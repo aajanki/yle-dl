@@ -1,0 +1,49 @@
+Yle plugin for librtmp
+Copyright (C) 2010-2012 Antti Ajanki
+License: GPLv2
+
+This is a plugin for librtmp for downloading media files from the
+video streaming services of the Finnish national broadcasting company
+Yle: Yle Areena (http://areena-beta.yle.fi/ng/areena,
+http://ylex.yle.fi/ylex-areena) and Elävä Arkisto
+(http://www.yle.fi/elavaarkisto/).
+
+Installation
+------------
+
+Prerequisites: libssl, libcrypto, pthreads, libltdl, python.
+Additionally in OS X libiconv and Xcode, and in MinGW libiconv.
+
+On Debian/Ubuntu installing packages libssl-dev, libltdl-dev and
+python-dev satisfies the dependencies.
+
+make
+make install
+
+Usage
+-----
+
+yle-dl [yle-dl or rtmpdump options] URL
+
+where URL is the address of the Areena or Elävä arkisto web page where
+you would normally watch the video in a browser.
+
+yle-dl options:
+
+--latestepisode   Download the latest episodes
+--showurl         Print librtmp-compatible URL, don't download
+
+Type "rtmpdump-yle --help" to see a full list of rtmpdump-yle options.
+
+When downloading from outside Finland, it may be necessary to add "-n
+flashu.yle.fi" on the command line. Note that not all videos are
+available outside Finland.
+
+Firewall must allow outgoing traffic on ports 80 and 1935.
+
+Examples
+--------
+
+yle-dl http://areena-beta.yle.fi/ng/areena/tv/1373722/#/play -o video.flv
+
+yle-dl "http://www.yle.fi/elavaarkisto/?s=s&g=4&ag=28&t=&a=9390"

@@ -1,0 +1,214 @@
+
+yle plugin for librtmp
+Copyright 2008-2012 Antti Ajanki
+Distributed under the GPL v2
+
+9 Jan 2012, Verison 1.99.1
+
+- Almost complete rewrite to support Yle Areena beta
+- Old Yle Areena is not supported
+- --sublang option for selecting the subtitle language
+- Removed --episodes switch, all episodes on the page are downloaded
+  by default
+- Removed --ylePassi, not needed anymore(?)
+
+29 Nov 2011, Version 1.4.6
+
+- Fix crash when filename had certain HTML entities
+- Support the updated Elävä arkisto
+- Updated rtmpdump snapshot to git-5d03a4f0d6216d
+
+27 Oct 2011, Version 1.4.5
+
+- Improved support for Akamai streams.
+
+11 Oct 2011, Version 1.4.4
+
+- Argument --vfat for creating Windows-compatible filenames works now
+  also in Elävä Arkisto and in YleX.
+- Updated rtmpdump snapshot to git-60218d0af0f4bd
+
+14 Jul 2011, Version 1.4.3
+
+- Added support for http://ylex.yle.fi/ylex-areena
+- Updated rtmpdump snapshot to git-c28f1bab7822de
+
+26 May 2011, Version 1.4.2
+
+- Install just the rtmpdump-yle binary to avoid conflicts with the
+  plain rtmpdump (patch by Ville Skyttä)
+- All the YLE specific parts have been moved into the librtmp code. It
+  is now possible to stream YLE videos in any librtmp-based program
+  using areenaParams URL option (patch by an anonymous contributor).
+- New option yle-dl --showurl outputs the clip URL.
+- "make STATIC_JSON=/path/to/json-c" links libjson statically.
+- Updated rtmpdump snapshot to v2.3+svn20110512.
+
+22 Feb 2011, Version 1.4.1
+
+- Fixed compilation on MinGW (thanks to Niko Mikkilä)
+- Do not build the shared library, static linking is used.
+- Improved support for Akamai streams.
+
+09 Feb 2011, Version 1.4.0
+
+- Fix dates in filenames (patch by Niko Mikkilä).
+- Link to system json-c library, drop embedded copy of json-c.
+- Debian packaging scripts by Eugene V. Lyubimkin.
+- Ignore --resume if the file does not exist.
+- Append subtitle to file name. Should fix the --episodes mode.
+- Updated rtmpdump snapshot to v2.3+svn20110207.
+
+04 Nov 2010, Version 1.3.1
+
+- Fix Elävä arkisto support (patch by Niko Mikkilä)
+- Updated rtmpdump snapshot to v2.3+svn20101104 and json-c to 0.9
+
+20 Sep 2010, Version 1.3.0
+
+- yle-dl can now download streams from Elävä arkisto.
+- Obey redirects. Required when connecting from foreign address.
+- libiconv required on OS X
+- Fixed compilation without SSL library.
+- Updated rtmpdump snapshot to v2.3+svn20100919
+
+4 Aug 2010, Version 1.2.4
+
+- Fix autoresume on long (longer than about an hour) streams
+- Updated rtmpdump snapshot to v2.3+svn20100726
+
+20 May 2010, Version 1.2.3
+
+- Option --vfat creates file names that are legal on Windows file
+  systems.
+- Option --destdir sets the directory for downloads.
+- A configuration file for Launchy Firefox extension.
+- Fixed --ylePassi option.
+
+19 Apr 2010, Version 1.2.2
+
+- Percent encode URLs when necessary.
+- Try harder to come up with distinct file names when downloading episodes.
+- Resuming works without explicit output file name on Yle streams.
+- Use "make posix ICONV=yes" if linking with libiconv is required.
+- Upated rtmpdump snapshot to 2.2c
+
+20 Feb 2010, Version 1.2.1
+
+- Fixed Akamai streams
+- yle-dl --latestepisode downloads the latest episode on a page
+- Upated rtmpdump snapshot to 2.1c+svn20100220
+
+06 Feb 2010, Version 1.2.0
+
+- Updated rtmpdump codebase to 2.1c+svn20100206
+- New dependency: Python (for yle-dl). Old dependency on libxml is
+  dropped.
+- In addition to being able to download from YLE Areena, rtmpdump-yle
+  behaves now like the unmodified rtmpdump on other sites.
+- New option --ylePassi for accessing content that requires login.
+  (The old option --auth behaves now like in unmodified rtmpdump).
+- Output filenames are created with correct charset in non-UTF8
+  locales.
+- Fixed a crash when output file name does not contain an extension.
+- Show file name in error message if file creation fails.
+- Ignore FLV packets received before the play command is sent.
+- Default installation location changed to /usr/local/bin. make
+  install warns, if it detects binaries in the old path.
+- yle-dl: download all episode on a page with --episodes (based on the
+  idea by Tuukka Hastrup).
+
+29 Aug 2009, version 1.1.7
+
+- Fixed a segfault on empty or invalid JSON input.
+- Fixed support for net radios (regression since 1.1.6)
+
+15 Aug 2009, version 1.1.6
+
+- Identify as Firefox when connection to Areena HTTP server.
+- A new command line option for overriding the default value of the
+  HTTP User-Agent header.
+- Changes to RTMP generation to make it more similar to the official
+  player.
+
+13 Aug 2009, version 1.1.5
+
+- Added support for FreeBSD. A patch by Antero Hytönen.
+- More fixes for Fedora 11. This time it should work, really.
+- Append User-Agent header to HTTP connections because YLE servers now
+  require it.
+
+7 Aug 2009, version 1.1.4
+
+- Send the bytes received report more frequently as required by the
+  recent changes on Yle servers.
+- Fixed compilation on Fedora 11.
+
+5 Aug 2009, version 1.1.3
+
+- Fixed a file corruption caused by auto resume.
+- Failed to connect when redirected.
+
+31 Jul 2009, version 1.1.2
+
+- New --autoResume mode for automatically resuming timed out streams
+  (enabled in yle-dl by default). Long streams can now be downloaded
+  in a single session.
+- Replace characters in filenames that are illegal on certain
+  filesystems.
+- Fix buffer overflows. Code is now Valgrind-clean. Avoids crash if -o
+  option given and the file exists.
+- Downloads cancelled with Ctrl-C can again be resumed (regression
+  since 1.1).
+
+24 Jul 2009, version 1.1.1
+
+- Re-enable faster than real-time downloads by correctly setting
+  the buffer size before connecting.
+- Send swfUrl when connecting. The Areena servers now refuses to talk
+  to us without it. Also other changes that bring the generated RTMP
+  packets closer to Areena flash player.
+
+15 Jul 2009, version 1.1
+
+- Support for Areena net radios and live streams (although live
+  streams are buggy).
+- Support for Akamai servers (only live streams tested).
+- Fixed compilation on Fedora 11.
+- Options --quiet and --verbose for controlling the output verbosity.
+  Be quieter by default.
+- Use considerably less CPU by updating the progress indicator less
+  frequently.
+- Fixed a buffer overflow and other potential problems. Thanks to
+  Reijo Tomperi.
+- Use the PREFIX defined in Makefile when calling rtmpdump-yle in
+  yle-dl.
+- It is now possible to download videos that require YLE passi by
+  giving the Areena cookie with the --auth command line option.
+- Append the optional parameters to the play packet only when their
+  values differ from default. The server seems be less likely to drop
+  connections this way.
+- yle-dl now correctly quotes parameters that contains white space.
+
+22 Jun 2009, version 1.0.2
+
+- Fixed a memory corruption in MP3 URL parsing code caused by
+  allocating too few bytes.
+- Remove '/' from the file names, and '.' from the beginning of the
+  file names.
+- Removed bashisms from yle-dl. Fixes --help on non-bash shells.
+- Avoid the temporary file by create the final destination file after
+  receiving stream title but before starting downloading.
+- Don't overwrite files: append an integer to file name, if the file
+  already exists.
+- When extracting clip ID, download the page if necessary. Now also
+  program name URLs can be used in addition to clip ID URLs.
+
+15 Jun 2009, version 1.0.1
+
+- Use .flv extension for the downloaded files. Some media players (vlc
+  at least) seem to have problems playing them otherwise.
+
+14 Jun 2009, version 1.0
+
+- Initial release
