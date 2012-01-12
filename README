@@ -1,6 +1,7 @@
 Yle plugin for librtmp
 Copyright (C) 2010-2012 Antti Ajanki
 License: GPLv2
+Homepage: http://www.iki.fi/aoa/rtmpdump-yle
 
 This is a plugin for librtmp for downloading media files from the
 video streaming services of the Finnish national broadcasting company
