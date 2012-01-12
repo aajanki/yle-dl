@@ -360,13 +360,12 @@ class AreenaNGDownloader:
         return areenaparams
 
     def extract_params(self, html):
-        m = re.search(r'<script>.*?AREENA.clip\s*=\s*(.*?)</script>', html, re.DOTALL)
+        m = re.search(r'<script>.*?AREENA.clip\s*=\s*(.*?})\s*?$',
+                      html, re.DOTALL | re.MULTILINE)
         if not m:
             return None
 
-        areenaclip = m.group(1)
-        areenaclip = areenaclip[:areenaclip.rfind('}')+1]
-        params = self.parse_JS_object(areenaclip)
+        params = self.parse_JS_object(m.group(1))
 
         if not params or not params.has_key('id'):
             return None
