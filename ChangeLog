@@ -3,6 +3,10 @@ yle plugin for librtmp
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
+12 Jan 2012, Version 1.99.2
+
+- Updated Areena page parser to fix the recent breakage
+
 9 Jan 2012, Verison 1.99.1
 
 - Almost complete rewrite to support Yle Areena beta
