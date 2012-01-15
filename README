@@ -33,8 +33,11 @@ yle-dl options:
 
 --latestepisode   Download the latest episodes
 --showurl         Print librtmp-compatible URL, don't download
+--vfat            Create Windows-compatible filenames
+--sublang lang    Download subtitles, lang = fin, swe, smi, none or all
+--rtmpdump path   Set path to rtmpdump binary
 
-Type "rtmpdump-yle --help" to see a full list of rtmpdump-yle options.
+Type "rtmpdump --help" to see a full list of options.
 
 When downloading from outside Finland, it may be necessary to add "-n
 flashu.yle.fi" on the command line. Note that not all videos are
