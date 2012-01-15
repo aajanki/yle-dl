@@ -265,11 +265,6 @@ class AreenaNGDownloader:
         else:
             islive = ''
 
-        outputparam = []
-        if '-o' not in parameters and '--flv' not in parameters:
-            filename = next_available_filename(filename)
-            outputparam = ['-o', filename.encode(enc, 'replace')]
-        
         rtmpurl = '%s swfUrl=%s tcUrl=%s pageUrl=%s%s yle=%s' % \
             (AREENA_NG_RTMP, AREENA_NG_SWF, AREENA_NG_TCURL,
              url, islive, areenaparams['id'])
@@ -278,26 +273,30 @@ class AreenaNGDownloader:
             print rtmpurl
             return 0
 
-        else:
-            args = [rtmpdump_binary]
-            args += ['-r', rtmpurl.encode(enc)]
-            args += parameters
-            args += outputparam
+        outputparam = []
+        if '-o' not in parameters and '--flv' not in parameters:
+            filename = next_available_filename(filename)
+            outputparam = ['-o', filename.encode(enc, 'replace')]
+        
+        args = [rtmpdump_binary]
+        args += ['-r', rtmpurl.encode(enc)]
+        args += parameters
+        args += outputparam
 
-            retcode = execute_rtmpdump(args)
-            if retcode != 0:
-                return retcode
-
-            outputfile = get_output_filename(args)
-            if outputfile and outputfile != '-':
-                print 'Stream saved to', outputfile
-
-            if areenaparams.has_key('subtitles'):
-                subtitlefile = self.download_subtitles(areenaparams['subtitles'], 'fin', outputfile)
-                if subtitlefile:
-                    print 'Subtitles saved to', subtitlefile
-
+        retcode = execute_rtmpdump(args)
+        if retcode != 0:
             return retcode
+
+        outputfile = get_output_filename(args)
+        if outputfile and outputfile != '-':
+            print 'Stream saved to', outputfile
+
+        if areenaparams.has_key('subtitles'):
+            subtitlefile = self.download_subtitles(areenaparams['subtitles'], 'fin', outputfile)
+            if subtitlefile:
+                print 'Subtitles saved to', subtitlefile
+
+        return retcode
 
     def get_playlist(self, url, latest_episode):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
