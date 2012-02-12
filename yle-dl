@@ -377,13 +377,36 @@ class AreenaNGDownloader:
         # First convert into JSON and then apply JSON parser. The
         # following is tuned for Areena HTML and will very likely break
         # on other inputs.
-        x = jsobj.replace('"', '\\"')
-        x = re.sub(r'[[{\s]([a-zA-Z]\w*)\s*:', r'"\1":', x)
-        x = x.replace("'", '"')
+        x = ' '.join(self.convert_tokens(jsobj))
         try:
             return json.loads(x)
         except ValueError:
             return None
+
+    def convert_tokens(self, data):
+        """Rudimentary generator that reads Javascript data and yields
+        JSONified tokens"""
+        while True:
+            data = data.lstrip()
+            if not data:
+                raise StopIteration
+            elif re.match(r'[]:,{}[]', data):
+                yield data[0]
+                data = data[1:]
+            elif data.startswith("'"):
+                m = re.match(r"'([^']*)'", data)
+                s = re.sub(r'["\\]', '.', m.group(1))
+                yield '"%s"' % s
+                data = data[m.end():]
+            elif re.match(r':', data):
+                yield ':'
+                data = data[1:]
+            else:
+                m = re.match(r"([a-zA-Z0-9]+)", data)
+                s = re.sub(r'["\\]', '.', m.group(1))
+                yield '"%s"' % s
+                data = data[m.end():]
+
 
     def download_subtitles(self, available_subtitles, preferred_lang, videofilename):
         basename = os.path.splitext(videofilename)[0]
