@@ -84,11 +84,17 @@ def download_page(url):
     request = urllib2.Request(url, headers=AREENA_NG_HTTP_HEADERS)
     try:
         urlreader = urllib2.urlopen(request)
+        content = urlreader.read()
+
         charset = urlreader.info().getparam('charset')
-        if charset is None:
+        if not charset:
+            metacharset = re.search(r'<meta [^>]*?charset="(.*?)"', content)
+            if metacharset:
+                charset = metacharset.group(1)
+        if not charset:
             charset = 'iso-8859-1'
 
-        return unicode(urlreader.read(), charset, 'replace')
+        return unicode(content, charset, 'replace')
     except urllib2.URLError, exc:
         print >> sys.stderr, "Can't read %s: %s" % (url, exc)
         return None
@@ -250,7 +256,6 @@ class AreenaNGDownloader:
 
         if areenaparams.has_key('title'):
             filename = areenaparams['title']
-            filename = urllib.unquote_plus(str(filename)).decode('utf-8', 'ignore')
             date = areenaparams.get('broadcasted', None) or \
                    areenaparams.get('productionDate', None)
             if date:
