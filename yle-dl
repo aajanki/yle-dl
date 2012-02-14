@@ -386,6 +386,7 @@ class AreenaNGDownloader:
         try:
             return json.loads(x)
         except ValueError:
+            print 'Invalid JSON'
             return None
 
     def convert_tokens(self, data):
@@ -399,19 +400,21 @@ class AreenaNGDownloader:
                 yield data[0]
                 data = data[1:]
             elif data.startswith("'"):
-                m = re.match(r"'([^']*)'", data)
-                s = re.sub(r'["\\]', '.', m.group(1))
-                yield '"%s"' % s
-                data = data[m.end():]
-            elif re.match(r':', data):
-                yield ':'
-                data = data[1:]
+                if data[1] == "'":
+                    yield '""'
+                    data = data[2:]
+                else:
+                    data = data[1:]
+                    m = re.search(r"[^\\]'", data)
+                    s = data[:m.start()+1]
+                    s = s.replace("\\'", "'")
+                    s = re.sub(r'([^\\])"', '\g<1>\\"', s)
+                    yield '"%s"' % s
+                    data = data[m.end():]
             else:
-                m = re.match(r"([a-zA-Z0-9]+)", data)
-                s = re.sub(r'["\\]', '.', m.group(1))
-                yield '"%s"' % s
+                m = re.match(r"([a-zA-Z0-9_]+)", data)
+                yield '"%s"' % m.group(1)
                 data = data[m.end():]
-
 
     def download_subtitles(self, available_subtitles, preferred_lang, videofilename):
         basename = os.path.splitext(videofilename)[0]
