@@ -3,6 +3,12 @@ yle plugin for librtmp
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
+15 Feb 2012, Version 1.99.3
+
+- Better parser handles some videos which were failing before (patch by
+  Jouni Seppänen)
+- Improved handling of scandinavian characters in titles
+
 12 Jan 2012, Version 1.99.2
 
 - Updated Areena page parser to fix the recent breakage
