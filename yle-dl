@@ -297,9 +297,7 @@ class AreenaNGDownloader:
             print 'Stream saved to', outputfile
 
         if areenaparams.has_key('subtitles'):
-            subtitlefile = self.download_subtitles(areenaparams['subtitles'], 'fin', outputfile)
-            if subtitlefile:
-                print 'Subtitles saved to', subtitlefile
+            self.download_subtitles(areenaparams['subtitles'], sublang, outputfile)
 
         return retcode
 
@@ -427,6 +425,7 @@ class AreenaNGDownloader:
                     try:
                         subtitlefile = basename + '.' + lang + '.srt'
                         urllib.urlretrieve(url, subtitlefile)
+                        print 'Subtitles saved to ' + subtitlefile
                         if preferred_lang != 'all':
                             return subtitlefile
                     except IOError, exc:
