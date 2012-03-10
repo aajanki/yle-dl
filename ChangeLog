@@ -3,6 +3,11 @@ yle plugin for librtmp
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
+10 Mar 2012, Version 1.99.4
+
+- --sublang option was not working
+- Cleaned up the plugin interface
+
 15 Feb 2012, Version 1.99.3
 
 - Better parser handles some videos which were failing before (patch by
