@@ -20,20 +20,25 @@ python-dev.
 
 Käännösohjeet:
 
-Poista aluksi järjestelmän oma librtmp.
-
 make
 make install
 
 Viimeinen komento vaatii pääkäyttäjän oikeudet (esim. Ubuntussa: sudo
 make install).
 
-MacOSX:llä lisää komentoihin SYS=darwin:
+Jos haluat säilyttää järjestelmän oman librtmp-paketin, on konfliktien
+välttämiseksi helpointa linkata librtmp-kirjasto staattisesti. Tämä
+onnistuu lisäämällä make-komentoon sopivat kirjastot seuraavasti:
+
+make LIB_RTMP="librtmp/librtmp.a -lltdl -rdynamic"
+make install
+
+Mac OS X:ssä lisää komentoihin SYS=darwin:
 
 make SYS=darwin
 make install SYS=darwin
 
-ja MinGW:llä (Windowsilla) SYS=mingw:
+ja MinGW:ssä (Windowsilla) SYS=mingw:
 
 make SYS=mingw
 make install SYS=mingw

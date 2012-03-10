@@ -21,6 +21,22 @@ python-dev satisfies the dependencies.
 make
 make install
 
+To avoid conflict with system's librtmp package the recommended way is
+to link librtmp statically with the following commands:
+
+make LIB_RTMP="librtmp/librtmp.a -lltdl -rdynamic"
+make install
+
+On MacOS, append SYS=darwin:
+
+make SYS=darwin
+make install SYS=darwin
+
+On MinGW:llä (Windows), append SYS=mingw:
+
+make SYS=mingw
+make install SYS=mingw
+
 Usage
 -----
 
