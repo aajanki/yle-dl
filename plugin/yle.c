@@ -431,7 +431,7 @@ static void FreeInstance(RTMP *r, void *data) {
   if (!yle)
     return;
 
-  RTMP_ReleaseCallback(r, yle->connectCBHandle);
-  RTMP_ReleaseCallback(r, yle->RPC_CBHandle);
+  RTMP_DetachCallback(r, yle->connectCBHandle);
+  RTMP_DetachCallback(r, yle->RPC_CBHandle);
   free(yle);
 }

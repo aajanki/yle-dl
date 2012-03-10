@@ -40,17 +40,17 @@ static void FreeInstance(RTMP *r, void *data);
 static void ParseOption(const AVal *opt, const AVal *arg, void *ctx);
 
 static RTMPPluginOption yleoptions[] = 
-  { {"yle", "string", "YLE Areena clip ID", ParseOption},
-    {"yleauth", "int", "Enable Yle authentication (YleX Areena)", ParseOption},
-    {NULL, 0, 0, NULL} };
+  { {AVC("yle"), AVC("string"), AVC("YLE Areena clip ID"), ParseOption},
+    {AVC("yleauth"), AVC("int"), AVC("Enable Yle authentication (YleX Areena)"), ParseOption},
+    {{0}, {0}, {0}, 0} };
 
 RTMP_Plugin plugin = 
 {
-  0,
-  "Yle Areena",
-  "1.0",
-  "Antti Ajanki <antti.ajanki@iki.fi>",
-  "http://iki.fi/aoa/rtmpdump-yle/",
+  1,
+  AVC("Yle Areena"),
+  AVC("1.1"),
+  AVC("Antti Ajanki <antti.ajanki@iki.fi>"),
+  AVC("http://iki.fi/aoa/rtmpdump-yle/"),
   yleoptions,
   NewInstance,
   FreeInstance
