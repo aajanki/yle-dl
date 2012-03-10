@@ -48,7 +48,7 @@ RTMP_Plugin plugin =
 {
   1,
   AVC("Yle Areena"),
-  AVC("1.0"),
+  AVC("1.1"),
   AVC("Antti Ajanki <antti.ajanki@iki.fi>"),
   AVC("http://iki.fi/aoa/rtmpdump-yle/"),
   yleoptions,
