@@ -25,7 +25,7 @@ import htmlentitydefs
 import json
 import string
 
-version = "1.99.4 (2.0 beta 4)"
+version = "1.99.5 (2.0 beta 5)"
 
 AREENA_NG_RTMP = 'rtmp://flashk.yle.fi/mediakanta//x'
 # x above is a placeholder, yle plugin will construct the real playpath.
