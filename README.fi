@@ -61,6 +61,7 @@ Valitsimet:
 --sublang lang  Lataa tekstitykset annetulla kielellä (Yle Areena)
                 lang = fin, swe, smi, none or all (oletus)
 --rtmpdump path Polku rtmpdump-ohjelmaan
+--destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 
 Muut valitsimet välitetään suoraan rtmpdump:lle. Luettelon
 mahdollisista valitsimista (englanniksi) näkee komentamalla

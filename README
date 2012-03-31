@@ -52,6 +52,7 @@ yle-dl options:
 --vfat            Create Windows-compatible filenames
 --sublang lang    Download subtitles, lang = fin, swe, smi, none or all
 --rtmpdump path   Set path to rtmpdump binary
+--destdir dir     Save files to dir
 
 Type "rtmpdump --help" to see a full list of options.
 
