@@ -190,6 +190,9 @@ def get_output_filename(args):
         prev = opt
     return None
 
+def is_resume_job(args):
+    return '--resume' in args or '-e' in args
+
 def next_available_filename(proposed):
     i = 1
     filename = proposed 
@@ -285,7 +288,8 @@ class AreenaNGDownloader:
 
         outputparam = []
         if '-o' not in parameters and '--flv' not in parameters:
-            filename = next_available_filename(filename)
+            if not is_resume_job(parameters):
+                filename = next_available_filename(filename)
             outputparam = ['-o', filename.encode(enc, 'replace')]
         
         args = [rtmpdump_binary]
@@ -575,6 +579,9 @@ class ElavaArkistoDownloader:
             if destdir:
                 filename = os.path.join(destdir, filename)
 
+            if not is_resume_job(parameters):
+                filename = next_available_filename(filename)
+
             status = self.download_single_episode(clip['rtmp'],
                                                   clip['playpath'],
                                                   clip['downloadURL'],
@@ -621,6 +628,9 @@ class YleXDownloader:
 
             if destdir:
                 filename = os.path.joint(destdir, filename)
+
+            if not is_resume_job(argv):
+                filename = next_available_filename(filename)
 
             outputoptions = ['-o', filename.encode(sys.getfilesystemencoding(), 'ignore')]
 
