@@ -25,6 +25,7 @@ import urlparse
 import htmlentitydefs
 import json
 import string
+import xml.dom.minidom
 
 version = "1.99.5 (2.0 beta 5)"
 
@@ -35,6 +36,8 @@ AREENA_NG_SWF = 'http://areena-beta.yle.fi/static/player/1.1/flowplayer/flowplay
 AREENA_NG_TCURL = 'rtmp://flashk.yle.fi/mediakanta/'
 AREENA_NG_CLIP_TEMPLATE = 'http://areena-beta.yle.fi/ng/areena/%s/%s/#/play'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
+
+AREENA_LIVE_SWF = 'http://areena.yle.fi/player/Application.swf?build=2'
 
 ARKISTO_SWF = 'http://yle.fi/elavaarkisto/flowplayer/flowplayer.commercial-3.2.7.swf?0.7134730119723827'
 RTMPDUMP_OPTIONS_ARKISTO = ['-s', ARKISTO_SWF, '-m', '60']
@@ -175,6 +178,8 @@ def downloader_factory(url):
         return ElavaArkistoDownloader()
     elif url.startswith('http://ylex.yle.fi/'):
         return YleXDownloader()
+    elif url.startswith('http://areena.yle.fi/player/index.php?'):
+        return AreenaNGLiveDownloader()
     else:
         return AreenaNGDownloader()
 
@@ -296,6 +301,8 @@ class AreenaNGDownloader:
         args += ['-r', rtmpurl.encode(enc)]
         args += parameters
         args += outputparam
+        if islive:
+            args += ['--live']
 
         retcode = execute_rtmpdump(args)
         if retcode != 0:
@@ -440,6 +447,181 @@ class AreenaNGDownloader:
                     except IOError, exc:
                         print >> sys.stderr, 'Failed to download subtitles at %s: %s' % (url, exc)
         return subtitlefile
+
+
+### Areena live ###
+
+class AreenaNGLiveDownloader:
+    def download_episodes(self, url, parameters, latest_episode, sublang, destdir):
+        """Download episode at url."""
+        return self.process_episodes(url, parameters, destdir, False)
+
+    def print_urls(self, url, latest_episode, sublang='all'):
+        """Extract episodes from url and print their
+        librtmp-compatible URLs on stdout."""
+        return self.process_episodes(url, [], None, True)
+
+    def process_episodes(self, url, parameters, destdir, print_url):
+        streamid, language = self.extract_stream_id(url)
+        if streamid is None:
+            return 1
+
+        metadata = self.get_metadata(streamid, language)
+        if not metadata:
+            return 1
+
+        is_akamai_stream = metadata.get('akamai', False)
+        if is_akamai_stream:
+            rtmpurl = self.get_akamai_rtmp_url(metadata, url)
+        else:
+            print >> sys.stderr, 'Non-Akamai streams not yet supported'
+            return 1
+        
+        if not rtmpurl:
+            return 1
+
+        if print_url:
+            print rtmpurl
+            return 0
+
+        enc = sys.getfilesystemencoding()
+        outputparam = []
+        if '-o' not in parameters and '--flv' not in parameters:
+            filename = self.create_output_filename(metadata, destdir)
+            outputparam = ['-o', filename.encode(enc, 'replace')]
+
+        args = [rtmpdump_binary]
+        args += ['-r', rtmpurl.encode(enc)]
+        args += parameters
+        args += outputparam
+        if ' live=1' in rtmpurl:
+            args.append('--live')
+
+        retcode = execute_rtmpdump(args)
+        if retcode != 0:
+            return retcode
+
+        outputfile = get_output_filename(args)
+        if outputfile and outputfile != '-':
+            print 'Stream saved to', outputfile
+
+        return 0
+
+    def get_xml_nodes(self, xmlurl, nodenames):
+        """Download XML file from xmlurl and parse first-level childs
+        named in nodenames."""
+        xmlstr = download_page(xmlurl)
+        if not xmlstr:
+            return None
+
+        try:
+            xmldoc = xml.dom.minidom.parseString(xmlstr)
+        except Exception:
+            return None
+
+        rootnode = xmldoc.documentElement
+        if rootnode is None:
+            return None
+
+        res = {}
+        for nodename in nodenames:
+            try:
+                res[nodename] = rootnode.getElementsByTagName(nodename)[0].firstChild.nodeValue
+            except IndexError:
+                pass
+
+        return res
+        
+    def extract_stream_id(self, url):
+        """Extract stream ID from the live stream URL."""
+        query = urlparse.urlparse(url).query
+        qdict = urlparse.parse_qs(query)
+        if 'stream' not in qdict:
+            print >> sys.stderr, 'No stream ID in URL'
+            return None, None
+        
+        streamid = qdict['stream'][0]
+        language = qdict.get('language', ['fi'])[0]
+
+        return (streamid, language)
+
+    def get_metadata(self, streamid, language):
+        """Download and parse metadata."""
+        metaurl = 'http://areena.yle.fi/meta/streams/info/%s/lang/%s' % (streamid, language)
+        metadata_json = download_page(metaurl)
+        if not metadata_json:
+            print >> sys.stderr, 'Failed to download metadata JSON'
+            return None
+
+        if debug:
+            print >>sys.stderr, metadata_json
+
+        try:
+            metadata_and_status = json.loads(metadata_json)
+        except ValueError:
+            print >> sys.stderr, 'Failed to parse metadata JSON'
+            return None
+
+        metadata_code = metadata_and_status.get('status', {}).get('code', None)
+        if metadata_code != 200:
+            print >> sys.stderr, 'Unexpected status code ' + str(metadata_code)
+            return None
+
+        return metadata_and_status.get('data', {})
+
+    def get_akamai_rtmp_url(self, metadata, pageurl):
+        """Parse Akamai stream parameters and return RTMP stream URL."""
+        streamurl = metadata.get('url', None)
+        if not streamurl:
+            print >> sys.stderr, 'No url in metadata!'
+            return None
+
+        required_parameters = ['hostname', 'appName', 'streamName', 'authParams']
+        akamai = self.get_xml_nodes(streamurl, required_parameters)
+        if akamai is None or len(akamai) != len(required_parameters):
+            print >> sys.stderr, 'Failed to parse Akamai XML'
+            return None
+
+        ident = self.get_xml_nodes('http://%s/fcs/ident' % akamai['hostname'], ['ip'])
+        if ident is None or 'ip' not in ident:
+            print >> sys.stderr, 'Failed to parse ident'
+            return None
+        
+        rtmpaddress = 'rtmp://%s/%s?%s?_fcs_vhost=%s&%s' % \
+            (ident['ip'], akamai['appName'], akamai['authParams'],
+             akamai['hostname'], akamai['authParams'])
+
+        if '&slist=' not in akamai['authParams']:
+            print >> sys.stderr, 'Live stream not fully supported'
+            return None
+            
+        slist = akamai['authParams'].split('&slist=', 1)[1]
+
+        playpath = '%s?%s&%s' % \
+            (slist, akamai['authParams'], akamai['authParams'])
+        app = '%s?%s?_fcs_vhost=%s&%s' % \
+            (akamai['appName'], akamai['authParams'], akamai['hostname'],
+             akamai['authParams'])
+        tcurl = 'rtmp://%s/%s' % (ident['ip'], playpath)
+
+        rtmpurl = '%s playpath=%s swfUrl=%s tcUrl=%s pageUrl=%s live=1' % \
+            (rtmpaddress, playpath, AREENA_LIVE_SWF, tcurl, pageurl)
+
+        return rtmpurl
+
+    def create_output_filename(self, metadata, destdir):
+        """Construct filename for the stream."""
+        title = metadata.get('title', None) or 'ylelive'
+        date = metadata.get('broadcastDateTime', None)
+        filename = title
+        if date:
+            filename += '-' + date.replace('/', '-').replace(' ', '-')
+        filename += '.flv'
+        filename = sane_filename(filename)
+        if destdir:
+            filename = os.path.join(destdir, filename)
+        filename = next_available_filename(filename)
+        return filename
 
 
 ### Elava Arkisto ###
@@ -627,7 +809,7 @@ class YleXDownloader:
                 filename = 'ylex.flv'
 
             if destdir:
-                filename = os.path.joint(destdir, filename)
+                filename = os.path.join(destdir, filename)
 
             if not is_resume_job(argv):
                 filename = next_available_filename(filename)
