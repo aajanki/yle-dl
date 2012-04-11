@@ -41,7 +41,7 @@ static void ParseOption(const AVal *opt, const AVal *arg, void *ctx);
 
 static RTMPPluginOption yleoptions[] = 
   { {AVC("yle"), AVC("string"), AVC("YLE Areena clip ID"), ParseOption},
-    {AVC("yleauth"), AVC("int"), AVC("Enable Yle authentication (YleX Areena)"), ParseOption},
+    {AVC("yleauth"), AVC("int"), AVC("Enable Yle authentication"), ParseOption},
     {{0}, {0}, {0}, 0} };
 
 RTMP_Plugin plugin = 

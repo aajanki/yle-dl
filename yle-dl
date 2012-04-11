@@ -38,6 +38,7 @@ AREENA_NG_CLIP_TEMPLATE = 'http://areena-beta.yle.fi/ng/areena/%s/%s/#/play'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
 AREENA_LIVE_SWF = 'http://areena.yle.fi/player/Application.swf?build=2'
+AREENA_LIVE_TCURL = 'rtmp://flashk.yle.fi/AreenaServer'
 
 ARKISTO_SWF = 'http://yle.fi/elavaarkisto/flowplayer/flowplayer.commercial-3.2.7.swf?0.7134730119723827'
 RTMPDUMP_OPTIONS_ARKISTO = ['-s', ARKISTO_SWF, '-m', '60']
@@ -227,6 +228,33 @@ def which(program):
                 return exe_file
 
     return None
+
+def parse_rtmp_single_component_app(rtmpurl):
+    """Extract single path-component app and playpath from rtmpurl."""
+    # YLE server requires that app is the first path component
+    # only. By default librtmp would take the first two
+    # components (app/appInstance).
+    #
+    # This also means that we can't rely on librtmp's playpath
+    # parser and have to duplicate the logic here.
+    k = 0
+    for i, x in enumerate(rtmpurl):
+        if x == '/':
+            k += 1
+            if k == 4:
+                break
+
+    playpath = rtmpurl[(i+1):]
+    app_only_rtmpurl = rtmpurl[:i]
+
+    ext = os.path.splitext(playpath)[1]
+    if ext == '.mp4':
+        playpath = 'mp4:' + playpath
+        ext = '.flv'
+    elif ext == '.mp3':
+        playpath = 'mp3:' + playpath[:-4]
+
+    return (app_only_rtmpurl, playpath, ext)
 
 
 ### Areena (new) ###
@@ -474,8 +502,7 @@ class AreenaNGLiveDownloader:
         if is_akamai_stream:
             rtmpurl = self.get_akamai_rtmp_url(metadata, url)
         else:
-            print >> sys.stderr, 'Non-Akamai streams not yet supported'
-            return 1
+            rtmpurl = self.get_areena_live_rtmp_url(metadata, url)
         
         if not rtmpurl:
             return 1
@@ -609,6 +636,21 @@ class AreenaNGLiveDownloader:
 
         return rtmpurl
 
+    def get_areena_live_rtmp_url(self, metadata, pageurl):
+        """Parse Areena live stream parameters and return RTMP stream
+        URL."""
+        rtmpaddress = metadata.get('url', None)
+        if not rtmpaddress:
+            print >> sys.stderr, 'No url in metadata!'
+            return None
+
+        rtmpaddress, playpath = parse_rtmp_single_component_app(rtmpaddress)[:2]
+
+        rtmpurl = '%s playpath=%s swfUrl=%s tcUrl=%s pageUrl=%s conn=S:1 live=1 yleauth=1' % \
+            (rtmpaddress, playpath, AREENA_LIVE_SWF, AREENA_LIVE_TCURL, pageurl)
+        
+        return rtmpurl
+
     def create_output_filename(self, metadata, destdir):
         """Construct filename for the stream."""
         title = metadata.get('title', None) or 'ylelive'
@@ -652,30 +694,9 @@ class ElavaArkistoDownloader:
             if not bestrtmpurl:
                 continue
 
-            # YLE server requires that app is the first path component
-            # only. By default librtmp would take the first two
-            # components (app/appInstance).
-            #
-            # This also means that we can't rely on librtmp's playpath
-            # parser and have to duplicate the logic here.
-            k = 0
-            for i, x in enumerate(bestrtmpurl):
-                if x == '/':
-                    k += 1
-                    if k == 4:
-                        break
+            rtmpurl, playpath, ext = parse_rtmp_single_component_app(bestrtmpurl)
 
-            playpath = bestrtmpurl[(i+1):]
-            bestrtmpurl = bestrtmpurl[:i]
-
-            ext = os.path.splitext(playpath)[1]
-            if ext == '.mp4':
-                playpath = 'mp4:' + playpath
-                ext = '.flv'
-            elif ext == '.mp3':
-                playpath = 'mp3:' + playpath[:-4]
-
-            clips.append({'rtmp': bestrtmpurl, 
+            clips.append({'rtmp': rtmpurl,
                           'playpath': playpath,
                           'downloadURL': downloadURL,
                           'filename': title + ext})
