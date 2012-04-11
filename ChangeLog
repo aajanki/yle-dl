@@ -3,6 +3,13 @@ yle plugin for librtmp
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
+xx xxx 2012, Version 1.99.6
+
+- Re-implement --destdir option for setting the destination directory
+- Fixed --resume
+- Support for live streams
+- Fix compilation on Windows (patch by Martin Pärtel)
+
 13 Mar 2012, Version 1.99.5
 
 - Previous release didn't compile because of missing files
