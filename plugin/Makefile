@@ -19,7 +19,7 @@ SO_EXT=$(SO_$(SYS))
 SO_LDFLAGS_posix=-shared -Wl,-soname,$@
 SO_LDFLAGS_darwin=-dynamiclib -twolevel_namespace -undefined dynamic_lookup \
 	-fno-common -headerpad_max_install_names -install_name $(plugindir)/$@
-SO_LDFLAGS_mingw=-shared -Wl,--out-implib,$@.dll.a
+SO_LDFLAGS_mingw=-shared -Wl,--out-implib,$@.a
 SO_LDFLAGS=$(SO_LDFLAGS_$(SYS))
 
 INSTALL_IMPLIB_posix=
@@ -29,6 +29,7 @@ INSTALL_IMPLIB=$(INSTALL_IMPLIB_$(SYS))
 
 OPT=-O2
 CFLAGS=-Wall -fPIC -I$(INCLUDEDIR) $(OPT)
+LDFLAGS=-L../rtmpdump/librtmp -lrtmp
 
 all: yle.$(SO_EXT)
 
@@ -36,7 +37,7 @@ yle.o: yle.c yle.h Makefile
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 yle.$(SO_EXT): yle.o
-	$(CC) $(SO_LDFLAGS) $(LDFLAGS) -o $@ $^ $>
+	$(CC) $(SO_LDFLAGS) -o $@ $^ $(LDFLAGS)
 
 install:
 	mkdir -p $(PLUGINDIR)
