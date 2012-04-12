@@ -60,24 +60,29 @@ excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
 
+def log(msg):
+    enc = sys.stderr.encoding or 'UTF-8'
+    sys.stderr.write(msg.encode(enc, 'backslashreplace'))
+    sys.stderr.write('\n')
+
 def usage():
     """Print the usage message to stderr"""
-    print >> sys.stderr, "yle-dl %s: Download media from Yle Areena and Elävä Arkisto" % version
-    print >> sys.stderr, "Copyright (C) 2009-2012 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv2"
-    print >> sys.stderr, ""
-    print >> sys.stderr, "%s [yle-dl or rtmpdump options] URL" % sys.argv[0]
-    print >> sys.stderr, ""
-    print >> sys.stderr, "yle-dl options:"
-    print >> sys.stderr, ""
-    print >> sys.stderr, "--latestepisode         Download the latest episode"
-    print >> sys.stderr, "--showurl               Print librtmp-compatible URL, don't download"
-    print >> sys.stderr, "--vfat                  Create Windows-compatible filenames"
-    print >> sys.stderr, "--sublang lang          Download subtitles, lang = fin, swe, smi, none or all"
-    print >> sys.stderr, "--rtmpdump path         Set path to rtmpdump binary"
-    print >> sys.stderr, "--destdir dir           Save files to dir"
-    print >> sys.stderr, ""
-    print >> sys.stderr, "rtmpdump options:"
-    print >> sys.stderr, ""
+    log(u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto' % version)
+    log(u'Copyright (C) 2009-2012 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv2')
+    log(u'')
+    log(u'%s [yle-dl or rtmpdump options] URL' % sys.argv[0])
+    log(u'')
+    log(u'yle-dl options:')
+    log(u'')
+    log(u'--latestepisode         Download the latest episode')
+    log(u"--showurl               Print librtmp-compatible URL, don't download")
+    log(u'--vfat                  Create Windows-compatible filenames')
+    log(u'--sublang lang          Download subtitles, lang = fin, swe, smi, none or all')
+    log(u'--rtmpdump path         Set path to rtmpdump binary')
+    log(u'--destdir dir           Save files to dir')
+    log(u'')
+    log(u'rtmpdump options:')
+    log(u'')
     subprocess.call([rtmpdump_binary, '--help'])
 
 def download_page(url):
@@ -102,10 +107,10 @@ def download_page(url):
 
         return unicode(content, charset, 'replace')
     except urllib2.URLError, exc:
-        print >> sys.stderr, "Can't read %s: %s" % (url, exc)
+        log(u"Can't read %s: %s" % (url, exc))
         return None
     except ValueError:
-        print >> sys.stderr, 'Invalid URL: ' + url
+        log(u'Invalid URL: ' + url)
         return None
 
 def encode_url_utf8(url):
@@ -159,8 +164,8 @@ def execute_rtmpdump(args):
     """Start rtmpdump process with argument list args and wait until
     completion."""
     if debug:
-        print >> sys.stderr, 'Executing:'
-        print >> sys.stderr, ' '.join(args)
+        log('Executing:')
+        log(' '.join(x.decode('UTF-8') for x in args))
 
     try:
         rtmpdump_process = subprocess.Popen(args)
@@ -170,7 +175,7 @@ def execute_rtmpdump(args):
         rtmpdump_process.wait()
         return 2
     except OSError, exc:
-        print >> sys.stderr, "Execution failed:", exc
+        log(u'Execution failed: ' + str(exc))
         return 2
 
 def downloader_factory(url):
@@ -204,7 +209,7 @@ def next_available_filename(proposed):
     filename = proposed 
     basename, ext = os.path.splitext(proposed)
     while os.path.exists(filename):
-        print >> sys.stderr, '%s exists, trying an alternative name' % filename
+        log(u'%s exists, trying an alternative name' % filename)
         filename = basename + '-' + str(i) + ext
         i += 1
     return filename
@@ -324,7 +329,7 @@ class AreenaNGDownloader:
             if not is_resume_job(parameters):
                 filename = next_available_filename(filename)
             outputparam = ['-o', filename.encode(enc, 'replace')]
-        
+
         args = [rtmpdump_binary]
         args += ['-r', rtmpurl.encode(enc)]
         args += parameters
@@ -338,7 +343,7 @@ class AreenaNGDownloader:
 
         outputfile = get_output_filename(args)
         if outputfile and outputfile != '-':
-            print 'Stream saved to', outputfile
+            log(u'Stream saved to ' + outputfile)
 
         if areenaparams.has_key('subtitles'):
             self.download_subtitles(areenaparams['subtitles'], sublang, outputfile)
@@ -351,14 +356,14 @@ class AreenaNGDownloader:
         if re.search(r'/sarjat/[0-9]+$', path) or not re.search(r'/[0-9]+/?$', path):
             # This page contains a list of episodes
             if debug:
-                print >> sys.stderr, 'searching for episodes at', url
+                log(u'searching for episodes at ' + url)
 
             episodeurl = urlparse.urlunparse((scheme, netloc, path + '.json', params, query, ''))
 
             try:
                 fulldata = json.loads(download_page(episodeurl))
             except ValueError:
-                print >> sys.stderr, 'Invalid JSON file at', episodeurl
+                log(u'Invalid JSON file at ' +  episodeurl)
                 return None
 
             if fulldata.has_key('availableEpisodes'):
@@ -379,7 +384,7 @@ class AreenaNGDownloader:
                 playlist.append(AREENA_NG_CLIP_TEMPLATE % (urltype, clip['id']))
 
             if not playlist:
-                print >> sys.stderr, 'Error: can\'t find streams at', url
+                log(u'Error: can\'t find streams at ' + url)
                 return None
 
             if latest_episode:
@@ -399,8 +404,8 @@ class AreenaNGDownloader:
 
         areenaparams = self.extract_params(html)
         if areenaparams is None:
-            print >> sys.stderr, "Can't find clip parameters."
-            print >> sys.stderr, "Is %s really a YLE Areena video page?" % url
+            log(u"Can't find clip parameters.")
+            log(u"Is %s really a YLE Areena video page?" % url)
             return None
 
         return areenaparams
@@ -428,7 +433,7 @@ class AreenaNGDownloader:
         try:
             return json.loads(x)
         except ValueError:
-            print 'Invalid JSON'
+            log('Invalid JSON')
             return None
 
     def convert_tokens(self, data):
@@ -469,11 +474,11 @@ class AreenaNGDownloader:
                     try:
                         subtitlefile = basename + '.' + lang + '.srt'
                         urllib.urlretrieve(url, subtitlefile)
-                        print 'Subtitles saved to ' + subtitlefile
+                        log(u'Subtitles saved to ' + subtitlefile)
                         if preferred_lang != 'all':
                             return subtitlefile
                     except IOError, exc:
-                        print >> sys.stderr, 'Failed to download subtitles at %s: %s' % (url, exc)
+                        log(u'Failed to download subtitles at %s: %s' % (url, exc))
         return subtitlefile
 
 
@@ -530,7 +535,7 @@ class AreenaNGLiveDownloader:
 
         outputfile = get_output_filename(args)
         if outputfile and outputfile != '-':
-            print 'Stream saved to', outputfile
+            log(u'Stream saved to ' + outputfile)
 
         return 0
 
@@ -564,7 +569,7 @@ class AreenaNGLiveDownloader:
         query = urlparse.urlparse(url).query
         qdict = urlparse.parse_qs(query)
         if 'stream' not in qdict:
-            print >> sys.stderr, 'No stream ID in URL'
+            log('No stream ID in URL')
             return None, None
         
         streamid = qdict['stream'][0]
@@ -577,21 +582,21 @@ class AreenaNGLiveDownloader:
         metaurl = 'http://areena.yle.fi/meta/streams/info/%s/lang/%s' % (streamid, language)
         metadata_json = download_page(metaurl)
         if not metadata_json:
-            print >> sys.stderr, 'Failed to download metadata JSON'
+            log('Failed to download metadata JSON')
             return None
 
         if debug:
-            print >>sys.stderr, metadata_json
+            log(metadata_json)
 
         try:
             metadata_and_status = json.loads(metadata_json)
         except ValueError:
-            print >> sys.stderr, 'Failed to parse metadata JSON'
+            log('Failed to parse metadata JSON')
             return None
 
         metadata_code = metadata_and_status.get('status', {}).get('code', None)
         if metadata_code != 200:
-            print >> sys.stderr, 'Unexpected status code ' + str(metadata_code)
+            log(u'Unexpected status code ' + str(metadata_code))
             return None
 
         return metadata_and_status.get('data', {})
@@ -600,18 +605,18 @@ class AreenaNGLiveDownloader:
         """Parse Akamai stream parameters and return RTMP stream URL."""
         streamurl = metadata.get('url', None)
         if not streamurl:
-            print >> sys.stderr, 'No url in metadata!'
+            log('No url in metadata!')
             return None
 
         required_parameters = ['hostname', 'appName', 'streamName', 'authParams']
         akamai = self.get_xml_nodes(streamurl, required_parameters)
         if akamai is None or len(akamai) != len(required_parameters):
-            print >> sys.stderr, 'Failed to parse Akamai XML'
+            log('Failed to parse Akamai XML')
             return None
 
         ident = self.get_xml_nodes('http://%s/fcs/ident' % akamai['hostname'], ['ip'])
         if ident is None or 'ip' not in ident:
-            print >> sys.stderr, 'Failed to parse ident'
+            log('Failed to parse ident')
             return None
         
         rtmpaddress = 'rtmp://%s/%s?%s?_fcs_vhost=%s&%s' % \
@@ -619,7 +624,7 @@ class AreenaNGLiveDownloader:
              akamai['hostname'], akamai['authParams'])
 
         if '&slist=' not in akamai['authParams']:
-            print >> sys.stderr, 'Live stream not fully supported'
+            log('Live stream not fully supported')
             return None
             
         slist = akamai['authParams'].split('&slist=', 1)[1]
@@ -641,7 +646,7 @@ class AreenaNGLiveDownloader:
         URL."""
         rtmpaddress = metadata.get('url', None)
         if not rtmpaddress:
-            print >> sys.stderr, 'No url in metadata!'
+            log('No url in metadata!')
             return None
 
         rtmpaddress, playpath = parse_rtmp_single_component_app(rtmpaddress)[:2]
@@ -708,13 +713,13 @@ class ElavaArkistoDownloader:
         enc = sys.getfilesystemencoding()
 
         if downloadURL:
-            print 'Downloading from HTTP server...'
+            log('Downloading from HTTP server...')
             try:
                 urllib.urlretrieve(downloadURL, filename.encode(enc))
             except IOError, exc:
-                print >> sys.stderr, "Download failed :", exc
+                log(u'Download failed: ' + str(exc))
                 return 2
-            print 'Stream saved to', filename.encode(enc)
+            log(u'Stream saved to ' + filename)
             return 0
         else:
             args = [rtmpdump_binary]
@@ -731,7 +736,7 @@ class ElavaArkistoDownloader:
 
             outputfile = get_output_filename(args)
             if outputfile and outputfile != '-':
-                print 'Stream saved to', outputfile
+                log(u'Stream saved to ' + outputfile)
 
             return retcode
 
@@ -762,7 +767,7 @@ class ElavaArkistoDownloader:
 
         playlist = self.extract_playlist(mediajson)
         if len(playlist) == 0:
-            print >> sys.stderr, "Can't find streams at %s." % url
+            log(u"Can't find streams at %s." % url)
             return None
 
         if latest_episode:
@@ -853,7 +858,7 @@ class YleXDownloader:
 
         outputfile = get_output_filename(args)
         if outputfile and outputfile != '-':
-            print 'Stream saved to', outputfile
+            log(u'Stream saved to ' + outputfile)
 
         return retcode
 
@@ -942,7 +947,7 @@ def main():
         else:
             rtmpdump_binary = which('rtmpdump')
     if not rtmpdump_binary:
-        print >> sys.stderr, 'Error: rtmpdump not found on path, use --rtmpdump for setting the location'
+        log(u'Error: rtmpdump not found on path, use --rtmpdump for setting the location')
 
     if show_usage or url is None:
         usage()
@@ -954,7 +959,7 @@ def main():
     try:
         url = unicode(url, encoding)
     except UnicodeDecodeError:
-        print >> sys.stderr, 'Warning: Failed to encode URL!'
+        log(u'Warning: Failed to encode URL!')
         url = unicode(url, 'ascii', 'replace')
 
     url = encode_url_utf8(url)

@@ -9,6 +9,7 @@ xx xxx 2012, Version 1.99.6
 - Fixed --resume
 - Support for live streams
 - Fix compilation on Windows (patch by Martin Pärtel)
+- Avoid crashing because of wrong character encoding
 
 13 Mar 2012, Version 1.99.5
 
