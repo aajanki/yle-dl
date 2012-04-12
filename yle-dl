@@ -189,8 +189,9 @@ def downloader_factory(url):
     else:
         return AreenaNGDownloader()
 
-def get_output_filename(args):
+def get_output_filename(args_in):
     prev = None
+    args = list(args_in) # copy
     while args:
         opt = args.pop()
         if opt in ('-o', '--flv'):
@@ -261,6 +262,13 @@ def parse_rtmp_single_component_app(rtmpurl):
 
     return (app_only_rtmpurl, playpath, ext)
 
+def log_output_file(outputfile, done=False):
+    if outputfile and outputfile != '-':
+        if done:
+            log(u'Stream saved to ' + outputfile)
+        else:
+            log(u'Output file: ' + outputfile)
+
 
 ### Areena (new) ###
 
@@ -295,8 +303,6 @@ class AreenaNGDownloader:
         if not areenaparams:
             return 1
 
-        enc = sys.getfilesystemencoding()
-
         if areenaparams.has_key('title'):
             filename = areenaparams['title']
             date = areenaparams.get('broadcasted', None) or \
@@ -324,6 +330,7 @@ class AreenaNGDownloader:
             print rtmpurl
             return 0
 
+        enc = sys.getfilesystemencoding()
         outputparam = []
         if '-o' not in parameters and '--flv' not in parameters:
             if not is_resume_job(parameters):
@@ -337,13 +344,14 @@ class AreenaNGDownloader:
         if islive:
             args += ['--live']
 
+        outputfile = get_output_filename(args)
+        log_output_file(outputfile)
+
         retcode = execute_rtmpdump(args)
         if retcode != 0:
             return retcode
 
-        outputfile = get_output_filename(args)
-        if outputfile and outputfile != '-':
-            log(u'Stream saved to ' + outputfile)
+        log_output_file(outputfile, True)
 
         if areenaparams.has_key('subtitles'):
             self.download_subtitles(areenaparams['subtitles'], sublang, outputfile)
@@ -529,13 +537,14 @@ class AreenaNGLiveDownloader:
         if ' live=1' in rtmpurl:
             args.append('--live')
 
+        outputfile = get_output_filename(args)
+        log_output_file(outputfile)
+
         retcode = execute_rtmpdump(args)
         if retcode != 0:
             return retcode
 
-        outputfile = get_output_filename(args)
-        if outputfile and outputfile != '-':
-            log(u'Stream saved to ' + outputfile)
+        log_output_file(outputfile, True)
 
         return 0
 
@@ -714,12 +723,15 @@ class ElavaArkistoDownloader:
 
         if downloadURL:
             log('Downloading from HTTP server...')
+            log_output_file(filename)
+            
             try:
                 urllib.urlretrieve(downloadURL, filename.encode(enc))
             except IOError, exc:
                 log(u'Download failed: ' + str(exc))
                 return 2
-            log(u'Stream saved to ' + filename)
+            
+            log_output_file(filename, True)
             return 0
         else:
             args = [rtmpdump_binary]
@@ -730,13 +742,14 @@ class ElavaArkistoDownloader:
                      '-o', filename.encode(enc, 'replace')]
             args += parameters
 
+            outputfile = get_output_filename(args)
+            log_output_file(outputfile)
+
             retcode = execute_rtmpdump(args)
             if retcode != 0:
                 return retcode
 
-            outputfile = get_output_filename(args)
-            if outputfile and outputfile != '-':
-                log(u'Stream saved to ' + outputfile)
+            log_output_file(outputfile, True)
 
             return retcode
 
@@ -852,13 +865,14 @@ class YleXDownloader:
         args += outputoptions
         args += argv
 
+        outputfile = get_output_filename(args)
+        log_output_file(outputfile)
+
         retcode = execute_rtmpdump(args)
         if retcode != 0:
             return retcode
 
-        outputfile = get_output_filename(args)
-        if outputfile and outputfile != '-':
-            log(u'Stream saved to ' + outputfile)
+        log_output_file(outputfile, True)
 
         return retcode
 
