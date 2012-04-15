@@ -7,6 +7,7 @@ all:
 	@cd plugin; $(MAKE) INCLUDEDIR=../rtmpdump
 
 install:
+	-mkdir -p $(BINDIR)
 	cp yle-dl $(BINDIR)
 	@cd rtmpdump; $(MAKE) install
 	@cd plugin; $(MAKE) install
