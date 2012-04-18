@@ -64,6 +64,7 @@ def log(msg):
     enc = sys.stderr.encoding or 'UTF-8'
     sys.stderr.write(msg.encode(enc, 'backslashreplace'))
     sys.stderr.write('\n')
+    sys.stderr.flush()
 
 def usage():
     """Print the usage message to stderr"""
