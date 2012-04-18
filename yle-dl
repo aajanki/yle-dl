@@ -345,6 +345,9 @@ class AreenaNGDownloader:
             args += ['--live']
 
         outputfile = get_output_filename(args)
+        if areenaparams.has_key('subtitles'):
+            self.download_subtitles(areenaparams['subtitles'], sublang, outputfile)
+
         log_output_file(outputfile)
 
         retcode = execute_rtmpdump(args)
@@ -352,9 +355,6 @@ class AreenaNGDownloader:
             return retcode
 
         log_output_file(outputfile, True)
-
-        if areenaparams.has_key('subtitles'):
-            self.download_subtitles(areenaparams['subtitles'], sublang, outputfile)
 
         return retcode
 
