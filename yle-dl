@@ -27,7 +27,7 @@ import json
 import string
 import xml.dom.minidom
 
-version = "1.99.5 (2.0 beta 5)"
+version = "1.99.6 (2.0 beta 6)"
 
 AREENA_NG_RTMP = 'rtmp://flashk.yle.fi/mediakanta//x'
 # x above is a placeholder, yle plugin will construct the real playpath.
