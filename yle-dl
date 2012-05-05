@@ -58,8 +58,10 @@ ARGOPTS = ('--rtmp', '-r', '--host', '-n', '--port', '-c', '--socks',
            '--timeout', '-m', '--start', '-A', '--stop', '-B', '--token',
            '-T', '--skip', '-k')
 
-SUCCESS = 0
-FAILED = 1
+# rtmpdump exit codes
+RD_SUCCESS = 0
+RD_FAILED = 1
+RD_INCOMPLETE = 2
 
 debug = False
 excludechars_linux = '*/|'
@@ -185,10 +187,10 @@ def execute_rtmpdump(args):
         except OSError:
             # The rtmpdump process died before we killed it.
             pass
-        return 2
+        return RD_INCOMPLETE
     except OSError, exc:
         log(u'Execution failed: ' + str(exc))
-        return 2
+        return RD_INCOMPLETE
 
 def downloader_factory(url):
     if url.startswith('http://www.yle.fi/elavaarkisto/') or \
@@ -302,21 +304,21 @@ class AreenaNGDownloader:
     def process_episodes(self, url, parameters, latest_only, sublang, destdir, print_url):
         playlist = self.get_playlist(url, latest_only)
         if not playlist:
-            return 1
+            return RD_FAILED
 
         for clip in playlist:
             res = self.process_single_episode(clip, parameters, sublang, destdir, print_url)
-            if res != 0:
+            if res != RD_SUCCESS:
                 return res
 
-        return 0
+        return RD_SUCCESS
 
     def process_single_episode(self, url, parameters, sublang, destdir, print_url):
         """Extracts Areena player params from a web page at url and
         starts a rtmpdump process."""
         areenaparams = self.get_areena_params(url)
         if not areenaparams:
-            return 1
+            return RD_FAILED
 
         if areenaparams.has_key('title'):
             filename = areenaparams['title']
@@ -343,7 +345,7 @@ class AreenaNGDownloader:
 
         if print_url:
             print rtmpurl
-            return 0
+            return RD_SUCCESS
 
         enc = sys.getfilesystemencoding()
         outputparam = []
@@ -366,7 +368,7 @@ class AreenaNGDownloader:
         log_output_file(outputfile)
 
         retcode = execute_rtmpdump(args)
-        if retcode != 0:
+        if retcode != RD_SUCCESS:
             return retcode
 
         log_output_file(outputfile, True)
@@ -520,11 +522,11 @@ class AreenaNGLiveDownloader:
     def process_episodes(self, url, parameters, destdir, print_url):
         streamid, language = self.extract_stream_id(url)
         if streamid is None:
-            return 1
+            return RD_FAILED
 
         metadata = self.get_metadata(streamid, language)
         if not metadata:
-            return 1
+            return RD_FAILED
 
         is_akamai_stream = metadata.get('akamai', False)
         if is_akamai_stream:
@@ -533,11 +535,11 @@ class AreenaNGLiveDownloader:
             rtmpurl = self.get_areena_live_rtmp_url(metadata, url)
         
         if not rtmpurl:
-            return 1
+            return RD_FAILED
 
         if print_url:
             print rtmpurl
-            return 0
+            return RD_SUCCESS
 
         enc = sys.getfilesystemencoding()
         outputparam = []
@@ -556,12 +558,12 @@ class AreenaNGLiveDownloader:
         log_output_file(outputfile)
 
         retcode = execute_rtmpdump(args)
-        if retcode != 0:
+        if retcode != RD_SUCCESS:
             return retcode
 
         log_output_file(outputfile, True)
 
-        return 0
+        return RD_SUCCESS
 
     def get_xml_nodes(self, xmlurl, nodenames):
         """Download XML file from xmlurl and parse first-level childs
@@ -711,15 +713,15 @@ class AreenaRadioDownloader:
         metadata = self.get_radio_metadata(url)
         if not metadata:
             log(u'Failed to download metadata')
-            return FAILED
+            return RD_FAILED
 
         rtmpurl = self.get_radio_rtmp_url(metadata, url)
         if not rtmpurl:
-            return FAILED
+            return RD_FAILED
 
         if print_url:
             print rtmpurl
-            return SUCCESS
+            return RD_SUCCESS
 
         enc = sys.getfilesystemencoding()
         curtime = time.strftime('-%Y-%m-%d-%H:%M:%S')
@@ -846,10 +848,10 @@ class ElavaArkistoDownloader:
                 urllib.urlretrieve(downloadURL, filename.encode(enc))
             except IOError, exc:
                 log(u'Download failed: ' + str(exc))
-                return 2
+                return RD_FAILED
             
             log_output_file(filename, True)
-            return 0
+            return RD_SUCCESS
         else:
             args = [rtmpdump_binary]
             args += RTMPDUMP_OPTIONS_ARKISTO
@@ -863,7 +865,7 @@ class ElavaArkistoDownloader:
             log_output_file(outputfile)
 
             retcode = execute_rtmpdump(args)
-            if retcode != 0:
+            if retcode != RD_SUCCESS:
                 return retcode
 
             log_output_file(outputfile, True)
@@ -877,7 +879,7 @@ class ElavaArkistoDownloader:
         else:
             print '%s playpath=%s swfUrl=%s pageUrl=%s' % \
                 (rtmpurl, playpath, ARKISTO_SWF, pageurl)
-        return 0
+        return RD_SUCCESS
 
     def get_playlist(self, url, latest_episode):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
@@ -910,7 +912,7 @@ class ElavaArkistoDownloader:
         download all clips using rtmpdump."""
         playlist = self.get_playlist(url, latest_episode)
         if playlist is None:
-            return 1
+            return RD_FAILED
 
         for clip in playlist:
             filename = clip['filename']
@@ -925,23 +927,23 @@ class ElavaArkistoDownloader:
                                                   clip['downloadURL'],
                                                   filename,
                                                   parameters, url)
-            if status != 0:
+            if status != RD_SUCCESS:
                 return status
 
-        return 0
+        return RD_SUCCESS
 
     def print_urls(self, url, latest_episode):
         """Download playlist from Elava Arkisto page at url and print
         a librtmp-compatible URL for each clip."""
         playlist = self.get_playlist(url, latest_episode)
         if playlist is None:
-            return 1
+            return RD_FAILED
 
         for clip in playlist:
             self.print_librtmp_url(clip['rtmp'], clip['playpath'],
                                    url, clip['downloadURL'])
 
-        return 0
+        return RD_SUCCESS
 
 
 ### YleX Areena ###
@@ -954,7 +956,7 @@ class YleXDownloader:
         rtmpdump."""
         html = download_page(url)
         if not html:
-            return 1
+            return RD_FAILED
 
         outputoptions = []
         if not '-o' in argv and not '--flv' in argv:
@@ -974,7 +976,7 @@ class YleXDownloader:
 
         rtmpurl = self.get_rtmp_url(html, url)
         if not rtmpurl:
-            return 1
+            return RD_FAILED
 
         args = [rtmpdump_binary]
         args += ['-r', rtmpurl]
@@ -986,7 +988,7 @@ class YleXDownloader:
         log_output_file(outputfile)
 
         retcode = execute_rtmpdump(args)
-        if retcode != 0:
+        if retcode != RD_SUCCESS:
             return retcode
 
         log_output_file(outputfile, True)
@@ -997,14 +999,14 @@ class YleXDownloader:
         """Print a librtmp-compatible YleX Areena URL to stdout."""
         html = download_page(url)
         if not html:
-            return 1
+            return RD_FAILED
 
         rtmpurl = self.get_rtmp_url(html, url)
         if not rtmpurl:
-            return 1
+            return RD_FAILED
 
         print rtmpurl
-        return 0
+        return RD_SUCCESS
 
     def get_rtmp_url(self, html, pageurl):
         match = re.search(r'jQuery.extend\([^,]*,(.*)\)', html)
