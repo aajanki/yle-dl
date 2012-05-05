@@ -26,6 +26,7 @@ import htmlentitydefs
 import json
 import string
 import xml.dom.minidom
+import time
 
 version = "1.99.6 (2.0 beta 6)"
 
@@ -40,6 +41,9 @@ AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 AREENA_LIVE_SWF = 'http://areena.yle.fi/player/Application.swf?build=2'
 AREENA_LIVE_TCURL = 'rtmp://flashk.yle.fi/AreenaServer'
 
+AREENA_RADIO_SWF = 'http://static.yle.fi/global/player/version/1.1.1.0/flowplayer/flowplayer.commercial-3.2.7.swf'
+AREENA_RADIO_TCURL = 'rtmp://flashu.yle.fi/AreenaServer/'
+
 ARKISTO_SWF = 'http://yle.fi/elavaarkisto/flowplayer/flowplayer.commercial-3.2.7.swf?0.7134730119723827'
 RTMPDUMP_OPTIONS_ARKISTO = ['-s', ARKISTO_SWF, '-m', '60']
 
@@ -53,6 +57,9 @@ ARGOPTS = ('--rtmp', '-r', '--host', '-n', '--port', '-c', '--socks',
            '--flashVer', '-f', '--subscribe', '-d', '--flv', '-o',
            '--timeout', '-m', '--start', '-A', '--stop', '-B', '--token',
            '-T', '--skip', '-k')
+
+SUCCESS = 0
+FAILED = 1
 
 debug = False
 excludechars_linux = '*/|'
@@ -187,6 +194,9 @@ def downloader_factory(url):
         return YleXDownloader()
     elif url.startswith('http://areena.yle.fi/player/index.php?'):
         return AreenaNGLiveDownloader()
+    elif url.startswith('http://areena-beta.yle.fi/ng/areena/radio/soitin/') or \
+         url == 'http://yle.fi/puhe/live':
+        return AreenaRadioDownloader()
     else:
         return AreenaNGDownloader()
 
@@ -679,6 +689,108 @@ class AreenaNGLiveDownloader:
             filename = os.path.join(destdir, filename)
         filename = next_available_filename(filename)
         return filename
+
+
+### Areena radio ###
+
+class AreenaRadioDownloader:
+    def download_episodes(self, url, parameters, latest_episode, sublang, destdir):
+        """Download live radio stream at url."""
+        return self.process_radio_stream(url, parameters, destdir, False)
+
+    def print_urls(self, url, latest_episode, sublang='all'):
+        """Extract live radio stream from url and print
+        librtmp-compatible URLs to stdout."""
+        return self.process_radio_stream(url, [], None, True)
+
+    def process_radio_stream(self, url, parameters, destdir, print_url):
+        metadata = self.get_radio_metadata(url)
+        if not metadata:
+            log(u'Failed to download metadata')
+            return FAILED
+
+        rtmpurl = self.get_radio_rtmp_url(metadata, url)
+        if not rtmpurl:
+            return FAILED
+
+        if print_url:
+            print rtmpurl
+            return SUCCESS
+
+        enc = sys.getfilesystemencoding()
+        curtime = time.strftime('-%Y-%m-%d-%H:%M:%S')
+        filename = metadata.get('title', 'yle-radio') + curtime + '.flv'
+        outputparam = []
+        if '-o' not in parameters and '--flv' not in parameters:
+            filename = next_available_filename(filename)
+            outputparam = ['-o', filename.encode(enc, 'replace')]
+
+        args = [rtmpdump_binary]
+        args += ['-r', rtmpurl.encode(enc)]
+        args += parameters
+        args += outputparam
+        if ' live=1' in rtmpurl:
+            args.append('--live')
+
+        outputfile = get_output_filename(args)
+        log_output_file(outputfile)
+
+        retcode = execute_rtmpdump(args)
+        log_output_file(outputfile, True)
+
+        return retcode
+
+    def get_radio_rtmp_url(self, metadata, pageurl):
+        rtmp = metadata.get('url', '')
+        if not rtmp:
+            log(u'No url in metadata!')
+            return None
+
+        rtmpbase, playpath = parse_rtmp_single_component_app(rtmp)[:2]
+
+        rtmpurl = '%s playpath=%s swfUrl=%s tcUrl=%s pageUrl=%s conn=S:0 live=1 yleauth=1' % \
+            (rtmpbase, playpath, AREENA_RADIO_SWF, AREENA_RADIO_TCURL, pageurl)
+        
+        return rtmpurl
+
+    def get_data_id(self, url):
+        if url == 'http://yle.fi/puhe/live':
+            # Yle Puhe's dataid is hidden in the JS code
+            # (http://yle.fi/puhe/js/puhe_pop-up.js). It's hard-coded
+            # here to avoid the need for a full-blown JS parser.
+            return '48'
+
+        html = download_page(url)
+        if not html:
+            return None
+
+        channeltag = re.search(r'<[^>]* id="live-channel"[^>]*>', html)
+        if not channeltag:
+            return None
+
+        dataid = re.search(r' data-id="(\w+)"', channeltag.group(0))
+        if not dataid:
+            return None
+        
+        return dataid.group(1)
+        
+    def get_radio_metadata(self, url):
+        dataid = self.get_data_id(url)
+        if not dataid:
+            return None
+
+        metaurl = 'http://areena.yle.fi/meta/channels/info/%s?lang_id=fin' % dataid
+        metadatastr = download_page(metaurl)
+        if not metadatastr:
+            return None
+
+        try:
+            metadata = json.loads(metadatastr)
+        except ValueError:
+            log(u'Invalid JSON at ' + metaurl)
+            return None
+
+        return metadata.get('data', {})
 
 
 ### Elava Arkisto ###
