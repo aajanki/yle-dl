@@ -179,8 +179,12 @@ def execute_rtmpdump(args):
         rtmpdump_process = subprocess.Popen(args)
         return rtmpdump_process.wait()
     except KeyboardInterrupt:
-        os.kill(rtmpdump_process.pid, signal.SIGINT)
-        rtmpdump_process.wait()
+        try:
+            os.kill(rtmpdump_process.pid, signal.SIGINT)
+            rtmpdump_process.wait()
+        except OSError:
+            # The rtmpdump process died before we killed it.
+            pass
         return 2
     except OSError, exc:
         log(u'Execution failed: ' + str(exc))
