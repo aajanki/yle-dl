@@ -6,9 +6,8 @@ Source code: https://github.com/aajanki/yle-dl
 
 This is a plugin for librtmp for downloading media files from the
 video streaming services of the Finnish national broadcasting company
-Yle: Yle Areena (http://areena-beta.yle.fi/ng/areena,
-http://ylex.yle.fi/ylex-areena) and Elävä Arkisto
-(http://www.yle.fi/elavaarkisto/).
+Yle: Yle Areena (http://areena.yle.fi, http://ylex.yle.fi/ylex-areena)
+and Elävä Arkisto (http://www.yle.fi/elavaarkisto/).
 
 Installation
 ------------
@@ -73,6 +72,6 @@ Firewall must allow outgoing traffic on ports 80 and 1935.
 Examples
 --------
 
-yle-dl http://areena-beta.yle.fi/ng/areena/tv/1373722/#/play -o video.flv
+yle-dl http://areena.yle.fi/tv/1544491 -o video.flv
 
 yle-dl "http://www.yle.fi/elavaarkisto/?s=s&g=4&ag=28&t=&a=9390"

@@ -5,9 +5,8 @@ Kotisivu: http://www.iki.fi/aoa/rtmpdump-yle
 Lähdekoodi: https://github.com/aajanki/yle-dl
 
 Tämä on librtmp-kirjaston plugin tiedostojen lataamiseen (uudesta) Yle
-Areenasta (http://areena-beta.yle.fi/ng/areena,
-http://ylex.yle.fi/ylex-areena) ja Elävästä arkistosta
-(http://www.yle.fi/elavaarkisto/).
+Areenasta (http://areena.yle.fi, http://ylex.yle.fi/ylex-areena) ja
+Elävästä arkistosta (http://www.yle.fi/elavaarkisto/).
 
 Asennus
 -------
@@ -112,14 +111,14 @@ Selvitä Areena-videon osoite komennolla "yle-dl --showurl" ja syötä
 komennon tulostama osoite mplayerille tai muulle librtmp-pohjaiselle
 ohjelmalle. Esimerkiksi:
 
-mplayer "`yle-dl --showurl http://areena-beta.yle.fi/ng/areena/tv/1373722/`"
+mplayer "`yle-dl --showurl http://areena.yle.fi/tv/1544491`"
 
 Esimerkkejä
 -----------
 
 * Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
 
-  yle-dl http://areena-beta.yle.fi/ng/areena/tv/1373722/
+  yle-dl http://areena.yle.fi/tv/1544491
 
 * Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 
@@ -127,12 +126,12 @@ Esimerkkejä
 
 * Ohjelman lataaminen tiedostoon uutiset.flv:
 
-  yle-dl http://areena-beta.yle.fi/ng/areena/tv/1377212/ -o uutiset.flv
+  yle-dl http://areena.yle.fi/tv/1544491 -o uutiset.flv
 
 * Keskeytyneen latauksen jatkaminen tiedostoon uutiset.flv:
 
-  yle-dl http://areena-beta.yle.fi/ng/areena/tv/1377212/ -o uutiset.flv --resume
+  yle-dl http://areena.yle.fi/tv/1544491 -o uutiset.flv --resume
 
 * Lataa uusimmat uutiset
 
-  yle-dl --latestepisode http://areena-beta.yle.fi/ng/areena?q=uutiset
+  yle-dl --latestepisode http://areena.yle.fi/?q=uutiset

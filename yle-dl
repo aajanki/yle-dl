@@ -7,10 +7,9 @@ yle-dl - rtmpdump frontend for Yle Areena, Elävä Arkisto and YleX Areena
 Copyright (C) 2010-2012 Antti Ajanki <antti.ajanki@iki.fi>
 
 This script extracts RTMP stream information from Yle Areena
-(http://areena-beta.yle.fi/ng/areena/tv), YleX Areena
-(http://ylex.yle.fi/ylex-areena), Elävä Arkisto
-(http://yle.fi/elavaarkisto/index.html) web pages and calls rtmpdump
-with correct parameters.
+(http://areena.yle.fi), YleX Areena (http://ylex.yle.fi/ylex-areena),
+Elävä Arkisto (http://yle.fi/elavaarkisto/index.html) web pages and
+calls rtmpdump with correct parameters.
 """
 
 import sys
@@ -33,9 +32,9 @@ version = "1.99.6 (2.0 beta 6)"
 AREENA_NG_RTMP = 'rtmp://flashk.yle.fi/mediakanta//x'
 # x above is a placeholder, yle plugin will construct the real playpath.
 # Two slashes after mediakanta is similar to what YLE player does.
-AREENA_NG_SWF = 'http://areena-beta.yle.fi/static/player/1.1/flowplayer/flowplayer.cluster-3.2.3.swf'
+AREENA_NG_SWF = 'http://static.yle.fi/global/player/version/1.2.7/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
 AREENA_NG_TCURL = 'rtmp://flashk.yle.fi/mediakanta/'
-AREENA_NG_CLIP_TEMPLATE = 'http://areena-beta.yle.fi/ng/areena/%s/%s/#/play'
+AREENA_NG_CLIP_TEMPLATE = 'http://areena.yle.fi/%s/%s'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
 AREENA_LIVE_SWF = 'http://areena.yle.fi/player/Application.swf?build=2'
@@ -200,7 +199,7 @@ def downloader_factory(url):
         return YleXDownloader()
     elif url.startswith('http://areena.yle.fi/player/index.php?'):
         return AreenaNGLiveDownloader()
-    elif url.startswith('http://areena-beta.yle.fi/ng/areena/radio/soitin/') or \
+    elif url.startswith('http://areena.yle.fi/radio/soitin/') or \
          url == 'http://yle.fi/puhe/live':
         return AreenaRadioDownloader()
     else:
