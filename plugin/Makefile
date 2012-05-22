@@ -29,7 +29,8 @@ INSTALL_IMPLIB=$(INSTALL_IMPLIB_$(SYS))
 
 OPT=-O2
 CFLAGS=-Wall -fPIC -I$(INCLUDEDIR) $(OPT)
-LDFLAGS=-L../rtmpdump/librtmp -lrtmp
+LDFLAGS_mingw=-L../rtmpdump/librtmp -lrtmp
+LDFLAGS=$(LDFLAGS_$(SYS))
 
 all: yle.$(SO_EXT)
 
