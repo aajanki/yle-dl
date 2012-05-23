@@ -26,6 +26,7 @@ import json
 import string
 import xml.dom.minidom
 import time
+import codecs
 
 version = "1.99.6 (2.0 beta 6)"
 
@@ -40,7 +41,7 @@ AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 AREENA_LIVE_SWF = 'http://areena.yle.fi/player/Application.swf?build=2'
 AREENA_LIVE_TCURL = 'rtmp://flashk.yle.fi/AreenaServer'
 
-AREENA_RADIO_SWF = 'http://static.yle.fi/global/player/version/1.1.1.0/flowplayer/flowplayer.commercial-3.2.7.swf'
+AREENA_RADIO_SWF = 'http://static.yle.fi/global/player/version/1.2.7/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
 AREENA_RADIO_TCURL = 'rtmp://flashu.yle.fi/AreenaServer/'
 
 ARKISTO_SWF = 'http://yle.fi/elavaarkisto/flowplayer/flowplayer.commercial-3.2.7.swf?0.7134730119723827'
@@ -498,12 +499,27 @@ class AreenaNGDownloader:
                     try:
                         subtitlefile = basename + '.' + lang + '.srt'
                         urllib.urlretrieve(url, subtitlefile)
+                        self.add_BOM(subtitlefile)
                         log(u'Subtitles saved to ' + subtitlefile)
                         if preferred_lang != 'all':
                             return subtitlefile
                     except IOError, exc:
                         log(u'Failed to download subtitles at %s: %s' % (url, exc))
         return subtitlefile
+
+    def add_BOM(self, filename):
+        """Add byte-order mark into a file.
+
+        Assumes (but does not check!) that the file is UTF-8 encoded.
+        """
+        content = open(filename, 'r').read()
+        if content.startswith(codecs.BOM_UTF8):
+            return
+        
+        f = open(filename, 'w')
+        f.write(codecs.BOM_UTF8)
+        f.write(content)
+        f.close()
 
 
 ### Areena live ###
