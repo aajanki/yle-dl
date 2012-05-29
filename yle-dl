@@ -377,22 +377,28 @@ class AreenaNGDownloader:
 
     def get_playlist(self, url, latest_episode):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
+        episodeurl = urlparse.urlunparse((scheme, netloc, path + '.json', params, query, ''))
+        jsonstr = download_page(episodeurl)
 
-        if re.search(r'/sarjat/[0-9]+$', path) or not re.search(r'/[0-9]+/?$', path):
-            # This page contains a list of episodes
-            if debug:
-                log(u'searching for episodes at ' + url)
+        if debug:
+            log(jsonstr)
 
-            episodeurl = urlparse.urlunparse((scheme, netloc, path + '.json', params, query, ''))
+        try:
+            fulldata = json.loads(jsonstr)
+        except ValueError:
+            log(u'Invalid JSON file at ' +  episodeurl)
+            return None
 
-            try:
-                fulldata = json.loads(download_page(episodeurl))
-            except ValueError:
-                log(u'Invalid JSON file at ' +  episodeurl)
-                return None
+        if fulldata.get('contentType', '') in ['EPISODE', 'PROGRAM']:
+            # This is a single episode page
+            return [url]
 
+        else:
+            # The page contains several episodes
             if fulldata.has_key('availableEpisodes'):
-                episodes = fulldata['availableEpisodes']
+                available_episodes = fulldata['availableEpisodes']
+                episodes = available_episodes.get('video', []) + \
+                           available_episodes.get('audio', [])
             else:
                 episodes = fulldata.get('search', {}).get('results', [])
 
@@ -416,9 +422,6 @@ class AreenaNGDownloader:
                 playlist = [playlist[0]]
 
             return playlist
-        else:
-            # This is a single episode page
-            return [url]
 
     def get_areena_params(self, url):
         """Download a web page at url and return Areena parameters
