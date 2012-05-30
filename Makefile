@@ -1,6 +1,8 @@
 prefix=/usr/local
-BINDIR=$(DESTDIR)/$(prefix)/bin
+SYS=posix
 
+FINALDIR=$(DESTDIR)/$(prefix)
+BINDIR=$(DESTDIR)/$(prefix)/bin
 
 all:
 	@cd rtmpdump; $(MAKE)
@@ -11,6 +13,12 @@ install:
 	cp yle-dl $(BINDIR)
 	@cd rtmpdump; $(MAKE) install
 	@cd plugin; $(MAKE) install
+
+ifeq ($(SYS),posix)
+	@if [ $(FINALDIR) = "/usr/" -o $(FINALDIR) = "//usr" -o $(FINALDIR) = "/usr/local" -o $(FINALDIR) = "//usr/local" ]; then \
+		/sbin/ldconfig; \
+	fi
+endif
 
 clean:
 	@cd rtmpdump; $(MAKE) clean
