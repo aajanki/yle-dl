@@ -189,7 +189,7 @@ def execute_rtmpdump(args):
             pass
         return RD_INCOMPLETE
     except OSError, exc:
-        log(u'Execution failed: ' + str(exc))
+        log(u'Execution failed: ' + unicode(exc, 'UTF-8', 'replace'))
         return RD_INCOMPLETE
 
 def downloader_factory(url):
