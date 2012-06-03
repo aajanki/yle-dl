@@ -389,7 +389,7 @@ class AreenaNGDownloader:
             log(u'Invalid JSON file at ' +  episodeurl)
             return None
 
-        if fulldata.get('contentType', '') in ['EPISODE', 'PROGRAM']:
+        if fulldata.get('contentType', '') in ['EPISODE', 'PROGRAM', 'CLIP']:
             # This is a single episode page
             return [url]
 
