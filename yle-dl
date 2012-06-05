@@ -27,13 +27,15 @@ import string
 import xml.dom.minidom
 import time
 import codecs
+import base64
+from Crypto.Cipher import AES
 
 version = "1.99.7 (2.0 beta 7)"
 
 AREENA_NG_RTMP = 'rtmp://flashk.yle.fi/mediakanta//x'
 # x above is a placeholder, yle plugin will construct the real playpath.
 # Two slashes after mediakanta is similar to what YLE player does.
-AREENA_NG_SWF = 'http://static.yle.fi/global/player/version/1.2.7/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
+AREENA_NG_SWF = 'http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
 AREENA_NG_TCURL = 'rtmp://flashk.yle.fi/mediakanta/'
 AREENA_NG_CLIP_TEMPLATE = 'http://areena.yle.fi/%s/%s'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
@@ -291,6 +293,10 @@ def log_output_file(outputfile, done=False):
 
 
 class AreenaNGDownloader:
+    # Extracted from
+    # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
+    AES_KEY = 'hjsadf89hk123ghk'
+    
     def download_episodes(self, url, parameters, latest_episode, sublang, destdir):
         """Extract all episodes (or just the latest episode if
         latest_only is True) from url."""
@@ -338,10 +344,64 @@ class AreenaNGDownloader:
             islive = ' live=1'
         else:
             islive = ''
+        
+        papiurl = 'http://papi.yle.fi/ng/mod/rtmp/' + areenaparams['id']
+        papi = download_page(papiurl)
+        papi_decoded = self.decode_papi(papi)
 
-        rtmpurl = '%s swfUrl=%s tcUrl=%s pageUrl=%s%s yle=%s' % \
-            (AREENA_NG_RTMP, AREENA_NG_SWF, AREENA_NG_TCURL,
-             url, islive, areenaparams['id'])
+        if self.debug:
+            log(papi_decoded)
+
+        try:
+            papi_xml = xml.dom.minidom.parseString(papi_decoded)
+        except Exception as exc:
+            print exc
+            return RD_FAILED
+
+        rootnode = papi_xml.documentElement
+        if not rootnode:
+            return RD_FAILED
+
+        rtmp_connect = None
+        rtmp_stream = None
+        for node in rootnode.getElementsByTagName('url')[0].childNodes:
+            if node.nodeName == 'connect':
+                rtmp_connect = node.firstChild.nodeValue
+            elif node.nodeName == 'stream':
+                rtmp_stream = node.firstChild.nodeValue
+
+
+        rtmp_fields = rtmp_connect.split('/')
+        edgefcs = rtmp_fields[2]
+        ident = download_page('http://%s/fcs/ident' % edgefcs)
+        if ident is None:
+            return RD_FAILED
+
+        if debug:
+            log(ident)
+
+        try:
+            identxml = xml.dom.minidom.parseString(ident)
+        except Exception as exc:
+            print exc
+            return RD_FAILED
+
+        rtmp_ip = identxml.documentElement.getElementsByTagName('ip')[0].firstChild.nodeValue
+
+        app_without_fcsvhost = '/'.join(rtmp_fields[3:])
+        if not app_without_fcsvhost.startswith('ondemand?'):
+            return RD_FAILED
+        
+        
+        auth = app_without_fcsvhost[len('ondemand?'):]
+        app = 'ondemand?_fcs_vhost=%s&%s' % (edgefcs, auth)
+
+        rtmpbase = 'rtmpe://%s/ondemand' % edgefcs
+        tcurl = 'rtmpe://%s/%s' % (rtmp_ip, app)
+
+        rtmpurl = '%s app=%s playpath=%s tcUrl=%s pageUrl=%s swfUrl=%s swfVfy=1' % \
+                  (rtmpbase, app, rtmp_stream, tcurl,
+                   url, AREENA_NG_SWF)
 
         if print_url:
             print rtmpurl
@@ -374,6 +434,20 @@ class AreenaNGDownloader:
         log_output_file(outputfile, True)
 
         return retcode
+
+    def decode_papi(self, papi):
+        try:
+            bytestring = base64.b64decode(str(papi))
+        except (UnicodeEncodeError, TypeError):
+            return None
+        
+        iv = bytestring[:16]
+        ciphertext = bytestring[16:]
+        padlen = 16 - (len(ciphertext) % 16)
+        ciphertext = ciphertext + '\0'*padlen
+
+        decrypter = AES.new(self.AES_KEY, AES.MODE_CFB, iv, segment_size=16*8)
+        return decrypter.decrypt(ciphertext)[:-padlen]
 
     def get_playlist(self, url, latest_episode):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
