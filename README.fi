@@ -17,12 +17,12 @@ osoitteesta https://github.com/aajanki/rtmpdump/tree/plugin2 ja pura
 se alihakemistoon nimeltä rtmpdump.
 
 1. Asenna vaaditut kirjastot ja ohjelmat libssl, libcryto, pthreads,
-libltdl ja python, OS X:ssä lisäksi libiconv ja Xcode, ja MinGW:ssä
-libiconv.
+libltdl, python ja pycrypto, OS X:ssä lisäksi libiconv ja Xcode, ja
+MinGW:ssä libiconv.
 
 Debianissa ja Ubuntussa käännöstyökalut ja tarvittavat kirjastot
-löytyvät paketeista build-essential, libssl-dev, libltdl-dev ja
-python-dev.
+löytyvät paketeista build-essential, libssl-dev, libltdl-dev,
+python-dev ja python-crypto.
 
 2. Käännä ja asenna komennoilla:
 

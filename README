@@ -17,11 +17,12 @@ version of the source code, download a modified version of rtmpdump
 from https://github.com/aajanki/rtmpdump/tree/plugin2 and unpack it
 into a subdirectory called rtmpdump.
 
-1. Install prerequisites: libssl, libcrypto, pthreads, libltdl, python.
-Additionally in OS X libiconv and Xcode, and in MinGW libiconv.
+1. Install prerequisites: libssl, libcrypto, pthreads, libltdl, python
+and pycrypto. Additionally in OS X libiconv and Xcode, and in MinGW
+libiconv.
 
-On Debian/Ubuntu installing packages libssl-dev, libltdl-dev and
-python-dev satisfies the dependencies.
+On Debian/Ubuntu installing packages libssl-dev, libltdl-dev,
+python-dev and python-pycrypto satisfies the dependencies.
 
 2. Compile and install:
 
