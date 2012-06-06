@@ -358,21 +358,18 @@ class AreenaNGDownloader:
             print exc
             return RD_FAILED
 
-        rootnode = papi_xml.documentElement
-        if not rootnode:
+        nodelist = papi_xml.getElementsByTagName('connect')
+        if len(nodelist) != 1 or len(nodelist[0].childNodes) != 1:
             return RD_FAILED
+        rtmp_connect = nodelist[0].firstChild.nodeValue
 
-        rtmp_connect = None
-        rtmp_stream = None
-        for node in rootnode.getElementsByTagName('url')[0].childNodes:
-            if node.nodeName == 'connect':
-                rtmp_connect = node.firstChild.nodeValue
-            elif node.nodeName == 'stream':
-                rtmp_stream = node.firstChild.nodeValue
+        nodelist = papi_xml.getElementsByTagName('stream')
+        if len(nodelist) != 1 or len(nodelist[0].childNodes) != 1:
+            return RD_FAILED
+        rtmp_stream = nodelist[0].firstChild.nodeValue
 
-
-        rtmp_fields = rtmp_connect.split('/')
-        edgefcs = rtmp_fields[2]
+        parsed_rtmp = urlparse.urlparse(rtmp_connect)
+        edgefcs = parsed_rtmp.netloc
         ident = download_page('http://%s/fcs/ident' % edgefcs)
         if ident is None:
             return RD_FAILED
@@ -386,15 +383,14 @@ class AreenaNGDownloader:
             print exc
             return RD_FAILED
 
-        rtmp_ip = identxml.documentElement.getElementsByTagName('ip')[0].firstChild.nodeValue
-
-        app_without_fcsvhost = '/'.join(rtmp_fields[3:])
-        if not app_without_fcsvhost.startswith('ondemand?'):
+        nodelist = identxml.getElementsByTagName('ip')
+        if len(nodelist) != 1 or len(nodelist[0].childNodes) != 1:
             return RD_FAILED
-        
-        
-        auth = app_without_fcsvhost[len('ondemand?'):]
-        app = 'ondemand?_fcs_vhost=%s&%s' % (edgefcs, auth)
+        rtmp_ip = nodelist[0].firstChild.nodeValue
+
+        app_without_fcsvhost = parsed_rtmp.path.lstrip('/')
+        baseapp, auth = app_without_fcsvhost.split('?', 1)
+        app = '%s?_fcs_vhost=%s&%s' % (baseapp, edgefcs, auth)
 
         rtmpbase = 'rtmpe://%s/ondemand' % edgefcs
         tcurl = 'rtmpe://%s/%s' % (rtmp_ip, app)
