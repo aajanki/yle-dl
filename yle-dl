@@ -30,7 +30,7 @@ import codecs
 import base64
 from Crypto.Cipher import AES
 
-version = "1.99.7 (2.0 beta 7)"
+version = "1.99.8 (2.0 beta 8)"
 
 AREENA_NG_RTMP = 'rtmp://flashk.yle.fi/mediakanta//x'
 # x above is a placeholder, yle plugin will construct the real playpath.
