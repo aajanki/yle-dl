@@ -349,7 +349,7 @@ class AreenaNGDownloader:
         papi = download_page(papiurl)
         papi_decoded = self.decode_papi(papi)
 
-        if self.debug:
+        if debug:
             log(papi_decoded)
 
         try:
