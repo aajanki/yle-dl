@@ -32,12 +32,7 @@ from Crypto.Cipher import AES
 
 version = "1.99.8 (2.0 beta 8)"
 
-AREENA_NG_RTMP = 'rtmp://flashk.yle.fi/mediakanta//x'
-# x above is a placeholder, yle plugin will construct the real playpath.
-# Two slashes after mediakanta is similar to what YLE player does.
 AREENA_NG_SWF = 'http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
-AREENA_NG_TCURL = 'rtmp://flashk.yle.fi/mediakanta/'
-AREENA_NG_CLIP_TEMPLATE = 'http://areena.yle.fi/%s/%s'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
 AREENA_LIVE_SWF = 'http://areena.yle.fi/player/Application.swf?build=2'
@@ -319,17 +314,23 @@ class AreenaNGDownloader:
 
         return RD_SUCCESS
 
-    def process_single_episode(self, url, parameters, sublang, destdir, print_url):
-        """Extracts Areena player params from a web page at url and
-        starts a rtmpdump process."""
-        areenaparams = self.get_areena_params(url)
-        if not areenaparams:
-            return RD_FAILED
-
-        if areenaparams.has_key('title'):
-            filename = areenaparams['title']
-            date = areenaparams.get('broadcasted', None) or \
-                   areenaparams.get('productionDate', None)
+    def process_single_episode(self, clip, parameters, sublang, destdir, print_url):
+        """Construct clip parameters and starts a rtmpdump process."""
+        # Search results don't have the media item so we have to
+        # download clip metadata from the source.
+        if not clip.has_key('media'):
+            clip = self.get_metadata(clip)
+            if not clip:
+                return RD_FAILED
+        
+        if clip.has_key('title'):
+            filename = clip['title']
+            date = None
+            broadcasted = clip.get('broadcasted', None)
+            if broadcasted:
+                date = broadcasted.get('date', None)
+            if not date:
+                date = clip.get('published', None)
             if date:
                 filename += '-' + date.replace('/', '-').replace(' ', '-')
             filename = sane_filename(filename)
@@ -340,13 +341,21 @@ class AreenaNGDownloader:
         if destdir:
             filename = os.path.join(destdir, filename)
 
-        if areenaparams.get('live', '') == 'true':
-            islive = ' live=1'
+        media = clip.get('media', {})
+        if not media:
+            return RD_FAILED
+
+        if media.get('live', False) == True:
+            islive = True
+            papiurl = 'http://papi.yle.fi/ng/live/rtmp/' + media['id'] + '/fin'
         else:
-            islive = ''
+            islive = False
+            papiurl = 'http://papi.yle.fi/ng/mod/rtmp/' + media['id']
         
-        papiurl = 'http://papi.yle.fi/ng/mod/rtmp/' + areenaparams['id']
         papi = download_page(papiurl)
+        if not papi:
+            return RD_FAILED
+        
         papi_decoded = self.decode_papi(papi)
 
         if debug:
@@ -355,7 +364,7 @@ class AreenaNGDownloader:
         try:
             papi_xml = xml.dom.minidom.parseString(papi_decoded)
         except Exception as exc:
-            print exc
+            log(unicode(exc, 'utf-8'))
             return RD_FAILED
 
         nodelist = papi_xml.getElementsByTagName('connect')
@@ -368,8 +377,8 @@ class AreenaNGDownloader:
             return RD_FAILED
         rtmp_stream = nodelist[0].firstChild.nodeValue
 
-        parsed_rtmp = urlparse.urlparse(rtmp_connect)
-        edgefcs = parsed_rtmp.netloc
+        (scheme, edgefcs, rtmppath) = \
+                 urlparse.urlparse(rtmp_connect)[:3]
         ident = download_page('http://%s/fcs/ident' % edgefcs)
         if ident is None:
             return RD_FAILED
@@ -380,7 +389,7 @@ class AreenaNGDownloader:
         try:
             identxml = xml.dom.minidom.parseString(ident)
         except Exception as exc:
-            print exc
+            log(unicode(exc, 'utf-8'))
             return RD_FAILED
 
         nodelist = identxml.getElementsByTagName('ip')
@@ -388,16 +397,22 @@ class AreenaNGDownloader:
             return RD_FAILED
         rtmp_ip = nodelist[0].firstChild.nodeValue
 
-        app_without_fcsvhost = parsed_rtmp.path.lstrip('/')
-        baseapp, auth = app_without_fcsvhost.split('?', 1)
+        app_without_fcsvhost = rtmppath.lstrip('/')
+        app_fields = app_without_fcsvhost.split('?', 1)
+        baseapp = app_fields[0]
+        if len(app_fields) > 1:
+            auth = app_fields[1]
+        else:
+            auth = ''
         app = '%s?_fcs_vhost=%s&%s' % (baseapp, edgefcs, auth)
 
         rtmpbase = 'rtmpe://%s/ondemand' % edgefcs
         tcurl = 'rtmpe://%s/%s' % (rtmp_ip, app)
+        pageurl = self.create_pageurl(media)
 
         rtmpurl = '%s app=%s playpath=%s tcUrl=%s pageUrl=%s swfUrl=%s swfVfy=1' % \
                   (rtmpbase, app, rtmp_stream, tcurl,
-                   url, AREENA_NG_SWF)
+                   pageurl, AREENA_NG_SWF)
 
         if print_url:
             print rtmpurl
@@ -418,8 +433,8 @@ class AreenaNGDownloader:
             args += ['--live']
 
         outputfile = get_output_filename(args)
-        if areenaparams.has_key('subtitles'):
-            self.download_subtitles(areenaparams['subtitles'], sublang, outputfile)
+        if media.has_key('subtitles'):
+            self.download_subtitles(media['subtitles'], sublang, outputfile)
 
         log_output_file(outputfile)
 
@@ -430,6 +445,20 @@ class AreenaNGDownloader:
         log_output_file(outputfile, True)
 
         return retcode
+
+    def get_metadata(self, clip):
+        jsonurl = self.create_pageurl(clip) + '.json'
+        jsonstr = download_page(jsonurl)
+        if not jsonstr:
+            return None
+
+        try:
+            clipjson = json.loads(jsonstr)
+        except ValueError:
+            log(u'Invalid JSON file at ' +  jsonurl)
+            return None
+        
+        return clipjson
 
     def decode_papi(self, papi):
         try:
@@ -459,107 +488,30 @@ class AreenaNGDownloader:
             log(u'Invalid JSON file at ' +  episodeurl)
             return None
 
-        if fulldata.get('contentType', '') in ['EPISODE', 'PROGRAM', 'CLIP']:
-            # This is a single episode page
-            return [url]
+        playlist = []
+        if 'contentType' in fulldata:
+            playlist = [fulldata]
+        elif 'search' in fulldata:
+            playlist = fulldata['search'].get('results', [])
+        elif 'availableEpisodes' in fulldata:
+            playlist = fulldata['availableEpisodes'].get('video', []) + \
+                       fulldata['availableEpisodes'].get('audio', [])
 
+        if latest_episode:
+            playlist = playlist[-1:]
+
+        return playlist
+
+    def create_pageurl(self, media):
+        if 'type' not in media or 'id' not in media:
+            return ''
+
+        if media['type'] == 'audio':
+            urltype = 'radio'
         else:
-            # The page contains several episodes
-            if fulldata.has_key('availableEpisodes'):
-                available_episodes = fulldata['availableEpisodes']
-                episodes = available_episodes.get('video', []) + \
-                           available_episodes.get('audio', [])
-            else:
-                episodes = fulldata.get('search', {}).get('results', [])
-
-            playlist = []
-            for clip in episodes:
-                if not clip.has_key('id') or not clip.has_key('type'):
-                    continue
-
-                if clip['type'] == 'audio':
-                    urltype = 'radio'
-                else:
-                    urltype = 'tv'
-
-                playlist.append(AREENA_NG_CLIP_TEMPLATE % (urltype, clip['id']))
-
-            if not playlist:
-                log(u'Error: can\'t find streams at ' + url)
-                return None
-
-            if latest_episode:
-                playlist = [playlist[0]]
-
-            return playlist
-
-    def get_areena_params(self, url):
-        """Download a web page at url and return Areena parameters
-        extracted from it."""
-        html = download_page(url)
-        if html is None:
-            return None
-
-        areenaparams = self.extract_params(html)
-        if areenaparams is None:
-            log(u"Can't find clip parameters.")
-            log(u"Is %s really a YLE Areena video page?" % url)
-            return None
-
-        return areenaparams
-
-    def extract_params(self, html):
-        m = re.search(r'<script>.*?AREENA.clip\s*=\s*(.*?})\s*?$',
-                      html, re.DOTALL | re.MULTILINE)
-        if not m:
-            return None
-
-        params = self.parse_JS_object(m.group(1))
-
-        if not params or not params.has_key('id'):
-            return None
-        else:
-            return params
-
-    def parse_JS_object(self, jsobj):
-        """Convert a Javascript object into a Python object."""
-
-        # First convert into JSON and then apply JSON parser. The
-        # following is tuned for Areena HTML and will very likely break
-        # on other inputs.
-        x = ' '.join(self.convert_tokens(jsobj))
-        try:
-            return json.loads(x)
-        except ValueError:
-            log('Invalid JSON')
-            return None
-
-    def convert_tokens(self, data):
-        """Rudimentary generator that reads Javascript data and yields
-        JSONified tokens"""
-        while True:
-            data = data.lstrip()
-            if not data:
-                raise StopIteration
-            elif re.match(r'[]:,{}[]', data):
-                yield data[0]
-                data = data[1:]
-            elif data.startswith("'"):
-                if data[1] == "'":
-                    yield '""'
-                    data = data[2:]
-                else:
-                    data = data[1:]
-                    m = re.search(r"[^\\]'", data)
-                    s = data[:m.start()+1]
-                    s = s.replace("\\'", "'")
-                    s = re.sub(r'([^\\])"', '\g<1>\\"', s)
-                    yield '"%s"' % s
-                    data = data[m.end():]
-            else:
-                m = re.match(r"([a-zA-Z0-9_]+)", data)
-                yield '"%s"' % m.group(1)
-                data = data[m.end():]
+            urltype = 'tv'
+        
+        return 'http://areena.yle.fi/%s/%s' % (urltype, media['id'])
 
     def download_subtitles(self, available_subtitles, preferred_lang, videofilename):
         basename = os.path.splitext(videofilename)[0]
