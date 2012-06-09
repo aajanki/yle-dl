@@ -323,6 +323,48 @@ class AreenaNGDownloader:
             if not clip:
                 return RD_FAILED
         
+        media = clip.get('media', {})
+        if not media:
+            return RD_FAILED
+
+        rtmpurl = self.get_rtmp_url(media)
+        if not rtmpurl:
+            return RD_FAILED
+
+        if print_url:
+            print rtmpurl
+            return RD_SUCCESS
+
+        enc = sys.getfilesystemencoding()
+        outputparam = []
+        if '-o' not in parameters and '--flv' not in parameters:
+            filename = self.get_clip_filename(clip, destdir)
+            if not is_resume_job(parameters):
+                filename = next_available_filename(filename)
+            outputparam = ['-o', filename.encode(enc, 'replace')]
+
+        args = [rtmpdump_binary]
+        args += ['-r', rtmpurl.encode(enc)]
+        args += parameters
+        args += outputparam
+        if ' live=1' in rtmpurl:
+            args += ['--live']
+
+        outputfile = get_output_filename(args)
+        if media.has_key('subtitles'):
+            self.download_subtitles(media['subtitles'], sublang, outputfile)
+
+        log_output_file(outputfile)
+
+        retcode = execute_rtmpdump(args)
+        if retcode != RD_SUCCESS:
+            return retcode
+
+        log_output_file(outputfile, True)
+
+        return retcode
+
+    def get_clip_filename(self, clip, destdir):
         if clip.has_key('title'):
             filename = clip['title']
             date = None
@@ -340,21 +382,20 @@ class AreenaNGDownloader:
 
         if destdir:
             filename = os.path.join(destdir, filename)
+            
+        return filename
 
-        media = clip.get('media', {})
-        if not media:
-            return RD_FAILED
-
+    def get_rtmp_url(self, media):
         if media.get('live', False) == True:
-            islive = True
+            livestream = ' live=1'
             papiurl = 'http://papi.yle.fi/ng/live/rtmp/' + media['id'] + '/fin'
         else:
-            islive = False
+            livestream = ''
             papiurl = 'http://papi.yle.fi/ng/mod/rtmp/' + media['id']
         
         papi = download_page(papiurl)
         if not papi:
-            return RD_FAILED
+            return None
         
         papi_decoded = self.decode_papi(papi)
 
@@ -365,23 +406,23 @@ class AreenaNGDownloader:
             papi_xml = xml.dom.minidom.parseString(papi_decoded)
         except Exception as exc:
             log(unicode(exc, 'utf-8'))
-            return RD_FAILED
+            return None
 
         nodelist = papi_xml.getElementsByTagName('connect')
         if len(nodelist) != 1 or len(nodelist[0].childNodes) != 1:
-            return RD_FAILED
+            return None
         rtmp_connect = nodelist[0].firstChild.nodeValue
 
         nodelist = papi_xml.getElementsByTagName('stream')
         if len(nodelist) != 1 or len(nodelist[0].childNodes) != 1:
-            return RD_FAILED
+            return None
         rtmp_stream = nodelist[0].firstChild.nodeValue
 
         (scheme, edgefcs, rtmppath) = \
                  urlparse.urlparse(rtmp_connect)[:3]
         ident = download_page('http://%s/fcs/ident' % edgefcs)
         if ident is None:
-            return RD_FAILED
+            return None
 
         if debug:
             log(ident)
@@ -390,11 +431,11 @@ class AreenaNGDownloader:
             identxml = xml.dom.minidom.parseString(ident)
         except Exception as exc:
             log(unicode(exc, 'utf-8'))
-            return RD_FAILED
+            return None
 
         nodelist = identxml.getElementsByTagName('ip')
         if len(nodelist) != 1 or len(nodelist[0].childNodes) != 1:
-            return RD_FAILED
+            return None
         rtmp_ip = nodelist[0].firstChild.nodeValue
 
         app_without_fcsvhost = rtmppath.lstrip('/')
@@ -410,41 +451,11 @@ class AreenaNGDownloader:
         tcurl = 'rtmpe://%s/%s' % (rtmp_ip, app)
         pageurl = self.create_pageurl(media)
 
-        rtmpurl = '%s app=%s playpath=%s tcUrl=%s pageUrl=%s swfUrl=%s swfVfy=1' % \
+        rtmpurl = '%s app=%s playpath=%s tcUrl=%s pageUrl=%s swfUrl=%s%s' % \
                   (rtmpbase, app, rtmp_stream, tcurl,
-                   pageurl, AREENA_NG_SWF)
+                   pageurl, AREENA_NG_SWF, livestream)
 
-        if print_url:
-            print rtmpurl
-            return RD_SUCCESS
-
-        enc = sys.getfilesystemencoding()
-        outputparam = []
-        if '-o' not in parameters and '--flv' not in parameters:
-            if not is_resume_job(parameters):
-                filename = next_available_filename(filename)
-            outputparam = ['-o', filename.encode(enc, 'replace')]
-
-        args = [rtmpdump_binary]
-        args += ['-r', rtmpurl.encode(enc)]
-        args += parameters
-        args += outputparam
-        if islive:
-            args += ['--live']
-
-        outputfile = get_output_filename(args)
-        if media.has_key('subtitles'):
-            self.download_subtitles(media['subtitles'], sublang, outputfile)
-
-        log_output_file(outputfile)
-
-        retcode = execute_rtmpdump(args)
-        if retcode != RD_SUCCESS:
-            return retcode
-
-        log_output_file(outputfile, True)
-
-        return retcode
+        return rtmpurl
 
     def get_metadata(self, clip):
         jsonurl = self.create_pageurl(clip) + '.json'
