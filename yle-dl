@@ -457,6 +457,15 @@ class AreenaNGDownloader:
 
         (scheme, edgefcs, rtmppath) = \
                  urlparse.urlparse(rtmp_connect)[:3]
+
+        # Workaround for OS X
+        if edgefcs == '':
+            try:
+                scheme, ign, edgefcs, rtmppath = rtmp_connect.split('/', 3)
+                scheme = scheme.rstrip(':')
+            except ValueError:
+                return None
+        
         ident = download_page('http://%s/fcs/ident' % edgefcs)
         if ident is None:
             return None
