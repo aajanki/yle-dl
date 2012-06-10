@@ -934,8 +934,7 @@ class ElavaArkistoDownloader:
 ### YleX Areena ###
 
 
-class YleXDownloader:
-
+class YleXDownloader(AreenaNGDownloader):
     def download_episodes(self, url, argv, latest_episode, sublang, destdir):
         """Download a stream from the given YleX Areena url using
         rtmpdump."""
@@ -994,23 +993,16 @@ class YleXDownloader:
         return RD_SUCCESS
 
     def get_rtmp_url(self, html, pageurl):
-        match = re.search(r'jQuery.extend\([^,]*,(.*)\)', html)
+        match = re.search(r'<meta +?property="og:image" +?content="(.+?)" *?/>', html)
         if not match:
             return None
 
-        ylexdata = json.loads(match.group(1).strip())
-
-        enc = sys.getfilesystemencoding()
-        try:
-            clip = ylexdata['YlexAreena']['clip'][0]
-            swf = 'http://ylex.yle.fi' + ylexdata['YlexFlowplayer']['src']
-            return '%s playpath=%s swfUrl=%s pageUrl=%s yleAuth=1' % \
-                (clip['plugins']['bwcheck']['hosts'][0]['host'].encode(enc),
-                 clip['clip']['url'].encode(enc),
-                 swf.encode(enc),
-                 pageurl.encode(enc))
-        except (KeyError, IndexError):
+        match = re.search(r'/([a-fA-F0-9]+)_', match.group(1))
+        if not match:
             return None
+
+        papiurl = 'http://papi.yle.fi/ng/mod/rtmp/%s' % match.group(1)
+        return self.rtmpurl_from_papi(papiurl, pageurl, False)
 
 
 ### main program ###
