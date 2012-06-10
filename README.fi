@@ -1,53 +1,32 @@
-librtmp Yle plugin
+Apuohjelma videoiden lataamiseen Yle Areenasta
 Copyright (C) 2012 Antti Ajanki
 Ohjelmistolisenssi: GPLv2
 Kotisivu: http://www.iki.fi/aoa/rtmpdump-yle
 Lähdekoodi: https://github.com/aajanki/yle-dl
 
-Tämä on librtmp-kirjaston plugin tiedostojen lataamiseen (uudesta) Yle
-Areenasta (http://areena.yle.fi, http://ylex.yle.fi/ylex-areena) ja
-Elävästä arkistosta (http://www.yle.fi/elavaarkisto/).
+yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
+(http://areena.yle.fi, http://ylex.yle.fi/ylex-areena) ja Elävästä
+arkistosta (http://www.yle.fi/elavaarkisto/).
 
 Asennus
 -------
 
-0. Jos tämä on tar.gz-paketti, siirry kohtaan 1. Jos tämä on
-git-versionhallinnasta haettu versio, hae muokattu rtmpdump
-osoitteesta https://github.com/aajanki/rtmpdump/tree/plugin2 ja pura
-se alihakemistoon nimeltä rtmpdump.
+Asenna vaaditut kirjastot ja ohjelmat: rtmpdump, python ja pycrypto.
 
-1. Asenna vaaditut kirjastot ja ohjelmat libssl, libcryto, pthreads,
-libltdl, python ja pycrypto, OS X:ssä lisäksi libiconv ja Xcode, ja
-MinGW:ssä libiconv.
+Debianissa ja Ubuntussa nämä löytyvät paketeista rtmpdump, python ja
+python-crypto.
 
-Debianissa ja Ubuntussa käännöstyökalut ja tarvittavat kirjastot
-löytyvät paketeista build-essential, libssl-dev, libltdl-dev,
-python-dev ja python-crypto.
+Asenna komennolla:
 
-2. Käännä ja asenna komennoilla:
-
-make
 make install
 
-Viimeinen komento vaatii pääkäyttäjän oikeudet (esim. Ubuntussa: sudo
-make install).
+Komento vaatii pääkäyttäjän oikeudet (esim. Ubuntussa: sudo make
+install).
 
-Jos haluat säilyttää järjestelmän oman librtmp-paketin, on konfliktien
-välttämiseksi helpointa linkata librtmp-kirjasto staattisesti. Tämä
-onnistuu lisäämällä make-komentoon sopivat kirjastot seuraavasti:
-
-make LIB_RTMP="librtmp/librtmp.a -lltdl -rdynamic"
-make install
-
-Mac OS X:ssä lisää komentoihin SYS=darwin:
-
-make SYS=darwin
-make install SYS=darwin
-
-ja MinGW:ssä (Windowsilla) SYS=mingw:
-
-make SYS=mingw
-make install SYS=mingw
+Alkaen versiosta 1.99.9 yle-dl:stä ei enää tarvitse Ylen palvelimia
+varten muunneltua kopiota rtmpdump-ohjelmasta. Aikaisemman
+yle-dl-version mukana asennetun rtmpdumpin ja pluginin voi poistaa
+komentamalla pääkäyttäjänä "make uninstall-old-rtmpdump".
 
 Käyttö
 ------

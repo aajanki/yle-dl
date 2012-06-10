@@ -1,10 +1,10 @@
-Yle plugin for librtmp
+rtmpdump frontend for Yle servers
 Copyright (C) 2010-2012 Antti Ajanki
 License: GPLv2
 Homepage: http://www.iki.fi/aoa/rtmpdump-yle
 Source code: https://github.com/aajanki/yle-dl
 
-This is a plugin for librtmp for downloading media files from the
+yle-dl is a rtmpdump frontend for downloading media files from the
 video streaming services of the Finnish national broadcasting company
 Yle: Yle Areena (http://areena.yle.fi, http://ylex.yle.fi/ylex-areena)
 and Elävä Arkisto (http://www.yle.fi/elavaarkisto/).
@@ -12,38 +12,19 @@ and Elävä Arkisto (http://www.yle.fi/elavaarkisto/).
 Installation
 ------------
 
-0. If this is a tar.gz package, goto to step 1. If this is the git
-version of the source code, download a modified version of rtmpdump
-from https://github.com/aajanki/rtmpdump/tree/plugin2 and unpack it
-into a subdirectory called rtmpdump.
+Install prerequisites: rtmpdump, python and pycrypto.
 
-1. Install prerequisites: libssl, libcrypto, pthreads, libltdl, python
-and pycrypto. Additionally in OS X libiconv and Xcode, and in MinGW
-libiconv.
+On Debian/Ubuntu installing packages rtmpdump, python and
+python-pycrypto satisfies the dependencies.
 
-On Debian/Ubuntu installing packages libssl-dev, libltdl-dev,
-python-dev and python-pycrypto satisfies the dependencies.
+To install run:
 
-2. Compile and install:
-
-make
 make install
 
-To avoid conflict with system's librtmp package the recommended way is
-to link librtmp statically with the following commands:
-
-make LIB_RTMP="librtmp/librtmp.a -lltdl -rdynamic"
-make install
-
-On MacOS, append SYS=darwin:
-
-make SYS=darwin
-make install SYS=darwin
-
-On MinGW:llä (Windows), append SYS=mingw:
-
-make SYS=mingw
-make install SYS=mingw
+Starting from version 1.99.9 yle-dl doesn't anymore require a modified
+rtmpdump or plugin. Instead, everything is now downloadable with the
+plain rtmpdump. To remove the remnants of previous versions run "make
+uninstall-old-rtmpdump".
 
 Usage
 -----

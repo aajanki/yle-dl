@@ -1,25 +1,27 @@
 prefix=/usr/local
-SYS=posix
-
-FINALDIR=$(DESTDIR)/$(prefix)
 BINDIR=$(DESTDIR)/$(prefix)/bin
 
 all:
-	@cd rtmpdump; $(MAKE)
-	@cd plugin; $(MAKE) INCLUDEDIR=../rtmpdump
 
 install:
 	-mkdir -p $(BINDIR)
 	cp yle-dl $(BINDIR)
-	@cd rtmpdump; $(MAKE) install
-	@cd plugin; $(MAKE) install
 
-ifeq ($(SYS),posix)
-	@if [ $(FINALDIR) = "/usr/" -o $(FINALDIR) = "//usr" -o $(FINALDIR) = "/usr/local" -o $(FINALDIR) = "//usr/local" ]; then \
-		/sbin/ldconfig; \
-	fi
-endif
+uninstall:
+	rm -f $(BINDIR)/yle-dl
 
-clean:
-	@cd rtmpdump; $(MAKE) clean
-	@cd plugin; $(MAKE) clean
+# Uninstall librtmp and plugin installed by pre-2.0 versions
+plugindir=$(prefix)/lib/librtmp/plugins
+mandir=$(prefix)/man
+libdir=$(prefix)/lib
+PLUGINDIR=$(DESTDIR)$(plugindir)
+MANDIR=$(DESTDIR)$(mandir)
+LIBDIR=$(DESTDIR)$(libdir)
+uninstall-old-rtmpdump:
+	rm -f $(BINDIR)/rtmpdump
+	rm -f $(PLUGINDIR)/yle.*
+	rm -f $(LIBDIR)/librtmp.*
+	rm -f $(LIBDIR)/pkgconfig/librtmp.pc
+	rm -f $(MANDIR)/man1/rtmpdump.1
+	rm -f $(MANDIR)/man3/librtmp.3
+	rm -f $(MANDIR)/man8/rtmpgw.8
