@@ -1,7 +1,13 @@
 
-yle plugin for librtmp
+rtmpdump frontend for Yle servers
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
+
+10 Jun 2012, Version 1.99.9
+
+- The modified rtmpdump is not required (nor included) anymore
+- Fixed live TV and radio and YleX streams
+- Workaround for the "Can't read http:///fcs/ident" problem on Mac OS X
 
 6 Jun 2012, Version 1.99.8
 
