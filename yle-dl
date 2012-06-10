@@ -166,10 +166,13 @@ def execute_rtmpdump(args):
     completion."""
     if debug:
         log('Executing:')
-        log(' '.join(x.decode('UTF-8') for x in args))
+        log(' '.join(args))
+
+    enc = sys.getfilesystemencoding()
+    encoded_args = [x.encode(enc, 'replace') for x in args]
 
     try:
-        rtmpdump_process = subprocess.Popen(args)
+        rtmpdump_process = subprocess.Popen(encoded_args)
         return rtmpdump_process.wait()
     except KeyboardInterrupt:
         try:
@@ -199,7 +202,7 @@ def get_output_filename(args_in):
         opt = args.pop()
         if opt in ('-o', '--flv'):
             if prev:
-                return prev.decode(sys.getfilesystemencoding())
+                return prev
             else:
                 return None
         prev = opt
@@ -210,13 +213,14 @@ def is_resume_job(args):
 
 def next_available_filename(proposed):
     i = 1
-    filename = proposed 
+    enc = sys.getfilesystemencoding()
+    filename = proposed.encode(enc, 'replace')
     basename, ext = os.path.splitext(proposed)
     while os.path.exists(filename):
         log(u'%s exists, trying an alternative name' % filename)
         filename = basename + '-' + str(i) + ext
         i += 1
-    return filename
+    return filename.decode('UTF-8', 'replace')
 
 def which(program):
     """Search for program on $PATH and return the full path if found."""
@@ -307,28 +311,26 @@ class AreenaNGDownloader:
     def process_single_episode(self, clip, pageurl, parameters,
                                sublang, destdir, print_url):
         """Construct clip parameters and starts a rtmpdump process."""
-        rtmpurl = self.get_rtmp_url(clip, pageurl)
-        if not rtmpurl:
+        rtmpparams = self.get_rtmp_parameters(clip, pageurl)
+        if not rtmpparams:
             return RD_FAILED
 
         if print_url:
-            print rtmpurl
+            enc = sys.getfilesystemencoding()
+            print self.rtmp_parameters_to_url(rtmpparams).encode(enc, 'replace')
             return RD_SUCCESS
 
-        enc = sys.getfilesystemencoding()
         outputparam = []
         if '-o' not in parameters and '--flv' not in parameters:
             filename = self.get_clip_filename(clip, destdir)
             if not is_resume_job(parameters):
                 filename = next_available_filename(filename)
-            outputparam = ['-o', filename.encode(enc, 'replace')]
+            outputparam = ['-o', filename]
 
         args = [rtmpdump_binary]
-        args += ['-r', rtmpurl.encode(enc)]
-        args += parameters
+        args += self.rtmp_parameters_to_rtmpdump_args(rtmpparams)
         args += outputparam
-        if ' live=1' in rtmpurl:
-            args += ['--live']
+        args += parameters
 
         outputfile = get_output_filename(args)
         media = clip.get('media', {})
@@ -344,6 +346,22 @@ class AreenaNGDownloader:
         log_output_file(outputfile, True)
 
         return retcode
+
+    def rtmp_parameters_to_url(self, params):
+        components = [params['rtmp']]
+        for key, value in params.iteritems():
+            if key != 'rtmp':
+                components.append('%s=%s' % (key, value))
+        return ' '.join(components)
+
+    def rtmp_parameters_to_rtmpdump_args(self, params):
+        args = []
+        for key, value in params.iteritems():
+            if key == 'live':
+                args.append('--live')
+            else:
+                args.append('--%s=%s' % (key, value))
+        return args
 
     def get_clip_filename(self, clip, destdir):
         if 'channel' in clip:
@@ -374,13 +392,13 @@ class AreenaNGDownloader:
             
         return filename
 
-    def get_rtmp_url(self, clip, pageurl):
+    def get_rtmp_parameters(self, clip, pageurl):
         if 'channel' in clip:
-            return self.get_liveradio_rtmp_url(clip, pageurl)
+            return self.get_liveradio_rtmp_parameters(clip, pageurl)
         else:
-            return self.get_tv_rtmp_url(clip, pageurl)
+            return self.get_tv_rtmp_parameters(clip, pageurl)
 
-    def get_tv_rtmp_url(self, clip, pageurl):
+    def get_tv_rtmp_parameters(self, clip, pageurl):
         # Search results don't have the media item so we have to
         # download clip metadata from the source.
         if not clip.has_key('media'):
@@ -399,9 +417,9 @@ class AreenaNGDownloader:
             islive = False
             papiurl = 'http://papi.yle.fi/ng/mod/rtmp/' + media['id']
 
-        return self.rtmpurl_from_papi(papiurl, pageurl, islive)
+        return self.rtmp_parameters_from_papi(papiurl, pageurl, islive)
 
-    def get_liveradio_rtmp_url(self, clip, pageurl):
+    def get_liveradio_rtmp_parameters(self, clip, pageurl):
         channel = clip.get('channel', {})
         lang = channel.get('lang', 'fi')
         radioid = channel.get('id', None)
@@ -409,10 +427,9 @@ class AreenaNGDownloader:
             return None
 
         papiurl = 'http://papi.yle.fi/ng/radio/rtmp/%s/%s' % (radioid, lang)
-        rtmpurl = self.rtmpurl_from_papi(papiurl, pageurl, True)
-        return rtmpurl
+        return self.rtmp_parameters_from_papi(papiurl, pageurl, True)
 
-    def rtmpurl_from_papi(self, papiurl, pageurl, islive):
+    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive):
         papi = download_page(papiurl)
         if not papi:
             return None
@@ -470,14 +487,16 @@ class AreenaNGDownloader:
         rtmpbase = urlparse.urlunparse((scheme, edgefcs, baseapp, None, None, None))
         tcurl = '%s://%s/%s' % (scheme, rtmp_ip, app)
 
-        rtmpurl = '%s app=%s playpath=%s tcUrl=%s pageUrl=%s swfUrl=%s' % \
-                  (rtmpbase, app, rtmp_stream, tcurl,
-                   pageurl, AREENA_NG_SWF)
-
+        rtmpparams = {'rtmp': rtmpbase,
+                      'app': app,
+                      'playpath': rtmp_stream,
+                      'tcUrl': tcurl,
+                      'pageUrl': pageurl,
+                      'swfUrl': AREENA_NG_SWF}
         if islive:
-            rtmpurl += ' live=1'
+            rtmpparams['live'] = '1'
 
-        return rtmpurl
+        return rtmpparams
 
     def get_metadata(self, clip):
         jsonurl = self.create_pageurl(clip) + '.json'
@@ -565,7 +584,8 @@ class AreenaNGDownloader:
                 if url:
                     try:
                         subtitlefile = basename + '.' + lang + '.srt'
-                        urllib.urlretrieve(url, subtitlefile)
+                        enc = sys.getfilesystemencoding()
+                        urllib.urlretrieve(url, subtitlefile.encode(enc, 'replace'))
                         self.add_BOM(subtitlefile)
                         log(u'Subtitles saved to ' + subtitlefile)
                         if preferred_lang != 'all':
@@ -579,11 +599,13 @@ class AreenaNGDownloader:
 
         Assumes (but does not check!) that the file is UTF-8 encoded.
         """
-        content = open(filename, 'r').read()
+        enc = sys.getfilesystemencoding()
+        encoded_filename = filename.encode(enc, 'replace')
+        content = open(encoded_filename, 'r').read()
         if content.startswith(codecs.BOM_UTF8):
             return
         
-        f = open(filename, 'w')
+        f = open(encoded_filename, 'w')
         f.write(codecs.BOM_UTF8)
         f.write(content)
         f.close()
@@ -628,12 +650,11 @@ class ElavaArkistoDownloader:
 
     def download_single_episode(self, rtmpurl, playpath, downloadURL,
                                 filename, parameters, pageurl):
-        enc = sys.getfilesystemencoding()
-
         if downloadURL:
             log('Downloading from HTTP server...')
             log_output_file(filename)
             
+            enc = sys.getfilesystemencoding()
             try:
                 urllib.urlretrieve(downloadURL, filename.encode(enc))
             except IOError, exc:
@@ -645,10 +666,10 @@ class ElavaArkistoDownloader:
         else:
             args = [rtmpdump_binary]
             args += RTMPDUMP_OPTIONS_ARKISTO
-            args += ['-r', rtmpurl.encode(enc),
-                     '-y', playpath.encode(enc),
-                     '-p', pageurl.encode(enc),
-                     '-o', filename.encode(enc, 'replace')]
+            args += ['-r', rtmpurl,
+                     '-y', playpath,
+                     '-p', pageurl,
+                     '-o', filename]
             args += parameters
 
             outputfile = get_output_filename(args)
@@ -761,14 +782,14 @@ class YleXDownloader(AreenaNGDownloader):
             if not is_resume_job(argv):
                 filename = next_available_filename(filename)
 
-            outputoptions = ['-o', filename.encode(sys.getfilesystemencoding(), 'ignore')]
+            outputoptions = ['-o', filename]
 
-        rtmpurl = self.get_rtmp_url(html, url)
-        if not rtmpurl:
+        rtmpparams = self.get_rtmp_parameters(html, url)
+        if not rtmpparams:
             return RD_FAILED
 
         args = [rtmpdump_binary]
-        args += ['-r', rtmpurl]
+        args += self.rtmp_parameters_to_rtmpdump_args(rtmpparams)
         args += RTMPDUMP_OPTIONS_YLEX
         args += outputoptions
         args += argv
@@ -790,14 +811,15 @@ class YleXDownloader(AreenaNGDownloader):
         if not html:
             return RD_FAILED
 
-        rtmpurl = self.get_rtmp_url(html, url)
-        if not rtmpurl:
+        rtmpparams = self.get_rtmp_parameters(html, url)
+        if not rtmpparams:
             return RD_FAILED
 
-        print rtmpurl
+        enc = sys.getfilesystemencoding()
+        print self.rtmp_parameters_to_url(rtmpparams).encode(enc, 'replace')
         return RD_SUCCESS
 
-    def get_rtmp_url(self, html, pageurl):
+    def get_rtmp_parameters(self, html, pageurl):
         match = re.search(r'<meta +?property="og:image" +?content="(.+?)" *?/>', html)
         if not match:
             return None
@@ -807,7 +829,7 @@ class YleXDownloader(AreenaNGDownloader):
             return None
 
         papiurl = 'http://papi.yle.fi/ng/mod/rtmp/%s' % match.group(1)
-        return self.rtmpurl_from_papi(papiurl, pageurl, False)
+        return self.rtmp_parameters_from_papi(papiurl, pageurl, False)
 
 
 ### main program ###
