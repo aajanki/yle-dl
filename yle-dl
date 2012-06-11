@@ -214,13 +214,14 @@ def is_resume_job(args):
 def next_available_filename(proposed):
     i = 1
     enc = sys.getfilesystemencoding()
-    filename = proposed.encode(enc, 'replace')
-    basename, ext = os.path.splitext(proposed)
-    while os.path.exists(filename):
+    filename = proposed
+    basename, ext = os.path.splitext(filename)
+    while os.path.exists(filename.encode(enc, 'replace')):
         log(u'%s exists, trying an alternative name' % filename)
         filename = basename + '-' + str(i) + ext
         i += 1
-    return filename.decode('UTF-8', 'replace')
+        
+    return filename
 
 def which(program):
     """Search for program on $PATH and return the full path if found."""
