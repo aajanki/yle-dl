@@ -11,7 +11,8 @@ arkistosta (http://www.yle.fi/elavaarkisto/).
 Asennus
 -------
 
-Asenna vaaditut kirjastot ja ohjelmat: rtmpdump, python ja pycrypto.
+Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi),
+python ja pycrypto.
 
 Debianissa ja Ubuntussa nämä löytyvät paketeista rtmpdump, python ja
 python-crypto.
