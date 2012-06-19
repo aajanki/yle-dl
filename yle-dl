@@ -40,6 +40,8 @@ RTMPDUMP_OPTIONS_ARKISTO = ['-s', ARKISTO_SWF, '-m', '60']
 
 RTMPDUMP_OPTIONS_YLEX = ['-m', '60']
 
+RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
+
 # list of all options that require an argument
 ARGOPTS = ('--rtmp', '-r', '--host', '-n', '--port', '-c', '--socks',
            '-S', '--swfUrl', '-s', '--tcUrl', '-t', '--pageUrl', '-p',
@@ -456,16 +458,10 @@ class AreenaNGDownloader:
             return None
         rtmp_stream = nodelist[0].firstChild.nodeValue
 
-        (scheme, edgefcs, rtmppath) = \
-                 urlparse.urlparse(rtmp_connect)[:3]
-
-        # Workaround for OS X
-        if edgefcs == '':
-            try:
-                scheme, ign, edgefcs, rtmppath = rtmp_connect.split('/', 3)
-                scheme = scheme.rstrip(':')
-            except ValueError:
-                return None
+        try:
+            scheme, edgefcs, rtmppath = self.rtmpurlparse(rtmp_connect)
+        except ValueError:
+            return None
         
         ident = download_page('http://%s/fcs/ident' % edgefcs)
         if ident is None:
@@ -493,8 +489,7 @@ class AreenaNGDownloader:
         else:
             auth = ''
         app = '%s?_fcs_vhost=%s&%s' % (baseapp, edgefcs, auth)
-
-        rtmpbase = urlparse.urlunparse((scheme, edgefcs, baseapp, None, None, None))
+        rtmpbase = '%s://%s/%s' % (scheme, edgefcs, baseapp)
         tcurl = '%s://%s/%s' % (scheme, rtmp_ip, app)
 
         rtmpparams = {'rtmp': rtmpbase,
@@ -507,6 +502,20 @@ class AreenaNGDownloader:
             rtmpparams['live'] = '1'
 
         return rtmpparams
+
+    def rtmpurlparse(self, url):
+        if '://' not in url:
+            raise ValueError("Invalid RTMP URL")
+
+        scheme, rest = url.split('://', 1)
+        if scheme not in RTMP_SCHEMES:
+            raise ValueError("Invalid RTMP URL")
+
+        if '/' not in rest:
+            raise ValueError("Invalid RTMP URL")
+
+        server, app_and_playpath = rest.split('/', 1)
+        return (scheme, server, app_and_playpath)
 
     def get_metadata(self, clip):
         jsonurl = self.create_pageurl(clip) + '.json'
