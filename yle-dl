@@ -578,7 +578,7 @@ class AreenaNGDownloader:
                        fulldata['availableEpisodes'].get('audio', [])
 
         if latest_episode:
-            playlist = playlist[-1:]
+            playlist = sorted(playlist, key=self.get_media_time)[-1:]
 
         return playlist
 
@@ -628,6 +628,23 @@ class AreenaNGDownloader:
         f.write(codecs.BOM_UTF8)
         f.write(content)
         f.close()
+
+    def parse_yle_date(self, yledate):
+        """Convert strings like 2012-06-16T18:45:00 into a struct_time.
+
+        Returns None if parsing fails.
+        """
+        try:
+            return time.strptime(yledate, '%Y-%m-%dT%H:%M:%S')
+        except (ValueError, TypeError):
+            return None
+
+    def get_media_time(self, media):
+        """Extract date (as struct_time) from media metadata."""
+        broadcasted = media.get('broadcasted', {}) or {}
+        return self.parse_yle_date(broadcasted.get('date', None)) or \
+            self.parse_yle_date(media.get('published', None)) or \
+            time.gmtime(0)
 
 
 ### Elava Arkisto ###
