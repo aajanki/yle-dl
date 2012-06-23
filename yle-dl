@@ -573,9 +573,14 @@ class AreenaNGDownloader:
             playlist = [fulldata]
         elif 'search' in fulldata:
             playlist = fulldata['search'].get('results', [])
-        elif 'availableEpisodes' in fulldata:
-            playlist = fulldata['availableEpisodes'].get('video', []) + \
-                       fulldata['availableEpisodes'].get('audio', [])
+        elif 'availableEpisodes' in fulldata or \
+                'availableClips' in fulldata:
+            available_episodes = fulldata.get('availableEpisodes', {})
+            available_clips = fulldata.get('availableClips', {})
+            playlist = available_episodes.get('video', []) + \
+                       available_episodes.get('audio', []) + \
+                       available_clips.get('video', []) + \
+                       available_clips.get('audio', [])
 
         if latest_episode:
             playlist = sorted(playlist, key=self.get_media_time)[-1:]
