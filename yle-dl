@@ -886,7 +886,12 @@ def main():
     url = None
     destdir = None
 
-    argv = list(sys.argv[1:])
+    #argv = list(sys.argv[1:])
+
+    # Is sys.getfilesystemencoding() the correct encoding for
+    # sys.argv?
+    encoding = sys.getfilesystemencoding()
+    argv = [unicode(x, encoding, 'ignore') for x in sys.argv[1:]]
     rtmpdumpargs = []
     while argv:
         arg = argv.pop(0)
@@ -930,15 +935,6 @@ def main():
     if show_usage or url is None:
         usage()
         sys.exit(1)
-
-    # Is sys.getfilesystemencoding() the correct encoding for
-    # sys.argv?
-    encoding = sys.getfilesystemencoding()
-    try:
-        url = unicode(url, encoding)
-    except UnicodeDecodeError:
-        log(u'Warning: Failed to encode URL!')
-        url = unicode(url, 'ascii', 'replace')
 
     url = encode_url_utf8(url)
     dl = downloader_factory(url)
