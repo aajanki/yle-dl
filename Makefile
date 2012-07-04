@@ -19,6 +19,7 @@ MANDIR=$(DESTDIR)$(mandir)
 LIBDIR=$(DESTDIR)$(libdir)
 uninstall-old-rtmpdump:
 	rm -f $(BINDIR)/rtmpdump
+	rm -f $(BINDIR)/rtmpdump-yle
 	rm -f $(PLUGINDIR)/yle.*
 	rm -f $(LIBDIR)/librtmp.*
 	rm -f $(LIBDIR)/pkgconfig/librtmp.pc
