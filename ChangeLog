@@ -3,6 +3,11 @@ rtmpdump frontend for Yle servers
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
+4 July 2012, Version 2.0.1
+
+- Fixed --latestepisode
+- Fixed Scandinavian characters in output filenames
+
 19 June 2012, Version 2.0.0
 
 - Fixed RTMP URL parsing
