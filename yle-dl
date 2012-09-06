@@ -453,14 +453,12 @@ class AreenaNGDownloader:
         if len(nodelist) < 1 or len(nodelist[0].childNodes) < 1:
             log('No <connect> node!')
             return None
-        nodelist[0].firstChild.normalize()
         rtmp_connect = nodelist[0].firstChild.nodeValue
 
         nodelist = papi_xml.getElementsByTagName('stream')
         if len(nodelist) < 1 or len(nodelist[0].childNodes) < 1:
             log('No <stream> node!')
             return None
-        nodelist[0].firstChild.normalize()
         rtmp_stream = nodelist[0].firstChild.nodeValue
 
         try:
@@ -487,7 +485,6 @@ class AreenaNGDownloader:
         if len(nodelist) < 1 or len(nodelist[0].childNodes) < 1:
             log('No <ip> node!')
             return None
-        nodelist[0].firstChild.normalize()
         rtmp_ip = nodelist[0].firstChild.nodeValue
 
         app_without_fcsvhost = rtmppath.lstrip('/')
