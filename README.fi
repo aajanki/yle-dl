@@ -29,6 +29,11 @@ varten muunneltua kopiota rtmpdump-ohjelmasta. Aikaisemman
 yle-dl-version mukana asennetun rtmpdumpin ja pluginin voi poistaa
 komentamalla pääkäyttäjänä "make uninstall-old-rtmpdump".
 
+RPM-paketointi:
+
+Tiedoston contrib/yle-dl.spec avulla on mahdollista luoda RPM-paketti
+Fedoraan.
+
 Käyttö
 ------
 

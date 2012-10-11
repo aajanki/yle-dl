@@ -27,6 +27,10 @@ rtmpdump or plugin. Instead, everything is now downloadable with the
 plain rtmpdump. To remove the remnants of previous versions run "make
 uninstall-old-rtmpdump".
 
+RPM package:
+
+contrib/yle-dl.spec is a spec file for creating RPM-package for Fedora.
+
 Usage
 -----
 
