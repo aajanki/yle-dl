@@ -86,18 +86,6 @@ yle-dl. Lataus käynnistyy taustalla. Toistaiseksi latauksen
 edistymisestä (tai epäonnistumisesta) ei näy mitään tietoa
 käyttäjälle. Video tallennetaan kotihakemistoon.
 
-YLE Areena -tuki librtmp-kirjastossa
-------------------------------------
-
-Tämän pluginin avulla Ylen ohjelmia voi katsoa millä tahansa
-librtmp-kirjstoa käyttämällä ohjelmalla kuten mplayerillä.
-
-Selvitä Areena-videon osoite komennolla "yle-dl --showurl" ja syötä
-komennon tulostama osoite mplayerille tai muulle librtmp-pohjaiselle
-ohjelmalle. Esimerkiksi:
-
-mplayer "`yle-dl --showurl http://areena.yle.fi/tv/1544491`"
-
 Esimerkkejä
 -----------
 
@@ -120,3 +108,7 @@ Esimerkkejä
 * Lataa uusimmat uutiset
 
   yle-dl --latestepisode http://areena.yle.fi/?q=uutiset
+
+* Toistaminen suoraan videotoistimessa:
+
+  mplayer "`yle-dl --showurl http://areena.yle.fi/tv/1544491`"
