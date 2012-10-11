@@ -1,4 +1,4 @@
-prefix=/usr/local
+prefix?=/usr/local
 BINDIR=$(DESTDIR)/$(prefix)/bin
 
 all:
