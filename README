@@ -12,11 +12,14 @@ and Elävä Arkisto (http://www.yle.fi/elavaarkisto/).
 Installation
 ------------
 
-Install prerequisites: rtmpdump (version 2.4 or newer), python and
+Install dependencies: rtmpdump (version 2.4 or newer), python and
 pycrypto.
 
 On Debian/Ubuntu installing packages rtmpdump, python and
 python-pycrypto satisfies the dependencies.
+
+On OS X install rtmpdump with homebrew: ``brew install --HEAD
+rtmpdump`` and pycrypto with pip: ``pip install -r requirements.txt``
 
 To install run:
 
