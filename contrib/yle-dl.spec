@@ -4,7 +4,7 @@ Release:	1%{?dist}
 Summary:	Rtmpdump front-end for Yle servers
 Group:		Applications/Multimedia
 License:	GPLv2
-URL:		http://users.tkk.fi/~aajanki/rtmpdump-yle/index.html
+URL:		http://aajanki.github.com/yle-dl/index.html
 Source0:	%{name}-%{version}.tar.gz
 Patch1:		Makefile.patch
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
