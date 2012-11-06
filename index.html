@@ -8,15 +8,15 @@
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <title>Yle-dl by aajanki</title>
+    <title>yle-dl</title>
   </head>
 
   <body>
 
     <header>
       <div class="container">
-        <h1>Yle-dl</h1>
-        <h2>Download videos from Yle Areena</h2>
+        <h1>yle-dl</h1>
+        <h2>Lataa videoita Yle Areenasta</h2>
 
         <section id="downloads">
           <a href="https://github.com/aajanki/yle-dl/zipball/master" class="btn">Download as .zip</a>
@@ -28,25 +28,130 @@
 
     <div class="container">
       <section id="main_content">
-        <p>yle-dl (previous known as RTMPDump-YLE) is a command-line program for downloading media files from the two video streaming services of the Finnish national broadcasting company Yle: <a href="http://areena.yle.fi">Yle Areena</a>, and <a href="http://yle.fi/elavaarkisto/">Elävä arkisto</a>.</p>
 
-<h2>Usage</h2>
+<div style="font-size: small;"><a href="index-en.html">In English</a></div>
 
-<p><code>yle-dl yle_video_page_url [rtmpdump_options]</code></p>
+<p>yle-dl (aikaisemmalta nimeltään RTMPDump-YLE) on komentoriviohjelma
+video- ja äänitiedostojen
+lataamiseen <a href="http://areena.yle.fi/">Yle
+Areenasta</a>, <a href="http://ylex.yle.fi/ylex-areena">YleX
+Areenasta</a> ja <a href="http://www.yle.fi/elavaarkisto/">Elävästä
+arkistosta</a> tietokoneen kovalevylle. Lisäksi yle-dl:llä voi ladata
+Areenan
+<a href="http://areena.yle.fi/radio">nettiradioita</a>
+ja <a href="http://areena.yle.fi/live">suoria TV lähetyksiä</a>.</p>
 
-<p>For example:</p>
+<p> Voit katsella omalle koneellesi lataamisia ohjelmia vaikka ne
+olisivatkin jo poistuneet Areenasta. Omalta koneelta toistettaessa
+videot eivät myöskään pätki kuten hitaan nettiyhteyden yli
+toistettaessa.</p>
 
-<p><code>yle-dl http://areena.yle.fi/tv/1515302</code></p>
+<p>Ohjelmat tallennetaan Flash Video (flv) -muodossa. Niitä voi katsoa
+esimerkiksi <a
+href="http://www.videolan.org/vlc/">VLC-soittimella</a>.</p>
 
-<p>or</p>
+<p>Voit ladata videoita vain omaan käyttöösi. Areenan ohjelmien
+levittäminen eteenpäin ilman tekijänoikeuden haltijan lupaa on
+kiellettyä.</p>
 
-<p><code>yle-dl http://areena.yle.fi/tv/1515302 -o /your/video/dir/video.mp4</code></p>
+<h2>Käyttö</h2>
 
-<h2>Download</h2>
+<p><code>yle-dl http://videon/osoite</code>,
+missä <code>http://videon/osoite</code> on sen webbi-sivun osoite,
+jossa Areenan tai Elävän arkiston ohjelmaa voisi katsoa
+nettiselaimella.</p>
 
-<p>The source code is available under <a href="http://www.gnu.org/licenses/gpl-2.0.html">GNU GPLv2 license</a>.</p>
+<p> Ohjelman toimitaa voi muokata lisäämällä komentoriviin
+valitsimia. Tärkeimmät valitsimet:</p>
 
-<p><a href="http://users.tkk.fi/%7Eaajanki/rtmpdump-yle/yle-dl-2.0.1.tar.gz">yle-dl 2.0.1</a> (4.7.2012)</p>
+<p>
+<dl>
+<dt>--latestepisode</dt>
+<dd>Lataa viimeisimmän jakson sivulta.</dd>
+<dt>--showurl</dt>
+<dd>Tulostaa librtmp-yhteensopivan video-URLin, ei lataa tiedostoa.</dd>
+</dl>
+</p>
+
+<p> Muut valitsimet välitetään suoraan rtmpdumpille. Luettelon
+kaikista valitsimista (englanniksi) näkee komentamalla <code>yle-dl
+--help</code></p>
+
+<h3>Esimerkkejä:</h3>
+
+<p> <code>yle-dl http://areena.yle.fi/tv/1515302</code></p>
+
+<p> lataa videon Areenasta ja nimeää tiedoston ladattavan ohjelman mukaan.</p>
+
+<p> <code>yle-dl
+"http://www.yle.fi/elavaarkisto/?s=s&amp;g=4&amp;ag=28&amp;t=&amp;a=9390"</code></p>
+
+<p> lataa videon Elävästä arkistosta.</p>
+
+<p> <code>yle-dl -o uutiset.flv http://areena.yle.fi/tv/1544491 </code></p>
+
+<p> lataa videon tiedostoon uutiset.flv</p>
+
+<p><code>yle-dl -o uutiset.flv
+--resume http://areena.yle.fi/tv/1544491 </code></p>
+
+<p> jatkaa aikaisemmin keskeytynyttä latausta tiedostoon uutiset.flv.</p>
+
+<p> <code>yle-dl --latestepisode http://areena.yle.fi/?q=uutiset</code></p>
+
+<p> lataa uusimman hakusanalla "uutiset" löytyvän ohjelman.</p>
+
+<h2>Asentaminen</h2>
+
+<h3>Lataa lähdekoodi</h3>
+
+<p><a href="http://users.tkk.fi/~aajanki/rtmpdump-yle/yle-dl-2.0.1.tar.gz">Vakaa versio: yle-dl 2.0.1</a> (4.7.2012)</p>
+
+<p><a href="https://github.com/aajanki/yle-dl/tarball/master">Kehitysversio</a></p>
+
+<p> Käännösohjeet löytyvät mukana tulevasta README.fi-tiedostosta.</p>
+
+<p> yle-dl on <a href="http://www.gnu.org/licenses/gpl-2.0.html">GNU
+GPLv2-lisenssin</a> mukainen vapaa ohjelmisto.</p>
+
+<p>Vaaditut kirjastot ja ohjelmat: rtmpdump (versio 2.4 tai uudempi),
+python ja pycrypto.</p>
+
+<h3>Asennuspaketit</h3>
+
+<p>Muiden ylläpitämiä asennuspaketteja:</p>
+
+<p>
+<ul>
+<li> Debian/Ubuntu (32/64 bit): <a
+href="http://rtmpdump-yle.xn--tlt-qlaac.fi/">http://rtmpdump-yle.täältä.fi</a>
+tai <a href="http://www.homelinuxpc.com/download/index.php">http://www.homelinuxpc.com/download/index.php</a>.
+<li> <a
+href="https://github.com/teknohog/ebuilds/tree/master/media-video/rtmpdump-yle">Gentoo ebuild</a>
+<li> Windows: <a
+href="http://mpartel.github.com/yle-downloader-gui/">http://mpartel.github.com/yle-downloader-gui/</a>
+(mukana myös graafinen käyttöliittymä). 
+<li> Mac OS X: <a
+href="http://users.tkk.fi/spotinka/areena/">http://users.tkk.fi/spotinka/areena/</a>
+(graafinen käyttöliittymä)
+</ul>
+</p>
+
+<h3>Asentaminen</h3>
+
+<p>Asenna komennolla</p>
+
+<p><code>
+make install<br>
+</code></p>
+
+<p> Komento vaatii pääkäyttäjän oikeudet.</p>
+
+<p> <a href="http://mudkippy.no-ip.org/~antti/rtmpdump-hard-way">Ohjeita</a>
+rtmpdumpin kääntämiseen, jos tarpeeksi uutta versiota ei ole saatavilla
+paketinhallinnasta.</p>
+
+
       </section>
     </div>
 

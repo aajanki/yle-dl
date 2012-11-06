@@ -8,14 +8,14 @@
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <title>Yle-dl by aajanki</title>
+    <title>yle-dl by aajanki</title>
   </head>
 
   <body>
 
     <header>
       <div class="container">
-        <h1>Yle-dl</h1>
+        <h1>yle-dl</h1>
         <h2>Download videos from Yle Areena</h2>
 
         <section id="downloads">
@@ -28,11 +28,32 @@
 
     <div class="container">
       <section id="main_content">
+
+<div style="font-size: small;"><a href="index.html">In Finnish</a></div>
+
         <p>yle-dl (previous known as RTMPDump-YLE) is a command-line program for downloading media files from the two video streaming services of the Finnish national broadcasting company Yle: <a href="http://areena.yle.fi">Yle Areena</a>, and <a href="http://yle.fi/elavaarkisto/">Elävä arkisto</a>.</p>
+
+<p>The videos are saved in Flash video (FLV) format. At
+least <a href="http://www.videolan.org/vlc/">VLC</a> player is able to
+play them back. </p>
 
 <h2>Usage</h2>
 
-<p><code>yle-dl yle_video_page_url [rtmpdump_options]</code></p>
+<p><code>yle-dl yle_video_page_url [options]</code></p>
+
+<p>Options include:</p>
+
+<p>
+<dl>
+<dt>--latestepisode</dt>
+<dd>Download the latest episode from the page</dd>
+<dt>--showurl</dt>
+<dd>Print librtmp-compatible URL, don't download</dd>
+</dl>
+</p>
+
+<p>Any option understood by rtmpdump is also accepted.
+See <code>yle-dl --help</code> for the full list of options.</p>
 
 <p>For example:</p>
 
@@ -44,9 +65,25 @@
 
 <h2>Download</h2>
 
+<h3>Source code</h3>
+
+<p><a href="http://users.tkk.fi/%7Eaajanki/rtmpdump-yle/yle-dl-2.0.1.tar.gz">Stable yle-dl 2.0.1</a> (4.7.2012)</p>
+
+<p><a href="https://github.com/aajanki/yle-dl/tarball/master">Development version</a></p>
+
 <p>The source code is available under <a href="http://www.gnu.org/licenses/gpl-2.0.html">GNU GPLv2 license</a>.</p>
 
-<p><a href="http://users.tkk.fi/%7Eaajanki/rtmpdump-yle/yle-dl-2.0.1.tar.gz">yle-dl 2.0.1</a> (4.7.2012)</p>
+<p>Other required packages: rtmpdump (version 2.4 or newer), python
+and pycrypto.</p>
+
+<h3>Installation</h3>
+
+<p>Install by command (requires root priviledges):</p>
+
+<p><code>
+make install<br>
+</code></p>
+
       </section>
     </div>
 
