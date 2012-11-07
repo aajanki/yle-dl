@@ -17,6 +17,9 @@ python ja pycrypto.
 Debianissa ja Ubuntussa nämä löytyvät paketeista rtmpdump, python ja
 python-crypto.
 
+OS X:ssä rtmpdumpin voi asentaa homebrew:llä ``brew install --HEAD
+rtmpdump`` ja pycrypton pipillä ``pip install -r requirements.txt``.
+
 Asenna komennolla:
 
 make install
