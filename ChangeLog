@@ -3,8 +3,9 @@ rtmpdump frontend for Yle servers
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
-xx xxx 2012, Version 2.0.2
+7 Nov 2012, Version 2.0.2
 
+- Minor XML parsing fixes
 - Fedora spec file contrib/yle-dl.spec contributed by Jari Karppinen
 
 4 July 2012, Version 2.0.1
