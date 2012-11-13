@@ -53,10 +53,6 @@ yle-dl options:
 
 Type "rtmpdump --help" to see a full list of options.
 
-When downloading from outside Finland, it may be necessary to add "-n
-flashu.yle.fi" on the command line. Note that not all videos are
-available outside Finland.
-
 Firewall must allow outgoing traffic on ports 80 and 1935.
 
 Examples

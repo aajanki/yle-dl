@@ -65,9 +65,6 @@ yle-dl --help
 Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
 ulospäin menevä liikenne porteissa 80 ja 1935.
 
-Suomen ulkopuolelta ladattaessa voi olla tarpeen lisätä valitsin "-n
-flashu.yle.fi".
-
 Integroiminen Firefox-selaimeen
 -------------------------------
 
