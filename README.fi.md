@@ -59,12 +59,17 @@ arkiston osoite.
 Valitsimet:
 
 --latestepisode Lataa viimeisimmän jakson sivulta.
+
 --showurl       Tulostaa librtmp-yhteensopivan video-URLin, ei lataa
                 tiedostoa.
+
 --vfat          Tuota Windows-yhteensopivia tiedoston nimiä
+
 --sublang lang  Lataa tekstitykset annetulla kielellä (Yle Areena)
                 lang = fin, swe, smi, none or all (oletus)
+
 --rtmpdump path Polku rtmpdump-ohjelmaan
+
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 
 Muut valitsimet välitetään suoraan rtmpdump:lle. Luettelon
