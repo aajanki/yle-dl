@@ -10,8 +10,11 @@ Source code: https://github.com/aajanki/yle-dl
 
 yle-dl is a rtmpdump frontend for downloading media files from the
 video streaming services of the Finnish national broadcasting company
-Yle: Yle Areena (http://areena.yle.fi, http://ylex.yle.fi/ylex-areena)
-and Elävä Arkisto (http://www.yle.fi/elavaarkisto/).
+Yle: [Yle Areena], [YleX Areena] and [Elävä Arkisto].
+
+[Yle Areena]:http://areena.yle.fi/
+[YleX Areena]:http://ylex.yle.fi/ylex-areena/
+[Elävä arkisto]:http://www.yle.fi/elavaarkisto/
 
 Installation
 ------------
@@ -53,10 +56,15 @@ you would normally watch the video in a browser.
 yle-dl options:
 
 --latestepisode   Download the latest episodes
+
 --showurl         Print librtmp-compatible URL, don't download
+
 --vfat            Create Windows-compatible filenames
+
 --sublang lang    Download subtitles, lang = fin, swe, smi, none or all
+
 --rtmpdump path   Set path to rtmpdump binary
+
 --destdir dir     Save files to dir
 
 Type "rtmpdump --help" to see a full list of options.

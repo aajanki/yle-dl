@@ -28,7 +28,9 @@ rtmpdump`` ja pycrypton pipillä ``pip install -r requirements.txt``.
 
 Asenna komennolla:
 
+```
 make install
+```
 
 Komento vaatii pääkäyttäjän oikeudet (esim. Ubuntussa: sudo make
 install).
