@@ -1,7 +1,11 @@
 rtmpdump frontend for Yle servers
+
 Copyright (C) 2010-2012 Antti Ajanki
+
 License: GPLv2
+
 Homepage: http://aajanki.github.com/yle-dl/index-en.html
+
 Source code: https://github.com/aajanki/yle-dl
 
 yle-dl is a rtmpdump frontend for downloading media files from the
@@ -23,7 +27,9 @@ rtmpdump`` and pycrypto with pip: ``pip install -r requirements.txt``
 
 To install run:
 
+```
 make install
+```
 
 Starting from version 1.99.9 yle-dl doesn't anymore require a modified
 rtmpdump or plugin. Instead, everything is now downloadable with the
@@ -37,7 +43,9 @@ contrib/yle-dl.spec is a spec file for creating RPM-package for Fedora.
 Usage
 -----
 
+```
 yle-dl [yle-dl or rtmpdump options] URL
+```
 
 where URL is the address of the Areena or Elävä arkisto web page where
 you would normally watch the video in a browser.
@@ -58,10 +66,16 @@ Firewall must allow outgoing traffic on ports 80 and 1935.
 Examples
 --------
 
+```
 yle-dl http://areena.yle.fi/tv/1544491 -o video.flv
+```
 
+```
 yle-dl "http://www.yle.fi/elavaarkisto/?s=s&g=4&ag=28&t=&a=9390"
+```
 
 Playing in mplayer (or vlc and others) without downloading first:
 
+```
 mplayer "`yle-dl --showurl http://areena.yle.fi/tv/1544491`"
+```
