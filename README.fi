@@ -50,6 +50,7 @@ Valitsimet:
 
 --latestepisode Lataa viimeisimmän jakson sivulta.
 --showurl       Tulostaa librtmp-yhteensopivan video-URLin, ei lataa
+--showurl       Tulostaa ladattavan ohjelman nimen, ei lataa
                 tiedostoa.
 --vfat          Tuota Windows-yhteensopivia tiedoston nimiä
 --sublang lang  Lataa tekstitykset annetulla kielellä (Yle Areena)
