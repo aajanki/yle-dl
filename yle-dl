@@ -78,7 +78,7 @@ def usage():
     log(u'yle-dl options:')
     log(u'')
     log(u'--latestepisode         Download the latest episode')
-    log(u"--showurl               Print librtmp-compatible URL, don't download")
+    log(u"--showname              Print the name of the episode, don't download")
     log(u'--vfat                  Create Windows-compatible filenames')
     log(u'--sublang lang          Download subtitles, lang = fin, swe, smi, none or all')
     log(u'--rtmpdump path         Set path to rtmpdump binary')
@@ -349,6 +349,37 @@ class AreenaNGDownloader:
         log_output_file(outputfile, True)
 
         return retcode
+
+    def print_filename(self, url, parameters, latest_only, destdir):
+        playlist = self.get_playlist(url, latest_only)
+        if not playlist:
+            return RD_FAILED
+        
+        for clip in playlist:
+            if '-o' not in parameters and '--flv' not in parameters:
+                filename = self.get_clip_filename(clip, destdir)
+                if not is_resume_job(parameters):
+                    filename = next_available_filename(filename)
+
+                filenameOnly, fileExtension = os.path.splitext(filename)
+                filenameOnly = re.sub(r'\s', '', filenameOnly)
+                filenameOnly = filenameOnly.replace(u'ä', 'a')
+                filenameOnly = filenameOnly.replace(u'Ä', 'A')
+                filenameOnly = filenameOnly.replace(u'ö', 'o')
+                filenameOnly = filenameOnly.replace(u'Ö', 'O')
+                filenameOnly = filenameOnly.replace(u'å', 'a')
+                filenameOnly = filenameOnly.replace(u'Å', 'A')
+                filenameOnly = filenameOnly.replace(':', '-')
+#                try:
+#                    filenameOnly = filenameOnly.decode('ascii')
+#                except UnicodeDecodeError:
+#                    print "it was not a ascii-encoded unicode string"
+#                else:
+#                    print "It may have been an ascii-encoded unicode string"
+                  
+                return filenameOnly
+
+        return 'noname'
 
     def rtmp_parameters_to_url(self, params):
         components = [params['rtmp']]
@@ -863,6 +894,7 @@ def main():
     show_usage = False
     url = None
     destdir = None
+    name_only = False
 
     argv = list(sys.argv[1:])
     rtmpdumpargs = []
@@ -879,6 +911,8 @@ def main():
             latest_episode = True
         elif arg == '--showurl':
             url_only = True
+        elif arg == '--showname':
+            name_only = True
         elif arg == '--vfat':
             global excludechars
             global excludechars_windows
@@ -923,6 +957,9 @@ def main():
 
     if url_only:
         sys.exit(dl.print_urls(url, latest_episode))
+    if name_only:
+        print(dl.print_filename(url, rtmpdumpargs, latest_episode, destdir))
+        sys.exit(1)
     else:
         sys.exit(dl.download_episodes(url, rtmpdumpargs, latest_episode, sublang, destdir))
 
