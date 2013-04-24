@@ -197,8 +197,11 @@ def downloader_factory(url):
         return YleXDownloader()
     elif url.startswith('http://areena.yle.fi/tv/suora/'):
         return AreenaLiveDownloader()
-    else:
+    elif url.startswith('http://areena.yle.fi/') or \
+            url.startswith('http://yle.fi/'):
         return AreenaNGDownloader()
+    else:
+        return None
 
 def get_output_filename(args_in):
     prev = None
@@ -1070,6 +1073,10 @@ def main():
 
     url = encode_url_utf8(url)
     dl = downloader_factory(url)
+    if not dl:
+        log(u'Unsupported URL %s.' % url)
+        log(u'Is this really a Yle video page?')
+        return RD_FAILED
 
     if url_only:
         sys.exit(dl.print_urls(url, latest_episode))
