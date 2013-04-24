@@ -79,6 +79,7 @@ def usage():
     log(u'')
     log(u'--latestepisode         Download the latest episode')
     log(u"--showurl               Print librtmp-compatible URL, don't download")
+    log(u"--showtitle             Print stream title, don't download")
     log(u'--vfat                  Create Windows-compatible filenames')
     log(u'--sublang lang          Download subtitles, lang = fin, swe, smi, none or all')
     log(u'--rtmpdump path         Set path to rtmpdump binary')
@@ -426,6 +427,17 @@ class AreenaNGDownloader(AreenaCommon):
         librtmp-compatible URLs on stdout."""
         return self.process_episodes(url, [], latest_episode, sublang, None, True)
 
+    def print_titles(self, url, latest_only):
+        playlist = self.get_playlist(url, latest_only)
+        if not playlist:
+            return RD_FAILED
+
+        enc = sys.getfilesystemencoding()
+        for clip in playlist:
+            print self.get_clip_title(clip).encode(enc, 'replace')
+
+        return RD_SUCCESS
+
     def process_episodes(self, url, parameters, latest_only, sublang, destdir, print_url):
         playlist = self.get_playlist(url, latest_only)
         if not playlist:
@@ -453,7 +465,10 @@ class AreenaNGDownloader(AreenaCommon):
 
         outputparam = []
         if '-o' not in parameters and '--flv' not in parameters:
-            filename = self.get_clip_filename(clip, destdir)
+            filename = self.get_clip_filename(clip)
+            if destdir:
+                filename = os.path.join(destdir, filename)
+
             if not is_resume_job(parameters):
                 filename = next_available_filename(filename)
             outputparam = ['-o', filename]
@@ -478,15 +493,15 @@ class AreenaNGDownloader(AreenaCommon):
 
         return retcode
 
-    def get_clip_filename(self, clip, destdir):
+    def get_clip_title(self, clip):
         if 'channel' in clip:
             # Live radio broadcast
             curtime = time.strftime('-%Y-%m-%d-%H:%M:%S')
-            filename = clip['channel'].get('name', 'yle-radio') + curtime + '.flv'
+            title = clip['channel'].get('name', 'yle-radio') + curtime
 
         elif 'title' in clip:
             # Video or radio stream
-            filename = clip['title']
+            title = clip['title']
             date = None
             broadcasted = clip.get('broadcasted', None)
             if broadcasted:
@@ -494,18 +509,15 @@ class AreenaNGDownloader(AreenaCommon):
             if not date:
                 date = clip.get('published', None)
             if date:
-                filename += '-' + date.replace('/', '-').replace(' ', '-')
-            filename += '.flv'
+                title += '-' + date.replace('/', '-').replace(' ', '-')
 
         else:
-            filename = 'areena.flv'
+            title = time.strftime('areena-%Y-%m-%d-%H:%M:%S')
 
-        filename = sane_filename(filename)
+        return title
 
-        if destdir:
-            filename = os.path.join(destdir, filename)
-
-        return filename
+    def get_clip_filename(self, clip):
+        return sane_filename(self.get_clip_title(clip)) + '.flv'
 
     def get_rtmp_parameters(self, clip, pageurl):
         if 'channel' in clip:
@@ -678,7 +690,7 @@ class AreenaLiveDownloader(AreenaCommon):
 
         outputparam = []
         if '-o' not in parameters and '--flv' not in parameters:
-            filename = self.get_live_stream_title(url)
+            filename = self.get_live_stream_title(url) + '.flv'
             if destdir:
                 filename = os.path.join(destdir, filename)
 
@@ -710,6 +722,11 @@ class AreenaLiveDownloader(AreenaCommon):
         print self.rtmp_parameters_to_url(rtmpparams).encode(enc, 'replace')
         return RD_SUCCESS
 
+    def print_titles(self, url, latest_episode):
+        enc = sys.getfilesystemencoding()
+        print self.get_live_stream_title(url).encode(enc, 'replace')
+        return RD_SUCCESS
+
     def get_live_rtmp_parameters(self, url):
         m = re.search(r'http://areena.yle.fi/tv/suora/(.+)', url)
         if m is None:
@@ -739,7 +756,6 @@ class AreenaLiveDownloader(AreenaCommon):
         else:
             title = 'yleTV'
         title += time.strftime('-%Y-%m-%d-%H:%M:%S')
-        title += '.flv'
         return title
 
 
@@ -755,7 +771,8 @@ class ElavaArkistoDownloader:
 
         clips = []
         for mediaitem in pagedata['media']:
-            title = sane_filename(mediaitem.get('title', 'elavaarkisto'))
+            title = mediaitem.get('title', 'elavaarkisto')
+            filename = sane_filename(title)
 
             downloadURL = mediaitem.get('downloadURL', None)
 
@@ -776,7 +793,8 @@ class ElavaArkistoDownloader:
             clips.append({'rtmp': rtmpurl,
                           'playpath': playpath,
                           'downloadURL': downloadURL,
-                          'filename': title + ext})
+                          'title': title,
+                          'filename': filename + ext})
 
         return clips
 
@@ -888,6 +906,18 @@ class ElavaArkistoDownloader:
 
         return RD_SUCCESS
 
+    def print_titles(self, url, latest_episode):
+        playlist = self.get_playlist(url, latest_episode)
+        if playlist is None:
+            return RD_FAILED
+
+        enc = sys.getfilesystemencoding()
+        for clip in playlist:
+            print clip['title'].encode(enc, 'replace')
+
+        return RD_SUCCESS
+        
+
 
 ### YleX Areena ###
 
@@ -902,12 +932,7 @@ class YleXDownloader(AreenaNGDownloader):
 
         outputoptions = []
         if not '-o' in argv and not '--flv' in argv:
-            match = re.search(r'<h1[^>]*>(.*?)</h1>', html)
-            if match:
-                filename = sane_filename(replace_entitydefs(match.group(1))) + '.flv'
-            else:
-                filename = 'ylex.flv'
-
+            filename = sane_filename(self.stream_title(html)) + '.flv'
             if destdir:
                 filename = os.path.join(destdir, filename)
 
@@ -951,6 +976,19 @@ class YleXDownloader(AreenaNGDownloader):
         print self.rtmp_parameters_to_url(rtmpparams).encode(enc, 'replace')
         return RD_SUCCESS
 
+    def print_titles(self, url, latest_episode):
+        enc = sys.getfilesystemencoding()
+        print self.stream_title(download_page(url)).encode(enc, 'replace')
+        return RD_SUCCESS
+
+    def stream_title(self, html):
+        if html:
+            match = re.search(r'<h1[^>]*>(.*?)</h1>', html)
+            if match:
+                return replace_entitydefs(match.group(1))
+
+        return time.strftime('YleX-%Y-%m-%d-%H:%M:%S')
+
     def get_rtmp_parameters(self, html, pageurl):
         match = re.search(r'<meta +?property="og:image" +?content="(.+?)" *?/>', html)
         if not match:
@@ -972,6 +1010,7 @@ def main():
     global rtmpdump_binary
     latest_episode = False
     url_only = False
+    title_only = False
     sublang = 'all'
     show_usage = False
     url = None
@@ -997,6 +1036,8 @@ def main():
             latest_episode = True
         elif arg == '--showurl':
             url_only = True
+        elif arg == '--showtitle':
+            title_only = True
         elif arg == '--vfat':
             global excludechars
             global excludechars_windows
@@ -1032,6 +1073,8 @@ def main():
 
     if url_only:
         sys.exit(dl.print_urls(url, latest_episode))
+    elif title_only:
+        sys.exit(dl.print_titles(url, latest_episode))
     else:
         sys.exit(dl.download_episodes(url, rtmpdumpargs, latest_episode, sublang, destdir))
 

@@ -59,6 +59,8 @@ yle-dl options:
 
 --showurl         Print librtmp-compatible URL, don't download
 
+--showtitle       Print stream title, don't download
+
 --vfat            Create Windows-compatible filenames
 
 --sublang lang    Download subtitles, lang = fin, swe, smi, none or all

@@ -48,9 +48,10 @@ arkiston osoite.
 
 Valitsimet:
 
---latestepisode Lataa viimeisimmän jakson sivulta.
+--latestepisode Lataa viimeisimmän jakson sivulta
 --showurl       Tulostaa librtmp-yhteensopivan video-URLin, ei lataa
-                tiedostoa.
+                tiedostoa
+--showtitle     Tulostaa ohjelman nimen, ei lataa tiedostoa
 --vfat          Tuota Windows-yhteensopivia tiedoston nimiä
 --sublang lang  Lataa tekstitykset annetulla kielellä (Yle Areena)
                 lang = fin, swe, smi, none or all (oletus)
