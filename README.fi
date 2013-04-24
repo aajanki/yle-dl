@@ -113,3 +113,8 @@ Esimerkkejä
 * Toistaminen suoraan videotoistimessa:
 
   mplayer "`yle-dl --showurl http://areena.yle.fi/tv/1544491`"
+
+* Ladatulle tiedostolle annetun nimen tulostaminen (esimerkiksi
+  jos skripti tarvitseen tiedoston nimen jatkokäsittelyä varten)
+
+  yle-dl http://areena.yle.fi/tv/1864726 2>&1 | grep "Output file:" | cut -d" " -f3-
