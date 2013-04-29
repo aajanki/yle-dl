@@ -681,6 +681,11 @@ class AreenaNGDownloader(AreenaCommon):
 
 
 ### Areena live TV ###
+#
+# This is for the real live streams
+# (http://areena.yle.fi/tv/suora/...). The old-style discrete live
+# broadcasts (http://areena.yle.fi/tv/...) are still handled by
+# AreenaNGDownloader.
 
 
 class AreenaLiveDownloader(AreenaCommon):
