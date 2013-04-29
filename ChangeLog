@@ -3,6 +3,11 @@ rtmpdump frontend for Yle servers
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
+29 Apr 2013, Version 2.1.0
+
+- Support for live streams
+- New option --showtitle prints the name of the stream
+
 7 Nov 2012, Version 2.0.2
 
 - Minor XML parsing fixes
