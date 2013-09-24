@@ -11,10 +11,13 @@ arkistosta (http://www.yle.fi/elavaarkisto/).
 Asennus
 -------
 
-Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi),
-python ja pycrypto.
+Ubuntu-paketit löytyvät osoitteesta
+https://launchpad.net/~hekkup/+archive/yle-dl.
 
-Debianissa ja Ubuntussa nämä löytyvät paketeista rtmpdump, python ja
+Muissa järjestelmissä asenna vaaditut kirjastot ja ohjelmat:
+rtmpdump (2.4 tai uudempi), python ja pycrypto.
+
+Debianissa nämä löytyvät paketeista rtmpdump, python ja
 python-crypto.
 
 OS X:ssä rtmpdumpin voi asentaa homebrew:llä ``brew install --HEAD

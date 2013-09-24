@@ -19,10 +19,12 @@ Yle: [Yle Areena], [YleX Areena] and [Elävä Arkisto].
 Installation
 ------------
 
-Install dependencies: rtmpdump (version 2.4 or newer), python and
-pycrypto.
+Ubuntu packages are available at https://launchpad.net/~hekkup/+archive/yle-dl.
 
-On Debian/Ubuntu installing packages rtmpdump, python and
+On other systems install dependencies: rtmpdump (version 2.4
+or newer), python and pycrypto.
+
+On Debian installing packages rtmpdump, python and
 python-crypto satisfies the dependencies.
 
 On OS X install rtmpdump with homebrew: ``brew install --HEAD
