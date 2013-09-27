@@ -12,7 +12,7 @@ Asennus
 -------
 
 Ubuntu-paketit löytyvät osoitteesta
-https://launchpad.net/~hekkup/+archive/yle-dl.
+https://launchpad.net/~yle-dl/+archive/release.
 
 Muissa järjestelmissä asenna vaaditut kirjastot ja ohjelmat:
 rtmpdump (2.4 tai uudempi), python ja pycrypto.

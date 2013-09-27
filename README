@@ -19,7 +19,7 @@ Yle: [Yle Areena], [YleX Areena] and [Elävä Arkisto].
 Installation
 ------------
 
-Ubuntu packages are available at https://launchpad.net/~hekkup/+archive/yle-dl.
+Ubuntu packages are available at https://launchpad.net/~yle-dl/+archive/release.
 
 On other systems install dependencies: rtmpdump (version 2.4
 or newer), python and pycrypto.
