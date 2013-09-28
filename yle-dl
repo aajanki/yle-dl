@@ -195,9 +195,11 @@ def downloader_factory(url):
         return ElavaArkistoDownloader()
     elif url.startswith('http://ylex.yle.fi/'):
         return YleXDownloader()
-    elif url.startswith('http://areena.yle.fi/tv/suora/'):
+    elif url.startswith('http://areena.yle.fi/tv/suora/') or \
+            url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return AreenaLiveDownloader()
     elif url.startswith('http://areena.yle.fi/') or \
+            url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
         return AreenaNGDownloader()
     else:
@@ -736,17 +738,14 @@ class AreenaLiveDownloader(AreenaCommon):
         return RD_SUCCESS
 
     def get_live_rtmp_parameters(self, url):
-        m = re.search(r'http://areena.yle.fi/tv/suora/(.+)', url)
-        if m is None:
+        channel = self.extract_live_channel_from_url(url)
+        if channel is None:
             return None
 
-        if m.group(1) == 'fem':
-            media_id = 'yle-fem-fi'
-        elif m.group(1) == 'fem?kieli=sv':
-            media_id = 'yle-fem-sv'
-        else:
-            media_id = 'yle-' + m.group(1)
-        
+        default_media_id = 'yle-' + channel
+        fem_mapping = {'fem': 'yle-fem-fi',
+                       'fem?kieli=sv': 'yle-fem-sv'}
+        media_id = fem_mapping.get(channel, default_media_id)
         papiurl = 'http://papi.yle.fi/ng/live/rtmp/' + media_id + '/fin'
         return self.rtmp_parameters_from_papi(papiurl, url, True)
 
@@ -758,13 +757,13 @@ class AreenaLiveDownloader(AreenaCommon):
         return ' '.join(components)
 
     def get_live_stream_title(self, url):
-        m = re.search(r'http://areena.yle.fi/tv/suora/(.+)', url)
-        if m:
-            title = m.group(1).upper()
-        else:
-            title = 'yleTV'
+        title = self.extract_live_channel_from_url(url) or 'yleTV'
         title += time.strftime('-%Y-%m-%d-%H:%M:%S')
         return title
+
+    def extract_live_channel_from_url(self, url):
+        m = re.search(r'http://(?:areena.yle.fi/tv/suora|arenan.yle.fi/tv/direkt)/(.+)', url)
+        return m and m.group(1)
 
 
 ### Elava Arkisto ###
