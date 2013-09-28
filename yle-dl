@@ -28,6 +28,8 @@ import xml.dom.minidom
 import time
 import codecs
 import base64
+import ctypes
+import ctypes.util
 from Crypto.Cipher import AES
 
 version = '2.1.0'
@@ -61,6 +63,9 @@ excludechars_linux = '*/|'
 excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
+
+libcname = ctypes.util.find_library('c')
+libc = libcname and ctypes.CDLL(libcname)
 
 def log(msg):
     enc = sys.stderr.encoding or 'UTF-8'
@@ -175,7 +180,8 @@ def execute_rtmpdump(args):
     encoded_args = [x.encode(enc, 'replace') for x in args]
 
     try:
-        rtmpdump_process = subprocess.Popen(encoded_args)
+        rtmpdump_process = subprocess.Popen(encoded_args,
+            preexec_fn=sigterm_when_parent_dies)
         return rtmpdump_process.wait()
     except KeyboardInterrupt:
         try:
@@ -188,6 +194,15 @@ def execute_rtmpdump(args):
     except OSError, exc:
         log(u'Execution failed: ' + unicode(exc, 'UTF-8', 'replace'))
         return RD_INCOMPLETE
+
+def sigterm_when_parent_dies():
+    PR_SET_PDEATHSIG = 1
+
+    try:
+        libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+    except AttributeError:
+        # libc is None or libc does not contain prctl
+        pass
 
 def downloader_factory(url):
     if url.startswith('http://www.yle.fi/elavaarkisto/') or \
