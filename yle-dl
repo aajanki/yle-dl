@@ -19,6 +19,7 @@ import re
 import subprocess
 import os
 import os.path
+import platform
 import signal
 import urlparse
 import htmlentitydefs
@@ -180,8 +181,11 @@ def execute_rtmpdump(args):
     encoded_args = [x.encode(enc, 'replace') for x in args]
 
     try:
-        rtmpdump_process = subprocess.Popen(encoded_args,
-            preexec_fn=sigterm_when_parent_dies)
+        if platform.system() == 'Windows':
+            rtmpdump_process = subprocess.Popen(encoded_args)
+        else:
+            rtmpdump_process = subprocess.Popen(encoded_args,
+                preexec_fn=sigterm_when_parent_dies)
         return rtmpdump_process.wait()
     except KeyboardInterrupt:
         try:
