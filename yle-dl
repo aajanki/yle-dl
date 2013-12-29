@@ -210,7 +210,9 @@ def sigterm_when_parent_dies():
 
 def downloader_factory(url):
     if url.startswith('http://www.yle.fi/elavaarkisto/') or \
-            url.startswith('http://yle.fi/elavaarkisto/'):
+            url.startswith('http://yle.fi/elavaarkisto/') or \
+            url.startswith('http://yle.fi/arkivet/') or \
+            url.startswith('http://svenska.yle.fi/arkivet/'):
         return ElavaArkistoDownloader()
     elif url.startswith('http://ylex.yle.fi/'):
         return YleXDownloader()
