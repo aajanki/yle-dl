@@ -548,7 +548,7 @@ class AreenaStreamUrlUtils:
         try:
             papi_xml = xml.dom.minidom.parseString(papi_decoded)
         except Exception as exc:
-            log(unicode(exc, 'utf-8', 'ignore'))
+            log(unicode(exc.message, 'utf-8', 'ignore'))
             return None
 
         nodelist = papi_xml.getElementsByTagName('connect')
@@ -566,7 +566,7 @@ class AreenaStreamUrlUtils:
         try:
             scheme, edgefcs, rtmppath = self.rtmpurlparse(rtmp_connect)
         except ValueError as exc:
-            log(unicode(exc, 'utf-8', 'ignore'))
+            log(unicode(exc.message, 'utf-8', 'ignore'))
             return None
 
         ident = download_page('http://%s/fcs/ident' % edgefcs)
@@ -580,7 +580,7 @@ class AreenaStreamUrlUtils:
         try:
             identxml = xml.dom.minidom.parseString(ident)
         except Exception as exc:
-            log(unicode(exc, 'utf-8'))
+            log(unicode(exc.message, 'utf-8'))
             return None
 
         nodelist = identxml.getElementsByTagName('ip')
