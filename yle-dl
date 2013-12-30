@@ -537,7 +537,10 @@ class AreenaStreamUrlUtils:
             log('Failed to download papi')
             return None
 
-        papi_decoded = self.decode_papi(papi)
+        if papi.startswith('<media>'):
+            papi_decoded = papi
+        else:
+            papi_decoded = self.decode_papi(papi)
 
         if debug:
             log(papi_decoded)
@@ -863,9 +866,9 @@ class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
 ### Elava Arkisto ###
 
 
-class ElavaArkistoDownloader:
+class ElavaArkistoDownloader(AreenaStreamUrlUtils):
 
-    def extract_playlist(self, mediajson):
+    def extract_playlist(self, mediajson, pageurl):
         pagedata = json.loads(mediajson)
         if not pagedata.has_key('media'):
             return []
@@ -877,19 +880,13 @@ class ElavaArkistoDownloader:
 
             downloadURL = mediaitem.get('downloadURL', None)
 
-            bestrate = 0
-            bestrtmpurl = ''
-            for clip in mediaitem.get('urls', {}).get('domestic', []):
-                rate = float(clip.get('bitrate', 0))
-                url = clip.get('url', '')
-                if rate > bestrate and url:
-                    bestrate = rate
-                    bestrtmpurl = url
+            rtmpurl, playpath, ext = self.arkisto_rtmp(mediaitem)
 
-            if not bestrtmpurl:
+            if not rtmpurl:
+                rtmpurl, playpath, ext = self.mediakanta_rtmp(mediaitem, pageurl)
+
+            if not rtmpurl:
                 continue
-
-            rtmpurl, playpath, ext = parse_rtmp_single_component_app(bestrtmpurl)
 
             clips.append({'rtmp': rtmpurl,
                           'playpath': playpath,
@@ -898,6 +895,31 @@ class ElavaArkistoDownloader:
                           'filename': filename + ext})
 
         return clips
+
+    def arkisto_rtmp(self, mediaitem):
+        bestrate = 0
+        bestrtmpurl = ''
+        for clip in mediaitem.get('urls', {}).get('domestic', []):
+            rate = float(clip.get('bitrate', 0))
+            url = clip.get('url', '')
+            if rate > bestrate and url:
+                bestrate = rate
+                bestrtmpurl = url
+
+        if not bestrtmpurl:
+            return (None, None, None)
+
+        return parse_rtmp_single_component_app(bestrtmpurl)
+
+    def mediakanta_rtmp(self, mediaitem, pageurl):
+        if mediaitem.get('mediakantaId', '') != '':
+            papiurl = 'http://papi.yle.fi/ea/mod/rtmp/' + mediaitem['mediakantaId']
+            rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, False)
+            playpath = rtmp_params['playpath']
+            ext = os.path.splitext(playpath)[1] or '.mp3'
+            return (rtmp_params['rtmp'], playpath, ext)
+        else:
+            return (None, None, None)
 
     def download_single_episode(self, rtmpurl, playpath, downloadURL,
                                 filename, parameters, pageurl):
@@ -959,7 +981,7 @@ class ElavaArkistoDownloader:
         # Content-type header. This will workaround the problem.
         mediajson = mediajson.encode('iso-8859-1').decode('utf-8')
 
-        playlist = self.extract_playlist(mediajson)
+        playlist = self.extract_playlist(mediajson, url)
         if len(playlist) == 0:
             log(u"Can't find streams at %s." % url)
             return None
