@@ -25,5 +25,7 @@ rm -f '/usr/local/bin/yle-dl'
 
 
 
-Notes: PKGBUILD "_commit" needs to be updated when Branch's commit id 
+Notes:
+UPDATE - No need anymore Branch's commit id mess. :) 
+PKGBUILD "_commit" needs to be updated when Branch's commit id 
 updates to different. ()

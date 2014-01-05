@@ -1,30 +1,41 @@
-# Copyright (C) 2010-2013 Antti Ajanki
+# Copyright (C) 2010-2014 Antti Ajanki
 # Maintainer: Aleksi Venäläinen <hotwheelx@gmail.com>
 
 pkgname=yle-dl
 pkgver=2.1.0
-pkgrel=9
-epoch=
+pkgrel=10
 pkgdesc="yle-dl"
-_commit=1a3d11a
 arch=('i686' 'x86_64')
 url="http://aajanki.github.io/yle-dl/"
+_root="git://github.com/aajanki/yle-dl"
 license=('GPLv2')
-groups=()
 depends=(python python2 rtmpdump pycrypto)
-makedepends=()
+makedepends=(git)
 checkdepends=(python python2 rtmpdump pycrypto)
-optdepends=()
 provides=()
-conflicts=()
 replaces=(yle-dl)
-options=()
 changelog=
 source=(${pkgname}.tar.gz::https://github.com/aajanki/yle-dl/tarball/master)
-noextract=()
 md5sums=('SKIP')
 
+
+build() {
+  cd "$srcdir"
+
+  if [ -d ${pkgname} ] ; then
+    (cd ${pkgname} && git pull origin) || warning "Git pull failed!"
+  else
+    git clone $_root ${pkgname}
+  fi
+
+  rm -rf ${pkgname}-build
+  git clone "$srcdir/${pkgname}" ${pkgname}-build
+  cd ${pkgname}-build
+
+  make
+}
+
 package() {
-	cd "$srcdir/aajanki-${pkgname}-${_commit}"
+	cd "$srcdir/${pkgname}-build"
 	make DESTDIR="$pkgdir/" install
 }
