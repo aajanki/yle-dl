@@ -340,8 +340,18 @@ class AreenaNGDownloader:
             return RD_FAILED
 
         for clip in playlist:
-            res = self.process_single_episode(clip, url, parameters,
-                                              sublang, destdir, print_url)
+
+            # Areena's "all episodes" page does not include subtitle information, only 
+            # the single episode pages do. So read the episode numbers from the "all 
+            # episodes" page and then download the episodes individually.
+            if clip.has_key('id') and not clip['id'] in url and not clip.has_key('subtitles'):
+                url = "http://areena.yle.fi/tv/" + clip['id']
+                print url
+                
+                res = self.download_episodes(url, parameters, latest_only, sublang, destdir)
+            else:
+                res = self.process_single_episode(clip, url, parameters,
+                                                  sublang, destdir, print_url)
             if res != RD_SUCCESS:
                 return res
 
