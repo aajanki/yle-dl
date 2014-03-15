@@ -220,6 +220,9 @@ def downloader_factory(url):
     elif url.startswith('http://areena.yle.fi/tv/suora/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return AreenaLiveDownloader()
+    elif re.match(r'http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/', url) or \
+            url == 'http://ylex.yle.fi/radio-popup':
+        return AreenaLiveRadioDownloader()
     elif url.startswith('http://areena.yle.fi/') or \
             url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
@@ -449,13 +452,6 @@ class AreenaNGDownloader:
         return sane_filename(self.get_clip_title(clip)) + '.flv'
 
     def get_playlist(self, url, latest_episode):
-        if url == 'http://yle.fi/puhe/live':
-            # Radio Puhe uses non-standard metadta location, hardcode
-            # the values here.
-            return [{'channel': {'lang': 'fi',
-                                 'name': 'Yle Radio Puhe',
-                                 'id': '48'}}]
-
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
         episodeurl = urlparse.urlunparse((scheme, netloc, path + '.json', params, query, ''))
         fulldata = self.load_metadata(episodeurl)
@@ -904,6 +900,88 @@ class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
         papiurl = 'http://papi.yle.fi/ng/live/rtmp/' + media_id + '/fin'
         return self.rtmp_parameters_from_papi(papiurl, url, True)
 
+
+### Areena live radio ###
+
+
+class AreenaLiveRadioDownloader(AreenaStreamUrlUtils):
+    def download_episodes(self, url, parameters, latest_episode, sublang, destdir):
+        streamurl = AreenaLiveRadioStreamUrl(url)
+        if not streamurl.is_valid():
+            return RD_FAILED
+
+        outputparam = []
+        if '-o' not in parameters and '--flv' not in parameters:
+            filename = self.get_live_stream_title(url) + '.flv'
+            if destdir:
+                filename = os.path.join(destdir, filename)
+
+            if not is_resume_job(parameters):
+                filename = next_available_filename(filename)
+            outputparam = ['-o', filename]
+
+        args = [rtmpdump_binary]
+        args += streamurl.to_rtmpdump_args()
+        args += outputparam
+        args += parameters
+
+        outputfile = get_output_filename(args)
+        log_output_file(outputfile)
+
+        retcode = execute_rtmpdump(args)
+        if retcode != RD_SUCCESS:
+            return retcode
+
+        log_output_file(outputfile, True)
+
+        return retcode
+
+    def print_urls(self, url, print_episode_url, latest_episode):
+        printableurl = (url if print_episode_url
+                        else AreenaLiveRadioStreamUrl(url).to_url())
+        enc = sys.getfilesystemencoding()
+        print printableurl.encode(enc, 'replace')
+        return RD_SUCCESS
+
+    def print_titles(self, url, latest_episode):
+        enc = sys.getfilesystemencoding()
+        print self.get_live_stream_title(url).encode(enc, 'replace')
+        return RD_SUCCESS
+
+    def get_live_stream_title(self, pageurl):
+        m = re.match(r'http://(?:www\.)?yle\.fi/radio/([a-zA-Z0-9]+)/suora/?', pageurl)
+        title = m.group(1) if m else 'yleradio'
+        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
+        return title
+
+
+class AreenaLiveRadioStreamUrl(AreenaStreamUrlUtils):
+    def __init__(self, pageurl):
+        self.rtmp_params = self._get_radio_rtmpurl(pageurl)
+
+    def is_valid(self):
+        return bool(self.rtmp_params)
+
+    def to_url(self):
+        return self.rtmp_parameters_to_url(self.rtmp_params)
+
+    def to_rtmpdump_args(self):
+        return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
+
+    def _get_radio_rtmpurl(self, pageurl):
+        html = download_page(pageurl)
+        if not html:
+            return None
+
+        radioid1 = re.search(r'"id": "/([0-9]+)"', html)
+        radioid2 = re.search(r'id="live-channel".+data-id="([0-9]+)"', html)
+        radioid = radioid1 or radioid2
+        if not radioid:
+            return None
+
+        streamid = radioid.group(1)
+        papiurl = 'http://papi.yle.fi/ng/radio/rtmp/%s/fi' % streamid
+        return self.rtmp_parameters_from_papi(papiurl, pageurl, True)
 
 
 ### Elava Arkisto ###
