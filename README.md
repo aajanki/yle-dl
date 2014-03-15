@@ -22,7 +22,7 @@ Installation
 Ubuntu packages are available at https://launchpad.net/~yle-dl/+archive/release.
 
 On other systems install dependencies: rtmpdump (version 2.4
-or newer), python and pycrypto.
+or newer), python (2.6 or newer) and pycrypto.
 
 On Debian installing packages rtmpdump, python and
 python-crypto satisfies the dependencies.
