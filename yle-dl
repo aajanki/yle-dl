@@ -86,6 +86,7 @@ def usage():
     log(u'--latestepisode         Download the latest episode')
     log(u"--showurl               Print librtmp-compatible URL, don't download")
     log(u"--showtitle             Print stream title, don't download")
+    log(u"--showepisodepage       Print web page for each episode")
     log(u'--vfat                  Create Windows-compatible filenames')
     log(u'--sublang lang          Download subtitles, lang = fin, swe, smi, none or all')
     log(u'--rtmpdump path         Set path to rtmpdump binary')
@@ -311,17 +312,23 @@ def log_output_file(outputfile, done=False):
 
 ### Areena (new) ###
 
-
 class AreenaNGDownloader:
+    OP_DOWNLOAD = 1
+    OP_PRINT_DOWNLOAD_URL = 2
+    OP_PRINT_EPISODE_PAGE_URL = 3
+
     def download_episodes(self, url, parameters, latest_episode, sublang, destdir):
         """Extract all episodes (or just the latest episode if
         latest_only is True) from url."""
-        return self.process_episodes(url, parameters, latest_episode, sublang, destdir, False)
+        return self.process_episodes(url, parameters, latest_episode, sublang,
+                                      destdir, self.OP_DOWNLOAD)
 
-    def print_urls(self, url, latest_episode, sublang='all'):
+    def print_urls(self, url, print_episode_url, latest_episode, sublang='all'):
         """Extract episodes from url and print their
         librtmp-compatible URLs on stdout."""
-        return self.process_episodes(url, [], latest_episode, sublang, None, True)
+        optype = (self.OP_PRINT_EPISODE_PAGE_URL if (print_episode_url)
+            else self.OP_PRINT_DOWNLOAD_URL)
+        return self.process_episodes(url, [], latest_episode, sublang, None, optype)
 
     def print_titles(self, url, latest_only):
         playlist = self.get_playlist(url, latest_only)
@@ -334,7 +341,7 @@ class AreenaNGDownloader:
 
         return RD_SUCCESS
 
-    def process_episodes(self, url, parameters, latest_only, sublang, destdir, print_url):
+    def process_episodes(self, url, parameters, latest_only, sublang, destdir, optype):
         playlist = self.get_playlist(url, latest_only)
         if not playlist:
             return RD_FAILED
@@ -344,21 +351,22 @@ class AreenaNGDownloader:
             # Areena's "all episodes" page does not include subtitle information, only 
             # the single episode pages do. So read the episode numbers from the "all 
             # episodes" page and then download the episodes individually.
-            if clip.has_key('id') and not clip['id'] in url and not clip.has_key('subtitles') and not print_url:
+            if (clip.has_key('id') and not clip['id'] in url and
+                not clip.has_key('subtitles') and optype == self.OP_DOWNLOAD):
                 url = "http://areena.yle.fi/tv/" + clip['id']
                 print url
                 
                 res = self.download_episodes(url, parameters, latest_only, sublang, destdir)
             else:
                 res = self.process_single_episode(clip, url, parameters,
-                                                  sublang, destdir, print_url)
+                                                  sublang, destdir, optype)
             if res != RD_SUCCESS:
                 return res
 
         return RD_SUCCESS
 
     def process_single_episode(self, clip, pageurl, parameters,
-                               sublang, destdir, print_url):
+                               sublang, destdir, optype):
         """Construct clip parameters and starts a rtmpdump process."""
         streamurl = AreenaStreamUrl(clip, pageurl)
         if not streamurl.is_valid():
@@ -366,9 +374,12 @@ class AreenaNGDownloader:
                 (pageurl, streamurl.get_error_message()))
             return RD_FAILED
 
-        if print_url:
-            enc = sys.getfilesystemencoding()
+        enc = sys.getfilesystemencoding()
+        if optype == self.OP_PRINT_DOWNLOAD_URL:
             print streamurl.to_url().encode(enc, 'replace')
+            return RD_SUCCESS
+        elif optype == self.OP_PRINT_EPISODE_PAGE_URL:
+            print streamurl.to_episode_url().encode(enc, 'replace')
             return RD_SUCCESS
 
         if not streamurl.to_rtmpdump_args():
@@ -687,12 +698,14 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
         self.rtmp_params = None
         self.direct_url = None
         self.error = None
+        self.episodeurl = pageurl
 
         if clip:
             if 'channel' in clip:
                 self._initialize_liveradio_parameters(clip, pageurl)
             else:
                 self._initialize_tv_stream(clip, pageurl)
+            self.episodeurl = self._create_pageurl(clip)
 
     def is_valid(self):
         return self.rtmp_params or self.direct_url
@@ -716,6 +729,9 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
             return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
         else:
             return []
+
+    def to_episode_url(self):
+        return self.episodeurl
 
     def _initialize_liveradio_parameters(self, clip, pageurl):
         channel = clip.get('channel', {})
@@ -835,12 +851,13 @@ class AreenaLiveDownloader:
 
         return retcode
 
-    def print_urls(self, url, latest_episode, sublang='all'):
+    def print_urls(self, url, print_episode_url, latest_episode, sublang='all'):
         """Extract episodes from url and print their
         librtmp-compatible URLs on stdout."""
-        streamurl = AreenaLiveStreamUrl(url)
+        printableurl = (url if print_episode_url
+                        else AreenaLiveStreamUrl(url).to_url())
         enc = sys.getfilesystemencoding()
-        print streamurl.to_url().encode(enc, 'replace')
+        print printableurl.encode(enc, 'replace')
         return RD_SUCCESS
 
     def print_titles(self, url, latest_episode):
@@ -1042,16 +1059,19 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
 
         return RD_SUCCESS
 
-    def print_urls(self, url, latest_episode):
+    def print_urls(self, url, print_episode_url, latest_episode):
         """Download playlist from Elava Arkisto page at url and print
         a librtmp-compatible URL for each clip."""
         playlist = self.get_playlist(url, latest_episode)
         if playlist is None:
             return RD_FAILED
 
-        for clip in playlist:
-            self.print_librtmp_url(clip['rtmp'], clip['playpath'],
-                                   url, clip['downloadURL'])
+        if print_episode_url:
+            print url
+        else:
+            for clip in playlist:
+                self.print_librtmp_url(clip['rtmp'], clip['playpath'],
+                                       url, clip['downloadURL'])
 
         return RD_SUCCESS
 
@@ -1111,7 +1131,7 @@ class YleXDownloader(AreenaNGDownloader):
 
         return retcode
 
-    def print_urls(self, url, latest_episode):
+    def print_urls(self, url, print_episode_url, latest_episode):
         """Print a librtmp-compatible YleX Areena URL to stdout."""
         html = download_page(url)
         if not html:
@@ -1122,7 +1142,12 @@ class YleXDownloader(AreenaNGDownloader):
             return RD_FAILED
 
         enc = sys.getfilesystemencoding()
-        print streamurl.to_url().encode(enc, 'replace')
+        printableurl = None
+        if print_episode_url:
+            printableurl = streamurl.to_episode_url()
+        else:
+            printableurl = streamurl.to_url()
+        print printableurl.encode(enc, 'replace')
         return RD_SUCCESS
 
     def print_titles(self, url, latest_episode):
@@ -1145,12 +1170,16 @@ class YleXDownloader(AreenaNGDownloader):
 class YleXStreamUrl(AreenaStreamUrlUtils):
     def __init__(self, html, url):
         self.rtmp_params = self._parse_rtmp_params(html, url)
+        self.episode_url = url
 
     def is_valid(self):
         return bool(self.rtmp_params)
 
     def to_url(self):
         return self.rtmp_parameters_to_url(self.rtmp_params)
+
+    def to_episode_url(self):
+        return self.episode_url
 
     def to_rtmpdump_args(self):
         return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
@@ -1177,6 +1206,7 @@ def main():
     latest_episode = False
     url_only = False
     title_only = False
+    print_episode_url = False
     sublang = 'all'
     show_usage = False
     url = None
@@ -1204,6 +1234,9 @@ def main():
             url_only = True
         elif arg == '--showtitle':
             title_only = True
+        elif arg == '--showepisodepage':
+            url_only = True
+            print_episode_url = True
         elif arg == '--vfat':
             global excludechars
             global excludechars_windows
@@ -1242,7 +1275,7 @@ def main():
         return RD_FAILED
 
     if url_only:
-        sys.exit(dl.print_urls(url, latest_episode))
+        sys.exit(dl.print_urls(url, print_episode_url, latest_episode))
     elif title_only:
         sys.exit(dl.print_titles(url, latest_episode))
     else:
