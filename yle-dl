@@ -447,17 +447,8 @@ class AreenaNGDownloader:
 
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
         episodeurl = urlparse.urlunparse((scheme, netloc, path + '.json', params, query, ''))
-        jsonstr = download_page(episodeurl)
-        if not jsonstr:
-            return None
-
-        if debug:
-            log(jsonstr)
-
-        try:
-            fulldata = json.loads(jsonstr)
-        except ValueError:
-            log(u'Invalid JSON file at ' +  episodeurl)
+        fulldata = self.load_metadata(episodeurl)
+        if fulldata is None:
             return None
 
         playlist = []
@@ -467,17 +458,42 @@ class AreenaNGDownloader:
             playlist = fulldata['search'].get('results', [])
         elif 'availableEpisodes' in fulldata or \
                 'availableClips' in fulldata:
-            available_episodes = fulldata.get('availableEpisodes', {})
-            available_clips = fulldata.get('availableClips', {})
-            playlist = available_episodes.get('video', []) + \
-                       available_episodes.get('audio', []) + \
-                       available_clips.get('video', []) + \
-                       available_clips.get('audio', [])
+            playlist = self.get_full_series_playlist(url)
 
         if latest_episode:
             playlist = sorted(playlist, key=self.get_media_time)[-1:]
 
         return playlist
+
+    def get_full_series_playlist(self, url):
+        playlist = []
+        (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
+        program_types = ['ohjelmat', 'muut']
+        for ptype in program_types:
+            size_query = 'from=0&to=1000&sisalto=%s' % ptype
+            searchurl = urlparse.urlunparse((scheme, netloc, path + '.json',
+                                             params, query + size_query, ''))
+            fulldata = self.load_metadata(searchurl)
+            if fulldata is not None:
+                playlist.extend(fulldata.get('search', {}).get('results', []))
+        return playlist
+
+    def load_metadata(self, url):
+        jsonstr = download_page(url)
+        if not jsonstr:
+            return None
+        
+        if debug:
+            log(url)
+            log(jsonstr)
+        
+        try:
+            metadata = json.loads(jsonstr)
+        except ValueError:
+            log(u'Invalid JSON file at ' +  url)
+            return None
+
+        return metadata
 
     def download_subtitles(self, available_subtitles, preferred_lang, videofilename):
         basename = os.path.splitext(videofilename)[0]
