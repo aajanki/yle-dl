@@ -220,7 +220,7 @@ def downloader_factory(url):
     elif url.startswith('http://areena.yle.fi/tv/suora/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return AreenaLiveDownloader()
-    elif re.match(r'http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/', url) or \
+    elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/?$', url) or \
             url == 'http://ylex.yle.fi/radio-popup':
         return AreenaLiveRadioDownloader()
     elif url.startswith('http://areena.yle.fi/') or \
