@@ -74,10 +74,13 @@ def log(msg):
     sys.stderr.write('\n')
     sys.stderr.flush()
 
-def usage():
-    """Print the usage message to stderr"""
+def splashscreen():
     log(u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto' % version)
     log(u'Copyright (C) 2009-2013 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv2')
+
+def usage():
+    """Print the usage message to stderr"""
+    splashscreen()
     log(u'')
     log(u'%s [yle-dl or rtmpdump options] URL' % sys.argv[0])
     log(u'')
@@ -1344,6 +1347,9 @@ def main():
     if show_usage or url is None:
         usage()
         sys.exit(1)
+
+    if debug or not (url_only or title_only):
+        splashscreen()
 
     url = encode_url_utf8(url)
     dl = downloader_factory(url)
