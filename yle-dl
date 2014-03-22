@@ -746,6 +746,7 @@ class AreenaStreamUrlUtils:
 
     def select_quality(self, streams, filters):
         maxbitrate = filters.maxbitrate if filters else sys.maxint
+        streams = self.filter_by_subtitle(streams, filters)
         if maxbitrate <= 0:
             # lowest quality stream
             return sorted(streams, key=lambda x: x.bitrate())[0]
@@ -756,6 +757,14 @@ class AreenaStreamUrlUtils:
                 return sorted(below_limit, key=lambda x: x.bitrate())[-1]
             else:
                 return None
+    
+    def filter_by_subtitle(self, streams, filters):
+        without_hard_subtitles = [s for s in streams if not s.hardSubtitles]
+        if without_hard_subtitles:
+            return without_hard_subtitles
+        else:
+            return streams
+
 
 class AreenaStreamUrl(AreenaStreamUrlUtils):
     def __init__(self, clip, pageurl, filters):
