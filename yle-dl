@@ -387,6 +387,7 @@ class AreenaNGDownloader:
         if not playlist:
             return RD_FAILED
 
+        overall_status = RD_SUCCESS
         for clip in playlist:
 
             # Areena's "all episodes" page does not include subtitle information, only 
@@ -402,9 +403,9 @@ class AreenaNGDownloader:
                 res = self.process_single_episode(clip, url, filters,
                                                   rtmpdumpargs, destdir, optype)
             if res != RD_SUCCESS:
-                return res
+                overall_status = res
 
-        return RD_SUCCESS
+        return overall_status
 
     def process_single_episode(self, clip, pageurl, filters, rtmpdumpargs,
                                destdir, optype):
@@ -1248,6 +1249,7 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
         if playlist is None:
             return RD_FAILED
 
+        overall_status = RD_SUCCESS
         for clip in playlist:
             filename = clip['filename']
             if destdir:
@@ -1262,9 +1264,9 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
                                                   filename,
                                                   rtmpdumpargs, url)
             if status != RD_SUCCESS:
-                return status
+                overall_status = status
 
-        return RD_SUCCESS
+        return overall_status
 
     def print_urls(self, url, print_episode_url, filters):
         """Download playlist from Elava Arkisto page at url and print
