@@ -163,6 +163,12 @@ def decode_html_entity(entity):
 def replace_entitydefs(content):
     return re.sub(r'&(.*?);', lambda m: decode_html_entity(m.group(1)), content)
 
+def int_or_else(x, default):
+    try:
+        return int(x)
+    except ValueError:
+        return default
+
 def sane_filename(name):
     if isinstance(name, unicode):
         tr = dict((ord(c), ord(u'_')) for c in excludechars)
@@ -587,17 +593,17 @@ class AreenaStreamUrlUtils:
             log(unicode(exc.message, 'utf-8', 'ignore'))
             return None
 
-        nodelist = papi_xml.getElementsByTagName('connect')
-        if len(nodelist) < 1 or len(nodelist[0].childNodes) < 1:
-            log('No <connect> node!')
+        streams = self.streams_from_papi(papi_xml)
+        if not streams:
+            log('No streams found in papi')
             return None
-        rtmp_connect = nodelist[0].firstChild.nodeValue
 
-        nodelist = papi_xml.getElementsByTagName('stream')
-        if len(nodelist) < 1 or len(nodelist[0].childNodes) < 1:
-            log('No <stream> node!')
-            return None
-        rtmp_stream = nodelist[0].firstChild.nodeValue
+        best = sorted(streams, key=lambda x: x.videoBitrate + x.audioBitrate)[-1]
+        rtmp_connect = best.connect
+        rtmp_stream = best.stream
+        if debug:
+            log('Selected stream')
+            log(str(best))
 
         try:
             scheme, edgefcs, rtmppath = self.rtmpurlparse(rtmp_connect)
@@ -690,6 +696,29 @@ class AreenaStreamUrlUtils:
             else:
                 args.append('--%s=%s' % (key, value))
         return args
+
+    def streams_from_papi(self, papi):
+        streams = []
+        assets = papi.getElementsByTagName('onlineAsset')
+        for asset in assets:
+            urls = asset.getElementsByTagName('url')
+            if urls and len(urls) >= 1:
+                connect = self.extract_child_content(urls[0], 'connect')
+                stream = self.extract_child_content(urls[0], 'stream')
+                if connect and stream:
+                    videoBR = self.extract_child_content(asset, 'videoBitrate') or ''
+                    audioBR = self.extract_child_content(asset, 'audioBitrate') or ''
+                    subtitles = self.extract_child_content(asset, 'hardSubtitles') or ''
+                    streams.append(PAPIStream(connect, stream, videoBR,
+                                              audioBR, subtitles))
+        return streams
+
+    def extract_child_content(self, node, childName):
+        child = node.getElementsByTagName(childName)
+        if child.length > 0 and child[0].firstChild:
+            return child[0].firstChild.nodeValue
+        else:
+            return None
 
 
 class AreenaStreamUrl(AreenaStreamUrlUtils):
@@ -806,6 +835,23 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
             urltype = 'tv'
 
         return 'http://areena.yle.fi/%s/%s' % (urltype, media['id'])
+
+
+class PAPIStream:
+    def __init__(self, connect, stream, videoBitrate, audioBitrate, hardSubtitles):
+        self.connect = connect
+        self.stream = stream
+        self.videoBitrate = int_or_else(videoBitrate, 0)
+        self.audioBitrate = int_or_else(audioBitrate, 0)
+        self.hardSubtitles = hardSubtitles
+
+    def __str__(self):
+        return json.dumps({
+            'connect': self.connect,
+            'stream': self.stream,
+            'videoBitrate': self.videoBitrate,
+            'audioBitrate': self.audioBitrate,
+            'hardSubtitles': self.hardSubtitles})
 
 
 ### Areena live TV ###
