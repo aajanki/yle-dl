@@ -306,14 +306,19 @@ def parse_rtmp_single_component_app(rtmpurl):
     # This also means that we can't rely on librtmp's playpath
     # parser and have to duplicate the logic here.
     k = 0
-    for i, x in enumerate(rtmpurl):
-        if x == '/':
-            k += 1
-            if k == 4:
-                break
+    if rtmpurl.find('://') != -1:
+        i = -1
+        for i, x in enumerate(rtmpurl):
+            if x == '/':
+                k += 1
+                if k == 4:
+                    break
 
-    playpath = rtmpurl[(i+1):]
-    app_only_rtmpurl = rtmpurl[:i]
+        playpath = rtmpurl[(i+1):]
+        app_only_rtmpurl = rtmpurl[:i]
+    else:
+        playpath = rtmpurl
+        app_only_rtmpurl = ''
 
     ext = os.path.splitext(playpath)[1]
     if ext == '.mp4':
@@ -1089,6 +1094,10 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
         if not pagedata.has_key('media'):
             return []
 
+        if debug:
+            log('media in pagedata:')
+            log(str(pagedata['media']))
+
         clips = []
         for mediaitem in pagedata['media']:
             title = mediaitem.get('title', 'elavaarkisto')
@@ -1100,6 +1109,9 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
 
             if not rtmpurl:
                 rtmpurl, playpath, ext = self.mediakanta_rtmp(mediaitem, pageurl)
+
+            if debug:
+                log('clip rtmp url: ' + rtmpurl)
 
             if not rtmpurl:
                 continue
