@@ -92,6 +92,7 @@ def usage():
     log(u"--showepisodepage       Print web page for each episode")
     log(u'--vfat                  Create Windows-compatible filenames')
     log(u'--sublang lang          Download subtitles, lang = fin, swe, smi, none or all')
+    log(u'--maxbitrate br         Maximum bitrate stream to download, integer in kB or "best"')
     log(u'--rtmpdump path         Set path to rtmpdump binary')
     log(u'--destdir dir           Save files to dir')
     log(u'')
@@ -254,6 +255,12 @@ def get_output_filename(args_in):
 
 def is_resume_job(args):
     return '--resume' in args or '-e' in args
+
+def bitrate_from_arg(arg):
+    if arg == 'best':
+        return sys.maxint
+    else:
+        return int_or_else(arg, sys.maxint)
 
 def next_available_filename(proposed):
     i = 1
@@ -583,7 +590,7 @@ class AreenaStreamUrlUtils:
     # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
     AES_KEY = 'hjsadf89hk123ghk'
 
-    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, maxbitrate=sys.maxint):
+    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters=None):
         papi = download_page(papiurl)
         if not papi:
             log('Failed to download papi')
@@ -608,7 +615,11 @@ class AreenaStreamUrlUtils:
             log('No streams found in papi')
             return None
 
-        best = sorted(streams, key=lambda x: x.videoBitrate + x.audioBitrate)[-1]
+        best = self.select_quality(streams, filters)
+        if not best:
+            log('No streams matching the bitrate limit')
+            return None
+        
         rtmp_connect = best.connect
         rtmp_stream = best.stream
         if debug:
@@ -730,6 +741,13 @@ class AreenaStreamUrlUtils:
         else:
             return None
 
+    def select_quality(self, streams, filters):
+        maxbitrate = filters.maxbitrate if filters else sys.maxint
+        below_limit = [x for x in streams if x.bitrate() < maxbitrate]
+        if below_limit:
+            return sorted(below_limit, key=lambda x: x.bitrate())[-1]
+        else:
+            return None
 
 class AreenaStreamUrl(AreenaStreamUrlUtils):
     def __init__(self, clip, pageurl, filters):
@@ -740,9 +758,9 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
 
         if clip:
             if 'channel' in clip:
-                self._initialize_liveradio_parameters(clip, pageurl)
+                self._initialize_liveradio_parameters(clip, pageurl, filters)
             else:
-                self._initialize_tv_stream(clip, pageurl, filters.maxbitrate)
+                self._initialize_tv_stream(clip, pageurl, filters)
             self.episodeurl = self._create_pageurl(clip)
 
     def is_valid(self):
@@ -771,7 +789,7 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
     def to_episode_url(self):
         return self.episodeurl
 
-    def _initialize_liveradio_parameters(self, clip, pageurl):
+    def _initialize_liveradio_parameters(self, clip, pageurl, filters):
         channel = clip.get('channel', {})
         lang = channel.get('lang', 'fi')
         radioid = channel.get('id', None)
@@ -780,9 +798,9 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
             return
 
         papiurl = 'http://papi.yle.fi/ng/radio/rtmp/%s/%s' % (radioid, lang)
-        self.rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, True)
+        self.rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, True, filters)
 
-    def _initialize_tv_stream(self, clip, pageurl, maxbitrate):
+    def _initialize_tv_stream(self, clip, pageurl, filters):
         # Search results don't have the media item so we have to
         # download clip metadata from the source.
         if not clip.has_key('media'):
@@ -792,7 +810,7 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
 
         media = clip.get('media', {})
         if media.get('id'):
-            self._parse_rtmp_url(media, pageurl, maxbitrate)
+            self._parse_rtmp_url(media, pageurl, filters)
         elif media.get('mediaUrl'):
             self._parse_direct_media_url(media)
         elif media.get('downloadUrl'):
@@ -800,7 +818,7 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
         else:
             self.error = 'No id, mediaUrl or downloadUrl'
 
-    def _parse_rtmp_url(self, media, pageurl, maxbitrate):
+    def _parse_rtmp_url(self, media, pageurl, filters):
         if media.get('live', False):
             islive = True
             papiurl = 'http://papi.yle.fi/ng/live/rtmp/' + media['id'] + '/fin'
@@ -809,7 +827,7 @@ class AreenaStreamUrl(AreenaStreamUrlUtils):
             papiurl = 'http://papi.yle.fi/ng/mod/rtmp/' + media['id']
 
         self.rtmp_params = \
-          self.rtmp_parameters_from_papi(papiurl, pageurl, islive, maxbitrate)
+          self.rtmp_parameters_from_papi(papiurl, pageurl, islive, filters)
 
     def _parse_direct_media_url(self, media):
         self.direct_url = media.get('mediaUrl')
@@ -862,6 +880,9 @@ class PAPIStream:
             'videoBitrate': self.videoBitrate,
             'audioBitrate': self.audioBitrate,
             'hardSubtitles': self.hardSubtitles})
+
+    def bitrate(self):
+        return self.videoBitrate + self.audioBitrate
 
 
 ### Areena live TV ###
@@ -1343,6 +1364,7 @@ def main():
     title_only = False
     print_episode_url = False
     sublang = 'all'
+    maxbitrate = sys.maxint
     show_usage = False
     url = None
     destdir = None
@@ -1379,6 +1401,9 @@ def main():
         elif arg == '--sublang':
             if argv:
                 sublang = argv.pop(0)
+        elif arg == '--maxbitrate':
+            if argv:
+                maxbitrate = bitrate_from_arg(argv.pop(0))
         elif arg == '--rtmpdump':
             if argv:
                 rtmpdump_binary = argv.pop(0)
@@ -1412,7 +1437,7 @@ def main():
         log(u'Is this really a Yle video page?')
         return RD_FAILED
 
-    sfilt = StreamFilters(latest_episode, sublang)
+    sfilt = StreamFilters(latest_episode, sublang, maxbitrate)
     if url_only:
         sys.exit(dl.print_urls(url, print_episode_url, sfilt))
     elif title_only:
