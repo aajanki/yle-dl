@@ -31,6 +31,7 @@ import codecs
 import base64
 import ctypes
 import ctypes.util
+from operator import itemgetter
 from Crypto.Cipher import AES
 
 version = '2.1.1'
@@ -345,6 +346,9 @@ class StreamFilters:
         self.latest_only = latest_only
         self.sublang = sublang
         self.maxbitrate = maxbitrate
+
+    def keep_lowest_bitrate(self):
+        return self.maxbitrate <= 0
 
 
 ### Areena (new) ###
@@ -750,9 +754,14 @@ class AreenaStreamUrlUtils:
             return None
 
     def select_quality(self, streams, filters):
-        maxbitrate = filters.maxbitrate if filters else sys.maxint
+        if filters:
+            maxbitrate = filters.maxbitrate
+            keep_lowest = filters.keep_lowest_bitrate()
+        else:
+            maxbitrate = sys.maxint
+            keep_lowest = False
         streams = self.filter_by_subtitle(streams, filters)
-        if maxbitrate <= 0:
+        if keep_lowest:
             # lowest quality stream
             return sorted(streams, key=lambda x: x.bitrate())[0]
         else:
@@ -1089,7 +1098,7 @@ class AreenaLiveRadioStreamUrl(AreenaStreamUrlUtils):
 
 class ElavaArkistoDownloader(AreenaStreamUrlUtils):
 
-    def extract_playlist(self, mediajson, pageurl):
+    def extract_playlist(self, mediajson, pageurl, filters):
         pagedata = json.loads(mediajson)
         if not pagedata.has_key('media'):
             return []
@@ -1105,10 +1114,11 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
 
             downloadURL = mediaitem.get('downloadURL', None)
 
-            rtmpurl, playpath, ext = self.arkisto_rtmp(mediaitem)
+            rtmpurl, playpath, ext = self.arkisto_rtmp(mediaitem, filters)
 
             if not rtmpurl:
-                rtmpurl, playpath, ext = self.mediakanta_rtmp(mediaitem, pageurl)
+                rtmpurl, playpath, ext = \
+                  self.mediakanta_rtmp(mediaitem, pageurl, filters)
 
             if debug:
                 log('clip rtmp url: ' + rtmpurl)
@@ -1124,25 +1134,37 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
 
         return clips
 
-    def arkisto_rtmp(self, mediaitem):
-        bestrate = 0
-        bestrtmpurl = ''
+    def arkisto_rtmp(self, mediaitem, filters):
+        streams = self.extract_streams_and_bitrates(mediaitem)
+        if not streams:
+            return (None, None, None)
+
+        if filters.keep_lowest_bitrate():
+            selected = sorted(streams, key=itemgetter(0))[0]
+        else:
+            filtered = [s for s in streams if s[0] <= filters.maxbitrate]
+            if not filtered:
+                log('No streams matching the bitrate limit')
+                return (None, None, None)
+            selected = sorted(streams, key=itemgetter(0))[-1]
+
+        if debug:
+            log('Selected by bitrate filter: ' + str(selected))
+            
+        return parse_rtmp_single_component_app(selected[1])
+
+    def extract_streams_and_bitrates(self, mediaitem):
+        streams = []
         for clip in mediaitem.get('urls', {}).get('domestic', []):
             rate = float(clip.get('bitrate', 0))
             url = clip.get('url', '')
-            if rate > bestrate and url:
-                bestrate = rate
-                bestrtmpurl = url
+            streams.append((rate, url))
+        return streams
 
-        if not bestrtmpurl:
-            return (None, None, None)
-
-        return parse_rtmp_single_component_app(bestrtmpurl)
-
-    def mediakanta_rtmp(self, mediaitem, pageurl):
+    def mediakanta_rtmp(self, mediaitem, pageurl, filters):
         if mediaitem.get('mediakantaId', '') != '':
             papiurl = 'http://papi.yle.fi/ea/mod/rtmp/' + mediaitem['mediakantaId']
-            rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, False)
+            rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
             playpath = rtmp_params['playpath']
             ext = os.path.splitext(playpath)[1] or '.mp3'
             return (rtmp_params['rtmp'], playpath, ext)
@@ -1193,7 +1215,7 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
                 (rtmpurl, playpath, ARKISTO_SWF, pageurl)
         return RD_SUCCESS
 
-    def get_playlist(self, url, latest_episode):
+    def get_playlist(self, url, filters):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
 
         if '.' in path:
@@ -1209,12 +1231,12 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
         # Content-type header. This will workaround the problem.
         mediajson = mediajson.encode('iso-8859-1').decode('utf-8')
 
-        playlist = self.extract_playlist(mediajson, url)
+        playlist = self.extract_playlist(mediajson, url, filters)
         if len(playlist) == 0:
             log(u"Can't find streams at %s." % url)
             return None
 
-        if latest_episode:
+        if filters.latest_only:
             playlist = playlist[:1]
 
         return playlist
@@ -1222,7 +1244,7 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
         """Download playlist from Elava Arkisto page at url and
         download all clips using rtmpdump."""
-        playlist = self.get_playlist(url, filters.latest_only)
+        playlist = self.get_playlist(url, filters)
         if playlist is None:
             return RD_FAILED
 
@@ -1247,7 +1269,7 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
     def print_urls(self, url, print_episode_url, filters):
         """Download playlist from Elava Arkisto page at url and print
         a librtmp-compatible URL for each clip."""
-        playlist = self.get_playlist(url, filters.latest_only)
+        playlist = self.get_playlist(url, filters)
         if playlist is None:
             return RD_FAILED
 
@@ -1261,7 +1283,7 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
         return RD_SUCCESS
 
     def print_titles(self, url, filters):
-        playlist = self.get_playlist(url, filters.latest_only)
+        playlist = self.get_playlist(url, filters)
         if playlist is None:
             return RD_FAILED
 
