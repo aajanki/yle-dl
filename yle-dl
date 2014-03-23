@@ -93,7 +93,8 @@ def usage():
     log(u"--showepisodepage       Print web page for each episode")
     log(u'--vfat                  Create Windows-compatible filenames')
     log(u'--sublang lang          Download subtitles, lang = fin, swe, smi, none or all')
-    log(u'--maxbitrate br         Maximum bitrate stream to download, integer in kB')
+    log(u'--hardsubs              Download stream with hard subs if available')
+    log(u'--maxbitrate br         Maximum bitrate stream to download, integer in kB/s')
     log(u'                        or "best" or "worst"')
     log(u'--rtmpdump path         Set path to rtmpdump binary')
     log(u'--destdir dir           Save files to dir')
@@ -342,9 +343,10 @@ class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
-    def __init__(self, latest_only=False, sublang='all', maxbitrate=None):
+    def __init__(self, latest_only, sublang, hardsubs, maxbitrate):
         self.latest_only = latest_only
         self.sublang = sublang
+        self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
 
     def keep_lowest_bitrate(self):
@@ -628,7 +630,8 @@ class AreenaStreamUrlUtils:
             log('No streams found in papi')
             return None
 
-        best = self.select_quality(streams, filters)
+        withsubs = self.filter_by_hard_subtitles(streams, filters)
+        best = self.select_quality(withsubs, filters)
         if not best:
             log('No streams matching the bitrate limit')
             return None
@@ -754,8 +757,16 @@ class AreenaStreamUrlUtils:
         else:
             return None
 
+    def filter_by_hard_subtitles(self, streams, filters):
+        if filters.hardsubs and filters.sublang == 'all':
+            filtered = streams
+        elif filters.hardsubs and filters.sublang != 'none':
+            filtered = [s for s in streams if s.hardSubtitles == filters.sublang]
+        else:
+            filtered = [s for s in streams if not s.hardSubtitles]
+        return filtered or streams
+
     def select_quality(self, streams, filters):
-        streams = self.filter_by_subtitle(streams, filters)
         if filters.keep_lowest_bitrate():
             # lowest quality stream
             return sorted(streams, key=lambda x: x.bitrate())[0]
@@ -766,13 +777,6 @@ class AreenaStreamUrlUtils:
                 return sorted(below_limit, key=lambda x: x.bitrate())[-1]
             else:
                 return None
-    
-    def filter_by_subtitle(self, streams, filters):
-        without_hard_subtitles = [s for s in streams if not s.hardSubtitles]
-        if without_hard_subtitles:
-            return without_hard_subtitles
-        else:
-            return streams
 
 
 class AreenaStreamUrl(AreenaStreamUrlUtils):
@@ -1411,6 +1415,7 @@ def main():
     title_only = False
     print_episode_url = False
     sublang = 'all'
+    hardsubs = False
     maxbitrate = sys.maxint
     show_usage = False
     url = None
@@ -1448,6 +1453,8 @@ def main():
         elif arg == '--sublang':
             if argv:
                 sublang = argv.pop(0)
+        elif arg == '--hardsubs':
+            hardsubs = True
         elif arg == '--maxbitrate':
             if argv:
                 maxbitrate = bitrate_from_arg(argv.pop(0))
@@ -1484,7 +1491,7 @@ def main():
         log(u'Is this really a Yle video page?')
         return RD_FAILED
 
-    sfilt = StreamFilters(latest_episode, sublang, maxbitrate)
+    sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
     if url_only:
         sys.exit(dl.print_urls(url, print_episode_url, sfilt))
     elif title_only:
