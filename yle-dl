@@ -1472,6 +1472,12 @@ def main():
             if arg in ARGOPTS and argv:
                 rtmpdumpargs.append(argv.pop(0))
 
+    if not rtmpdump_binary:
+        if sys.platform == 'win32':
+            rtmpdump_binary = which('rtmpdump.exe')
+        else:
+            rtmpdump_binary = which('rtmpdump')
+
     if show_usage or url is None:
         usage()
         sys.exit(1)
@@ -1480,12 +1486,8 @@ def main():
         splashscreen()
 
     if not rtmpdump_binary:
-        if sys.platform == 'win32':
-            rtmpdump_binary = which('rtmpdump.exe')
-        else:
-            rtmpdump_binary = which('rtmpdump')
-    if not rtmpdump_binary:
         log(u'Error: rtmpdump not found on path, use --rtmpdump for setting the location')
+        sys.exit(1)
 
     url = encode_url_utf8(url)
     dl = downloader_factory(url)
