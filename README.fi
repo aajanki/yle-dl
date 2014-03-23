@@ -11,11 +11,8 @@ arkistosta (http://www.yle.fi/elavaarkisto/).
 Asennus
 -------
 
-Ubuntu-paketit löytyvät osoitteesta
-https://launchpad.net/~yle-dl/+archive/release.
-
-Muissa järjestelmissä asenna vaaditut kirjastot ja ohjelmat:
-rtmpdump (2.4 tai uudempi), python (2.6 tai uudempi) ja pycrypto.
+Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi),
+python (2.6 tai uudempi) ja pycrypto.
 
 Debianissa nämä löytyvät paketeista rtmpdump, python ja
 python-crypto.
@@ -34,6 +31,12 @@ Alkaen versiosta 1.99.9 yle-dl:stä ei enää tarvitse Ylen palvelimia
 varten muunneltua kopiota rtmpdump-ohjelmasta. Aikaisemman
 yle-dl-version mukana asennetun rtmpdumpin ja pluginin voi poistaa
 komentamalla pääkäyttäjänä "make uninstall-old-rtmpdump".
+
+Valmiit asennuspaketit
+----------------------
+
+Katso lista saatavilla olevista asennuspaketeista osoitteesta
+http://aajanki.github.io/yle-dl/
 
 RPM-paketointi:
 

@@ -19,13 +19,11 @@ Yle: [Yle Areena], [YleX Areena] and [Elävä Arkisto].
 Installation
 ------------
 
-Ubuntu packages are available at https://launchpad.net/~yle-dl/+archive/release.
+Install dependencies: rtmpdump (version 2.4 or newer), python (2.6 or
+newer) and pycrypto.
 
-On other systems install dependencies: rtmpdump (version 2.4
-or newer), python (2.6 or newer) and pycrypto.
-
-On Debian installing packages rtmpdump, python and
-python-crypto satisfies the dependencies.
+On Debian installing packages rtmpdump, python and python-crypto
+satisfies the dependencies.
 
 On OS X install rtmpdump with homebrew: ``brew install --HEAD
 rtmpdump`` and pycrypto with pip: ``pip install -r requirements.txt``
@@ -41,9 +39,16 @@ rtmpdump or plugin. Instead, everything is now downloadable with the
 plain rtmpdump. To remove the remnants of previous versions run "make
 uninstall-old-rtmpdump".
 
-RPM package:
+Packages for various distros
+----------------------------
 
-contrib/yle-dl.spec is a spec file for creating RPM-package for Fedora.
+See http://aajanki.github.com/yle-dl/index-en.html for a list of
+available installation packages.
+
+RPM packaging:
+
+contrib/yle-dl.spec is a spec file for creating a RPM-package for
+Fedora.
 
 Usage
 -----
