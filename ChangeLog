@@ -3,6 +3,13 @@ rtmpdump frontend for Yle servers
 Copyright 2008-2012 Antti Ajanki
 Distributed under the GPL v2
 
+23 Mar 2014, Version 2.2.0
+
+- Download best availability quality streams by default
+- --maxbitrate controls the maximum bitrate of the stream to download
+- --hardsubs downloads a stream with burned-in subtitles if available
+- Continue downloading episodes on a series page even if one episode fails
+
 16 Mar 2014, Version 2.1.1
 
 - Fix live radio streams
