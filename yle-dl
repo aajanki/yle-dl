@@ -1360,7 +1360,7 @@ class YleXDownloader(AreenaNGDownloader):
 
     def stream_title(self, html):
         if html:
-            match = re.search(r'<h1[^>]*>(.*?)</h1>', html)
+            match = re.search(r'<meta +?property="og:title" +?content="(.+?)" *?/>', html)
             if match:
                 return replace_entitydefs(match.group(1))
 
