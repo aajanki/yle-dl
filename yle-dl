@@ -603,7 +603,7 @@ class AreenaStreamUrlUtils:
     # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
     AES_KEY = 'hjsadf89hk123ghk'
 
-    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters=None):
+    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters):
         papi = download_page(papiurl)
         if not papi:
             log('Failed to download papi')
@@ -755,19 +755,13 @@ class AreenaStreamUrlUtils:
             return None
 
     def select_quality(self, streams, filters):
-        if filters:
-            maxbitrate = filters.maxbitrate
-            keep_lowest = filters.keep_lowest_bitrate()
-        else:
-            maxbitrate = sys.maxint
-            keep_lowest = False
         streams = self.filter_by_subtitle(streams, filters)
-        if keep_lowest:
+        if filters.keep_lowest_bitrate():
             # lowest quality stream
             return sorted(streams, key=lambda x: x.bitrate())[0]
         else:
             # highest quality stream below maxbitrate
-            below_limit = [x for x in streams if x.bitrate() < maxbitrate]
+            below_limit = [x for x in streams if x.bitrate() < filters.maxbitrate]
             if below_limit:
                 return sorted(below_limit, key=lambda x: x.bitrate())[-1]
             else:
@@ -927,7 +921,7 @@ class PAPIStream:
 
 class AreenaLiveDownloader:
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
-        streamurl = AreenaLiveStreamUrl(url)
+        streamurl = AreenaLiveStreamUrl(url, filters)
         if not streamurl.is_valid():
             return RD_FAILED
 
@@ -961,7 +955,7 @@ class AreenaLiveDownloader:
         """Extract episodes from url and print their
         librtmp-compatible URLs on stdout."""
         printableurl = (url if print_episode_url
-                        else AreenaLiveStreamUrl(url).to_url())
+                        else AreenaLiveStreamUrl(url, filters).to_url())
         enc = sys.getfilesystemencoding()
         print printableurl.encode(enc, 'replace')
         return RD_SUCCESS
@@ -981,8 +975,8 @@ class AreenaLiveDownloader:
 
 
 class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
-    def __init__(self, pageurl):
-        self.rtmp_params = self._get_live_rtmp_parameters(pageurl)
+    def __init__(self, pageurl, filters):
+        self.rtmp_params = self._get_live_rtmp_parameters(pageurl, filters)
 
     def is_valid(self):
         return bool(self.rtmp_params)
@@ -998,7 +992,7 @@ class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
         m = re.search(r'http://(?:areena.yle.fi/tv/suora|arenan.yle.fi/tv/direkt)/(.+)', url)
         return m and m.group(1)
 
-    def _get_live_rtmp_parameters(self, url):
+    def _get_live_rtmp_parameters(self, url, filters):
         channel = AreenaLiveStreamUrl.extract_live_channel_from_url(url)
         if channel is None:
             return None
@@ -1008,7 +1002,7 @@ class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
                        'fem?kieli=sv': 'yle-fem-sv'}
         media_id = fem_mapping.get(channel, default_media_id)
         papiurl = 'http://papi.yle.fi/ng/live/rtmp/' + media_id + '/fin'
-        return self.rtmp_parameters_from_papi(papiurl, url, True)
+        return self.rtmp_parameters_from_papi(papiurl, url, True, filters)
 
 
 ### Areena live radio ###
@@ -1016,7 +1010,7 @@ class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
 
 class AreenaLiveRadioDownloader(AreenaStreamUrlUtils):
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
-        streamurl = AreenaLiveRadioStreamUrl(url)
+        streamurl = AreenaLiveRadioStreamUrl(url, filters)
         if not streamurl.is_valid():
             return RD_FAILED
 
@@ -1048,7 +1042,7 @@ class AreenaLiveRadioDownloader(AreenaStreamUrlUtils):
 
     def print_urls(self, url, print_episode_url, filters):
         printableurl = (url if print_episode_url
-                        else AreenaLiveRadioStreamUrl(url).to_url())
+                        else AreenaLiveRadioStreamUrl(url, filters).to_url())
         enc = sys.getfilesystemencoding()
         print printableurl.encode(enc, 'replace')
         return RD_SUCCESS
@@ -1066,8 +1060,8 @@ class AreenaLiveRadioDownloader(AreenaStreamUrlUtils):
 
 
 class AreenaLiveRadioStreamUrl(AreenaStreamUrlUtils):
-    def __init__(self, pageurl):
-        self.rtmp_params = self._get_radio_rtmpurl(pageurl)
+    def __init__(self, pageurl, filters):
+        self.rtmp_params = self._get_radio_rtmpurl(pageurl, filters)
 
     def is_valid(self):
         return bool(self.rtmp_params)
@@ -1078,7 +1072,7 @@ class AreenaLiveRadioStreamUrl(AreenaStreamUrlUtils):
     def to_rtmpdump_args(self):
         return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
 
-    def _get_radio_rtmpurl(self, pageurl):
+    def _get_radio_rtmpurl(self, pageurl, filters):
         html = download_page(pageurl)
         if not html:
             return None
@@ -1091,7 +1085,7 @@ class AreenaLiveRadioStreamUrl(AreenaStreamUrlUtils):
 
         streamid = radioid.group(1)
         papiurl = 'http://papi.yle.fi/ng/radio/rtmp/%s/fi' % streamid
-        return self.rtmp_parameters_from_papi(papiurl, pageurl, True)
+        return self.rtmp_parameters_from_papi(papiurl, pageurl, True, filters)
 
 
 ### Elava Arkisto ###
@@ -1308,7 +1302,7 @@ class YleXDownloader(AreenaNGDownloader):
         if not html:
             return RD_FAILED
 
-        streamurl = YleXStreamUrl(html, url)
+        streamurl = YleXStreamUrl(html, url, filters)
         if not streamurl.is_valid():
             return RD_FAILED
 
@@ -1346,7 +1340,7 @@ class YleXDownloader(AreenaNGDownloader):
         if not html:
             return RD_FAILED
 
-        streamurl = YleXStreamUrl(html, url)
+        streamurl = YleXStreamUrl(html, url, filters)
         if not streamurl.is_valid():
             return RD_FAILED
 
@@ -1377,8 +1371,8 @@ class YleXDownloader(AreenaNGDownloader):
 
 
 class YleXStreamUrl(AreenaStreamUrlUtils):
-    def __init__(self, html, url):
-        self.rtmp_params = self._parse_rtmp_params(html, url)
+    def __init__(self, html, url, filters):
+        self.rtmp_params = self._parse_rtmp_params(html, url, filters)
         self.episode_url = url
 
     def is_valid(self):
@@ -1393,7 +1387,7 @@ class YleXStreamUrl(AreenaStreamUrlUtils):
     def to_rtmpdump_args(self):
         return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
 
-    def _parse_rtmp_params(self, html, pageurl):
+    def _parse_rtmp_params(self, html, pageurl, filters):
         match = re.search(r'<meta +?property="og:image" +?content="(.+?)" *?/>', html)
         if not match:
             return None
@@ -1403,7 +1397,7 @@ class YleXStreamUrl(AreenaStreamUrlUtils):
             return None
 
         papiurl = 'http://papi.yle.fi/ng/mod/rtmp/%s' % match.group(1)
-        return self.rtmp_parameters_from_papi(papiurl, pageurl, False)
+        return self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
 
 
 ### main program ###
