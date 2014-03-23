@@ -431,11 +431,22 @@ class AreenaNGDownloader:
             log(u'Try --showurl')
             return RD_FAILED
 
-        return self.save_rtmp_stream_to_file(streamurl, clip, filters.sublang,
-                                             destdir, rtmpdumpargs)
+        fullargs = self.build_full_rtmpdumpargs(clip, streamurl, destdir, rtmpdumpargs)
+        outputfile = get_output_filename(fullargs)
+        self.download_subtitles(clip, filters, outputfile)
+        return self.save_rtmp_stream_to_file(fullargs, outputfile)
 
-    def save_rtmp_stream_to_file(self, streamurl, clip, sublang, destdir,
-                                 rtmpdumpargs):
+    def save_rtmp_stream_to_file(self, rtmpdumpargs, outputfile):
+        log_output_file(outputfile)
+        retcode = execute_rtmpdump(rtmpdumpargs)
+        if retcode != RD_SUCCESS:
+            return retcode
+
+        log_output_file(outputfile, True)
+
+        return retcode
+
+    def build_full_rtmpdumpargs(self, clip, streamurl, destdir, rtmpdumpargs):
         outputparam = []
         if '-o' not in rtmpdumpargs and '--flv' not in rtmpdumpargs:
             filename = self.get_clip_filename(clip)
@@ -450,21 +461,8 @@ class AreenaNGDownloader:
         args += streamurl.to_rtmpdump_args()
         args += outputparam
         args += rtmpdumpargs
+        return args
 
-        outputfile = get_output_filename(args)
-        media = clip.get('media', {})
-        if media.has_key('subtitles'):
-            self.download_subtitles(media['subtitles'], sublang, outputfile)
-
-        log_output_file(outputfile)
-
-        retcode = execute_rtmpdump(args)
-        if retcode != RD_SUCCESS:
-            return retcode
-
-        log_output_file(outputfile, True)
-
-        return retcode
 
     def get_clip_title(self, clip):
         if 'channel' in clip:
@@ -543,25 +541,26 @@ class AreenaNGDownloader:
 
         return metadata
 
-    def download_subtitles(self, available_subtitles, preferred_lang, videofilename):
-        basename = os.path.splitext(videofilename)[0]
-        subtitlefile = None
-        for sub in available_subtitles:
-            lang = sub.get('lang', '')
-            if lang == preferred_lang or preferred_lang == 'all':
-                url = sub.get('url', None)
-                if url:
-                    try:
-                        subtitlefile = basename + '.' + lang + '.srt'
-                        enc = sys.getfilesystemencoding()
-                        urllib.urlretrieve(url, subtitlefile.encode(enc, 'replace'))
-                        self.add_BOM(subtitlefile)
-                        log(u'Subtitles saved to ' + subtitlefile)
-                        if preferred_lang != 'all':
-                            return subtitlefile
-                    except IOError, exc:
-                        log(u'Failed to download subtitles at %s: %s' % (url, exc))
-        return subtitlefile
+    def download_subtitles(self, clip, filters, videofilename):
+        media = clip.get('media', {})
+        if media.has_key('subtitles') and not filters.hardsubs:
+            preferred_lang = filters.sublang
+            basename = os.path.splitext(videofilename)[0]
+            for sub in media['subtitles']:
+                lang = sub.get('lang', '')
+                if lang == preferred_lang or preferred_lang == 'all':
+                    url = sub.get('url', None)
+                    if url:
+                        try:
+                            subtitlefile = basename + '.' + lang + '.srt'
+                            enc = sys.getfilesystemencoding()
+                            urllib.urlretrieve(url, subtitlefile.encode(enc, 'replace'))
+                            self.add_BOM(subtitlefile)
+                            log(u'Subtitles saved to ' + subtitlefile)
+                            if preferred_lang != 'all':
+                                return
+                        except IOError, exc:
+                            log(u'Failed to download subtitles at %s: %s' % (url, exc))
 
     def add_BOM(self, filename):
         """Add byte-order mark into a file.
