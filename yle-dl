@@ -265,7 +265,11 @@ def bitrate_from_arg(arg):
     elif arg == 'worst':
         return 0
     else:
-        return int_or_else(arg, sys.maxint)
+        try:
+            return int(arg)
+        except ValueError:
+            log(u'Invalid bitrate %s, defaulting to best' % arg)
+            arg = sys.maxint
 
 def next_available_filename(proposed):
     i = 1
