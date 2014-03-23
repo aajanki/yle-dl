@@ -1419,7 +1419,7 @@ def main():
     print_episode_url = False
     sublang = 'all'
     hardsubs = False
-    maxbitrate = sys.maxint
+    bitratearg = sys.maxint
     show_usage = False
     url = None
     destdir = None
@@ -1460,7 +1460,7 @@ def main():
             hardsubs = True
         elif arg == '--maxbitrate':
             if argv:
-                maxbitrate = bitrate_from_arg(argv.pop(0))
+                bitratearg = argv.pop(0)
         elif arg == '--rtmpdump':
             if argv:
                 rtmpdump_binary = argv.pop(0)
@@ -1472,6 +1472,13 @@ def main():
             if arg in ARGOPTS and argv:
                 rtmpdumpargs.append(argv.pop(0))
 
+    if show_usage or url is None:
+        usage()
+        sys.exit(1)
+
+    if debug or not (url_only or title_only):
+        splashscreen()
+
     if not rtmpdump_binary:
         if sys.platform == 'win32':
             rtmpdump_binary = which('rtmpdump.exe')
@@ -1480,13 +1487,6 @@ def main():
     if not rtmpdump_binary:
         log(u'Error: rtmpdump not found on path, use --rtmpdump for setting the location')
 
-    if show_usage or url is None:
-        usage()
-        sys.exit(1)
-
-    if debug or not (url_only or title_only):
-        splashscreen()
-
     url = encode_url_utf8(url)
     dl = downloader_factory(url)
     if not dl:
@@ -1494,6 +1494,7 @@ def main():
         log(u'Is this really a Yle video page?')
         return RD_FAILED
 
+    maxbitrate = bitrate_from_arg(bitratearg)
     sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
     if url_only:
         sys.exit(dl.print_urls(url, print_episode_url, sfilt))
