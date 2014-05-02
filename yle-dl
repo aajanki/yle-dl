@@ -1494,7 +1494,7 @@ def main():
     if not dl:
         log(u'Unsupported URL %s.' % url)
         log(u'Is this really a Yle video page?')
-        return RD_FAILED
+        sys.exit(RD_FAILED)
 
     maxbitrate = bitrate_from_arg(bitratearg)
     sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
