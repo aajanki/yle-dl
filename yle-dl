@@ -473,7 +473,6 @@ class AreenaNGDownloader:
         args += rtmpdumpargs
         return args
 
-
     def get_clip_title(self, clip):
         if 'channel' in clip:
             # Live radio broadcast
@@ -609,14 +608,67 @@ class AreenaNGDownloader:
 ### Areena stream URL ###
 
 
-class AreenaStreamUrlUtils:
-    # Extracted from
-    # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
-    AES_KEY = 'hjsadf89hk123ghk'
+class AreenaStreamBase:
+    def __init__(self, clip, pageurl):
+        self.error = None
+        self.episodeurl = self.create_pageurl(clip) or pageurl
 
-    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters):
-        stream = self.stream_from_papi(papiurl, self.AES_KEY, filters)
-        return self.stream_to_rtmp_parameters(stream, pageurl, islive)
+    def is_valid(self):
+        return not self.error
+    
+    def get_error_message(self):
+        if self.is_valid():
+            return None
+        else:
+            return self.error or 'Stream not valid'
+    
+    def to_url(self):
+        return ''
+
+    def to_episode_url(self):
+        return self.episodeurl
+
+    def to_rtmpdump_args(self):
+        return None
+
+    def create_pageurl(self, media):
+        if not media or 'type' not in media or 'id' not in media:
+            return ''
+
+        if media['type'] == 'audio':
+            urltype = 'radio'
+        else:
+            urltype = 'tv'
+
+        return 'http://areena.yle.fi/%s/%s' % (urltype, media['id'])
+
+    def get_metadata(self, clip):
+        metadata_page = self.create_pageurl(clip)
+        if not metadata_page:
+            return None
+
+        jsonurl = metadata_page + '.json'
+        jsonstr = download_page(jsonurl)
+        if not jsonstr:
+            return None
+
+        try:
+            clipjson = json.loads(jsonstr)
+        except ValueError:
+            log(u'Invalid JSON file at ' +  jsonurl)
+            return None
+
+        return clipjson
+
+    def full_metadata_if_search_result(self, clip):
+        # Search results don't have the media item so we have to
+        # download clip metadata from the source.
+        if not clip:
+            return {}
+        elif not clip.has_key('media'):
+            clip = self.get_metadata(clip)
+        return clip
+
 
     def stream_from_papi(self, papiurl, aes_key, filters):
         papi = download_page(papiurl)
@@ -638,7 +690,7 @@ class AreenaStreamUrlUtils:
             log(unicode(exc.message, 'utf-8', 'ignore'))
             return None
 
-        streams = self.streams_from_papi(papi_xml)
+        streams = self.all_streams_from_papi(papi_xml)
         if not streams:
             log('No streams found in papi')
             return None
@@ -654,6 +706,90 @@ class AreenaStreamUrlUtils:
             log(str(best))
 
         return best
+
+    def decode_papi(self, papi, aes_key):
+        try:
+            bytestring = base64.b64decode(str(papi))
+        except (UnicodeEncodeError, TypeError):
+            return None
+
+        iv = bytestring[:16]
+        ciphertext = bytestring[16:]
+        padlen = 16 - (len(ciphertext) % 16)
+        ciphertext = ciphertext + '\0'*padlen
+
+        decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
+        return decrypter.decrypt(ciphertext)[:-padlen]
+
+    def all_streams_from_papi(self, papi):
+        streams = []
+        assets = papi.getElementsByTagName('onlineAsset')
+        for asset in assets:
+            urls = asset.getElementsByTagName('url')
+            if urls and len(urls) >= 1:
+                connect = self.extract_child_content(urls[0], 'connect')
+                stream = self.extract_child_content(urls[0], 'stream')
+                if connect:
+                    videoBR = self.extract_child_content(asset, 'videoBitrate') or ''
+                    audioBR = self.extract_child_content(asset, 'audioBitrate') or ''
+                    subtitles = self.extract_child_content(asset, 'hardSubtitles') or ''
+                    streams.append(PAPIStream(connect, stream, videoBR,
+                                              audioBR, subtitles))
+        return streams
+
+    def extract_child_content(self, node, childName):
+        child = node.getElementsByTagName(childName)
+        if child.length > 0 and child[0].firstChild:
+            return child[0].firstChild.nodeValue
+        else:
+            return None
+
+    def filter_by_hard_subtitles(self, streams, filters):
+        if filters.hardsubs and filters.sublang == 'all':
+            filtered = streams
+        elif filters.hardsubs and filters.sublang != 'none':
+            filtered = [s for s in streams if s.hardSubtitles == filters.sublang]
+        else:
+            filtered = [s for s in streams if not s.hardSubtitles]
+        return filtered or streams
+
+    def select_quality(self, streams, filters):
+        if filters.keep_lowest_bitrate():
+            # lowest quality stream
+            return sorted(streams, key=lambda x: x.bitrate())[0]
+        else:
+            # highest quality stream below maxbitrate
+            below_limit = [x for x in streams if x.bitrate() < filters.maxbitrate]
+            if below_limit:
+                return sorted(below_limit, key=lambda x: x.bitrate())[-1]
+            else:
+                return None
+
+
+class AreenaRTMPStreamUrl(AreenaStreamBase):
+    # Extracted from
+    # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
+    AES_KEY = 'hjsadf89hk123ghk'
+
+    def __init__(self, clip, pageurl):
+        AreenaStreamBase.__init__(self, clip, pageurl)
+        self.rtmp_params = None
+
+    def is_valid(self):
+        return bool(self.rtmp_params)
+
+    def to_url(self):
+        return self.rtmp_parameters_to_url(self.rtmp_params)
+
+    def to_rtmpdump_args(self):
+        if self.rtmp_params:
+            return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
+        else:
+            return []
+
+    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters):
+        stream = self.stream_from_papi(papiurl, self.AES_KEY, filters)
+        return self.stream_to_rtmp_parameters(stream, pageurl, islive)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -713,20 +849,6 @@ class AreenaStreamUrlUtils:
 
         return rtmpparams
     
-    def decode_papi(self, papi, aes_key):
-        try:
-            bytestring = base64.b64decode(str(papi))
-        except (UnicodeEncodeError, TypeError):
-            return None
-
-        iv = bytestring[:16]
-        ciphertext = bytestring[16:]
-        padlen = 16 - (len(ciphertext) % 16)
-        ciphertext = ciphertext + '\0'*padlen
-
-        decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
-        return decrypter.decrypt(ciphertext)[:-padlen]
-
     def rtmpurlparse(self, url):
         if '://' not in url:
             raise ValueError("Invalid RTMP URL")
@@ -757,117 +879,10 @@ class AreenaStreamUrlUtils:
                 args.append('--%s=%s' % (key, value))
         return args
 
-    def streams_from_papi(self, papi):
-        streams = []
-        assets = papi.getElementsByTagName('onlineAsset')
-        for asset in assets:
-            urls = asset.getElementsByTagName('url')
-            if urls and len(urls) >= 1:
-                connect = self.extract_child_content(urls[0], 'connect')
-                stream = self.extract_child_content(urls[0], 'stream')
-                if connect:
-                    videoBR = self.extract_child_content(asset, 'videoBitrate') or ''
-                    audioBR = self.extract_child_content(asset, 'audioBitrate') or ''
-                    subtitles = self.extract_child_content(asset, 'hardSubtitles') or ''
-                    streams.append(PAPIStream(connect, stream, videoBR,
-                                              audioBR, subtitles))
-        return streams
 
-    def extract_child_content(self, node, childName):
-        child = node.getElementsByTagName(childName)
-        if child.length > 0 and child[0].firstChild:
-            return child[0].firstChild.nodeValue
-        else:
-            return None
-
-    def filter_by_hard_subtitles(self, streams, filters):
-        if filters.hardsubs and filters.sublang == 'all':
-            filtered = streams
-        elif filters.hardsubs and filters.sublang != 'none':
-            filtered = [s for s in streams if s.hardSubtitles == filters.sublang]
-        else:
-            filtered = [s for s in streams if not s.hardSubtitles]
-        return filtered or streams
-
-    def select_quality(self, streams, filters):
-        if filters.keep_lowest_bitrate():
-            # lowest quality stream
-            return sorted(streams, key=lambda x: x.bitrate())[0]
-        else:
-            # highest quality stream below maxbitrate
-            below_limit = [x for x in streams if x.bitrate() < filters.maxbitrate]
-            if below_limit:
-                return sorted(below_limit, key=lambda x: x.bitrate())[-1]
-            else:
-                return None
-
-
-class AreenaStreamBase(AreenaStreamUrlUtils):
-    def __init__(self, clip, pageurl):
-        self.error = None
-        self.episodeurl = self.create_pageurl(clip) or pageurl
-
-    def is_valid(self):
-        return not self.error
-    
-    def get_error_message(self):
-        if self.is_valid():
-            return None
-        else:
-            return self.error or 'Stream not valid'
-    
-    def to_url(self):
-        return ''
-
-    def to_episode_url(self):
-        return self.episodeurl
-
-    def to_rtmpdump_args(self):
-        return None
-
-    def create_pageurl(self, media):
-        if 'type' not in media or 'id' not in media:
-            return ''
-
-        if media['type'] == 'audio':
-            urltype = 'radio'
-        else:
-            urltype = 'tv'
-
-        return 'http://areena.yle.fi/%s/%s' % (urltype, media['id'])
-
-    def get_metadata(self, clip):
-        metadata_page = self.create_pageurl(clip)
-        if not metadata_page:
-            return None
-
-        jsonurl = metadata_page + '.json'
-        jsonstr = download_page(jsonurl)
-        if not jsonstr:
-            return None
-
-        try:
-            clipjson = json.loads(jsonstr)
-        except ValueError:
-            log(u'Invalid JSON file at ' +  jsonurl)
-            return None
-
-        return clipjson
-
-    def full_metadata_if_search_result(self, clip):
-        # Search results don't have the media item so we have to
-        # download clip metadata from the source.
-        if not clip:
-            return {}
-        elif not clip.has_key('media'):
-            clip = self.get_metadata(clip)
-        return clip
-    
-
-class AreenaStreamUrl(AreenaStreamBase):
+class AreenaStreamUrl(AreenaRTMPStreamUrl):
     def __init__(self, clip, pageurl, filters):
-        AreenaStreamBase.__init__(self, clip, pageurl)
-        self.rtmp_params = None
+        AreenaRTMPStreamUrl.__init__(self, clip, pageurl)
         self.direct_url = None
         if clip:
             if 'channel' in clip:
@@ -876,7 +891,7 @@ class AreenaStreamUrl(AreenaStreamBase):
                 self._initialize_tv_stream(clip, pageurl, filters)
 
     def is_valid(self):
-        return self.rtmp_params or self.direct_url
+        return bool(self.rtmp_params) or bool(self.direct_url)
 
     def to_url(self):
         if self.rtmp_params:
@@ -885,12 +900,6 @@ class AreenaStreamUrl(AreenaStreamBase):
             return self.direct_url
         else:
             return ''
-
-    def to_rtmpdump_args(self):
-        if self.rtmp_params:
-            return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
-        else:
-            return []
 
     def _initialize_liveradio_parameters(self, clip, pageurl, filters):
         channel = clip.get('channel', {})
@@ -934,6 +943,8 @@ class AreenaStreamUrl(AreenaStreamBase):
 
 
 class AreenaHDSStreamUrl(AreenaStreamBase):
+    # Extracted from
+    # http://areena.yle.fi/static/player/1.3.12/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     HDS_AES_KEY = 'C6F258503B21E30A'
     
     def __init__(self, clip, pageurl, filters):
@@ -964,7 +975,8 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
         if not stream or not stream.connect:
             self.error = 'HDS stream not found'
             return None
-        return stream.connect
+        else:
+            return stream.connect
 
 
 class PAPIStream:
@@ -1050,18 +1062,10 @@ class AreenaLiveDownloader:
 ### Areena live stream URL ###
 
 
-class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
+class AreenaLiveStreamUrl(AreenaRTMPStreamUrl):
     def __init__(self, pageurl, filters):
+        AreenaRTMPStreamUrl.__init__(self, None, pageurl)
         self.rtmp_params = self._get_live_rtmp_parameters(pageurl, filters)
-
-    def is_valid(self):
-        return bool(self.rtmp_params)
-
-    def to_url(self):
-        return self.rtmp_parameters_to_url(self.rtmp_params)
-
-    def to_rtmpdump_args(self):
-        return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
 
     @staticmethod
     def extract_live_channel_from_url(url):
@@ -1084,7 +1088,7 @@ class AreenaLiveStreamUrl(AreenaStreamUrlUtils):
 ### Areena live radio ###
 
 
-class AreenaLiveRadioDownloader(AreenaStreamUrlUtils):
+class AreenaLiveRadioDownloader:
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
         streamurl = AreenaLiveRadioStreamUrl(url, filters)
         if not streamurl.is_valid():
@@ -1135,18 +1139,10 @@ class AreenaLiveRadioDownloader(AreenaStreamUrlUtils):
         return title
 
 
-class AreenaLiveRadioStreamUrl(AreenaStreamUrlUtils):
+class AreenaLiveRadioStreamUrl(AreenaRTMPStreamUrl):
     def __init__(self, pageurl, filters):
+        AreenaRTMPStreamUrl.__init__(self, None, pageurl)
         self.rtmp_params = self._get_radio_rtmpurl(pageurl, filters)
-
-    def is_valid(self):
-        return bool(self.rtmp_params)
-
-    def to_url(self):
-        return self.rtmp_parameters_to_url(self.rtmp_params)
-
-    def to_rtmpdump_args(self):
-        return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
 
     def _get_radio_rtmpurl(self, pageurl, filters):
         html = download_page(pageurl)
@@ -1167,7 +1163,10 @@ class AreenaLiveRadioStreamUrl(AreenaStreamUrlUtils):
 ### Elava Arkisto ###
 
 
-class ElavaArkistoDownloader(AreenaStreamUrlUtils):
+class ElavaArkistoDownloader(AreenaRTMPStreamUrl):
+
+    def __init__(self):
+        AreenaRTMPStreamUrl.__init__(self, None, None)
 
     def extract_playlist(self, mediajson, pageurl, filters):
         pagedata = json.loads(mediajson)
@@ -1364,7 +1363,6 @@ class ElavaArkistoDownloader(AreenaStreamUrlUtils):
             print clip['title'].encode(enc, 'replace')
 
         return RD_SUCCESS
-        
 
 
 ### YleX Areena ###
@@ -1446,22 +1444,10 @@ class YleXDownloader(AreenaNGDownloader):
 ### YleX Areena stream URL ###
 
 
-class YleXStreamUrl(AreenaStreamUrlUtils):
+class YleXStreamUrl(AreenaRTMPStreamUrl):
     def __init__(self, html, url, filters):
+        AreenaRTMPStreamUrl.__init__(self, None, url)
         self.rtmp_params = self._parse_rtmp_params(html, url, filters)
-        self.episode_url = url
-
-    def is_valid(self):
-        return bool(self.rtmp_params)
-
-    def to_url(self):
-        return self.rtmp_parameters_to_url(self.rtmp_params)
-
-    def to_episode_url(self):
-        return self.episode_url
-
-    def to_rtmpdump_args(self):
-        return self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
 
     def _parse_rtmp_params(self, html, pageurl, filters):
         match = re.search(r'<meta +?property="og:image" +?content="(.+?)" *?/>', html)
