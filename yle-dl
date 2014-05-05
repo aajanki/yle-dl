@@ -976,7 +976,7 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
             self.error = 'HDS stream not found'
             return None
         else:
-            return stream.connect
+            return stream.connect + '&g=ABCDEFGHIJKL&hdcore=3.3.0&plugin=flowplayer-3.3.0.0'
 
 
 class PAPIStream:
