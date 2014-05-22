@@ -65,6 +65,7 @@ excludechars_linux = '*/|'
 excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
+hds_binary = ['php', 'AdobeHDS.php']
 
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
@@ -184,9 +185,10 @@ def sane_filename(name):
     else:
         return 'ylevideo'
 
-def execute_rtmpdump(args):
-    """Start rtmpdump process with argument list args and wait until
-    completion."""
+def external_downloader(args):
+    """Start an external process such as rtmpdump with argument list args and
+    wait until completion.
+    """
     if debug:
         log('Executing:')
         log(' '.join(args))
@@ -196,17 +198,17 @@ def execute_rtmpdump(args):
 
     try:
         if platform.system() == 'Windows':
-            rtmpdump_process = subprocess.Popen(encoded_args)
+            process = subprocess.Popen(encoded_args)
         else:
-            rtmpdump_process = subprocess.Popen(encoded_args,
+            process = subprocess.Popen(encoded_args,
                 preexec_fn=sigterm_when_parent_dies)
-        return rtmpdump_process.wait()
+        return process.wait()
     except KeyboardInterrupt:
         try:
-            os.kill(rtmpdump_process.pid, signal.SIGINT)
-            rtmpdump_process.wait()
+            os.kill(process.pid, signal.SIGINT)
+            process.wait()
         except OSError:
-            # The rtmpdump process died before we killed it.
+            # The process died before we killed it.
             pass
         return RD_INCOMPLETE
     except OSError, exc:
@@ -436,42 +438,16 @@ class AreenaNGDownloader:
             print streamurl.to_episode_url().encode(enc, 'replace')
             return RD_SUCCESS
 
-        if not streamurl.to_rtmpdump_args():
+        downloader = streamurl.create_downloader(self.get_clip_title(clip),
+                                                 destdir, rtmpdumpargs)
+        if not downloader:
             log(u'Downloading the stream at %s is not yet supported.' % pageurl)
             log(u'Try --showurl')
             return RD_FAILED
 
-        fullargs = self.build_full_rtmpdumpargs(clip, streamurl, destdir, rtmpdumpargs)
-        outputfile = get_output_filename(fullargs)
+        outputfile = downloader.output_filename()
         self.download_subtitles(clip, filters, outputfile)
-        return self.save_rtmp_stream_to_file(fullargs, outputfile)
-
-    def save_rtmp_stream_to_file(self, rtmpdumpargs, outputfile):
-        log_output_file(outputfile)
-        retcode = execute_rtmpdump(rtmpdumpargs)
-        if retcode != RD_SUCCESS:
-            return retcode
-
-        log_output_file(outputfile, True)
-
-        return retcode
-
-    def build_full_rtmpdumpargs(self, clip, streamurl, destdir, rtmpdumpargs):
-        outputparam = []
-        if '-o' not in rtmpdumpargs and '--flv' not in rtmpdumpargs:
-            filename = self.get_clip_filename(clip)
-            if destdir:
-                filename = os.path.join(destdir, filename)
-
-            if not is_resume_job(rtmpdumpargs):
-                filename = next_available_filename(filename)
-            outputparam = ['-o', filename]
-
-        args = [rtmpdump_binary]
-        args += streamurl.to_rtmpdump_args()
-        args += outputparam
-        args += rtmpdumpargs
-        return args
+        return downloader.save_stream()
 
     def get_clip_title(self, clip):
         if 'channel' in clip:
@@ -787,6 +763,12 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
+    def create_downloader(self, clip_title, destdir, extra_argv):
+        if not self.to_rtmpdump_args():
+            return None
+        else:
+            return RTMPDump(self, clip_title, destdir, extra_argv)
+
     def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters):
         stream = self.stream_from_papi(papiurl, self.AES_KEY, filters)
         return self.stream_to_rtmp_parameters(stream, pageurl, islive)
@@ -954,6 +936,9 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
     def to_url(self):
         return self.hds_url or ''
 
+    def create_downloader(self, clip_title, destdir, extra_argv):
+        return HDSDump(self, clip_title, destdir, extra_argv)
+
     def _initialize_hds_stream(self, clip, pageurl, filters):
         clip = self.full_metadata_if_search_result(clip) or {}
         media = clip.get('media', {})
@@ -1031,7 +1016,7 @@ class AreenaLiveDownloader:
         outputfile = get_output_filename(args)
         log_output_file(outputfile)
 
-        retcode = execute_rtmpdump(args)
+        retcode = external_downloader(args)
         if retcode != RD_SUCCESS:
             return retcode
 
@@ -1112,7 +1097,7 @@ class AreenaLiveRadioDownloader:
         outputfile = get_output_filename(args)
         log_output_file(outputfile)
 
-        retcode = execute_rtmpdump(args)
+        retcode = external_downloader(args)
         if retcode != RD_SUCCESS:
             return retcode
 
@@ -1268,7 +1253,7 @@ class ElavaArkistoDownloader(AreenaRTMPStreamUrl):
             outputfile = get_output_filename(args)
             log_output_file(outputfile)
 
-            retcode = execute_rtmpdump(args)
+            retcode = external_downloader(args)
             if retcode != RD_SUCCESS:
                 return retcode
 
@@ -1400,7 +1385,7 @@ class YleXDownloader(AreenaNGDownloader):
         outputfile = get_output_filename(args)
         log_output_file(outputfile)
 
-        retcode = execute_rtmpdump(args)
+        retcode = external_downloader(args)
         if retcode != RD_SUCCESS:
             return retcode
 
@@ -1462,12 +1447,71 @@ class YleXStreamUrl(AreenaRTMPStreamUrl):
         return self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
 
 
+### Dumping a stream to a file using external programs ###
+
+class ExternalDownloader:
+    def __init__(self, stream, clip_title, destdir, extra_argv):
+        self.stream = stream
+        self.clip_title = clip_title or 'ylestream'
+        self.extra_argv = extra_argv
+        self.destdir = destdir or ''
+
+    def save_stream(self):
+        args = self.build_args()
+        outputfile = get_output_filename(args)
+        log_output_file(outputfile)
+        retcode = external_downloader(args)
+        if retcode == RD_SUCCESS:
+            log_output_file(outputfile, True)
+        return retcode
+
+    def output_filename(self):
+        return sane_filename(self.clip_title) + '.flv'
+
+    def build_args(self):
+        return []
+
+
+class RTMPDump(ExternalDownloader):
+    def build_args(self):
+        outputparam = []
+        if '-o' not in self.extra_argv and '--flv' not in self.extra_argv:
+            filename = sane_filename(self.clip_title) + '.flv'
+            if self.destdir:
+                filename = os.path.join(self.destdir, filename)
+
+            if not is_resume_job(self.extra_argv):
+                filename = next_available_filename(filename)
+            outputparam = ['-o', filename]
+
+        args = [rtmpdump_binary]
+        args += self.stream.to_rtmpdump_args()
+        args += outputparam
+        args += self.extra_argv
+        return args
+
+    def output_filename(self):
+        return get_output_filename(self.build_args())
+
+
+class HDSDump(ExternalDownloader):
+    def build_args(self):
+        args = hds_binary
+        args.append('--manifest')
+        args.append(self.stream.to_url())
+        args.append('--delete')
+        args.append('--outfile')
+        args.append(os.path.join(self.destdir, self.output_filename()))
+        return args
+
+
 ### main program ###
 
 
 def main():
     global debug
     global rtmpdump_binary
+    global hds_binary
     latest_episode = False
     url_only = False
     title_only = False
@@ -1478,8 +1522,6 @@ def main():
     show_usage = False
     url = None
     destdir = None
-
-    #argv = list(sys.argv[1:])
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -1519,6 +1561,9 @@ def main():
         elif arg == '--rtmpdump':
             if argv:
                 rtmpdump_binary = argv.pop(0)
+        elif arg == '--adobehds':
+            if argv:
+                hds_binary = argv.pop(0).split(' ')
         elif arg == '--destdir':
             if argv:
                 destdir = argv.pop(0)
