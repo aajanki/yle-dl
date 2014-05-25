@@ -185,36 +185,6 @@ def sane_filename(name):
     else:
         return 'ylevideo'
 
-def external_downloader(args):
-    """Start an external process such as rtmpdump with argument list args and
-    wait until completion.
-    """
-    if debug:
-        log('Executing:')
-        log(' '.join(args))
-
-    enc = sys.getfilesystemencoding()
-    encoded_args = [x.encode(enc, 'replace') for x in args]
-
-    try:
-        if platform.system() == 'Windows':
-            process = subprocess.Popen(encoded_args)
-        else:
-            process = subprocess.Popen(encoded_args,
-                preexec_fn=sigterm_when_parent_dies)
-        return process.wait()
-    except KeyboardInterrupt:
-        try:
-            os.kill(process.pid, signal.SIGINT)
-            process.wait()
-        except OSError:
-            # The process died before we killed it.
-            pass
-        return RD_INCOMPLETE
-    except OSError, exc:
-        log(u'Execution failed: ' + unicode(exc, 'UTF-8', 'replace'))
-        return RD_INCOMPLETE
-
 def sigterm_when_parent_dies():
     PR_SET_PDEATHSIG = 1
 
@@ -245,22 +215,6 @@ def downloader_factory(url):
     else:
         return None
 
-def get_output_filename(args_in):
-    prev = None
-    args = list(args_in) # copy
-    while args:
-        opt = args.pop()
-        if opt in ('-o', '--flv'):
-            if prev:
-                return prev
-            else:
-                return None
-        prev = opt
-    return None
-
-def is_resume_job(args):
-    return '--resume' in args or '-e' in args
-
 def bitrate_from_arg(arg):
     if arg == 'best':
         return sys.maxint
@@ -272,18 +226,6 @@ def bitrate_from_arg(arg):
         except ValueError:
             log(u'Invalid bitrate %s, defaulting to best' % arg)
             arg = sys.maxint
-
-def next_available_filename(proposed):
-    i = 1
-    enc = sys.getfilesystemencoding()
-    filename = proposed
-    basename, ext = os.path.splitext(filename)
-    while os.path.exists(filename.encode(enc, 'replace')):
-        log(u'%s exists, trying an alternative name' % filename)
-        filename = basename + '-' + str(i) + ext
-        i += 1
-
-    return filename
 
 def which(program):
     """Search for program on $PATH and return the full path if found."""
@@ -304,45 +246,6 @@ def which(program):
                 return exe_file
 
     return None
-
-def parse_rtmp_single_component_app(rtmpurl):
-    """Extract single path-component app and playpath from rtmpurl."""
-    # YLE server requires that app is the first path component
-    # only. By default librtmp would take the first two
-    # components (app/appInstance).
-    #
-    # This also means that we can't rely on librtmp's playpath
-    # parser and have to duplicate the logic here.
-    k = 0
-    if rtmpurl.find('://') != -1:
-        i = -1
-        for i, x in enumerate(rtmpurl):
-            if x == '/':
-                k += 1
-                if k == 4:
-                    break
-
-        playpath = rtmpurl[(i+1):]
-        app_only_rtmpurl = rtmpurl[:i]
-    else:
-        playpath = rtmpurl
-        app_only_rtmpurl = ''
-
-    ext = os.path.splitext(playpath)[1]
-    if ext == '.mp4':
-        playpath = 'mp4:' + playpath
-        ext = '.flv'
-    elif ext == '.mp3':
-        playpath = 'mp3:' + playpath[:-4]
-
-    return (app_only_rtmpurl, playpath, ext)
-
-def log_output_file(outputfile, done=False):
-    if outputfile and outputfile != '-':
-        if done:
-            log(u'Stream saved to ' + outputfile)
-        else:
-            log(u'Output file: ' + outputfile)
 
 
 class StreamFilters:
@@ -644,7 +547,6 @@ class AreenaStreamBase:
         elif not clip.has_key('media'):
             clip = self.get_metadata(clip)
         return clip
-
 
     def stream_from_papi(self, papiurl, aes_key, filters):
         papi = download_page(papiurl)
@@ -998,31 +900,9 @@ class AreenaLiveDownloader:
         if not streamurl.is_valid():
             return RD_FAILED
 
-        outputparam = []
-        if '-o' not in rtmpdumpargs and '--flv' not in rtmpdumpargs:
-            filename = self.get_live_stream_title(url) + '.flv'
-            if destdir:
-                filename = os.path.join(destdir, filename)
-
-            if not is_resume_job(rtmpdumpargs):
-                filename = next_available_filename(filename)
-            outputparam = ['-o', filename]
-
-        args = [rtmpdump_binary]
-        args += streamurl.to_rtmpdump_args()
-        args += outputparam
-        args += rtmpdumpargs
-
-        outputfile = get_output_filename(args)
-        log_output_file(outputfile)
-
-        retcode = external_downloader(args)
-        if retcode != RD_SUCCESS:
-            return retcode
-
-        log_output_file(outputfile, True)
-
-        return retcode
+        clip_title = self.get_live_stream_title(url)
+        downloader = streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
+        return downloader.save_stream()
 
     def print_urls(self, url, print_episode_url, filters):
         """Extract episodes from url and print their
@@ -1078,32 +958,10 @@ class AreenaLiveRadioDownloader:
         streamurl = AreenaLiveRadioStreamUrl(url, filters)
         if not streamurl.is_valid():
             return RD_FAILED
-
-        outputparam = []
-        if '-o' not in rtmpdumpargs and '--flv' not in rtmpdumpargs:
-            filename = self.get_live_stream_title(url) + '.flv'
-            if destdir:
-                filename = os.path.join(destdir, filename)
-
-            if not is_resume_job(rtmpdumpargs):
-                filename = next_available_filename(filename)
-            outputparam = ['-o', filename]
-
-        args = [rtmpdump_binary]
-        args += streamurl.to_rtmpdump_args()
-        args += outputparam
-        args += rtmpdumpargs
-
-        outputfile = get_output_filename(args)
-        log_output_file(outputfile)
-
-        retcode = external_downloader(args)
-        if retcode != RD_SUCCESS:
-            return retcode
-
-        log_output_file(outputfile, True)
-
-        return retcode
+        
+        clip_title = self.get_live_stream_title(url)
+        downloader = streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
+        return downloader.save_stream()
 
     def print_urls(self, url, print_episode_url, filters):
         printableurl = (url if print_episode_url
@@ -1148,10 +1006,7 @@ class AreenaLiveRadioStreamUrl(AreenaRTMPStreamUrl):
 ### Elava Arkisto ###
 
 
-class ElavaArkistoDownloader(AreenaRTMPStreamUrl):
-
-    def __init__(self):
-        AreenaRTMPStreamUrl.__init__(self, None, None)
+class ElavaArkistoDownloader:
 
     def extract_playlist(self, mediajson, pageurl, filters):
         pagedata = json.loads(mediajson)
@@ -1164,102 +1019,12 @@ class ElavaArkistoDownloader(AreenaRTMPStreamUrl):
 
         clips = []
         for mediaitem in pagedata['media']:
-            title = mediaitem.get('title', 'elavaarkisto')
-            filename = sane_filename(title)
-
-            downloadURL = mediaitem.get('downloadURL', None)
-
-            rtmpurl, playpath, ext = self.arkisto_rtmp(mediaitem, filters)
-
-            if not rtmpurl:
-                rtmpurl, playpath, ext = \
-                  self.mediakanta_rtmp(mediaitem, pageurl, filters)
-
-            if debug:
-                log('clip rtmp url: ' + rtmpurl)
-
-            if not rtmpurl:
+            stream = ElavaArkistoStreamUrl(mediaitem, pageurl, filters)
+            if not stream.is_valid():
                 continue
-
-            clips.append({'rtmp': rtmpurl,
-                          'playpath': playpath,
-                          'downloadURL': downloadURL,
-                          'title': title,
-                          'filename': filename + ext})
+            clips.append(stream)
 
         return clips
-
-    def arkisto_rtmp(self, mediaitem, filters):
-        streams = self.extract_streams_and_bitrates(mediaitem)
-        if not streams:
-            return (None, None, None)
-
-        if filters.keep_lowest_bitrate():
-            selected = sorted(streams, key=itemgetter(0))[0]
-        else:
-            filtered = [s for s in streams if s[0] <= filters.maxbitrate]
-            if not filtered:
-                log('No streams matching the bitrate limit')
-                return (None, None, None)
-            selected = sorted(streams, key=itemgetter(0))[-1]
-
-        if debug:
-            log('Selected by bitrate filter: ' + str(selected))
-            
-        return parse_rtmp_single_component_app(selected[1])
-
-    def extract_streams_and_bitrates(self, mediaitem):
-        streams = []
-        for clip in mediaitem.get('urls', {}).get('domestic', []):
-            rate = float(clip.get('bitrate', 0))
-            url = clip.get('url', '')
-            streams.append((rate, url))
-        return streams
-
-    def mediakanta_rtmp(self, mediaitem, pageurl, filters):
-        if mediaitem.get('mediakantaId', '') != '':
-            papiurl = 'http://papi.yle.fi/ea/mod/rtmp/' + mediaitem['mediakantaId']
-            rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
-            playpath = rtmp_params['playpath']
-            ext = os.path.splitext(playpath)[1] or '.mp3'
-            return (rtmp_params['rtmp'], playpath, ext)
-        else:
-            return (None, None, None)
-
-    def download_single_episode(self, rtmpurl, playpath, downloadURL,
-                                filename, rtmpdumpargs, pageurl):
-        if downloadURL:
-            log('Downloading from HTTP server...')
-            log_output_file(filename)
-
-            enc = sys.getfilesystemencoding()
-            try:
-                urllib.urlretrieve(downloadURL, filename.encode(enc))
-            except IOError, exc:
-                log(u'Download failed: ' + str(exc))
-                return RD_FAILED
-
-            log_output_file(filename, True)
-            return RD_SUCCESS
-        else:
-            args = [rtmpdump_binary]
-            args += RTMPDUMP_OPTIONS_ARKISTO
-            args += ['-r', rtmpurl,
-                     '-y', playpath,
-                     '-p', pageurl,
-                     '-o', filename]
-            args += rtmpdumpargs
-
-            outputfile = get_output_filename(args)
-            log_output_file(outputfile)
-
-            retcode = external_downloader(args)
-            if retcode != RD_SUCCESS:
-                return retcode
-
-            log_output_file(outputfile, True)
-
-            return retcode
 
     def print_librtmp_url(self, rtmpurl, playpath, pageurl, downloadURL):
         """Print a librtmp-compatible Elava Arkisto URL to stdout."""
@@ -1304,19 +1069,14 @@ class ElavaArkistoDownloader(AreenaRTMPStreamUrl):
             return RD_FAILED
 
         overall_status = RD_SUCCESS
-        for clip in playlist:
-            filename = clip['filename']
-            if destdir:
-                filename = os.path.join(destdir, filename)
+        for stream in playlist:
+            downloader = stream.create_downloader('', destdir, rtmpdumpargs)
+            if not downloader:
+                log(u'Downloading the stream at %s is not yet supported.' % url)
+                log(u'Try --showurl')
+                continue
 
-            if not is_resume_job(rtmpdumpargs):
-                filename = next_available_filename(filename)
-
-            status = self.download_single_episode(clip['rtmp'],
-                                                  clip['playpath'],
-                                                  clip['downloadURL'],
-                                                  filename,
-                                                  rtmpdumpargs, url)
+            status = downloader.save_stream()
             if status != RD_SUCCESS:
                 overall_status = status
 
@@ -1332,9 +1092,9 @@ class ElavaArkistoDownloader(AreenaRTMPStreamUrl):
         if print_episode_url:
             print url
         else:
-            for clip in playlist:
-                self.print_librtmp_url(clip['rtmp'], clip['playpath'],
-                                       url, clip['downloadURL'])
+            enc = sys.getfilesystemencoding()
+            for stream in playlist:
+                print stream.to_url().encode(enc, 'replace')
 
         return RD_SUCCESS
 
@@ -1344,10 +1104,111 @@ class ElavaArkistoDownloader(AreenaRTMPStreamUrl):
             return RD_FAILED
 
         enc = sys.getfilesystemencoding()
-        for clip in playlist:
-            print clip['title'].encode(enc, 'replace')
+        for stream in playlist:
+            print stream.clip_title.encode(enc, 'replace')
 
         return RD_SUCCESS
+
+
+class ElavaArkistoStreamUrl(AreenaRTMPStreamUrl):
+    def __init__(self, mediaitem, pageurl, filters):
+        AreenaRTMPStreamUrl.__init__(self, mediaitem, pageurl)
+        self._initialize(mediaitem, pageurl, filters)
+
+    def is_valid(self):
+        return bool(self.rtmp_params) or bool(self.direct_url)
+    
+    def to_url(self):
+        if self.direct_url:
+            return self.direct_url
+        else:
+            return AreenaRTMPStreamUrl.to_url(self)
+
+    def create_downloader(self, clip_title_ignored, destdir, extra_argv):
+        if self.direct_url:
+            return HTTPDump(self, self.clip_title, destdir)
+        else:
+            return RTMPDump(self, self.clip_title, destdir, extra_argv)
+
+    def _initialize(self, mediaitem, pageurl, filters):
+        self.clip_title = mediaitem.get('title', 'elavaarkisto')
+        self.direct_url = mediaitem.get('downloadURL', None)
+        rtmpurl, playpath, self.ext = self._arkisto_rtmp(mediaitem, filters)
+        if not rtmpurl:
+            rtmpurl, playpath, self.ext = \
+                self._mediakanta_rtmp(mediaitem, pageurl, filters)
+        self.rtmp_params = {'rtmp': rtmpurl,
+                            'playpath': playpath,
+                            'pageUrl': pageurl}
+
+    def _arkisto_rtmp(self, mediaitem, filters):
+        streams = self._extract_streams_and_bitrates(mediaitem)
+        if not streams:
+            return (None, None, None)
+
+        if filters.keep_lowest_bitrate():
+            selected = sorted(streams, key=itemgetter(0))[0]
+        else:
+            filtered = [s for s in streams if s[0] <= filters.maxbitrate]
+            if not filtered:
+                log('No streams matching the bitrate limit')
+                return (None, None, None)
+            selected = sorted(streams, key=itemgetter(0))[-1]
+
+        if debug:
+            log('Selected by bitrate filter: ' + str(selected))
+            
+        return self._parse_rtmp_single_component_app(selected[1])
+
+    def _parse_rtmp_single_component_app(self, rtmpurl):
+        """Extract single path-component app and playpath from rtmpurl."""
+        # YLE server requires that app is the first path component
+        # only. By default librtmp would take the first two
+        # components (app/appInstance).
+        #
+        # This also means that we can't rely on librtmp's playpath
+        # parser and have to duplicate the logic here.
+        k = 0
+        if rtmpurl.find('://') != -1:
+            i = -1
+            for i, x in enumerate(rtmpurl):
+                if x == '/':
+                    k += 1
+                    if k == 4:
+                        break
+
+            playpath = rtmpurl[(i+1):]
+            app_only_rtmpurl = rtmpurl[:i]
+        else:
+            playpath = rtmpurl
+            app_only_rtmpurl = ''
+
+        ext = os.path.splitext(playpath)[1]
+        if ext == '.mp4':
+            playpath = 'mp4:' + playpath
+            ext = '.flv'
+        elif ext == '.mp3':
+            playpath = 'mp3:' + playpath[:-4]
+
+        return (app_only_rtmpurl, playpath, ext)
+
+    def _extract_streams_and_bitrates(self, mediaitem):
+        streams = []
+        for clip in mediaitem.get('urls', {}).get('domestic', []):
+            rate = float(clip.get('bitrate', 0))
+            url = clip.get('url', '')
+            streams.append((rate, url))
+        return streams
+
+    def _mediakanta_rtmp(self, mediaitem, pageurl, filters):
+        if mediaitem.get('mediakantaId', '') != '':
+            papiurl = 'http://papi.yle.fi/ea/mod/rtmp/' + mediaitem['mediakantaId']
+            rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
+            playpath = rtmp_params['playpath']
+            ext = os.path.splitext(playpath)[1] or '.mp3'
+            return (rtmp_params['rtmp'], playpath, ext)
+        else:
+            return (None, None, None)
 
 
 ### YleX Areena ###
@@ -1365,33 +1226,10 @@ class YleXDownloader(AreenaNGDownloader):
         if not streamurl.is_valid():
             return RD_FAILED
 
-        outputoptions = []
-        if not '-o' in argv and not '--flv' in argv:
-            filename = sane_filename(self.stream_title(html)) + '.flv'
-            if destdir:
-                filename = os.path.join(destdir, filename)
-
-            if not is_resume_job(argv):
-                filename = next_available_filename(filename)
-
-            outputoptions = ['-o', filename]
-
-        args = [rtmpdump_binary]
-        args += streamurl.to_rtmpdump_args()
-        args += RTMPDUMP_OPTIONS_YLEX
-        args += outputoptions
-        args += argv
-
-        outputfile = get_output_filename(args)
-        log_output_file(outputfile)
-
-        retcode = external_downloader(args)
-        if retcode != RD_SUCCESS:
-            return retcode
-
-        log_output_file(outputfile, True)
-
-        return retcode
+        stream_title = self.stream_title(html)
+        extra_args = RTMPDUMP_OPTIONS_YLEX + argv
+        downloader = streamurl.create_downloader(stream_title, destdir, extra_args)
+        return downloader.save_stream()
 
     def print_urls(self, url, print_episode_url, filters):
         """Print a librtmp-compatible YleX Areena URL to stdout."""
@@ -1458,18 +1296,68 @@ class ExternalDownloader:
 
     def save_stream(self):
         args = self.build_args()
-        outputfile = get_output_filename(args)
-        log_output_file(outputfile)
-        retcode = external_downloader(args)
+        outputfile = self.outputfile_from_args(args)
+        self.log_output_file(outputfile)
+        retcode = self.external_downloader(args)
         if retcode == RD_SUCCESS:
-            log_output_file(outputfile, True)
+            self.log_output_file(outputfile, True)
         return retcode
 
-    def output_filename(self):
-        return sane_filename(self.clip_title) + '.flv'
+    def output_filename(self, ext='.flv'):
+        return sane_filename(self.clip_title) + ext
 
     def build_args(self):
         return []
+
+    def external_downloader(self, args):
+        """Start an external process such as rtmpdump with argument list args and
+        wait until completion.
+        """
+        if debug:
+            log('Executing:')
+            log(' '.join(args))
+
+        enc = sys.getfilesystemencoding()
+        encoded_args = [x.encode(enc, 'replace') for x in args]
+
+        try:
+            if platform.system() == 'Windows':
+                process = subprocess.Popen(encoded_args)
+            else:
+                process = subprocess.Popen(encoded_args,
+                    preexec_fn=sigterm_when_parent_dies)
+            return process.wait()
+        except KeyboardInterrupt:
+            try:
+                os.kill(process.pid, signal.SIGINT)
+                process.wait()
+            except OSError:
+                # The process died before we killed it.
+                pass
+            return RD_INCOMPLETE
+        except OSError, exc:
+            log(u'Execution failed: ' + unicode(exc, 'UTF-8', 'replace'))
+            return RD_INCOMPLETE
+
+    def outputfile_from_args(self, args_in):
+        prev = None
+        args = list(args_in) # copy
+        while args:
+            opt = args.pop()
+            if opt in ('-o', '--flv'):
+                if prev:
+                    return prev
+                else:
+                    return None
+            prev = opt
+        return None
+
+    def log_output_file(self, outputfile, done=False):
+        if outputfile and outputfile != '-':
+            if done:
+                log(u'Stream saved to ' + outputfile)
+            else:
+                log(u'Output file: ' + outputfile)
 
 
 class RTMPDump(ExternalDownloader):
@@ -1480,8 +1368,8 @@ class RTMPDump(ExternalDownloader):
             if self.destdir:
                 filename = os.path.join(self.destdir, filename)
 
-            if not is_resume_job(self.extra_argv):
-                filename = next_available_filename(filename)
+            if not self.is_resume_job(self.extra_argv):
+                filename = self.next_available_filename(filename)
             outputparam = ['-o', filename]
 
         args = [rtmpdump_binary]
@@ -1491,7 +1379,22 @@ class RTMPDump(ExternalDownloader):
         return args
 
     def output_filename(self):
-        return get_output_filename(self.build_args())
+        return self.outputfile_from_args(self.build_args())
+
+    def is_resume_job(self, args):
+        return '--resume' in args or '-e' in args
+
+    def next_available_filename(self, proposed):
+        i = 1
+        enc = sys.getfilesystemencoding()
+        filename = proposed
+        basename, ext = os.path.splitext(filename)
+        while os.path.exists(filename.encode(enc, 'replace')):
+            log(u'%s exists, trying an alternative name' % filename)
+            filename = basename + '-' + str(i) + ext
+            i += 1
+
+        return filename
 
 
 class HDSDump(ExternalDownloader):
@@ -1503,6 +1406,31 @@ class HDSDump(ExternalDownloader):
         args.append('--outfile')
         args.append(os.path.join(self.destdir, self.output_filename()))
         return args
+
+
+class HTTPDump(ExternalDownloader):
+    def __init__(self, stream, clip_title, destdir):
+        ExternalDownloader.__init__(self, stream, clip_title, destdir, None)
+
+    def save_stream(self):
+        log('Downloading from HTTP server...')
+        if debug:
+            log('URL: %s' % self.stream.to_url())
+        ext = self.stream.ext or '.flv'
+        filename = self.output_filename(ext)
+        if self.destdir:
+            filename = os.path.join(self.destdir, filename)
+        self.log_output_file(filename)
+
+        enc = sys.getfilesystemencoding()
+        try:
+            urllib.urlretrieve(self.stream.to_url(), filename.encode(enc))
+        except IOError, exc:
+            log(u'Download failed: ' + str(exc))
+            return RD_FAILED
+
+        self.log_output_file(filename, True)
+        return RD_SUCCESS
 
 
 ### main program ###
