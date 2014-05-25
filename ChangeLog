@@ -1,7 +1,11 @@
 
 rtmpdump frontend for Yle servers
-Copyright 2008-2012 Antti Ajanki
+Copyright 2008-2014 Antti Ajanki
 Distributed under the GPL v2
+
+xx xxx 2014, Version next
+
+- Support for HDS streams in Areena (disabled by default)
 
 23 Mar 2014, Version 2.2.1
 

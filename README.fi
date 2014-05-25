@@ -72,6 +72,19 @@ yle-dl --help
 Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
 ulospäin menevä liikenne porteissa 80 ja 1935.
 
+Kokeellinen tuki HDS-protokollalle
+----------------------------------
+
+Areenan videot ovat ladattavissa sekä RTMP- että HDS-protokollien
+kautta. Käytettävä protokolla valitaan --protocol-valitsimella.
+Oletuksena käytetään RTMP-protokollaa eikä protokollaa tarvitse
+normaalisti valita itse.
+
+HDS-videoiden lataamiseen tarvitaan php-tulkki ja AdobeHDS.php-skripti
+osoitteesta https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
+
+yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" ...
+
 Integroiminen Firefox-selaimeen
 -------------------------------
 
