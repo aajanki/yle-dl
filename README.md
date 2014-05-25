@@ -91,7 +91,9 @@ To download streams through HDS, install php interpreter and download
 AdobeHDS.php script from
 https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
 
+```
 yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" ...
+```
 
 Examples
 --------
