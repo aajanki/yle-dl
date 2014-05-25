@@ -176,26 +176,6 @@ def int_or_else(x, default):
     except ValueError:
         return default
 
-def sane_filename(name):
-    if isinstance(name, unicode):
-        tr = dict((ord(c), ord(u'_')) for c in excludechars)
-    else:
-        tr = string.maketrans(excludechars, '_'*len(excludechars))
-    x = name.strip(' .').translate(tr)
-    if x:
-        return x
-    else:
-        return 'ylevideo'
-
-def sigterm_when_parent_dies():
-    PR_SET_PDEATHSIG = 1
-
-    try:
-        libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
-    except AttributeError:
-        # libc is None or libc does not contain prctl
-        pass
-
 def downloader_factory(url):
     if url.startswith('http://www.yle.fi/elavaarkisto/') or \
             url.startswith('http://yle.fi/elavaarkisto/') or \
@@ -378,9 +358,6 @@ class AreenaNGDownloader:
             title = time.strftime('areena-%Y-%m-%d-%H:%M:%S')
 
         return title
-
-    def get_clip_filename(self, clip):
-        return sane_filename(self.get_clip_title(clip)) + '.flv'
 
     def get_playlist(self, url, latest_episode):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
@@ -1308,7 +1285,7 @@ class ExternalDownloader:
         return retcode
 
     def output_filename(self, ext='.flv'):
-        return sane_filename(self.clip_title) + ext
+        return self.sane_filename(self.clip_title) + ext
 
     def build_args(self):
         return []
@@ -1329,7 +1306,7 @@ class ExternalDownloader:
                 process = subprocess.Popen(encoded_args)
             else:
                 process = subprocess.Popen(encoded_args,
-                    preexec_fn=sigterm_when_parent_dies)
+                    preexec_fn=self._sigterm_when_parent_dies)
             return process.wait()
         except KeyboardInterrupt:
             try:
@@ -1342,6 +1319,15 @@ class ExternalDownloader:
         except OSError, exc:
             log(u'Execution failed: ' + unicode(exc, 'UTF-8', 'replace'))
             return RD_INCOMPLETE
+
+    def _sigterm_when_parent_dies(self):
+       PR_SET_PDEATHSIG = 1
+
+       try:
+           libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+       except AttributeError:
+           # libc is None or libc does not contain prctl
+           pass
 
     def outputfile_from_args(self, args_in):
         prev = None
@@ -1363,12 +1349,23 @@ class ExternalDownloader:
             else:
                 log(u'Output file: ' + outputfile)
 
+    def sane_filename(self, name):
+        if isinstance(name, unicode):
+            tr = dict((ord(c), ord(u'_')) for c in excludechars)
+        else:
+            tr = string.maketrans(excludechars, '_'*len(excludechars))
+        x = name.strip(' .').translate(tr)
+        if x:
+            return x
+        else:
+            return 'ylevideo'
+
 
 class RTMPDump(ExternalDownloader):
     def build_args(self):
         outputparam = []
         if '-o' not in self.extra_argv and '--flv' not in self.extra_argv:
-            filename = sane_filename(self.clip_title) + '.flv'
+            filename = self.sane_filename(self.clip_title) + '.flv'
             if self.destdir:
                 filename = os.path.join(self.destdir, filename)
 
