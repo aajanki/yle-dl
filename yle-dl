@@ -89,7 +89,7 @@ def usage():
     log(u'yle-dl options:')
     log(u'')
     log(u'--latestepisode         Download the latest episode')
-    log(u"--showurl               Print librtmp-compatible URL, don't download")
+    log(u"--showurl               Print URL, don't download")
     log(u"--showtitle             Print stream title, don't download")
     log(u"--showepisodepage       Print web page for each episode")
     log(u'--vfat                  Create Windows-compatible filenames')
@@ -98,7 +98,9 @@ def usage():
     log(u'--maxbitrate br         Maximum bitrate stream to download, integer in kB/s')
     log(u'                        or "best" or "worst"')
     log(u'--rtmpdump path         Set path to rtmpdump binary')
+    log(u'--adobehds path         Set command for executing AdobeHDS.php script')
     log(u'--destdir dir           Save files to dir')
+    log(u'--protocol proto        Preferred streaming protocol, proto = rtmp or hds')
     log(u'')
     log(u'rtmpdump options:')
     log(u'')
@@ -252,14 +254,21 @@ class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
-    def __init__(self, latest_only, sublang, hardsubs, maxbitrate):
+    def __init__(self, latest_only, sublang, hardsubs, maxbitrate, preferred_protocol):
         self.latest_only = latest_only
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
+        self.preferred_protocol = preferred_protocol
 
     def keep_lowest_bitrate(self):
         return self.maxbitrate <= 0
+
+    def preferred_stream_class(self):
+        if self.preferred_protocol == 'hds':
+            return AreenaHDSStreamUrl
+        else:
+            return AreenaStreamUrl
 
 
 ### Areena (new) ###
@@ -321,13 +330,8 @@ class AreenaNGDownloader:
     def process_single_episode(self, clip, pageurl, filters, rtmpdumpargs,
                                destdir, optype):
         """Construct clip parameters and starts a rtmpdump process."""
-        streamurl = AreenaHDSStreamUrl(clip, pageurl, filters)
-        if not streamurl.is_valid():
-            if debug:
-                log('Failed to find HDS stream (%s). Falling back to RTMP.' %
-                    streamurl.get_error_message())
-            streamurl = AreenaStreamUrl(clip, pageurl, filters)
-            
+        stream_class = filters.preferred_stream_class()
+        streamurl = stream_class(clip, pageurl, filters)
         if not streamurl.is_valid():
             log(u'Unsupported stream at %s: %s' %
                 (pageurl, streamurl.get_error_message()))
@@ -1450,6 +1454,7 @@ def main():
     show_usage = False
     url = None
     destdir = None
+    streaming_protocol = 'rtmp'
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -1495,6 +1500,9 @@ def main():
         elif arg == '--destdir':
             if argv:
                 destdir = argv.pop(0)
+        elif arg == '--protocol':
+            if argv:
+                streaming_protocol = argv.pop(0)
         else:
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:
@@ -1517,6 +1525,10 @@ def main():
         log(u'Error: rtmpdump not found on path, use --rtmpdump for setting the location')
         sys.exit(1)
 
+    if streaming_protocol not in ('rtmp', 'hds'):
+        log(u'Error: Unknown protocol: %s, valid values: rtmp, hds' % streaming_protocol)
+        sys.exit(1)
+
     url = encode_url_utf8(url)
     dl = downloader_factory(url)
     if not dl:
@@ -1525,7 +1537,7 @@ def main():
         sys.exit(RD_FAILED)
 
     maxbitrate = bitrate_from_arg(bitratearg)
-    sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
+    sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate, streaming_protocol)
     if url_only:
         sys.exit(dl.print_urls(url, print_episode_url, sfilt))
     elif title_only:
