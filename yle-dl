@@ -1284,8 +1284,25 @@ class ExternalDownloader:
             self.log_output_file(outputfile, True)
         return retcode
 
-    def output_filename(self, ext='.flv'):
-        return self.sane_filename(self.clip_title) + ext
+    def output_filename(self, ext='.flv', resume=False):
+        filename = self.sane_filename(self.clip_title) + ext
+        if self.destdir:
+            filename = os.path.join(self.destdir, filename)
+        if not resume:
+            filename = self.next_available_filename(filename)
+        return filename
+        
+    def next_available_filename(self, proposed):
+        i = 1
+        enc = sys.getfilesystemencoding()
+        filename = proposed
+        basename, ext = os.path.splitext(filename)
+        while os.path.exists(filename.encode(enc, 'replace')):
+            log(u'%s exists, trying an alternative name' % filename)
+            filename = basename + '-' + str(i) + ext
+            i += 1
+
+        return filename
 
     def build_args(self):
         return []
@@ -1365,12 +1382,7 @@ class RTMPDump(ExternalDownloader):
     def build_args(self):
         outputparam = []
         if '-o' not in self.extra_argv and '--flv' not in self.extra_argv:
-            filename = self.sane_filename(self.clip_title) + '.flv'
-            if self.destdir:
-                filename = os.path.join(self.destdir, filename)
-
-            if not self.is_resume_job(self.extra_argv):
-                filename = self.next_available_filename(filename)
+            filename = self.output_filename(resume=self.is_resume_job(self.extra_argv))
             outputparam = ['-o', filename]
 
         args = [rtmpdump_binary]
@@ -1379,23 +1391,8 @@ class RTMPDump(ExternalDownloader):
         args += self.extra_argv
         return args
 
-    def output_filename(self):
-        return self.outputfile_from_args(self.build_args())
-
     def is_resume_job(self, args):
         return '--resume' in args or '-e' in args
-
-    def next_available_filename(self, proposed):
-        i = 1
-        enc = sys.getfilesystemencoding()
-        filename = proposed
-        basename, ext = os.path.splitext(filename)
-        while os.path.exists(filename.encode(enc, 'replace')):
-            log(u'%s exists, trying an alternative name' % filename)
-            filename = basename + '-' + str(i) + ext
-            i += 1
-
-        return filename
 
 
 class HDSDump(ExternalDownloader):
@@ -1405,7 +1402,7 @@ class HDSDump(ExternalDownloader):
         args.append(self.stream.to_url())
         args.append('--delete')
         args.append('--outfile')
-        args.append(os.path.join(self.destdir, self.output_filename()))
+        args.append(self.output_filename())
         return args
 
 
@@ -1418,9 +1415,7 @@ class HTTPDump(ExternalDownloader):
         if debug:
             log('URL: %s' % self.stream.to_url())
         ext = self.stream.ext or '.flv'
-        filename = self.output_filename(ext)
-        if self.destdir:
-            filename = os.path.join(self.destdir, filename)
+        filename = self.output_filename(ext=ext)
         self.log_output_file(filename)
 
         enc = sys.getfilesystemencoding()
