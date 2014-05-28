@@ -1274,6 +1274,7 @@ class ExternalDownloader:
         self.clip_title = clip_title or 'ylestream'
         self.extra_argv = extra_argv
         self.destdir = destdir or ''
+        self._cached_output_file = None
 
     def save_stream(self):
         args = self.build_args()
@@ -1285,11 +1286,15 @@ class ExternalDownloader:
         return retcode
 
     def output_filename(self, ext='.flv', resume=False):
+        if self._cached_output_file:
+            return self._cached_output_file
+        
         filename = self.sane_filename(self.clip_title) + ext
         if self.destdir:
             filename = os.path.join(self.destdir, filename)
         if not resume:
             filename = self.next_available_filename(filename)
+        self._cached_output_file = filename
         return filename
         
     def next_available_filename(self, proposed):
