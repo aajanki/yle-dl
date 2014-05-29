@@ -83,16 +83,14 @@ Firewall must allow outgoing traffic on ports 80 and 1935.
 Experimental support for HDS streams
 ------------------------------------
 
-Areena streams are available through both RTMP and HDS protocols.
---protocol argument selects which protocol is used. The default is
-RTMP. Usually there is no need to change the default.
-
-To download streams through HDS, install php interpreter and download
-AdobeHDS.php script from
+Some Areena streams are available only as HDS streams. If normal
+downloading fails, you can instruct yle-dl to download the HDS stream.
+Do do that, first install php interpreter and download AdobeHDS.php
+script from
 https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
 
 ```
-yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" ...
+yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" http://areena.yle.fi/...
 ```
 
 Examples

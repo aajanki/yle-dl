@@ -75,15 +75,12 @@ ulospäin menevä liikenne porteissa 80 ja 1935.
 Kokeellinen tuki HDS-protokollalle
 ----------------------------------
 
-Areenan videot ovat ladattavissa sekä RTMP- että HDS-protokollien
-kautta. Käytettävä protokolla valitaan --protocol-valitsimella.
-Oletuksena käytetään RTMP-protokollaa eikä protokollaa tarvitse
-normaalisti valita itse.
-
-HDS-videoiden lataamiseen tarvitaan php-tulkki ja AdobeHDS.php-skripti
+Jotkin Areenan TV-ohjelmat ovat ladattavissa vain HDS-protokollalla.
+Jos normaali lataaminen ei onnistu, voi yle-dl:n komentaa lataamaan
+HDS-striimin. Lataamiseen vaaditaan php-tulkki ja AdobeHDS.php-skripti
 osoitteesta https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
 
-yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" ...
+yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" http://areena.yle.fi/...
 
 Integroiminen Firefox-selaimeen
 -------------------------------
