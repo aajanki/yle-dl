@@ -683,7 +683,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         try:
             identxml = xml.dom.minidom.parseString(ident)
         except Exception as exc:
-            log(unicode(exc.message, 'utf-8'))
+            log(unicode(exc.message, 'utf-8', 'ignore'))
             return None
 
         nodelist = identxml.getElementsByTagName('ip')
@@ -1339,7 +1339,7 @@ class ExternalDownloader:
                 pass
             return RD_INCOMPLETE
         except OSError, exc:
-            log(u'Execution failed: ' + unicode(exc, 'UTF-8', 'replace'))
+            log(u'Execution failed: ' + unicode(exc.message, 'UTF-8', 'replace'))
             return RD_INCOMPLETE
 
     def _sigterm_when_parent_dies(self):
@@ -1427,7 +1427,7 @@ class HTTPDump(ExternalDownloader):
         try:
             urllib.urlretrieve(self.stream.to_url(), filename.encode(enc))
         except IOError, exc:
-            log(u'Download failed: ' + str(exc))
+            log(u'Download failed: ' + unicode(exc.message, 'UTF-8', 'replace'))
             return RD_FAILED
 
         self.log_output_file(filename, True)
