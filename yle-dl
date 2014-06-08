@@ -176,24 +176,24 @@ def int_or_else(x, default):
     except ValueError:
         return default
 
-def downloader_factory(url, streaming_protocol):
+def downloader_factory(url, protocols):
     if url.startswith('http://www.yle.fi/elavaarkisto/') or \
             url.startswith('http://yle.fi/elavaarkisto/') or \
             url.startswith('http://yle.fi/arkivet/') or \
             url.startswith('http://svenska.yle.fi/arkivet/'):
-        return ElavaArkistoDownloader()
+        return RetryingDownloader(ElavaArkistoDownloader, protocols)
     elif url.startswith('http://ylex.yle.fi/'):
-        return YleXDownloader()
+        return RetryingDownloader(YleXDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/tv/suora/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
-        return AreenaLiveDownloader()
+        return RetryingDownloader(AreenaLiveDownloader, protocols)
     elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/?$', url) or \
             url == 'http://ylex.yle.fi/radio-popup':
-        return AreenaLiveRadioDownloader()
+        return RetryingDownloader(AreenaLiveRadioDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/') or \
             url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
-        return AreenaNGDownloader(streaming_protocol)
+        return RetryingDownloader(AreenaNGDownloader, protocols)
     else:
         return None
 
@@ -251,6 +251,10 @@ class AreenaNGDownloader:
     OP_PRINT_DOWNLOAD_URL = 2
     OP_PRINT_EPISODE_PAGE_URL = 3
 
+    @staticmethod
+    def supported_protocols():
+        return ['hds', 'rtmp']
+    
     def __init__(self, streaming_protocol):
         if streaming_protocol == 'hds':
             self.stream_class = AreenaHDSStreamUrl
@@ -874,6 +878,13 @@ class PAPIStream:
 
 
 class AreenaLiveDownloader:
+    @staticmethod
+    def supported_protocols():
+        return ['rtmp']
+
+    def __init__(self, streaming_protocols):
+        pass
+
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
         streamurl = AreenaLiveStreamUrl(url, filters)
         if not streamurl.is_valid():
@@ -933,6 +944,13 @@ class AreenaLiveStreamUrl(AreenaRTMPStreamUrl):
 
 
 class AreenaLiveRadioDownloader:
+    @staticmethod
+    def supported_protocols():
+        return ['rtmp']
+
+    def __init__(self, streaming_protocols):
+        pass
+
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
         streamurl = AreenaLiveRadioStreamUrl(url, filters)
         if not streamurl.is_valid():
@@ -986,6 +1004,12 @@ class AreenaLiveRadioStreamUrl(AreenaRTMPStreamUrl):
 
 
 class ElavaArkistoDownloader:
+    @staticmethod
+    def supported_protocols():
+        return ['rtmp']
+
+    def __init__(self, streaming_protocols):
+        pass
 
     def extract_playlist(self, mediajson, pageurl, filters):
         pagedata = json.loads(mediajson)
@@ -1194,6 +1218,13 @@ class ElavaArkistoStreamUrl(AreenaRTMPStreamUrl):
 
 
 class YleXDownloader(AreenaNGDownloader):
+    @staticmethod
+    def supported_protocols():
+        return ['rtmp']
+
+    def __init__(self, streaming_protocols):
+        pass
+
     def download_episodes(self, url, filters, argv, destdir):
         """Download a stream from the given YleX Areena url using
         rtmpdump."""
@@ -1264,7 +1295,55 @@ class YleXStreamUrl(AreenaRTMPStreamUrl):
         return self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
 
 
+### Downloader wrapper class that retries different protocols ###
+
+
+class RetryingDownloader:
+    def __init__(self, wrapped_class, protocols):
+        self.wrapped_class = wrapped_class
+        supported_protocols = wrapped_class.supported_protocols()
+        required_or_default_protocols = protocols or supported_protocols
+        self.protocols = \
+          [x for x in required_or_default_protocols if x in supported_protocols]
+
+        unsupported = frozenset(protocols or []) - frozenset(self.protocols)
+        if unsupported:
+            log(u'The following protocols are not supported on this source: ' +
+                u', '.join(unsupported))
+
+    def _create_next_downloader(self):
+        if self.protocols:
+            proto = self.protocols.pop(0)
+            if debug:
+                log('Streaming protocol %s' % proto)
+            return self.wrapped_class(proto)
+        else:
+            return None
+
+    def _retry_call(self, method_name, *args, **kwargs):
+        downloader = self._create_next_downloader()
+        if not downloader:
+            return RD_FAILED
+
+        method = getattr(downloader, method_name)
+        res = method(*args, **kwargs)
+        if res == RD_FAILED:
+            return self._retry_call(method_name, *args, **kwargs)
+        else:
+            return res
+
+    def print_urls(self, *args, **kwargs):
+        return self._retry_call('print_urls', *args, **kwargs)
+
+    def print_titles(self, *args, **kwargs):
+        return self._retry_call('print_titles', *args, **kwargs)
+
+    def download_episodes(self, *args, **kwargs):
+        return self._retry_call('download_episodes', *args, **kwargs)
+
+
 ### Dumping a stream to a file using external programs ###
+
 
 class ExternalDownloader:
     def __init__(self, stream, clip_title, destdir, extra_argv):
@@ -1449,7 +1528,7 @@ def main():
     show_usage = False
     url = None
     destdir = None
-    streaming_protocol = 'rtmp'
+    streaming_protocols = None
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -1497,7 +1576,7 @@ def main():
                 destdir = argv.pop(0)
         elif arg == '--protocol':
             if argv:
-                streaming_protocol = argv.pop(0)
+                streaming_protocols = argv.pop(0).split(',')
         else:
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:
@@ -1520,12 +1599,8 @@ def main():
         log(u'Error: rtmpdump not found on path, use --rtmpdump for setting the location')
         sys.exit(1)
 
-    if streaming_protocol not in ('rtmp', 'hds'):
-        log(u'Error: Unknown protocol: %s, valid values: rtmp, hds' % streaming_protocol)
-        sys.exit(1)
-
     url = encode_url_utf8(url)
-    dl = downloader_factory(url, streaming_protocol)
+    dl = downloader_factory(url, streaming_protocols)
     if not dl:
         log(u'Unsupported URL %s.' % url)
         log(u'Is this really a Yle video page?')
