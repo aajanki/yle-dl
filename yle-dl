@@ -1418,8 +1418,9 @@ class ExternalDownloader:
                 pass
             return RD_INCOMPLETE
         except OSError, exc:
-            log(u'Execution failed: ' + unicode(exc.message, 'UTF-8', 'replace'))
-            return RD_INCOMPLETE
+            log(u'Failed to execute ' + ' '.join(args))
+            log(unicode(exc.strerror, 'UTF-8', 'replace'))
+            return RD_FAILED
 
     def _sigterm_when_parent_dies(self):
        PR_SET_PDEATHSIG = 1
