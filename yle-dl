@@ -176,7 +176,7 @@ def int_or_else(x, default):
     except ValueError:
         return default
 
-def downloader_factory(url):
+def downloader_factory(url, streaming_protocol):
     if url.startswith('http://www.yle.fi/elavaarkisto/') or \
             url.startswith('http://yle.fi/elavaarkisto/') or \
             url.startswith('http://yle.fi/arkivet/') or \
@@ -193,7 +193,7 @@ def downloader_factory(url):
     elif url.startswith('http://areena.yle.fi/') or \
             url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
-        return AreenaNGDownloader()
+        return AreenaNGDownloader(streaming_protocol)
     else:
         return None
 
@@ -234,21 +234,14 @@ class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
-    def __init__(self, latest_only, sublang, hardsubs, maxbitrate, preferred_protocol):
+    def __init__(self, latest_only, sublang, hardsubs, maxbitrate):
         self.latest_only = latest_only
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
-        self.preferred_protocol = preferred_protocol
 
     def keep_lowest_bitrate(self):
         return self.maxbitrate <= 0
-
-    def preferred_stream_class(self):
-        if self.preferred_protocol == 'hds':
-            return AreenaHDSStreamUrl
-        else:
-            return AreenaStreamUrl
 
 
 ### Areena (new) ###
@@ -257,6 +250,12 @@ class AreenaNGDownloader:
     OP_DOWNLOAD = 1
     OP_PRINT_DOWNLOAD_URL = 2
     OP_PRINT_EPISODE_PAGE_URL = 3
+
+    def __init__(self, streaming_protocol):
+        if streaming_protocol == 'hds':
+            self.stream_class = AreenaHDSStreamUrl
+        else:
+            self.stream_class = AreenaStreamUrl
 
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
         """Extract all episodes (or just the latest episode if
@@ -310,8 +309,7 @@ class AreenaNGDownloader:
     def process_single_episode(self, clip, pageurl, filters, rtmpdumpargs,
                                destdir, optype):
         """Construct clip parameters and starts a rtmpdump process."""
-        stream_class = filters.preferred_stream_class()
-        streamurl = stream_class(clip, pageurl, filters)
+        streamurl = self.stream_class(clip, pageurl, filters)
         if not streamurl.is_valid():
             log(u'Unsupported stream at %s: %s' %
                 (pageurl, streamurl.get_error_message()))
@@ -1527,14 +1525,14 @@ def main():
         sys.exit(1)
 
     url = encode_url_utf8(url)
-    dl = downloader_factory(url)
+    dl = downloader_factory(url, streaming_protocol)
     if not dl:
         log(u'Unsupported URL %s.' % url)
         log(u'Is this really a Yle video page?')
         sys.exit(RD_FAILED)
 
     maxbitrate = bitrate_from_arg(bitratearg)
-    sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate, streaming_protocol)
+    sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
     if url_only:
         sys.exit(dl.print_urls(url, print_episode_url, sfilt))
     elif title_only:
