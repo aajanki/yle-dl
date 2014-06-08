@@ -819,12 +819,13 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
     def __init__(self, clip, pageurl, filters):
         AreenaStreamBase.__init__(self, clip, pageurl)
         self.hds_url = self._initialize_hds_stream(clip, pageurl, filters)
+        self.lowest_bitrate = filters.keep_lowest_bitrate()
 
     def to_url(self):
         return self.hds_url or ''
 
     def create_downloader(self, clip_title, destdir, extra_argv):
-        return HDSDump(self, clip_title, destdir, extra_argv)
+        return HDSDump(self, clip_title, destdir, extra_argv, self.lowest_bitrate)
 
     def _initialize_hds_stream(self, clip, pageurl, filters):
         clip = self.full_metadata_if_search_result(clip) or {}
@@ -1481,6 +1482,10 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
+    def __init__(self, stream, clip_title, destdir, extra_argv, lowest_bitrate):
+        ExternalDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
+        self.lowest_bitrate = lowest_bitrate
+
     def build_args(self):
         args = hds_binary
         args.append('--manifest')
@@ -1488,6 +1493,9 @@ class HDSDump(ExternalDownloader):
         args.append('--delete')
         args.append('--outfile')
         args.append(self.output_filename())
+        if self.lowest_bitrate:
+            args.append('--quality')
+            args.append('low')
         return args
 
 
