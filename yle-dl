@@ -1590,14 +1590,14 @@ def main():
 
     if show_usage or url is None:
         usage()
-        sys.exit(1)
+        sys.exit(RD_FAILED)
 
     if debug or not (url_only or title_only):
         splashscreen()
 
     if not rtmpdump_binary:
         log(u'Error: rtmpdump not found on path, use --rtmpdump for setting the location')
-        sys.exit(1)
+        sys.exit(RD_FAILED)
 
     url = encode_url_utf8(url)
     dl = downloader_factory(url, streaming_protocols)
