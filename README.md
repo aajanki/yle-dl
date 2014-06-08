@@ -20,10 +20,15 @@ Installation
 ------------
 
 Install dependencies: rtmpdump (version 2.4 or newer), python (2.6 or
-newer) and pycrypto.
+newer), pycrypto, AdobeHDS.php, php and the following php extensions:
+bcmath, curl and SimpleXML.
 
-On Debian installing packages rtmpdump, python and python-crypto
-satisfies the dependencies.
+Copy AdobeHDS.php from
+https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php to
+/usr/local/bin.
+
+On Debian installing packages rtmpdump, python, python-crypto,
+php5-cli and php5-curl satisfies the dependencies.
 
 On OS X install rtmpdump with homebrew: ``brew install --HEAD
 rtmpdump`` and pycrypto with pip: ``pip install -r requirements.txt``
@@ -74,24 +79,13 @@ yle-dl options:
 
 --rtmpdump path   Set path to rtmpdump binary
 
+--adobehds cmd    Set command for executing AdobeHDS.php script
+
 --destdir dir     Save files to dir
 
 Type "rtmpdump --help" to see a full list of options.
 
 Firewall must allow outgoing traffic on ports 80 and 1935.
-
-Experimental support for HDS streams
-------------------------------------
-
-Some Areena streams are available only as HDS streams. If normal
-downloading fails, you can instruct yle-dl to download the HDS stream.
-Do do that, first install php interpreter and download AdobeHDS.php
-script from
-https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
-
-```
-yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" http://areena.yle.fi/...
-```
 
 Examples
 --------

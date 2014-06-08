@@ -12,10 +12,15 @@ Asennus
 -------
 
 Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi),
-python (2.6 tai uudempi) ja pycrypto.
+python (2.6 tai uudempi), pycrypto, AdobeHDS.php, php sekä seuraavat
+php-laajennukset: bcmath, curl ja SimpleXML.
 
-Debianissa nämä löytyvät paketeista rtmpdump, python ja
-python-crypto.
+Kopioi AdobeHDS.php osoitteesta
+https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
+hakemistoon /usr/local/bin.
+
+Debianissa muut tarvittavat kirjastot löytyvät paketeista rtmpdump,
+python, python-crypto, php5-cli ja php5-curl.
 
 OS X:ssä rtmpdumpin voi asentaa homebrew:llä ``brew install --HEAD
 rtmpdump`` ja pycrypton pipillä ``pip install -r requirements.txt``.
@@ -62,6 +67,7 @@ Valitsimet:
 --sublang lang  Lataa tekstitykset annetulla kielellä (Yle Areena)
                 lang = fin, swe, smi, none or all (oletus)
 --rtmpdump path Polku rtmpdump-ohjelmaan
+--adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 
 Muut valitsimet välitetään suoraan rtmpdump:lle. Luettelon
@@ -71,16 +77,6 @@ yle-dl --help
 
 Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
 ulospäin menevä liikenne porteissa 80 ja 1935.
-
-Kokeellinen tuki HDS-protokollalle
-----------------------------------
-
-Jotkin Areenan TV-ohjelmat ovat ladattavissa vain HDS-protokollalla.
-Jos normaali lataaminen ei onnistu, voi yle-dl:n komentaa lataamaan
-HDS-striimin. Lataamiseen vaaditaan php-tulkki ja AdobeHDS.php-skripti
-osoitteesta https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
-
-yle-dl --protocol hds --adobehds "php /path/to/AdobeHDS.php" http://areena.yle.fi/...
 
 Integroiminen Firefox-selaimeen
 -------------------------------
