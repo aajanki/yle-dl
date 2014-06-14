@@ -1365,7 +1365,7 @@ class ExternalDownloader:
             self.log_output_file(outputfile, True)
         return retcode
 
-    def output_filename(self, ext='.flv', resume=False):
+    def outputfile_from_clip_title(self, ext='.flv', resume=False):
         if self._cached_output_file:
             return self._cached_output_file
         
@@ -1463,19 +1463,29 @@ class ExternalDownloader:
         else:
             return 'ylevideo'
 
+    def output_filename(self):
+        return (self.outputfile_from_args(self.extra_argv) or
+                self.outputfile_from_clip_title())
+
 
 class RTMPDump(ExternalDownloader):
     def build_args(self):
-        outputparam = []
-        if '-o' not in self.extra_argv and '--flv' not in self.extra_argv:
-            filename = self.output_filename(resume=self.is_resume_job(self.extra_argv))
-            outputparam = ['-o', filename]
-
         args = [rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
-        args += outputparam
+        args += self._outputparams_unless_defined_in_extra_argv()
         args += self.extra_argv
         return args
+
+    def output_filename(self):
+        resume_job = self.is_resume_job(self.extra_argv)
+        return (self.outputfile_from_args(self.extra_argv) or
+                self.outputfile_from_clip_title(resume=resume_job))
+
+    def _outputparams_unless_defined_in_extra_argv(self):
+        if self.outputfile_from_args(self.extra_argv):
+            return []
+        else:
+            return ['-o', self.output_filename()]
 
     def is_resume_job(self, args):
         return '--resume' in args or '-e' in args
@@ -1507,8 +1517,7 @@ class HTTPDump(ExternalDownloader):
         log('Downloading from HTTP server...')
         if debug:
             log('URL: %s' % self.stream.to_url())
-        ext = self.stream.ext or '.flv'
-        filename = self.output_filename(ext=ext)
+        filename = self.output_filename()
         self.log_output_file(filename)
 
         enc = sys.getfilesystemencoding()
@@ -1520,6 +1529,11 @@ class HTTPDump(ExternalDownloader):
 
         self.log_output_file(filename, True)
         return RD_SUCCESS
+
+    def output_filename(self):
+        ext = self.stream.ext or '.flv'
+        return (self.outputfile_from_args(self.extra_argv) or
+                self.outputfile_from_clip_title(ext=ext))
 
 
 ### main program ###
@@ -1607,7 +1621,7 @@ def main():
         splashscreen()
 
     if not rtmpdump_binary:
-        log(u'Error: rtmpdump not found on path, use --rtmpdump for setting the location')
+        log(u'Error: rtmpdump not fonud on path, use --rtmpdump for setting the location')
         sys.exit(RD_FAILED)
 
     url = encode_url_utf8(url)
