@@ -3,6 +3,11 @@ rtmpdump frontend for Yle servers
 Copyright 2008-2014 Antti Ajanki
 Distributed under the GPL v2
 
+14 Jun 2014, Version 2.3.1
+
+- Fix -o and --maxbitrate on HDS streams. Maxbitrate is only approximate.
+- make install-adobehds downloads and installs AdobeHDS.php
+
 8 Jun 2014, Version 2.3.0
 
 - Support for Areena HDS streams (requires additional packages, see README)
