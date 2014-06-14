@@ -23,10 +23,6 @@ Install dependencies: rtmpdump (version 2.4 or newer), python (2.6 or
 newer), pycrypto, AdobeHDS.php, php and the following php extensions:
 bcmath, curl and SimpleXML.
 
-Copy AdobeHDS.php from
-https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php to
-/usr/local/bin.
-
 On Debian installing packages rtmpdump, python, python-crypto,
 php5-cli and php5-curl satisfies the dependencies.
 
@@ -36,8 +32,13 @@ rtmpdump`` and pycrypto with pip: ``pip install -r requirements.txt``
 To install run:
 
 ```
+make install-adobehds
 make install
 ```
+
+Instead of install-adobehds you can also manually download
+https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
+to /usr/local/bin.
 
 Starting from version 1.99.9 yle-dl doesn't anymore require a modified
 rtmpdump or plugin. Instead, everything is now downloadable with the

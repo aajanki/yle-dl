@@ -7,6 +7,11 @@ install:
 	-mkdir -p $(BINDIR)
 	cp yle-dl $(BINDIR)
 
+install-adobehds:
+	if [ ! -f $(BINDIR)/AdobeHDS.php ]; then \
+		curl https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php > $(BINDIR)/AdobeHDS.php ; \
+	fi;
+
 uninstall:
 	rm -f $(BINDIR)/yle-dl
 
