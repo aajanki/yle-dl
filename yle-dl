@@ -1507,7 +1507,7 @@ class HDSDump(ExternalDownloader):
             return []
 
     def build_args(self):
-        args = hds_binary
+        args = list(hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.append('--delete')
