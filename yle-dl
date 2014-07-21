@@ -844,7 +844,7 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
         return HDSDump(self, clip_title, destdir, extra_argv, self.maxbitrate)
 
     def create_pipe(self, maxbitrate):
-        args = hds_binary
+        args = list(hds_binary)
         if maxbitrate < 1000:
             args.append('--quality low')
         elif maxbitrate < 2000:
