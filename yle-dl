@@ -103,6 +103,8 @@ def usage():
     log(u'--destdir dir           Save files to dir')
     log(u'--protocol protos       Preferred streaming protocols (comma-separated)')
     log(u'                        Supported values: rtmp and hds')
+    log(u'--pipe                  Dump stream to stdout for piping to media player')
+    log(u'                        E.g. "yle-dl --pipe URL | vlc -"')
     log(u'')
     log(u'rtmpdump options:')
     log(u'')
@@ -252,6 +254,7 @@ class AreenaNGDownloader:
     OP_DOWNLOAD = 1
     OP_PRINT_DOWNLOAD_URL = 2
     OP_PRINT_EPISODE_PAGE_URL = 3
+    OP_PIPE = 4
 
     @staticmethod
     def supported_protocols():
@@ -275,6 +278,9 @@ class AreenaNGDownloader:
         optype = (self.OP_PRINT_EPISODE_PAGE_URL if (print_episode_url)
             else self.OP_PRINT_DOWNLOAD_URL)
         return self.process_episodes(url, filters, [], None, optype)
+
+    def pipe(self, url, filters):
+        return self.process_episodes(url, filters, [], None, self.OP_PIPE)
 
     def print_titles(self, url, filters):
         playlist = self.get_playlist(url, filters.latest_only)
@@ -328,6 +334,8 @@ class AreenaNGDownloader:
         elif optype == self.OP_PRINT_EPISODE_PAGE_URL:
             print streamurl.to_episode_url().encode(enc, 'replace')
             return RD_SUCCESS
+        elif optype == self.OP_PIPE:
+            return streamurl.create_pipe(filters.maxbitrate)
 
         downloader = streamurl.create_downloader(self.get_clip_title(clip),
                                                  destdir, rtmpdumpargs)
@@ -656,6 +664,14 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return RTMPDump(self, clip_title, destdir, extra_argv)
 
+    def create_pipe(self, dummy):
+        args = [rtmpdump_binary]
+        args += self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
+        args += ['-o', '-']
+        enc = sys.getfilesystemencoding()
+        encoded_args = [x.encode(enc, 'replace') for x in args]
+        return subprocess.Popen(encoded_args).wait()
+
     def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters):
         stream = self.stream_from_papi(papiurl, self.AES_KEY, filters)
         return self.stream_to_rtmp_parameters(stream, pageurl, islive)
@@ -827,6 +843,19 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
     def create_downloader(self, clip_title, destdir, extra_argv):
         return HDSDump(self, clip_title, destdir, extra_argv, self.maxbitrate)
 
+    def create_pipe(self, maxbitrate):
+        args = hds_binary
+        if maxbitrate < 1000:
+            args.append('--quality low')
+        elif maxbitrate < 2000:
+            args.append('--quality medium')
+        args.append('--manifest')
+        args.append(self.to_url())
+        args.append('--play')
+        enc = sys.getfilesystemencoding()
+        encoded_args = [x.encode(enc, 'replace') for x in args]
+        return subprocess.Popen(encoded_args).wait()
+
     def _initialize_hds_stream(self, clip, pageurl, filters):
         clip = self.full_metadata_if_search_result(clip) or {}
         media = clip.get('media', {})
@@ -906,6 +935,10 @@ class AreenaLiveDownloader:
         print printableurl.encode(enc, 'replace')
         return RD_SUCCESS
 
+    def pipe(self, url, filters):
+        streamurl = AreenaLiveStreamUrl(url, filters)
+        return streamurl.create_pipe(filters.maxbitrate)
+
     def print_titles(self, url, filters):
         enc = sys.getfilesystemencoding()
         print self.get_live_stream_title(url).encode(enc, 'replace')
@@ -969,6 +1002,10 @@ class AreenaLiveRadioDownloader:
         enc = sys.getfilesystemencoding()
         print printableurl.encode(enc, 'replace')
         return RD_SUCCESS
+
+    def pipe(self, url, filters):
+        streamurl = AreenaLiveRadioStreamUrl(url, filters)
+        return streamurl.create_pipe(filters.maxbitrate)
 
     def print_titles(self, url, filters):
         enc = sys.getfilesystemencoding()
@@ -1103,6 +1140,10 @@ class ElavaArkistoDownloader:
                 print stream.to_url().encode(enc, 'replace')
 
         return RD_SUCCESS
+
+    def pipe(self, url, filters):
+        log('Elava Arkisto not supported by --pipe.')
+        return RD_FAILED
 
     def print_titles(self, url, filters):
         playlist = self.get_playlist(url, filters)
@@ -1263,6 +1304,11 @@ class YleXDownloader(AreenaNGDownloader):
         print printableurl.encode(enc, 'replace')
         return RD_SUCCESS
 
+    def pipe(self, url, filters):
+        html = download_page(url)
+        streamurl = YleXStreamUrl(html, url, filters)
+        return streamurl.create_pipe(filters.maxbitrate)
+
     def print_titles(self, url, filters):
         enc = sys.getfilesystemencoding()
         print self.stream_title(download_page(url)).encode(enc, 'replace')
@@ -1343,6 +1389,9 @@ class RetryingDownloader:
 
     def download_episodes(self, *args, **kwargs):
         return self._retry_call('download_episodes', *args, **kwargs)
+
+    def pipe(self, *args, **kwargs):
+        return self._retry_call('pipe', *args, **kwargs)
 
 
 ### Dumping a stream to a file using external programs ###
@@ -1562,6 +1611,7 @@ def main():
     url = None
     destdir = None
     streaming_protocols = None
+    pipe = False
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -1610,6 +1660,8 @@ def main():
         elif arg == '--protocol':
             if argv:
                 streaming_protocols = argv.pop(0).split(',')
+        elif arg == '--pipe':
+            pipe = True
         else:
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:
@@ -1629,7 +1681,7 @@ def main():
         splashscreen()
 
     if not rtmpdump_binary:
-        log(u'Error: rtmpdump not fonud on path, use --rtmpdump for setting the location')
+        log(u'Error: rtmpdump not found in path, use --rtmpdump for setting the location')
         sys.exit(RD_FAILED)
 
     url = encode_url_utf8(url)
@@ -1645,6 +1697,8 @@ def main():
         sys.exit(dl.print_urls(url, print_episode_url, sfilt))
     elif title_only:
         sys.exit(dl.print_titles(url, sfilt))
+    elif pipe:
+        sys.exit(dl.pipe(url, sfilt))
     else:
         sys.exit(dl.download_episodes(url, sfilt, rtmpdumpargs, destdir))
 

@@ -16,7 +16,10 @@ python (2.6 tai uudempi), pycrypto, AdobeHDS.php, php sekä seuraavat
 php-laajennukset: bcmath, curl ja SimpleXML.
 
 Debianissa muut tarvittavat kirjastot löytyvät paketeista rtmpdump,
-python, python-crypto, php5-cli ja php5-curl.
+python, python-crypto, php5-cli ja php5-curl. Huom! Paketinhallinnasta
+saatava versio rtmpdump-ohjelmasta voi olla vanhentunut ja aiheuttaa ongelmia
+Yle Areenan kanssa. Uusin versio löytyy projektin kotisivuilta osoitteesta
+http://rtmpdump.mplayerhq.hu/.
 
 OS X:ssä rtmpdumpin voi asentaa homebrew:llä ``brew install --HEAD
 rtmpdump`` ja pycrypton pipillä ``pip install -r requirements.txt``.
