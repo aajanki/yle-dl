@@ -53,7 +53,7 @@ ARGOPTS = ('--rtmp', '-r', '--host', '-n', '--port', '-c', '--socks',
            '-W', '--swfAge', '-X', '--auth', '-u', '--conn', '-C',
            '--flashVer', '-f', '--subscribe', '-d', '--flv', '-o',
            '--timeout', '-m', '--start', '-A', '--stop', '-B', '--token',
-           '-T', '--skip', '-k')
+           '-T', '--skip', '-k', '--buffer', '-b')
 
 # rtmpdump exit codes
 RD_SUCCESS = 0
