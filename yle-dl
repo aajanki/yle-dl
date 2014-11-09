@@ -198,6 +198,8 @@ def downloader_factory(url, protocols):
             url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
         return RetryingDownloader(AreenaNGDownloader, protocols)
+    elif url.startswith('http://areena.kokeile.yle.fi/'):
+        return RetryingDownloader(Areena2014Downloader, protocols)
     else:
         return None
 
@@ -233,7 +235,6 @@ def which(program):
 
     return None
 
-
 class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
@@ -248,9 +249,72 @@ class StreamFilters:
         return self.maxbitrate <= 0
 
 
-### Areena (new) ###
+# Areena
 
-class AreenaNGDownloader:
+class AreenaUtils:
+    def areena_decrypt(self, data, aes_key):
+        try:
+            bytestring = base64.b64decode(str(data))
+        except (UnicodeEncodeError, TypeError):
+            return None
+
+        iv = bytestring[:16]
+        ciphertext = bytestring[16:]
+        padlen = 16 - (len(ciphertext) % 16)
+        ciphertext = ciphertext + '\0'*padlen
+
+        decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
+        return decrypter.decrypt(ciphertext)[:-padlen]
+
+
+    def download_subtitles(self, subtitles, filters, videofilename):
+        if not filters.hardsubs:
+            preferred_lang = filters.sublang
+            basename = os.path.splitext(videofilename)[0]
+            for sub in subtitles:
+                lang = sub.language
+                if lang == preferred_lang or preferred_lang == 'all':
+                    if sub.url:
+                        try:
+                            enc = sys.getfilesystemencoding()
+                            filename = basename + '.' + lang + '.srt'
+                            subtitlefile = filename.encode(enc, 'replace')
+                            urllib.urlretrieve(sub.url, subtitlefile)
+                            self.add_BOM(subtitlefile)
+                            log(u'Subtitles saved to ' + subtitlefile)
+                            if preferred_lang != 'all':
+                                return
+                        except IOError, exc:
+                            log(u'Failed to download subtitles at %s: %s' % (sub.url, exc))
+
+    def add_BOM(self, filename):
+        """Add byte-order mark into a file.
+
+        Assumes (but does not check!) that the file is UTF-8 encoded.
+        """
+        enc = sys.getfilesystemencoding()
+        encoded_filename = filename.encode(enc, 'replace')
+        content = open(encoded_filename, 'r').read()
+        if content.startswith(codecs.BOM_UTF8):
+            return
+
+        f = open(encoded_filename, 'w')
+        f.write(codecs.BOM_UTF8)
+        f.write(content)
+        f.close()
+
+    def parse_yle_date(self, yledate):
+        """Convert strings like 2012-06-16T18:45:00 into a struct_time.
+
+        Returns None if parsing fails.
+        """
+        try:
+            return time.strptime(yledate, '%Y-%m-%dT%H:%M:%S')
+        except (ValueError, TypeError):
+            return None
+
+
+class AreenaNGDownloader(AreenaUtils):
     OP_DOWNLOAD = 1
     OP_PRINT_DOWNLOAD_URL = 2
     OP_PRINT_EPISODE_PAGE_URL = 3
@@ -345,7 +409,7 @@ class AreenaNGDownloader:
             return RD_FAILED
 
         outputfile = downloader.output_filename()
-        self.download_subtitles(clip, filters, outputfile)
+        self.download_subtitles(self.clip_subtitles(clip), filters, outputfile)
         return downloader.save_stream()
 
     def get_clip_title(self, clip):
@@ -422,52 +486,10 @@ class AreenaNGDownloader:
 
         return metadata
 
-    def download_subtitles(self, clip, filters, videofilename):
-        media = clip.get('media', {})
-        if media.has_key('subtitles') and not filters.hardsubs:
-            preferred_lang = filters.sublang
-            basename = os.path.splitext(videofilename)[0]
-            for sub in media['subtitles']:
-                lang = sub.get('lang', '')
-                if lang == preferred_lang or preferred_lang == 'all':
-                    url = sub.get('url', None)
-                    if url:
-                        try:
-                            subtitlefile = basename + '.' + lang + '.srt'
-                            enc = sys.getfilesystemencoding()
-                            urllib.urlretrieve(url, subtitlefile.encode(enc, 'replace'))
-                            self.add_BOM(subtitlefile)
-                            log(u'Subtitles saved to ' + subtitlefile)
-                            if preferred_lang != 'all':
-                                return
-                        except IOError, exc:
-                            log(u'Failed to download subtitles at %s: %s' % (url, exc))
-
-    def add_BOM(self, filename):
-        """Add byte-order mark into a file.
-
-        Assumes (but does not check!) that the file is UTF-8 encoded.
-        """
-        enc = sys.getfilesystemencoding()
-        encoded_filename = filename.encode(enc, 'replace')
-        content = open(encoded_filename, 'r').read()
-        if content.startswith(codecs.BOM_UTF8):
-            return
-
-        f = open(encoded_filename, 'w')
-        f.write(codecs.BOM_UTF8)
-        f.write(content)
-        f.close()
-
-    def parse_yle_date(self, yledate):
-        """Convert strings like 2012-06-16T18:45:00 into a struct_time.
-
-        Returns None if parsing fails.
-        """
-        try:
-            return time.strptime(yledate, '%Y-%m-%dT%H:%M:%S')
-        except (ValueError, TypeError):
-            return None
+    def clip_subtitles(self, clip):
+        subdata = clip.get('media', {}).get('subtitles', [])
+        return [Subtitle(s.get('url'), s.get('lang', '')) for s in subdata
+                if s.get('url')]
 
     def get_media_time(self, media):
         """Extract date (as struct_time) from media metadata."""
@@ -480,7 +502,7 @@ class AreenaNGDownloader:
 ### Areena stream URL ###
 
 
-class AreenaStreamBase:
+class AreenaStreamBase(AreenaUtils):
     def __init__(self, clip, pageurl):
         self.error = None
         self.episodeurl = self.create_pageurl(clip) or pageurl
@@ -550,7 +572,7 @@ class AreenaStreamBase:
         if papi.startswith('<media>'):
             papi_decoded = papi
         else:
-            papi_decoded = self.decode_papi(papi, aes_key)
+            papi_decoded = self.areena_decrypt(papi, aes_key)
 
         if debug:
             log(papi_decoded)
@@ -577,20 +599,6 @@ class AreenaStreamBase:
             log(str(best))
 
         return best
-
-    def decode_papi(self, papi, aes_key):
-        try:
-            bytestring = base64.b64decode(str(papi))
-        except (UnicodeEncodeError, TypeError):
-            return None
-
-        iv = bytestring[:16]
-        ciphertext = bytestring[16:]
-        padlen = 16 - (len(ciphertext) % 16)
-        ciphertext = ciphertext + '\0'*padlen
-
-        decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
-        return decrypter.decrypt(ciphertext)[:-padlen]
 
     def all_streams_from_papi(self, papi):
         streams = []
@@ -881,6 +889,43 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
             return stream.connect + '&g=ABCDEFGHIJKL&hdcore=3.3.0&plugin=flowplayer-3.3.0.0'
 
 
+class Areena2014HDSStreamUrl(AreenaHDSStreamUrl):
+    def __init__(self, pageurl, hdsurl, filters):
+        AreenaHDSStreamUrl.__init__(self, {}, pageurl, filters)
+        self.episodeurl = pageurl
+        if hdsurl:
+            self.hds_url = hdsurl + '&g=ABCDEFGHIJKL&hdcore=3.3.0&plugin=flowplayer-3.3.0.0'
+        else:
+            self.hds_url = None
+        self.error = None
+    
+    def is_valid(self):
+        return not self.error
+    
+    def get_error_message(self):
+        if self.is_valid():
+            return None
+        else:
+            return self.error or 'Stream not valid'
+    
+    def to_url(self):
+        return self.hds_url
+
+    def to_episode_url(self):
+        return self.episodeurl
+
+
+class InvalidStreamUrl:
+    def __init__(self, error_message):
+        self.error = error_message
+
+    def is_valid(self):
+        return False
+
+    def get_error_message(self):
+        return self.error
+
+
 class PAPIStream:
     def __init__(self, connect, stream, videoBitrate, audioBitrate, hardSubtitles):
         self.connect = connect
@@ -899,6 +944,224 @@ class PAPIStream:
 
     def bitrate(self):
         return self.videoBitrate + self.audioBitrate
+
+
+### Areena (the new version with beta introduced in 2014) ###
+
+class Areena2014Downloader(AreenaUtils):
+    # Extracted from
+    # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
+    AES_KEY = 'yjuap4n5ok9wzg43'
+
+    @staticmethod
+    def supported_protocols():
+        return ['hds']
+
+    def __init__(self, streaming_protocols):
+        pass
+    
+    def download_episodes(self, url, filters, extra_argv, destdir):
+        def download_clip(clip):
+            downloader = clip.streamurl.create_downloader(clip.title, destdir,
+                                                          extra_argv)
+            if not downloader:
+                log(u'Downloading the stream at %s is not yet supported.' % url)
+                log(u'Try --showurl')
+                return RD_FAILED
+
+            outputfile = downloader.output_filename()
+            self.download_subtitles(clip.subtitles, filters, outputfile)
+            return downloader.save_stream()
+
+        return self.process_single_episode(download_clip, url, filters)
+
+    def print_urls(self, url, print_episode_url, filters):
+        def print_clip_url(clip):
+            enc = sys.getfilesystemencoding()
+            if print_episode_url:
+                print_url = clip.streamurl.to_episode_url()
+            else:
+                print_url = clip.streamurl.to_url()
+            print print_url.encode(enc, 'replace')
+            return RD_SUCCESS
+        
+        return self.process_single_episode(print_clip_url, url, filters)
+
+    def pipe(self, url, filters):
+        def pipe_clip(clip):
+            return clip.streamurl.create_pipe(filters.maxbitrate)
+
+        return self.process_single_episode(pipe_clip, url, filters)
+
+    def print_titles(self, url, filters):
+        def print_clip_title(clip):
+            enc = sys.getfilesystemencoding()
+            print clip.title.encode(enc, 'replace')
+            return RD_SUCCESS
+        
+        return self.process_single_episode(print_clip_title, url, filters)
+
+    def process_single_episode(self, clipfunc, url, filters):
+        clip = self.clip_for_url(url, filters)
+        if clip.streamurl.is_valid():
+            return clipfunc(clip)
+        else:
+            log(u'Unsupported stream at %s: %s' %
+                (url, clip.streamurl.get_error_message()))
+            return RD_FAILED
+
+    def clip_for_url(self, pageurl, filters):
+        pid = self.program_id_from_url(pageurl)
+        if not pid:
+            return FailedClip(pageurl, 'Failed to parse a program ID')
+        
+        programs_jsonp_url = 'http://player.yle.fi/api/v1/programs.jsonp?' \
+                             'id=%s&callback=yleEmbed.programJsonpCallback' % \
+                             (urllib.quote_plus(pid))
+        program_info = self.load_jsonp(programs_jsonp_url)
+        if not program_info:
+            return FailedClip(pageurl, 'Failed to download program data')
+
+        if debug:
+            log('program data:')
+            log(str(program_info))
+
+        return self.create_clip(program_info, pid, pageurl, filters)
+
+    def create_clip(self, program_info, program_id, pageurl, filters):
+        media_id = self.program_media_id(program_info)
+        if not media_id:
+            return FailedClip(pageurl, 'Failed to parse media ID')
+
+        media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
+                          'id=%s&callback=yleEmbed.startPlayerCallback&' \
+                          'mediaId=%s&protocol=HDS&client=areena-flash-player' % \
+            (urllib.quote_plus(media_id), urllib.quote_plus(program_id))
+        media = self.load_jsonp(media_jsonp_url)
+        if not media:
+            return FailedClip(pageurl, 'Failed to parse media object')
+
+        if debug:
+            log('media:')
+            log(str(media))
+
+        return Clip(pageurl,
+                    self.program_title(program_info),
+                    self.media_streamurl(media, pageurl, filters),
+                    self.media_subtitles(media))
+
+    def program_id_from_url(self, url):
+        parsed = urlparse.urlparse(url)
+        return parsed.path.strip('/')
+
+    def program_media_id(self, program_info):
+        event = self.publish_event(program_info)
+        return event.get('media', {}).get('id')
+
+    def program_title(self, program_info):
+        program = program_info.get('data', {}).get('program', {})
+        title = self.localized_text(program.get('title')) or \
+                self.localized_text(program.get('itemTitle')) or \
+                'areena'
+
+        promotionTitle = self.localized_text(program.get('promotionTitle'))
+        if promotionTitle and not promotionTitle.startswith(title):
+            title += ": " + promotionTitle
+
+        date = self.publish_date(program_info)
+        if date:
+            title += '-' + date.replace('/', '-').replace(' ', '-')
+
+        return title
+
+    def publish_date(self, program_info):
+        event = self.publish_event(program_info)
+        return event.get('startTime')
+
+    def publish_event(self, program_info):
+        events = program_info.get('data', {}) \
+                             .get('program', {}) \
+                             .get('publicationEvent', [])
+        with_media = [e for e in events if e.get('media')]
+        if with_media:
+            return with_media[0]
+        else:
+            return {}
+
+    def localized_text(self, alternatives, language='fi'):
+        if alternatives:
+            return alternatives.get(language) or alternatives.get('fi')
+        else:
+            return None
+
+    def media_streamurl(self, media, pageurl, filters):
+        hds = media.get('data', {}).get('media', {}).get('HDS', [])
+        if hds:
+            hdsurl = hds[0].get('url')
+        else:
+            hdsurl = None
+        if not hdsurl:
+            return InvalidStreamUrl('No HDS URL')
+        
+        decodedurl = self.areena_decrypt(hdsurl, self.AES_KEY)
+        if not decodedurl:
+            return InvalidStreamUrl('Decrypting HDS URL failed')
+        
+        return Areena2014HDSStreamUrl(pageurl, decodedurl, filters)
+
+    def media_subtitles(self, media):
+        hds = media.get('data', {}).get('media', {}).get('HDS', [])
+        if hds:
+            subs_json = hds[0].get('subtitles', [])
+        else:
+            subs_json = []
+        subtitles = (Subtitle(s.get('uri'), self.three_letter_language_code(s.get('lang'))) for s in subs_json)
+        return [s for s in subtitles if s.url]
+
+    def three_letter_language_code(self, lang):
+        language_map = {'fi': 'fin', 'sv': 'swe'}
+        return language_map.get(lang, lang)
+
+    def load_jsonp(self, url):
+        json_string = self.remove_jsonp_padding(download_page(url))
+        if not json_string:
+            return None
+
+        try:
+            json_parsed = json.loads(json_string)
+        except ValueError:
+            return None
+
+        return json_parsed
+
+    def remove_jsonp_padding(self, jsonp):
+        if not jsonp:
+            return None
+        
+        without_padding = re.sub(r'^[\w.]+\(|\);$','', jsonp)
+        if without_padding[:1] != '{' or without_padding[-1:] != '}':
+            return None
+
+        return without_padding
+
+
+class Clip:
+    def __init__(self, pageurl, title, streamurl, subtitles):
+        self.pageurl = pageurl
+        self.title = title
+        self.streamurl = streamurl
+        self.subtitles = subtitles
+
+
+class FailedClip(Clip):
+    def __init__(self, pageurl, errormessage):
+        Clip.__init__(self, pageurl, None, InvalidStreamUrl(errormessage), None)
+
+
+class Subtitle:
+    def __init__(self, url, language):
+        self.url = url
+        self.language = language
 
 
 ### Areena live TV ###
