@@ -235,6 +235,39 @@ def which(program):
 
     return None
 
+def parse_rtmp_single_component_app(rtmpurl):
+    """Extract single path-component app and playpath from rtmpurl."""
+    # YLE server requires that app is the first path component
+    # only. By default librtmp would take the first two
+    # components (app/appInstance).
+    #
+    # This also means that we can't rely on librtmp's playpath
+    # parser and have to duplicate the logic here.
+    k = 0
+    if rtmpurl.find('://') != -1:
+        i = -1
+        for i, x in enumerate(rtmpurl):
+            if x == '/':
+                k += 1
+                if k == 4:
+                    break
+
+        playpath = rtmpurl[(i+1):]
+        app_only_rtmpurl = rtmpurl[:i]
+    else:
+        playpath = rtmpurl
+        app_only_rtmpurl = ''
+
+    ext = os.path.splitext(playpath)[1]
+    if ext == '.mp4':
+        playpath = 'mp4:' + playpath
+        ext = '.flv'
+    elif ext == '.mp3':
+        playpath = 'mp3:' + playpath[:-4]
+
+    return (app_only_rtmpurl, playpath, ext)
+
+
 class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
@@ -915,6 +948,19 @@ class Areena2014HDSStreamUrl(AreenaHDSStreamUrl):
         return self.episodeurl
 
 
+class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
+    def __init__(self, pageurl, streamurl, filters):
+        AreenaRTMPStreamUrl.__init__(self, None, pageurl)
+        rtmpstream = self.create_rtmpstream(streamurl)
+        self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl, False)
+        self.rtmp_params['app'] = self.rtmp_params['app'].split('/', 1)[0]
+
+    def create_rtmpstream(self, streamurl):
+        (rtmpurl, playpath, ext) = parse_rtmp_single_component_app(streamurl)
+        playpath = playpath.split('?', 1)[0]
+        return PAPIStream(streamurl, playpath, 0, 0, False)
+
+
 class InvalidStreamUrl:
     def __init__(self, error_message):
         self.error = error_message
@@ -1033,10 +1079,12 @@ class Areena2014Downloader(AreenaUtils):
         if not media_id:
             return FailedClip(pageurl, 'Failed to parse media ID')
 
+        proto = self.program_protocol(program_info)
         media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
                           'id=%s&callback=yleEmbed.startPlayerCallback&' \
-                          'mediaId=%s&protocol=HDS&client=areena-flash-player' % \
-            (urllib.quote_plus(media_id), urllib.quote_plus(program_id))
+                          'mediaId=%s&protocol=%s&client=areena-flash-player' % \
+            (urllib.quote_plus(media_id), urllib.quote_plus(program_id), \
+             urllib.quote_plus(proto))
         media = self.load_jsonp(media_jsonp_url)
         if not media:
             return FailedClip(pageurl, 'Failed to parse media object')
@@ -1074,6 +1122,13 @@ class Areena2014Downloader(AreenaUtils):
 
         return title
 
+    def program_protocol(self, program_info):
+        event = self.publish_event(program_info)
+        if event.get('media', {}).get('type') == 'AudioObject':
+            return 'RTMPE'
+        else:
+            return 'HDS'
+
     def publish_date(self, program_info):
         event = self.publish_event(program_info)
         return event.get('startTime')
@@ -1095,19 +1150,23 @@ class Areena2014Downloader(AreenaUtils):
             return None
 
     def media_streamurl(self, media, pageurl, filters):
-        hds = media.get('data', {}).get('media', {}).get('HDS', [])
-        if hds:
-            hdsurl = hds[0].get('url')
+        protocol = media.get('meta', {}).get('protocol') or 'HDS'
+        mediaobj = media.get('data', {}).get('media', {}).get(protocol, [])
+        if mediaobj:
+            url = mediaobj[0].get('url')
         else:
-            hdsurl = None
-        if not hdsurl:
-            return InvalidStreamUrl('No HDS URL')
+            url = None
+        if not url:
+            return InvalidStreamUrl('No media URL')
         
-        decodedurl = self.areena_decrypt(hdsurl, self.AES_KEY)
+        decodedurl = self.areena_decrypt(url, self.AES_KEY)
         if not decodedurl:
-            return InvalidStreamUrl('Decrypting HDS URL failed')
-        
-        return Areena2014HDSStreamUrl(pageurl, decodedurl, filters)
+            return InvalidStreamUrl('Decrypting media URL failed')
+
+        if protocol == 'RTMPE':
+            return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
+        else:
+            return Areena2014HDSStreamUrl(pageurl, decodedurl, filters)
 
     def media_subtitles(self, media):
         hds = media.get('data', {}).get('media', {}).get('HDS', [])
@@ -1468,39 +1527,7 @@ class ElavaArkistoStreamUrl(AreenaRTMPStreamUrl):
         if debug:
             log('Selected by bitrate filter: ' + str(selected))
             
-        return self._parse_rtmp_single_component_app(selected[1])
-
-    def _parse_rtmp_single_component_app(self, rtmpurl):
-        """Extract single path-component app and playpath from rtmpurl."""
-        # YLE server requires that app is the first path component
-        # only. By default librtmp would take the first two
-        # components (app/appInstance).
-        #
-        # This also means that we can't rely on librtmp's playpath
-        # parser and have to duplicate the logic here.
-        k = 0
-        if rtmpurl.find('://') != -1:
-            i = -1
-            for i, x in enumerate(rtmpurl):
-                if x == '/':
-                    k += 1
-                    if k == 4:
-                        break
-
-            playpath = rtmpurl[(i+1):]
-            app_only_rtmpurl = rtmpurl[:i]
-        else:
-            playpath = rtmpurl
-            app_only_rtmpurl = ''
-
-        ext = os.path.splitext(playpath)[1]
-        if ext == '.mp4':
-            playpath = 'mp4:' + playpath
-            ext = '.flv'
-        elif ext == '.mp3':
-            playpath = 'mp3:' + playpath[:-4]
-
-        return (app_only_rtmpurl, playpath, ext)
+        return parse_rtmp_single_component_app(selected[1])
 
     def _extract_streams_and_bitrates(self, mediaitem):
         streams = []
