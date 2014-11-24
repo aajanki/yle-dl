@@ -314,7 +314,7 @@ class AreenaUtils:
                             subtitlefile = filename.encode(enc, 'replace')
                             urllib.urlretrieve(sub.url, subtitlefile)
                             self.add_BOM(subtitlefile)
-                            log(u'Subtitles saved to ' + subtitlefile)
+                            log(u'Subtitles saved to ' + filename)
                             if preferred_lang != 'all':
                                 return
                         except IOError, exc:
@@ -325,13 +325,11 @@ class AreenaUtils:
 
         Assumes (but does not check!) that the file is UTF-8 encoded.
         """
-        enc = sys.getfilesystemencoding()
-        encoded_filename = filename.encode(enc, 'replace')
-        content = open(encoded_filename, 'r').read()
+        content = open(filename, 'r').read()
         if content.startswith(codecs.BOM_UTF8):
             return
 
-        f = open(encoded_filename, 'w')
+        f = open(filename, 'w')
         f.write(codecs.BOM_UTF8)
         f.write(content)
         f.close()
