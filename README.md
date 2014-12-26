@@ -23,11 +23,11 @@ Install dependencies: rtmpdump (version 2.4 or newer), python (2.6 or
 newer), pycrypto, AdobeHDS.php, php and the following php extensions:
 bcmath, curl and SimpleXML.
 
-On Debian installing packages rtmpdump, python, python-crypto,
-php5-cli and php5-curl satisfies the dependencies.
+On Debian `apt-get install rtmpdump python python-cpyryptopp php5-cli
+php5-curl` satisfies the dependencies.
 
-On OS X install rtmpdump with homebrew: ``brew install --HEAD
-rtmpdump`` and pycrypto with pip: ``pip install -r requirements.txt``
+On OS X install rtmpdump with homebrew: `brew install --HEAD
+rtmpdump` and pycrypto with pip: `pip install -r requirements.txt`
 
 To install run:
 
@@ -68,23 +68,23 @@ you would normally watch the video in a browser.
 
 yle-dl options:
 
---latestepisode   Download the latest episodes
+* `--latestepisode`   Download the latest episodes
 
---showurl         Print librtmp-compatible URL, don't download
+* `--showurl`         Print librtmp-compatible URL, don't download
 
---showtitle       Print stream title, don't download
+* `--showtitle`       Print stream title, don't download
 
---vfat            Create Windows-compatible filenames
+* `--vfat`            Create Windows-compatible filenames
 
---sublang lang    Download subtitles, lang = fin, swe, smi, none or all
+* `--sublang lang`    Download subtitles, lang = fin, swe, smi, none or all
 
---rtmpdump path   Set path to rtmpdump binary
+* `--rtmpdump path`   Set path to rtmpdump binary
 
---adobehds cmd    Set command for executing AdobeHDS.php script
+* `--adobehds cmd`    Set command for executing AdobeHDS.php script
 
---destdir dir     Save files to dir
+* `--destdir dir`     Save files to dir
 
-Type "rtmpdump --help" to see a full list of options.
+Type `rtmpdump --help` to see a full list of options.
 
 Firewall must allow outgoing traffic on ports 80 and 1935.
 
@@ -102,5 +102,5 @@ yle-dl "http://www.yle.fi/elavaarkisto/?s=s&g=4&ag=28&t=&a=9390"
 Playing in mplayer (or vlc and others) without downloading first:
 
 ```
-mplayer "`yle-dl --showurl http://areena.yle.fi/tv/1544491`"
+mplayer "$(yle-dl --showurl http://areena.yle.fi/tv/1544491)"
 ```
