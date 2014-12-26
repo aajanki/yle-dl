@@ -1963,7 +1963,7 @@ def main():
 
     if show_usage or url is None:
         usage()
-        sys.exit(RD_FAILED)
+        sys.exit(RD_SUCCESS)
 
     if debug or not (url_only or title_only):
         splashscreen()
