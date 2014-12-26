@@ -1,5 +1,6 @@
 prefix?=/usr/local
 BINDIR=$(DESTDIR)/$(prefix)/bin
+DATADIR=$(DESTDIR)/$(prefix)/share/yle-dl
 
 all:
 
@@ -8,8 +9,9 @@ install:
 	cp yle-dl $(BINDIR)
 
 install-adobehds:
-	if [ ! -f $(BINDIR)/AdobeHDS.php ]; then \
-		curl https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php > $(BINDIR)/AdobeHDS.php ; \
+	mkdir -p $(DATADIR)
+	if [ ! -f $(DATADIR)/AdobeHDS.php ]; then \
+		curl https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php > $(DATADIR)/AdobeHDS.php ; \
 	fi;
 
 uninstall:

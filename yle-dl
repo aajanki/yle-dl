@@ -65,7 +65,7 @@ excludechars_linux = '*/|'
 excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
-hds_binary = ['php', '/usr/local/bin/AdobeHDS.php']
+hds_binary = ['php', '/usr/local/share/yle-dl/AdobeHDS.php']
 
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
