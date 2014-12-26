@@ -198,6 +198,8 @@ def downloader_factory(url, protocols):
             url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
         return RetryingDownloader(AreenaNGDownloader, protocols)
+    elif url.startswith('http://areena.kokeile.yle.fi/tv/suorat/'):
+        return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
     elif url.startswith('http://areena.kokeile.yle.fi/'):
         return RetryingDownloader(Areena2014Downloader, protocols)
     else:
@@ -925,7 +927,9 @@ class Areena2014HDSStreamUrl(AreenaHDSStreamUrl):
         AreenaHDSStreamUrl.__init__(self, {}, pageurl, filters)
         self.episodeurl = pageurl
         if hdsurl:
-            self.hds_url = hdsurl + '&g=ABCDEFGHIJKL&hdcore=3.3.0&plugin=flowplayer-3.3.0.0'
+            sep = '&' if '?' in hdsurl else '?'
+            self.hds_url = hdsurl + sep + \
+                'g=ABCDEFGHIJKL&hdcore=3.3.0&plugin=flowplayer-3.3.0.0'
         else:
             self.hds_url = None
         self.error = None
@@ -1058,11 +1062,8 @@ class Areena2014Downloader(AreenaUtils):
         pid = self.program_id_from_url(pageurl)
         if not pid:
             return FailedClip(pageurl, 'Failed to parse a program ID')
-        
-        programs_jsonp_url = 'http://player.yle.fi/api/v1/programs.jsonp?' \
-                             'id=%s&callback=yleEmbed.programJsonpCallback' % \
-                             (urllib.quote_plus(pid))
-        program_info = self.load_jsonp(programs_jsonp_url)
+
+        program_info = self.load_jsonp(self.program_info_url(pid))
         if not program_info:
             return FailedClip(pageurl, 'Failed to download program data')
 
@@ -1072,33 +1073,43 @@ class Areena2014Downloader(AreenaUtils):
 
         return self.create_clip(program_info, pid, pageurl, filters)
 
+    def program_info_url(self, program_id):
+        return 'http://player.yle.fi/api/v1/programs.jsonp?' \
+            'id=%s&callback=yleEmbed.programJsonpCallback' % \
+            (urllib.quote_plus(program_id))
+
     def create_clip(self, program_info, program_id, pageurl, filters):
         media_id = self.program_media_id(program_info)
         if not media_id:
             return FailedClip(pageurl, 'Failed to parse media ID')
 
         proto = self.program_protocol(program_info)
-        media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
-                          'id=%s&callback=yleEmbed.startPlayerCallback&' \
-                          'mediaId=%s&protocol=%s&client=areena-flash-player' % \
-            (urllib.quote_plus(media_id), urllib.quote_plus(program_id), \
-             urllib.quote_plus(proto))
-        media = self.load_jsonp(media_jsonp_url)
+        media = self.yle_media_descriptor(media_id, program_id, proto)
         if not media:
             return FailedClip(pageurl, 'Failed to parse media object')
-
-        if debug:
-            log('media:')
-            log(str(media))
 
         return Clip(pageurl,
                     self.program_title(program_info),
                     self.media_streamurl(media, pageurl, filters),
                     self.media_subtitles(media))
 
+    def yle_media_descriptor(self, media_id, program_id, protocol):
+        media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
+                          'id=%s&callback=yleEmbed.startPlayerCallback&' \
+                          'mediaId=%s&protocol=%s&client=areena-flash-player&instance=1' % \
+            (urllib.quote_plus(media_id), urllib.quote_plus(program_id), \
+             urllib.quote_plus(protocol))
+        media = self.load_jsonp(media_jsonp_url)
+
+        if debug and media:
+            log('media:')
+            log(str(media))
+
+        return media
+    
     def program_id_from_url(self, url):
         parsed = urlparse.urlparse(url)
-        return parsed.path.strip('/')
+        return parsed.path.split('/')[-1]
 
     def program_media_id(self, program_info):
         event = self.publish_event(program_info)
@@ -1200,6 +1211,25 @@ class Areena2014Downloader(AreenaUtils):
             return None
 
         return without_padding
+
+
+class Areena2014LiveTVDownloader(Areena2014Downloader):
+    def program_info_url(self, program_id):
+        quoted_pid = urllib.quote_plus(program_id)
+        return 'http://player.yle.fi/api/v1/services.jsonp?' \
+            'id=%s&callback=yleEmbed.simulcastJsonpCallback&' \
+            'region=fi&instance=1&dataId=%s' % \
+            (quoted_pid, quoted_pid)
+
+    def program_media_id(self, program_info):
+        outlets = program_info.get('data', {}).get('outlets') or [{}]
+        return outlets[0].get('outlet', {}).get('media', {}).get('id')
+
+    def program_title(self, program_info):
+        service = program_info.get('data', {}).get('service', {})
+        title = self.localized_text(service.get('title')) or 'areena'
+        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
+        return title
 
 
 class Clip:
