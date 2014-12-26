@@ -23,7 +23,7 @@ Install dependencies: rtmpdump (version 2.4 or newer), python (2.6 or
 newer), pycrypto, AdobeHDS.php, php and the following php extensions:
 bcmath, curl and SimpleXML.
 
-On Debian `apt-get install rtmpdump python python-cpyryptopp php5-cli
+On Debian `apt-get install rtmpdump python python-crypto php5-cli
 php5-curl` satisfies the dependencies.
 
 On OS X install rtmpdump with homebrew: `brew install --HEAD
