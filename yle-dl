@@ -1756,7 +1756,7 @@ class ExternalDownloader:
     def __init__(self, stream, clip_title, destdir, extra_argv):
         self.stream = stream
         self.clip_title = clip_title or 'ylestream'
-        self.extra_argv = extra_argv
+        self.extra_argv = extra_argv or []
         self.destdir = destdir or ''
         self._cached_output_file = None
 
@@ -1837,6 +1837,9 @@ class ExternalDownloader:
            pass
 
     def outputfile_from_args(self, args_in):
+        if not args_in:
+            return None
+
         prev = None
         args = list(args_in) # copy
         while args:
