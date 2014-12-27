@@ -1021,7 +1021,7 @@ class Areena2014Downloader(AreenaUtils):
             self.download_subtitles(clip.subtitles, filters, outputfile)
             return downloader.save_stream()
 
-        return self.process_single_episode(download_clip, url, filters)
+        return self.process(download_clip, url, filters)
 
     def print_urls(self, url, print_episode_url, filters):
         def print_clip_url(clip):
@@ -1033,13 +1033,13 @@ class Areena2014Downloader(AreenaUtils):
             print print_url.encode(enc, 'replace')
             return RD_SUCCESS
         
-        return self.process_single_episode(print_clip_url, url, filters)
+        return self.process(print_clip_url, url, filters)
 
     def pipe(self, url, filters):
         def pipe_clip(clip):
             return clip.streamurl.create_pipe(filters.maxbitrate)
 
-        return self.process_single_episode(pipe_clip, url, filters)
+        return self.process(pipe_clip, url, filters)
 
     def print_titles(self, url, filters):
         def print_clip_title(clip):
@@ -1047,7 +1047,44 @@ class Areena2014Downloader(AreenaUtils):
             print clip.title.encode(enc, 'replace')
             return RD_SUCCESS
         
-        return self.process_single_episode(print_clip_title, url, filters)
+        return self.process(print_clip_title, url, filters)
+
+    def process(self, clipfunc, url, filters):
+        overall_status = RD_SUCCESS
+        playlist = self.get_playlist(url, filters)
+        for clipurl in playlist:
+            res = self.process_single_episode(clipfunc, clipurl, filters)
+            if res != RD_SUCCESS:
+                overall_status = res
+        return overall_status
+
+    def get_playlist(self, url, filters):
+        """If url is a series page, return a list of included episode pages."""
+        maybe_series_id = self.program_id_from_url(url)
+        path = '/api/programs/v1/items.json?' \
+               'series=%s&type=program&availability=ondemand&' \
+               'order=ondemand.publication.starttime%%253Adesc&' \
+               'app_id=cb021459&app_key=fa6c26b3b3e617b7033c83c108417200&' \
+               'limit=25&offset=0&olang=fi' % (maybe_series_id)
+        series_url = urlparse.urljoin(url, path)
+        series_info = self.load_jsonp(series_url) or {}
+        data = series_info.get('data', [])
+        ids = (d.get('id') for d in data if d.get('id'))
+        playlist = [urlparse.urljoin(url, '/' + eid) for eid in ids]
+
+        if debug:
+            if playlist:
+                log('playlist page with %d clips' % len(playlist))
+            else:
+                log('not a playlist')
+
+        if filters.latest_only:
+            playlist = playlist[:1]
+
+        if not playlist:
+            playlist = [url]
+
+        return playlist
 
     def process_single_episode(self, clipfunc, url, filters):
         clip = self.clip_for_url(url, filters)
