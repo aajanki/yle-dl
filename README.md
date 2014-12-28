@@ -1,4 +1,4 @@
-rtmpdump frontend for Yle servers
+download videos from Yle servers
 
 Copyright (C) 2010-2014 Antti Ajanki, antti.ajanki@iki.fi
 
@@ -8,12 +8,11 @@ Homepage: http://aajanki.github.com/yle-dl/index-en.html
 
 Source code: https://github.com/aajanki/yle-dl
 
-yle-dl is a rtmpdump frontend for downloading media files from the
-video streaming services of the Finnish national broadcasting company
-Yle: [Yle Areena], [YleX Areena] and [Elävä Arkisto].
+yle-dl is a tool for downloading media files from the video streaming
+services of the Finnish national broadcasting company Yle: [Yle
+Areena] and [Elävä Arkisto].
 
 [Yle Areena]:http://areena.yle.fi/
-[YleX Areena]:http://ylex.yle.fi/ylex-areena/
 [Elävä arkisto]:http://www.yle.fi/elavaarkisto/
 
 Installation

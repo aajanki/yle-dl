@@ -2,14 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-yle-dl - rtmpdump frontend for Yle Areena, Elävä Arkisto and YleX Areena
+yle-dl - download videos from Yle servers
 
 Copyright (C) 2010-2014 Antti Ajanki <antti.ajanki@iki.fi>
 
-This script extracts RTMP stream information from Yle Areena
-(http://areena.yle.fi), YleX Areena (http://ylex.yle.fi/ylex-areena),
-Elävä Arkisto (http://yle.fi/elavaarkisto/index.html) web pages and
-calls rtmpdump with correct parameters.
+This script downloads video and audio streams from Yle Areena
+(http://areena.yle.fi) and Elävä Arkisto
+(http://yle.fi/elavaarkisto/index.html).
+
 """
 
 import sys
@@ -41,8 +41,6 @@ AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
 ARKISTO_SWF = 'http://yle.fi/elavaarkisto/flowplayer/flowplayer.commercial-3.2.7.swf?0.7134730119723827'
 RTMPDUMP_OPTIONS_ARKISTO = ['-s', ARKISTO_SWF, '-m', '60']
-
-RTMPDUMP_OPTIONS_YLEX = ['-m', '60']
 
 RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
 
@@ -186,13 +184,10 @@ def downloader_factory(url, protocols):
             url.startswith('http://yle.fi/arkivet/') or \
             url.startswith('http://svenska.yle.fi/arkivet/'):
         return RetryingDownloader(ElavaArkistoDownloader, protocols)
-    elif url.startswith('http://ylex.yle.fi/'):
-        return RetryingDownloader(YleXDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/tv/suora/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return RetryingDownloader(AreenaLiveDownloader, protocols)
-    elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/?$', url) or \
-            url == 'http://ylex.yle.fi/radio-popup':
+    elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/?$', url):
         return RetryingDownloader(AreenaLiveRadioDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/') or \
             url.startswith('http://arenan.yle.fi/') or \
@@ -1573,92 +1568,6 @@ class ElavaArkistoStreamUrl(AreenaRTMPStreamUrl):
             return (rtmp_params['rtmp'], playpath, ext)
         else:
             return (None, None, None)
-
-
-### YleX Areena ###
-
-
-class YleXDownloader(AreenaNGDownloader):
-    @staticmethod
-    def supported_protocols():
-        return ['rtmp']
-
-    def __init__(self, streaming_protocols):
-        pass
-
-    def download_episodes(self, url, filters, argv, destdir):
-        """Download a stream from the given YleX Areena url using
-        rtmpdump."""
-        html = download_page(url)
-        if not html:
-            return RD_FAILED
-
-        streamurl = YleXStreamUrl(html, url, filters)
-        if not streamurl.is_valid():
-            return RD_FAILED
-
-        stream_title = self.stream_title(html)
-        extra_args = RTMPDUMP_OPTIONS_YLEX + argv
-        downloader = streamurl.create_downloader(stream_title, destdir, extra_args)
-        return downloader.save_stream()
-
-    def print_urls(self, url, print_episode_url, filters):
-        """Print a librtmp-compatible YleX Areena URL to stdout."""
-        html = download_page(url)
-        if not html:
-            return RD_FAILED
-
-        streamurl = YleXStreamUrl(html, url, filters)
-        if not streamurl.is_valid():
-            return RD_FAILED
-
-        enc = sys.getfilesystemencoding()
-        printableurl = None
-        if print_episode_url:
-            printableurl = streamurl.to_episode_url()
-        else:
-            printableurl = streamurl.to_url()
-        print printableurl.encode(enc, 'replace')
-        return RD_SUCCESS
-
-    def pipe(self, url, filters):
-        html = download_page(url)
-        streamurl = YleXStreamUrl(html, url, filters)
-        return streamurl.create_pipe(filters.maxbitrate)
-
-    def print_titles(self, url, filters):
-        enc = sys.getfilesystemencoding()
-        print self.stream_title(download_page(url)).encode(enc, 'replace')
-        return RD_SUCCESS
-
-    def stream_title(self, html):
-        if html:
-            match = re.search(r'<meta +?property="og:title" +?content="(.+?)" *?/>', html)
-            if match:
-                return replace_entitydefs(match.group(1))
-
-        return time.strftime('YleX-%Y-%m-%d-%H:%M:%S')
-
-
-### YleX Areena stream URL ###
-
-
-class YleXStreamUrl(AreenaRTMPStreamUrl):
-    def __init__(self, html, url, filters):
-        AreenaRTMPStreamUrl.__init__(self, None, url)
-        self.rtmp_params = self._parse_rtmp_params(html, url, filters)
-
-    def _parse_rtmp_params(self, html, pageurl, filters):
-        match = re.search(r'<meta +?property="og:image" +?content="(.+?)" *?/>', html)
-        if not match:
-            return None
-
-        match = re.search(r'/([a-fA-F0-9]+)_', match.group(1))
-        if not match:
-            return None
-
-        papiurl = 'http://papi.yle.fi/ng/mod/rtmp/%s' % match.group(1)
-        return self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
 
 
 ### Downloader wrapper class that retries different protocols ###
