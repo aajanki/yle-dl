@@ -1456,15 +1456,6 @@ class ElavaArkistoDownloader:
 
         return clips
 
-    def print_librtmp_url(self, rtmpurl, playpath, pageurl, downloadURL):
-        """Print a librtmp-compatible Elava Arkisto URL to stdout."""
-        if downloadURL:
-            print downloadURL
-        else:
-            print '%s playpath=%s swfUrl=%s pageUrl=%s' % \
-                (rtmpurl, playpath, ARKISTO_SWF, pageurl)
-        return RD_SUCCESS
-
     def get_playlist(self, url, filters):
         (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
 
@@ -1567,40 +1558,11 @@ class ElavaArkistoStreamUrl(AreenaRTMPStreamUrl):
     def _initialize(self, mediaitem, pageurl, filters):
         self.clip_title = mediaitem.get('title', 'elavaarkisto')
         self.direct_url = mediaitem.get('downloadURL', None)
-        rtmpurl, playpath, self.ext = self._arkisto_rtmp(mediaitem, filters)
-        if not rtmpurl:
-            rtmpurl, playpath, self.ext = \
-                self._mediakanta_rtmp(mediaitem, pageurl, filters)
+        rtmpurl, playpath, self.ext = \
+            self._mediakanta_rtmp(mediaitem, pageurl, filters)
         self.rtmp_params = {'rtmp': rtmpurl,
                             'playpath': playpath,
                             'pageUrl': pageurl}
-
-    def _arkisto_rtmp(self, mediaitem, filters):
-        streams = self._extract_streams_and_bitrates(mediaitem)
-        if not streams:
-            return (None, None, None)
-
-        if filters.keep_lowest_bitrate():
-            selected = sorted(streams, key=itemgetter(0))[0]
-        else:
-            filtered = [s for s in streams if s[0] <= filters.maxbitrate]
-            if not filtered:
-                log('No streams matching the bitrate limit')
-                return (None, None, None)
-            selected = sorted(streams, key=itemgetter(0))[-1]
-
-        if debug:
-            log('Selected by bitrate filter: ' + str(selected))
-            
-        return parse_rtmp_single_component_app(selected[1])
-
-    def _extract_streams_and_bitrates(self, mediaitem):
-        streams = []
-        for clip in mediaitem.get('urls', {}).get('domestic', []):
-            rate = float(clip.get('bitrate', 0))
-            url = clip.get('url', '')
-            streams.append((rate, url))
-        return streams
 
     def _mediakanta_rtmp(self, mediaitem, pageurl, filters):
         if mediaitem.get('mediakantaId', '') != '':
