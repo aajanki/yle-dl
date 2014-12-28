@@ -1546,7 +1546,7 @@ class ElavaArkistoStreamUrl(AreenaRTMPStreamUrl):
 
     def create_downloader(self, clip_title_ignored, destdir, extra_argv):
         if self.direct_url:
-            return HTTPDump(self, self.clip_title, destdir)
+            return HTTPDump(self, self.clip_title, destdir, extra_arg)
         else:
             return RTMPDump(self, self.clip_title, destdir, extra_argv)
 
@@ -1630,6 +1630,12 @@ class ExternalDownloader:
         self.extra_argv = extra_argv or []
         self.destdir = destdir or ''
         self._cached_output_file = None
+
+        if self.is_resume_job(extra_argv) and not self.resume_supported():
+            log('Warning: Resume not supported on this stream')
+
+    def resume_supported(self):
+        return False
 
     def save_stream(self):
         args = self.build_args()
@@ -1745,8 +1751,14 @@ class ExternalDownloader:
         return (self.outputfile_from_args(self.extra_argv) or
                 self.outputfile_from_clip_title())
 
+    def is_resume_job(self, args):
+        return '--resume' in args or '-e' in args
+
 
 class RTMPDump(ExternalDownloader):
+    def resume_supported(self):
+        return True
+
     def build_args(self):
         args = [rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
@@ -1764,9 +1776,6 @@ class RTMPDump(ExternalDownloader):
             return []
         else:
             return ['-o', self.output_filename()]
-
-    def is_resume_job(self, args):
-        return '--resume' in args or '-e' in args
 
 
 class HDSDump(ExternalDownloader):
@@ -1796,8 +1805,8 @@ class HDSDump(ExternalDownloader):
 
 
 class HTTPDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, destdir):
-        ExternalDownloader.__init__(self, stream, clip_title, destdir, None)
+    def __init__(self, stream, clip_title, destdir, extra_argv):
+        ExternalDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
 
     def save_stream(self):
         log('Downloading from HTTP server...')
