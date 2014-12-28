@@ -1,7 +1,16 @@
-
-rtmpdump frontend for Yle servers
+download videos from Yle servers
 Copyright 2008-2014 Antti Ajanki
 Distributed under the GPL v2
+
+28 Dec 2014, Version 2.4.0
+
+- Support http://areena.kokeile.yle.fi
+- Dropped the support for YleX Areena because the service has been shut down
+- --pipe switch dumps the stream to stdout
+- Fixed downloading of several HDS streams during one session
+- Fixed subtitle file name encoding
+- Improved Elävä Arkisto compatibility
+- Changed the default path for AdobeHDS.php, override with --adobehds
 
 14 Jun 2014, Version 2.3.1
 
