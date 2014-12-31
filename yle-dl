@@ -97,7 +97,7 @@ def usage():
     log(u'                        or "best" or "worst". Not exact on HDS streams.')
     log(u'--rtmpdump path         Set path to rtmpdump binary')
     log(u'--adobehds cmd          Set command for executing AdobeHDS.php script')
-    log(u'                        Default: "php /usr/local/bin/AdobeHDS.php"')
+    log(u'                        Default: "php /usr/local/share/yle-dl/AdobeHDS.php"')
     log(u'--destdir dir           Save files to dir')
     log(u'--protocol protos       Preferred streaming protocols (comma-separated)')
     log(u'                        Supported values: rtmp and hds')
