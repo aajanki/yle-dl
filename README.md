@@ -37,7 +37,7 @@ make install
 
 Instead of install-adobehds you can also manually download
 https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
-to /usr/local/bin.
+to /usr/local/share/yle-dl.
 
 Starting from version 1.99.9 yle-dl doesn't anymore require a modified
 rtmpdump or plugin. Instead, everything is now downloadable with the

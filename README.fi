@@ -34,7 +34,7 @@ install).
 
 install-adobehds:n sijaan voit myös hakea AdobeHDS.php:n osoitteesta
 https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
-ja kopioida sen /usr/local/bin-hakemistoon.
+ja kopioida sen /usr/local/share/yle-dl -hakemistoon.
 
 Alkaen versiosta 1.99.9 yle-dl:stä ei enää tarvitse Ylen palvelimia
 varten muunneltua kopiota rtmpdump-ohjelmasta. Aikaisemman
