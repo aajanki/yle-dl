@@ -425,6 +425,13 @@ class AreenaNGDownloader(AreenaUtils):
                 (pageurl, streamurl.get_error_message()))
             return RD_FAILED
 
+        downloader = streamurl.create_downloader(self.get_clip_title(clip),
+                                                 destdir, rtmpdumpargs)
+        if not downloader:
+            log(u'Downloading the stream at %s is not yet supported.' % pageurl)
+            log(u'Try --showurl')
+            return RD_FAILED
+
         enc = sys.getfilesystemencoding()
         if optype == self.OP_PRINT_DOWNLOAD_URL:
             print streamurl.to_url().encode(enc, 'replace')
@@ -433,14 +440,7 @@ class AreenaNGDownloader(AreenaUtils):
             print streamurl.to_episode_url().encode(enc, 'replace')
             return RD_SUCCESS
         elif optype == self.OP_PIPE:
-            return streamurl.create_pipe(filters.maxbitrate)
-
-        downloader = streamurl.create_downloader(self.get_clip_title(clip),
-                                                 destdir, rtmpdumpargs)
-        if not downloader:
-            log(u'Downloading the stream at %s is not yet supported.' % pageurl)
-            log(u'Try --showurl')
-            return RD_FAILED
+            return downloader.pipe()
 
         outputfile = downloader.output_filename()
         self.download_subtitles(self.clip_subtitles(clip), filters, outputfile)
@@ -706,14 +706,6 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return RTMPDump(self, clip_title, destdir, extra_argv)
 
-    def create_pipe(self, dummy):
-        args = [rtmpdump_binary]
-        args += self.rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
-        args += ['-o', '-']
-        enc = sys.getfilesystemencoding()
-        encoded_args = [x.encode(enc, 'replace') for x in args]
-        return subprocess.Popen(encoded_args).wait()
-
     def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters):
         stream = self.stream_from_papi(papiurl, self.AES_KEY, filters)
         return self.stream_to_rtmp_parameters(stream, pageurl, islive)
@@ -889,19 +881,6 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
     def create_downloader(self, clip_title, destdir, extra_argv):
         return self.downloader_class(self, clip_title, destdir, extra_argv, self.maxbitrate)
 
-    def create_pipe(self, maxbitrate):
-        args = list(hds_binary)
-        if maxbitrate < 1000:
-            args.append('--quality low')
-        elif maxbitrate < 2000:
-            args.append('--quality medium')
-        args.append('--manifest')
-        args.append(self.to_url())
-        args.append('--play')
-        enc = sys.getfilesystemencoding()
-        encoded_args = [x.encode(enc, 'replace') for x in args]
-        return subprocess.Popen(encoded_args).wait()
-
     def _initialize_hds_stream(self, clip, pageurl, filters):
         clip = self.full_metadata_if_search_result(clip) or {}
         media = clip.get('media', {})
@@ -1042,7 +1021,8 @@ class Areena2014Downloader(AreenaUtils):
 
     def pipe(self, url, filters):
         def pipe_clip(clip):
-            return clip.streamurl.create_pipe(filters.maxbitrate)
+            dl = clip.streamurl.create_downloader(clip.title, '', [])
+            return dl.pipe()
 
         return self.process(pipe_clip, url, filters)
 
@@ -1310,13 +1290,18 @@ class AreenaLiveDownloader:
         pass
 
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
+        dl = self._downloader(url, filters, rtmpdumpargs, destdir)
+        if not dl:
+            return RD_FAILED
+        return dl.save_stream()
+
+    def _downloader(self, url, filters, rtmpdumpargs, destdir):
         streamurl = AreenaLiveStreamUrl(url, filters)
         if not streamurl.is_valid():
-            return RD_FAILED
+            return None
 
         clip_title = self.get_live_stream_title(url)
-        downloader = streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
-        return downloader.save_stream()
+        return streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
 
     def print_urls(self, url, print_episode_url, filters):
         """Extract episodes from url and print their
@@ -1328,8 +1313,8 @@ class AreenaLiveDownloader:
         return RD_SUCCESS
 
     def pipe(self, url, filters):
-        streamurl = AreenaLiveStreamUrl(url, filters)
-        return streamurl.create_pipe(filters.maxbitrate)
+        dl = self._downloader(url, filters, [], '')
+        return dl.pipe()
 
     def print_titles(self, url, filters):
         enc = sys.getfilesystemencoding()
@@ -1380,13 +1365,19 @@ class AreenaLiveRadioDownloader:
         pass
 
     def download_episodes(self, url, filters, rtmpdumpargs, destdir):
+        dl = self._downloader(url, filters, rtmpdumpargs, destdir)
+        if not dl:
+            return RD_FAILED
+
+        return dl.save_stream()
+
+    def _downloader(self, url, filters, rtmpdumpargs, destdir):
         streamurl = AreenaLiveRadioStreamUrl(url, filters)
         if not streamurl.is_valid():
-            return RD_FAILED
-        
+            return None
+
         clip_title = self.get_live_stream_title(url)
-        downloader = streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
-        return downloader.save_stream()
+        return streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
 
     def print_urls(self, url, print_episode_url, filters):
         printableurl = (url if print_episode_url
@@ -1396,8 +1387,8 @@ class AreenaLiveRadioDownloader:
         return RD_SUCCESS
 
     def pipe(self, url, filters):
-        streamurl = AreenaLiveRadioStreamUrl(url, filters)
-        return streamurl.create_pipe(filters.maxbitrate)
+        dl = self._downloader(url, filters, [], '')
+        return dl.pipe()
 
     def print_titles(self, url, filters):
         enc = sys.getfilesystemencoding()
@@ -1525,8 +1516,15 @@ class ElavaArkistoDownloader:
         return RD_SUCCESS
 
     def pipe(self, url, filters):
-        log('Elava Arkisto not supported by --pipe.')
-        return RD_FAILED
+        playlist = self.get_playlist(url, filters)
+        if not playlist:
+            return RD_FAILED
+
+        downloader = playlist[0].create_downloader('', '', [])
+        if not downloader:
+            return RD_FAILED
+
+        return downloader.pipe()
 
     def print_titles(self, url, filters):
         playlist = self.get_playlist(url, filters)
@@ -1647,6 +1645,10 @@ class BaseDownloader:
     def save_stream(self):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
+
+    def pipe(self):
+        """Derived classes can override this to pipe to stdout"""
+        return RD_FAILED
 
     def outputfile_from_clip_title(self, ext='.flv', resume=False):
         if self._cached_output_file:
@@ -1792,6 +1794,14 @@ class RTMPDump(ExternalDownloader):
         else:
             return ['-o', self.output_filename()]
 
+    def pipe(self):
+        args = [rtmpdump_binary]
+        args += self.stream.to_rtmpdump_args()
+        args += ['-o', '-']
+        enc = sys.getfilesystemencoding()
+        encoded_args = [x.encode(enc, 'replace') for x in args]
+        return subprocess.Popen(encoded_args).wait()
+
 
 ### Download a stream by delegating to AdobeHDS.php ###
 
@@ -1820,6 +1830,16 @@ class HDSDump(ExternalDownloader):
         args.append(self.output_filename())
         args.extend(self.quality_options)
         return args
+
+    def pipe(self):
+        args = list(hds_binary)
+        args.append('--manifest')
+        args.append(self.stream.to_url())
+        args.extend(self.quality_options)
+        args.append('--play')
+        enc = sys.getfilesystemencoding()
+        encoded_args = [x.encode(enc, 'replace') for x in args]
+        return subprocess.Popen(encoded_args).wait()
 
 
 ### Download a stream delegating to the youtube_dl HDS downloader ###
