@@ -101,5 +101,5 @@ yle-dl "http://www.yle.fi/elavaarkisto/?s=s&g=4&ag=28&t=&a=9390"
 Playing in mplayer (or vlc and others) without downloading first:
 
 ```
-mplayer "$(yle-dl --showurl http://areena.yle.fi/tv/1544491)"
+yle-dl --pipe http://areena.yle.fi/tv/2409251 | mplayer -
 ```
