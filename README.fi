@@ -128,7 +128,7 @@ Esimerkkejä
 
 * Toistaminen suoraan videotoistimessa:
 
-  yle-dl --pipe http://areena.yle.fi/tv/2409251 | mplayer -
+  yle-dl --pipe http://areena.yle.fi/tv/2409251 | mplayer -cache 1024 -
 
 * Ladatulle tiedostolle annetun nimen tulostaminen (esimerkiksi
   jos skripti tarvitseen tiedoston nimen jatkokäsittelyä varten)
