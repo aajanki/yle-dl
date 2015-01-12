@@ -1802,9 +1802,8 @@ class RTMPDump(ExternalDownloader):
         args = [rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', '-']
-        enc = sys.getfilesystemencoding()
-        encoded_args = [x.encode(enc, 'replace') for x in args]
-        return subprocess.Popen(encoded_args).wait()
+        self.external_downloader(args)
+        return RD_SUCCESS
 
 
 ### Download a stream by delegating to AdobeHDS.php ###
@@ -1841,9 +1840,8 @@ class HDSDump(ExternalDownloader):
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
         args.append('--play')
-        enc = sys.getfilesystemencoding()
-        encoded_args = [x.encode(enc, 'replace') for x in args]
-        return subprocess.Popen(encoded_args).wait()
+        self.external_downloader(args)
+        return RD_SUCCESS
 
 
 ### Download a stream delegating to the youtube_dl HDS downloader ###
