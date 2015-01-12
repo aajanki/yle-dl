@@ -45,6 +45,8 @@ RTMPDUMP_OPTIONS_ARKISTO = ['-s', ARKISTO_SWF, '-m', '60']
 
 RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
 
+DEFAULT_PROTOCOLS = ['hds', 'hds:youtubedl', 'rtmp']
+
 # list of all options that require an argument
 ARGOPTS = ('--rtmp', '-r', '--host', '-n', '--port', '-c', '--socks',
            '-S', '--swfUrl', '-s', '--tcUrl', '-t', '--pageUrl', '-p',
@@ -1586,7 +1588,9 @@ class RetryingDownloader:
         self.wrapped_class = wrapped_class
         acceptable = wrapped_class.supported_protocols()
         is_supported = lambda p: acceptable.count(p.split(':', 1)[0]) > 0
-        accepted, rejected = partition(is_supported, protocols or acceptable)
+        defaults = [p for p in DEFAULT_PROTOCOLS \
+                    if any(p.startswith(a) for a in acceptable)]
+        accepted, rejected = partition(is_supported, protocols or defaults)
         self.protocols = list(accepted)
 
         rejected = list(rejected)
