@@ -1841,7 +1841,14 @@ class HDSDump(ExternalDownloader):
         args.extend(self.quality_options)
         args.append('--play')
         self.external_downloader(args)
+        self.cleanup_cookies()
         return RD_SUCCESS
+
+    def cleanup_cookies(self):
+        try:
+            os.remove('Cookies.txt')
+        except OSError:
+            pass
 
 
 ### Download a stream delegating to the youtube_dl HDS downloader ###
