@@ -1,5 +1,5 @@
 Apuohjelma videoiden lataamiseen Yle Areenasta
-Copyright (C) 2010-2014 Antti Ajanki, antti.ajanki@iki.fi
+Copyright (C) 2010-2015 Antti Ajanki, antti.ajanki@iki.fi
 Ohjelmistolisenssi: GPLv2
 Kotisivu: http://aajanki.github.com/yle-dl/
 Lähdekoodi: https://github.com/aajanki/yle-dl
@@ -11,30 +11,32 @@ yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
 Asennus
 -------
 
-Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi),
-python (2.6 tai uudempi), pycrypto, AdobeHDS.php, php sekä seuraavat
+Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi,
+mieluiten uusin kehitysversio projektin kotisivulta
+http://rtmpdump.mplayerhq.hu/), python (2.6 tai uudempi) ja pycrypto.
+Lisäksi joko AdobeHDS.php tai youtube-dl tarvitaan Yle Areenan
+videoiden lataamiseen. Vain AdobeHDS.php pystyy lataamaan suoria
+lähetyksiä. AdobeHDS.php vaatii lisäksi php-tulkin sekä seuraavat
 php-laajennukset: bcmath, curl ja SimpleXML.
 
-Debianissa muut tarvittavat kirjastot löytyvät paketeista rtmpdump,
-python, python-crypto, php5-cli ja php5-curl. Huom! Paketinhallinnasta
-saatava versio rtmpdump-ohjelmasta voi olla vanhentunut ja aiheuttaa ongelmia
-Yle Areenan kanssa. Uusin versio löytyy projektin kotisivuilta osoitteesta
-http://rtmpdump.mplayerhq.hu/.
+Debianissa tarvittavat paketit voi asentaa komentamalla joko
 
-OS X:ssä rtmpdumpin voi asentaa homebrew:llä ``brew install --HEAD
-rtmpdump`` ja pycrypton pipillä ``pip install -r requirements.txt``.
-
-Asenna komennoilla:
-
+apt-get install rtmpdump python python-crypto php5-cli php5-curl
 make install-adobehds
+
+tai
+
+apt-get install rtmpdump python python-crypto youtube-dl
+
+OS X:ssä rtmpdumpin voi asentaa homebrew:llä "brew install --HEAD
+rtmpdump" ja pycrypton pipillä "pip install -r requirements.txt".
+
+Asenna yle-dl komennolla:
+
 make install
 
-Komennot vaativat pääkäyttäjän oikeudet (esim. Ubuntussa: sudo make
+Komento vaatii pääkäyttäjän oikeudet (esim. Debianissa: sudo make
 install).
-
-install-adobehds:n sijaan voit myös hakea AdobeHDS.php:n osoitteesta
-https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
-ja kopioida sen /usr/local/share/yle-dl -hakemistoon.
 
 Alkaen versiosta 1.99.9 yle-dl:stä ei enää tarvitse Ylen palvelimia
 varten muunneltua kopiota rtmpdump-ohjelmasta. Aikaisemman
@@ -64,8 +66,7 @@ arkiston osoite.
 Valitsimet:
 
 --latestepisode Lataa viimeisimmän jakson sivulta
---showurl       Tulostaa librtmp-yhteensopivan video-URLin, ei lataa
-                tiedostoa
+--showurl       Tulostaa videon URL, ei lataa tiedostoa
 --showtitle     Tulostaa ohjelman nimen, ei lataa tiedostoa
 --vfat          Tuota Windows-yhteensopivia tiedoston nimiä
 --sublang lang  Lataa tekstitykset annetulla kielellä (Yle Areena)
@@ -73,6 +74,13 @@ Valitsimet:
 --rtmpdump path Polku rtmpdump-ohjelmaan
 --adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
+--pipe          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
+--protocol vals Järjestys, jossa lataajia kokeillaan kunnes jokin niistä
+                onnistuu lataamaan ohjelman. Voi sisältää useita arvoja
+                pilkuilla eroteltuina. Mahdolliset arvot:
+                  hds - lataa käyttäen AdobeHDS.php:ta
+                  hds:youtube-dl - youtube-dl
+                  rtmp - rtmpdump
 
 Muut valitsimet välitetään suoraan rtmpdump:lle. Luettelon
 mahdollisista valitsimista (englanniksi) näkee komentamalla

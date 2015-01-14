@@ -1,6 +1,6 @@
 download videos from Yle servers
 
-Copyright (C) 2010-2014 Antti Ajanki, antti.ajanki@iki.fi
+Copyright (C) 2010-2015 Antti Ajanki, antti.ajanki@iki.fi
 
 License: GPLv2
 
@@ -18,26 +18,28 @@ Areena] and [Elävä Arkisto].
 Installation
 ------------
 
-Install dependencies: rtmpdump (version 2.4 or newer), python (2.6 or
-newer), pycrypto, AdobeHDS.php, php and the following php extensions:
-bcmath, curl and SimpleXML.
+Install dependencies: rtmpdump (version 2.4 or newer, preferably the
+latest development version from the project homepage at
+http://rtmpdump.mplayerhq.hu/), python (2.6 or newer) and pycrypto.
+Either AdobeHDS.php or youtube-dl is required to download videos from
+Yle Areena. Only AdobeHDS.php can download live streams. AdobeHDS.php
+additionally requires php and the following php extensions: bcmath,
+curl and SimpleXML.
 
-On Debian `apt-get install rtmpdump python python-crypto php5-cli
-php5-curl` satisfies the dependencies.
+On Debian the required packages can be installed either
+
+* by `apt-get install rtmpdump python python-crypto php5-cli php5-curl` and running `make install-adobehds` in the yle-dl directory
+
+* or by `apt-get install rtmpdump python python-crypto youtube-dl`
 
 On OS X install rtmpdump with homebrew: `brew install --HEAD
 rtmpdump` and pycrypto with pip: `pip install -r requirements.txt`
 
-To install run:
+To install yle-dl run:
 
 ```
-make install-adobehds
 make install
 ```
-
-Instead of install-adobehds you can also manually download
-https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php
-to /usr/local/share/yle-dl.
 
 Starting from version 1.99.9 yle-dl doesn't anymore require a modified
 rtmpdump or plugin. Instead, everything is now downloadable with the
@@ -69,7 +71,7 @@ yle-dl options:
 
 * `--latestepisode`   Download the latest episodes
 
-* `--showurl`         Print librtmp-compatible URL, don't download
+* `--showurl`         Print the URL of the stream, don't download
 
 * `--showtitle`       Print stream title, don't download
 
@@ -83,7 +85,11 @@ yle-dl options:
 
 * `--destdir dir`     Save files to dir
 
-Type `rtmpdump --help` to see a full list of options.
+* `--pipe`            Dump stream to stdout for piping to media player. E.g. `yle-dl --pipe URL | vlc -`.
+
+* `--protocol protos` Downloaders that are tried until one of them succeeds (a comma-separated list). Possible values: `hds` (download a stream using AdobeHDS.php), `hds:youtubedl` (youtube-dl), and `rtmp` (rtmpdump).
+
+Type `rtmpdump --help` to see the full list of options.
 
 Firewall must allow outgoing traffic on ports 80 and 1935.
 
