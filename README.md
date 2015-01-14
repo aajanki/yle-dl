@@ -43,14 +43,14 @@ make install
 
 Starting from version 1.99.9 yle-dl doesn't anymore require a modified
 rtmpdump or plugin. Instead, everything is now downloadable with the
-plain rtmpdump. To remove the remnants of previous versions run "make
-uninstall-old-rtmpdump".
+plain rtmpdump. To remove the remnants of previous versions run `make
+uninstall-old-rtmpdump`.
 
 Packages for various distros
 ----------------------------
 
-See http://aajanki.github.com/yle-dl/index-en.html for a list of
-available installation packages.
+[A list of available installation
+packages](http://aajanki.github.com/yle-dl/index-en.html)
 
 RPM packaging:
 
