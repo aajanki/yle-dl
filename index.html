@@ -19,8 +19,8 @@
         <h2>Lataa videoita Yle Areenasta</h2>
 
         <section id="downloads">
-          <a href="https://github.com/aajanki/yle-dl/zipball/2.4.0" class="btn">Download as .zip</a>
-          <a href="https://github.com/aajanki/yle-dl/tarball/2.4.0" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/aajanki/yle-dl/zipball/2.5.0" class="btn">Download as .zip</a>
+          <a href="https://github.com/aajanki/yle-dl/tarball/2.5.0" class="btn">Download as .tar.gz</a>
           <a href="https://github.com/aajanki/yle-dl" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
@@ -104,32 +104,30 @@ kaikista valitsimista (englanniksi) näkee komentamalla <code>yle-dl
 
 <h3>Lataa lähdekoodi</h3>
 
-<p><a href="https://github.com/aajanki/yle-dl/tarball/2.4.0">Vakaa versio: yle-dl 2.4.0</a> (28.12.2014)</p>
+<p><a href="https://github.com/aajanki/yle-dl/tarball/2.5.0">Vakaa versio: yle-dl 2.5.0</a> (14.1.2015)</p>
 
 <p><a href="https://github.com/aajanki/yle-dl/tarball/master">Kehitysversio</a></p>
 
 <p> yle-dl on <a href="http://www.gnu.org/licenses/gpl-2.0.html">GNU
 GPLv2-lisenssin</a> mukainen vapaa ohjelmisto.</p>
 
-<p>Vaaditut kirjastot ja ohjelmat: rtmpdump (versio 2.4 tai uudempi),
-python (2.6 tai uudempi), pycrypto,
-<a href="https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php">AdobeHDS.php</a>,
-php ja seuraavat php-laajennukset: bcmath, curl ja SimpleXML.</p>
+<p>Vaaditut kirjastot ja ohjelmat: rtmpdump (versio 2.4 tai uudempi,
+mieluiten uusin
+kehitysversio <a href="http://rtmpdump.mplayerhq.hu/">projektin
+kotisivulta</a>), python (2.6 tai uudempi) ja pycrypto. Lisäksi joko
+<a href="https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php">AdobeHDS.php</a>
+tai youtube-dl tarvitaan Yle Areenan videoiden lataamiseen. Vain
+AdobeHDS.php pystyy lataamaan suoria lähetyksiä. AdobeHDS.php vaatii
+lisäksi php-tulkin sekä seuraavat php-laajennukset: bcmath, curl ja
+SimpleXML.</p>
 
 <h3>Asentaminen</h3>
 
-<p>Asenna yle-dl komennolla</p>
+<p>Asenna yle-dl: <code>make install</code></p>
 
-<p><code>
-make install<br>
-make install-adobehds<br>
-</code></p>
+<p>Asenna AdobeHDS.php: <code>make install-adobehds</code></p>
 
-<p>Komennot vaativat pääkäyttäjän oikeudet.</p>
-
-<p>install-adobehds:n sijaan voit myös tallentaa tiedoston
-<a href="https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php">AdobeHDS.php</a>
-omalle koneelle /usr/local/share/yle-dl-hakemistoon.
+<p>Komento vaatii pääkäyttäjän oikeudet.</p>
 
 <h3>Muiden ylläpitämiä asennuspaketteja</h3>
 

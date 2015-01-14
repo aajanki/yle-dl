@@ -19,8 +19,8 @@
         <h2>Download videos from Yle Areena</h2>
 
         <section id="downloads">
-          <a href="https://github.com/aajanki/yle-dl/zipball/2.4.0" class="btn">Download as .zip</a>
-          <a href="https://github.com/aajanki/yle-dl/tarball/2.4.0" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/aajanki/yle-dl/zipball/2.5.0" class="btn">Download as .zip</a>
+          <a href="https://github.com/aajanki/yle-dl/tarball/2.5.0" class="btn">Download as .tar.gz</a>
           <a href="https://github.com/aajanki/yle-dl" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
@@ -67,29 +67,27 @@ See <code>yle-dl --help</code> for the full list of options.</p>
 
 <h3>Source code</h3>
 
-<p><a href="https://github.com/aajanki/yle-dl/tarball/2.4.0">Stable yle-dl 2.4.0</a> (28.12.2014)</p>
+<p><a href="https://github.com/aajanki/yle-dl/tarball/2.5.0">Stable yle-dl 2.5.0</a> (14.1.2015)</p>
 
 <p><a href="https://github.com/aajanki/yle-dl/tarball/master">Development version</a></p>
 
 <p>The source code is available under <a href="http://www.gnu.org/licenses/gpl-2.0.html">GNU GPLv2 license</a>.</p>
 
-<p>Other required packages: rtmpdump (version 2.4 or newer), python
-(version 2.6 or newer), pycrypto,
-<a href="https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php">AdobeHDS.php</a>,
-php and the following php extensions: bcmath, curl and SimpleXML.</p>
+<p>Other required packages: rtmpdump (version 2.4 or newer, the latest
+development version from
+the <a href="http://rtmpdump.mplayerhq.hu/">project homepage</a> is
+recommended), python (version 2.6 or newer) and pycrypto. Either
+<a href="https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php">AdobeHDS.php</a>
+or youtube-dl is required to download videos from Yle Areena. Only
+AdobeHDS.php can download live streams. AdobeHDS.php additionally
+requires php and the following php extensions: bcmath, curl and
+SimpleXML.</p>
 
 <h3>Installation</h3>
 
-<p>Install yle-dl by running (requires root priviledges):</p>
+<p>Install yle-dl by running (requires root priviledges): <code>make install</code></p>
 
-<p><code>
-make install<br>
-make install-adobehds<br>
-</code></p>
-
-<p>Instead of <code>make install-adobehds</code> you can also manually copy
-<a href="https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php">AdobeHDS.php</a>
-to /usr/local/share/yle-dl.
+<p>Install AdobeHDS.php: <code>make install-adobehds</code></p>
 
 <h3>Installer and frontend packages created by others</h3>
 
