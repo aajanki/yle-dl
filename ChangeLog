@@ -1,6 +1,11 @@
 download videos from Yle servers
-Copyright 2008-2014 Antti Ajanki
+Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v2
+
+14 Jan 2015, Version 2.5.0
+
+- youtube-dl can now be used as the downloader backend instead of AdobeHDS.php
+- Minor improvements to piping the stream to stdout
 
 28 Dec 2014, Version 2.4.0
 
