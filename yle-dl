@@ -408,7 +408,8 @@ class AreenaNGDownloader(AreenaUtils):
             # the single episode pages do. So read the episode numbers from the "all 
             # episodes" page and then download the episodes individually.
             if (clip.has_key('id') and not clip['id'] in url and
-                not clip.has_key('subtitles') and optype == self.OP_DOWNLOAD):
+                not clip.has_key('subtitles') and optype == self.OP_DOWNLOAD and
+                clip['type'] == 'video'):
                 url = "http://areena.yle.fi/tv/" + clip['id']
                 print url
                 
