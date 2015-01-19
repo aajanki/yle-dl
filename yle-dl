@@ -1875,7 +1875,10 @@ class YoutubeDLHDSDump(BaseDownloader):
         ydl = youtube_dl.YoutubeDL({})
         f4mdl = youtube_dl.downloader.F4mFD(ydl, {})
         info = {'url': self.stream.to_url()}
-        if not f4mdl.download(outputfile, info):
+        try:
+            if not f4mdl.download(outputfile, info):
+                return RD_FAILED
+        except urllib2.URLError:
             return RD_FAILED
 
         self.log_output_file(outputfile, True)
