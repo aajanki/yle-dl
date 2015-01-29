@@ -1878,7 +1878,8 @@ class YoutubeDLHDSDump(BaseDownloader):
         try:
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
-        except urllib2.URLError:
+        except urllib2.HTTPError, ex:
+            log(u'HTTP request failed: %s %s' % (ex.code, ex.reason))
             return RD_FAILED
 
         self.log_output_file(outputfile, True)
