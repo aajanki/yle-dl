@@ -1836,6 +1836,8 @@ class HDSDump(ExternalDownloader):
         args.append('--outfile')
         args.append(self.output_filename())
         args.extend(self.quality_options)
+        if debug:
+            args.append('--debug')
         return args
 
     def pipe(self):
@@ -1844,6 +1846,8 @@ class HDSDump(ExternalDownloader):
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
         args.append('--play')
+        if debug:
+            args.append('--debug')
         self.external_downloader(args)
         self.cleanup_cookies()
         return RD_SUCCESS
