@@ -482,6 +482,11 @@ class AreenaNGDownloader(AreenaUtils):
         if fulldata is None:
             return None
 
+        has_drm = fulldata.get('media', {}).get('protection', 0) >= 3
+        if has_drm:
+            log(u'This stream is protected with DRM. yle-dl is not able to download this stream.')
+            return None
+
         playlist = []
         if 'contentType' in fulldata or 'channel' in fulldata:
             playlist = [fulldata]
