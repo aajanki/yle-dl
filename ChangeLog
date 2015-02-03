@@ -2,6 +2,12 @@ download videos from Yle servers
 Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v2
 
+3 Feb 2015, Version 2.5.1
+
+- Fixed bugs that prevented radio programs from being downloaded
+- More informative error message when the stream is DRM-protected
+- Show verbose output from AdobeHDS.php when --debug is given
+
 14 Jan 2015, Version 2.5.0
 
 - youtube-dl can now be used as the downloader backend instead of AdobeHDS.php
