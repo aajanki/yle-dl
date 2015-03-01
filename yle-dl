@@ -185,10 +185,8 @@ def int_or_else(x, default):
         return default
 
 def downloader_factory(url, protocols):
-    if url.startswith('http://www.yle.fi/elavaarkisto/') or \
-            url.startswith('http://yle.fi/elavaarkisto/') or \
-            url.startswith('http://yle.fi/arkivet/') or \
-            url.startswith('http://svenska.yle.fi/arkivet/'):
+    if url.startswith('http://yle.fi/aihe/') or \
+            url.startswith('http://svenska.yle.fi/artikel/'):
         return RetryingDownloader(ElavaArkistoDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/tv/suora/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
@@ -958,6 +956,25 @@ class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
         return PAPIStream(streamurl, playpath, 0, 0, False)
 
 
+class HTTPStreamUrl:
+    def __init__(self, url):
+        self.url = url
+        path = urlparse.urlparse(url)[2]
+        self.ext = os.path.splitext(path)[1] or None
+
+    def is_valid(self):
+        return True
+
+    def get_error_message(self):
+        return None
+
+    def to_url(self):
+        return self.url
+
+    def create_downloader(self, clip_title, destdir, extra_argv):
+        return HTTPDump(self, clip_title, destdir, extra_argv)
+
+
 class InvalidStreamUrl:
     def __init__(self, error_message):
         self.error = error_message
@@ -1087,8 +1104,8 @@ class Areena2014Downloader(AreenaUtils):
         if clip.streamurl.is_valid():
             return clipfunc(clip)
         else:
-            log(u'Unsupported stream at %s: %s' %
-                (url, clip.streamurl.get_error_message()))
+            log(u'Unsupported stream: %s' %
+                clip.streamurl.get_error_message())
             return RD_FAILED
 
     def clip_for_url(self, pageurl, filters):
@@ -1437,156 +1454,65 @@ class AreenaLiveRadioStreamUrl(AreenaRTMPStreamUrl):
 ### Elava Arkisto ###
 
 
-class ElavaArkistoDownloader:
+class ElavaArkistoDownloader(Areena2014Downloader):
     @staticmethod
     def supported_protocols():
-        return ['rtmp']
-
-    def __init__(self, streaming_protocols):
-        pass
-
-    def extract_playlist(self, mediajson, pageurl, filters):
-        pagedata = json.loads(mediajson)
-        if not pagedata.has_key('media'):
-            return []
-
-        if debug:
-            log('media in pagedata:')
-            log(str(pagedata['media']))
-
-        clips = []
-        for mediaitem in pagedata['media']:
-            stream = ElavaArkistoStreamUrl(mediaitem, pageurl, filters)
-            if not stream.is_valid():
-                continue
-            clips.append(stream)
-
-        return clips
+        return ['hds']
 
     def get_playlist(self, url, filters):
-        (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
-
-        if '.' in path:
-            path = path.rsplit('.', 1)[0]
-        path = path + '.json'
-        jsonurl = urlparse.urlunparse((scheme, netloc, path, '', '', ''))
-
-        mediajson = download_page(jsonurl)
-        if mediajson is None:
-            return None
-
-        # Yle server sends UTF-8 but doesn't set charset in
-        # Content-type header. This will workaround the problem.
-        mediajson = mediajson.encode('iso-8859-1').decode('utf-8')
-
-        playlist = self.extract_playlist(mediajson, url, filters)
+        dataids = self.get_dataids(url)
+        playlist = [self.clip_from_dataid(d, url, filters) for d in dataids]
         if len(playlist) == 0:
             log(u"Can't find streams at %s." % url)
-            return None
+            return []
 
         if filters.latest_only:
             playlist = playlist[:1]
 
         return playlist
 
-    def download_episodes(self, url, filters, rtmpdumpargs, destdir):
-        """Download playlist from Elava Arkisto page at url and
-        download all clips using rtmpdump."""
-        playlist = self.get_playlist(url, filters)
-        if playlist is None:
-            return RD_FAILED
+    def get_dataids(self, url):
+        page = download_page(url)
+        if not page:
+            return []
 
-        overall_status = RD_SUCCESS
-        for stream in playlist:
-            downloader = stream.create_downloader('', destdir, rtmpdumpargs)
-            if not downloader:
-                log(u'Downloading the stream at %s is not yet supported.' % url)
-                log(u'Try --showurl')
-                continue
+        return re.findall(r' data-id="([0-9-]+)"', page)
 
-            status = downloader.save_stream()
-            if status != RD_SUCCESS:
-                overall_status = status
+    def clip_from_dataid(self, dataid, pageurl, filters):
+        mediaitem = self.load_jsonp(self.embed_url(dataid))
+        if not mediaitem:
+            return FailedClip(pageurl, 'Failed to download embeded media data')
 
-        return overall_status
+        if mediaitem.get('status') == 404:
+            return FailedClip(pageurl, mediaitem.get('message') or 'Failed with status 404')
 
-    def print_urls(self, url, print_episode_url, filters):
-        """Download playlist from Elava Arkisto page at url and print
-        a librtmp-compatible URL for each clip."""
-        playlist = self.get_playlist(url, filters)
-        if playlist is None:
-            return RD_FAILED
-
-        if print_episode_url:
-            print url
+        title = mediaitem.get('title') or \
+                mediaitem.get('originalTitle') or \
+                'elavaarkisto'
+        download_url = mediaitem.get('downloadUrl')
+        if download_url:
+            return Clip(pageurl, title, HTTPStreamUrl(download_url), [])
         else:
-            enc = sys.getfilesystemencoding()
-            for stream in playlist:
-                print stream.to_url().encode(enc, 'replace')
+            mediakanta_id = '6-' + mediaitem['mediakantaId']
+            media_id = '26-' + mediaitem['id']
+            media = self.yle_media_descriptor(mediakanta_id, media_id, 'HDS')
+            if not media:
+                return FailedClip(pageurl, 'Failed to parse media object')
 
-        return RD_SUCCESS
+            return Clip(pageurl, title,
+                        self.media_streamurl(media, pageurl, filters),
+                        self.media_subtitles(media))
 
-    def pipe(self, url, filters):
-        playlist = self.get_playlist(url, filters)
-        if not playlist:
-            return RD_FAILED
-
-        downloader = playlist[0].create_downloader('', '', [])
-        if not downloader:
-            return RD_FAILED
-
-        return downloader.pipe()
-
-    def print_titles(self, url, filters):
-        playlist = self.get_playlist(url, filters)
-        if playlist is None:
-            return RD_FAILED
-
-        enc = sys.getfilesystemencoding()
-        for stream in playlist:
-            print stream.clip_title.encode(enc, 'replace')
-
-        return RD_SUCCESS
-
-
-class ElavaArkistoStreamUrl(AreenaRTMPStreamUrl):
-    def __init__(self, mediaitem, pageurl, filters):
-        AreenaRTMPStreamUrl.__init__(self, mediaitem, pageurl)
-        self._initialize(mediaitem, pageurl, filters)
-
-    def is_valid(self):
-        return bool(self.rtmp_params) or bool(self.direct_url)
-    
-    def to_url(self):
-        if self.direct_url:
-            return self.direct_url
+    def embed_url(self, dataid):
+        if '-' in dataid:
+            did = dataid.split('-')[-1]
         else:
-            return AreenaRTMPStreamUrl.to_url(self)
+            did = dataid
 
-    def create_downloader(self, clip_title_ignored, destdir, extra_argv):
-        if self.direct_url:
-            return HTTPDump(self, self.clip_title, destdir, extra_argv)
-        else:
-            return RTMPDump(self, self.clip_title, destdir, extra_argv)
+        return 'http://yle.fi/elavaarkisto/embed/%s.jsonp?callback=yleEmbed.eaJsonpCallback&instance=1&id=%s&lang=fi' % (did, did)
 
-    def _initialize(self, mediaitem, pageurl, filters):
-        self.clip_title = mediaitem.get('title', 'elavaarkisto')
-        self.direct_url = mediaitem.get('downloadURL', None)
-        rtmpurl, playpath, self.ext = \
-            self._mediakanta_rtmp(mediaitem, pageurl, filters)
-        self.rtmp_params = {'rtmp': rtmpurl,
-                            'playpath': playpath,
-                            'pageUrl': pageurl}
-
-    def _mediakanta_rtmp(self, mediaitem, pageurl, filters):
-        if mediaitem.get('mediakantaId', '') != '':
-            papiurl = 'http://papi.yle.fi/ea/mod/rtmp/' + mediaitem['mediakantaId']
-            rtmp_params = self.rtmp_parameters_from_papi(papiurl, pageurl, False, filters)
-            playpath = rtmp_params['playpath']
-            ext = os.path.splitext(playpath)[1] or '.mp3'
-            return (rtmp_params['rtmp'], playpath, ext)
-        else:
-            return (None, None, None)
+    def clip_for_url(self, clip, filters):
+        return clip
 
 
 ### Downloader wrapper class that retries different protocols ###
