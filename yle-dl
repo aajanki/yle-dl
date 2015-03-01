@@ -1470,6 +1470,10 @@ class ElavaArkistoDownloader(Areena2014Downloader):
         if filters.latest_only:
             playlist = playlist[:1]
 
+        if debug:
+            log(u'playlist')
+            log(str([p.streamurl.to_url() for p in playlist]))
+
         return playlist
 
     def get_dataids(self, url):
@@ -1483,6 +1487,9 @@ class ElavaArkistoDownloader(Areena2014Downloader):
         mediaitem = self.load_jsonp(self.embed_url(dataid))
         if not mediaitem:
             return FailedClip(pageurl, 'Failed to download embeded media data')
+
+        if debug:
+            log(str(mediaitem))
 
         if mediaitem.get('status') == 404:
             return FailedClip(pageurl, mediaitem.get('message') or 'Failed with status 404')
@@ -1499,6 +1506,9 @@ class ElavaArkistoDownloader(Areena2014Downloader):
             media = self.yle_media_descriptor(mediakanta_id, media_id, 'HDS')
             if not media:
                 return FailedClip(pageurl, 'Failed to parse media object')
+
+            if debug:
+                log(str(media))
 
             return Clip(pageurl, title,
                         self.media_streamurl(media, pageurl, filters),
