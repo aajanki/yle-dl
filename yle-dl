@@ -1839,9 +1839,11 @@ class YoutubeDLHDSDump(BaseDownloader):
         outputfile = self.output_filename()
         self.log_output_file(outputfile)
 
-        dlopts = {'nopart': True}
-        if self.is_resume_job(self.extra_argv):
-            dlopts['continuedl'] = True
+        dlopts = {
+            'nopart': True,
+            'continuedl': self.is_resume_job(self.extra_argv),
+            'verbose': debug
+        }
 
         ydl = youtube_dl.YoutubeDL({})
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
