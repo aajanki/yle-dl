@@ -1825,7 +1825,10 @@ class HDSDump(ExternalDownloader):
 class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream, clip_title, destdir, extra_argv, maxbitrate):
         BaseDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
-    
+
+    def resume_supported(self):
+        return True
+
     def save_stream(self):
         try:
             import youtube_dl
@@ -1836,8 +1839,12 @@ class YoutubeDLHDSDump(BaseDownloader):
         outputfile = self.output_filename()
         self.log_output_file(outputfile)
 
+        dlopts = {'nopart': True}
+        if self.is_resume_job(self.extra_argv):
+            dlopts['continuedl'] = True
+
         ydl = youtube_dl.YoutubeDL({})
-        f4mdl = youtube_dl.downloader.F4mFD(ydl, {})
+        f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
         info = {'url': self.stream.to_url()}
         try:
             if not f4mdl.download(outputfile, info):
