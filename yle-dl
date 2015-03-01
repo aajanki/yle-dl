@@ -185,9 +185,10 @@ def int_or_else(x, default):
         return default
 
 def downloader_factory(url, protocols):
-    if url.startswith('http://yle.fi/aihe/') or \
-            url.startswith('http://svenska.yle.fi/artikel/'):
+    if url.startswith('http://yle.fi/aihe/'):
         return RetryingDownloader(ElavaArkistoDownloader, protocols)
+    if url.startswith('http://svenska.yle.fi/artikel/'):
+        return RetryingDownloader(ArkivetDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/tv/suora/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return RetryingDownloader(AreenaLiveDownloader, protocols)
@@ -1513,6 +1514,34 @@ class ElavaArkistoDownloader(Areena2014Downloader):
 
     def clip_for_url(self, clip, filters):
         return clip
+
+
+### Svenska Arkivet ###
+
+
+class ArkivetDownloader(Areena2014Downloader):
+    @staticmethod
+    def supported_protocols():
+        return ['hds']
+
+    def get_playlist(self, url, filters):
+        return [url]
+
+    def program_id_from_url(self, pageurl):
+        dataids = self.get_dataids(pageurl)
+        if dataids:
+            return dataids[0]
+        else:
+            return None
+
+    def get_dataids(self, url):
+        page = download_page(url)
+        if not page:
+            return []
+
+        dataids = re.findall(r' data-id="([0-9-]+)"', page)
+        dataids = [d if '-' in d else '1-' + d for d in dataids]
+        return dataids
 
 
 ### Downloader wrapper class that retries different protocols ###
