@@ -6,7 +6,7 @@ Lähdekoodi: https://github.com/aajanki/yle-dl
 
 yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
 (http://areena.yle.fi) ja Elävästä arkistosta
-(http://www.yle.fi/elavaarkisto/).
+(http://yle.fi/aihe/elava-arkisto).
 
 Asennus
 -------
@@ -120,7 +120,7 @@ Esimerkkejä
 
 * Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 
-  yle-dl "http://www.yle.fi/elavaarkisto/?s=s&g=4&ag=28&t=&a=9390"
+  yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 
 * Ohjelman lataaminen tiedostoon uutiset.flv:
 

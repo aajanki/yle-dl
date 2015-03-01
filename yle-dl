@@ -8,8 +8,7 @@ Copyright (C) 2010-2015 Antti Ajanki <antti.ajanki@iki.fi>
 
 This script downloads video and audio streams from Yle Areena
 (http://areena.yle.fi) and Elävä Arkisto
-(http://yle.fi/elavaarkisto/index.html).
-
+(http://yle.fi/aihe/elava-arkisto).
 """
 
 import sys
@@ -35,7 +34,7 @@ import itertools
 from operator import itemgetter
 from Crypto.Cipher import AES
 
-version = '2.5.1'
+version = '2.6.0'
 
 AREENA_NG_SWF = 'http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}

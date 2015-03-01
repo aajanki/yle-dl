@@ -13,7 +13,7 @@ services of the Finnish national broadcasting company Yle: [Yle
 Areena] and [Elävä Arkisto].
 
 [Yle Areena]:http://areena.yle.fi/
-[Elävä arkisto]:http://www.yle.fi/elavaarkisto/
+[Elävä arkisto]:http://yle.fi/aihe/elava-arkisto
 
 Installation
 ------------
@@ -101,7 +101,7 @@ yle-dl http://areena.yle.fi/tv/1544491 -o video.flv
 ```
 
 ```
-yle-dl "http://www.yle.fi/elavaarkisto/?s=s&g=4&ag=28&t=&a=9390"
+yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
 Playing in mplayer (or vlc and others) without downloading first:
