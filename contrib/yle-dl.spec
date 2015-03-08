@@ -8,7 +8,7 @@ Group:		Applications/Multimedia
 Url:		http://aajanki.github.io/yle-dl/
 Source0:	https://github.com/aajanki/%{name}/archive/%{commit}/%{name}-%{commit}.tar.gz
 
-BuildRequires:	openssl-devel, json-c-devel, python-devel
+BuildRequires:	python-devel
 Requires:		rtmpdump, python-crypto, php
 BuildArch:		noarch
 
@@ -18,13 +18,10 @@ BuildArch:		noarch
 %description
 yle-dl is a command-line program for downloading media files
 from the two video streaming services of the Finnish national
-broadcasting company YLE: Yle Areena (http://areena.yle.fi/), 
-and Elävä Arkisto (http://yle.fi/aihe/elava-arkisto/) and 
+broadcasting company YLE: Yle Areena (http://areena.yle.fi/),
+and Elävä Arkisto (http://yle.fi/aihe/elava-arkisto/) and
 partial support for Yle Arkivet (http://svenska.yle.fi/arkivet).
-The videos are saved in Flash video (FLV) format. 
-yle-dl is an extension of RTMPDump (http://rtmpdump.mplayerhq.hu/), 
-which is based on XBMC RTMP code used in RTMPDumper by team 
-boxee. 
+The videos are saved in Flash video (FLV) format.
 
 
 %prep
