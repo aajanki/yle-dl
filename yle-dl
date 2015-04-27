@@ -193,13 +193,13 @@ def downloader_factory(url, protocols):
         return RetryingDownloader(AreenaLiveDownloader, protocols)
     elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/?$', url):
         return RetryingDownloader(AreenaLiveRadioDownloader, protocols)
-    elif url.startswith('http://areena.yle.fi/') or \
-            url.startswith('http://arenan.yle.fi/') or \
-            url.startswith('http://yle.fi/'):
+    elif url.startswith('http://areena-v3.yle.fi/') or \
+            url.startswith('http://arenan-v3.yle.fi/'):
         return RetryingDownloader(AreenaNGDownloader, protocols)
-    elif url.startswith('http://areena.kokeile.yle.fi/tv/suorat/'):
+    elif url.startswith('http://areena.yle.fi/tv/suorat/'):
         return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
-    elif url.startswith('http://areena.kokeile.yle.fi/'):
+    elif url.startswith('http://areena.yle.fi/') or \
+            url.startswith('http://yle.fi/'):
         return RetryingDownloader(Areena2014Downloader, protocols)
     else:
         return None
