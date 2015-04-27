@@ -199,6 +199,7 @@ def downloader_factory(url, protocols):
     elif url.startswith('http://areena.yle.fi/tv/suorat/'):
         return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/') or \
+            url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
         return RetryingDownloader(Areena2014Downloader, protocols)
     else:
