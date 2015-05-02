@@ -1977,6 +1977,12 @@ def main():
                 streaming_protocols = argv.pop(0).split(',')
         elif arg == '--pipe':
             pipe = True
+        elif arg == '-o':
+            if argv:
+                outputfile = argv.pop(0)
+                rtmpdumpargs.extend([arg, outputfile])
+                if outputfile == '-':
+                    pipe = True
         else:
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:
