@@ -84,10 +84,11 @@ def usage():
     """Print the usage message to stderr"""
     splashscreen()
     log(u'')
-    log(u'%s [yle-dl or rtmpdump options] URL' % sys.argv[0])
+    log(u'%s [options] URL' % sys.argv[0])
     log(u'')
-    log(u'yle-dl options:')
+    log(u'options:')
     log(u'')
+    log(u'-o filename             Save stream to the named file')
     log(u'--latestepisode         Download the latest episode')
     log(u"--showurl               Print URL, don't download")
     log(u"--showtitle             Print stream title, don't download")
@@ -108,10 +109,6 @@ def usage():
     log(u'                          rtmp - rtmpdump')
     log(u'--pipe                  Dump stream to stdout for piping to media player')
     log(u'                        E.g. "yle-dl --pipe URL | vlc -"')
-    log(u'')
-    log(u'rtmpdump options:')
-    log(u'')
-    subprocess.call([rtmpdump_binary, '--help'])
 
 def download_page(url):
     """Returns contents of a HTML page at url."""

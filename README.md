@@ -61,13 +61,15 @@ Usage
 -----
 
 ```
-yle-dl [yle-dl or rtmpdump options] URL
+yle-dl [options] URL
 ```
 
 where URL is the address of the Areena or Elävä arkisto web page where
 you would normally watch the video in a browser.
 
 yle-dl options:
+
+* `-o filename`       Save stream to the named file
 
 * `--latestepisode`   Download the latest episodes
 
@@ -89,7 +91,10 @@ yle-dl options:
 
 * `--protocol protos` Downloaders that are tried until one of them succeeds (a comma-separated list). Possible values: `hds` (download a stream using AdobeHDS.php), `hds:youtubedl` (youtube-dl), and `rtmp` (rtmpdump).
 
-Type `rtmpdump --help` to see the full list of options.
+Type `yle-dl --help` to see the full list of options.
+
+Any unrecognized options will be relayed to rtmpdump process (when
+downloading RTMP streams).
 
 Firewall must allow outgoing traffic on ports 80 and 1935.
 

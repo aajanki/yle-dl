@@ -57,7 +57,7 @@ Fedoraan.
 Käyttö
 ------
 
-yle-dl [yle-dl-valitsimet ja rtmpdump-valitsimet] URL
+yle-dl [valitsimet] URL
 
 Korvaa URL webbi-osoitteella, missä ladatavaa ohjelmaa voisi katsoa
 nettiselaimen kautta. URL voi olla joko Yle Areenan tai Elävän
@@ -65,6 +65,7 @@ arkiston osoite.
 
 Valitsimet:
 
+-o filename     Tallenna striimi nimettyyn tiedostoon
 --latestepisode Lataa viimeisimmän jakson sivulta
 --showurl       Tulostaa videon URL, ei lataa tiedostoa
 --showtitle     Tulostaa ohjelman nimen, ei lataa tiedostoa
@@ -82,8 +83,9 @@ Valitsimet:
                   hds:youtube-dl - youtube-dl
                   rtmp - rtmpdump
 
-Muut valitsimet välitetään suoraan rtmpdump:lle. Luettelon
-mahdollisista valitsimista (englanniksi) näkee komentamalla
+Muut valitsimet välitetään rtmpdump:lle, jos ladataan RTMP-tyyppistä
+striimiä. Luettelon mahdollisista valitsimista (englanniksi) näkee
+komentamalla
 
 yle-dl --help
 
