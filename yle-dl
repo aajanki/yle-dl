@@ -1840,22 +1840,33 @@ class YoutubeDLHDSDump(BaseDownloader):
         return True
 
     def save_stream(self):
+        return self._execute_youtube_dl(self.output_filename())
+
+    def pipe(self):
+        return self._execute_youtube_dl(u'-')
+
+    def _execute_youtube_dl(self, outputfile):
         try:
             import youtube_dl
         except ImportError:
             log(u'Failed to import youtube_dl')
             return RD_FAILED
 
-        outputfile = self.output_filename()
-        self.log_output_file(outputfile)
+        if outputfile != '-':
+            self.log_output_file(outputfile)
 
-        dlopts = {
-            'nopart': True,
-            'continuedl': self.is_resume_job(self.extra_argv),
+        ydlopts = {
+            'logtostderr': True,
             'verbose': debug
         }
 
-        ydl = youtube_dl.YoutubeDL({})
+        dlopts = {
+            'nopart': True,
+            'continuedl': outputfile != '-' and \
+                self.is_resume_job(self.extra_argv)
+        }
+
+        ydl = youtube_dl.YoutubeDL(ydlopts)
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
         info = {'url': self.stream.to_url()}
         try:
@@ -1865,7 +1876,8 @@ class YoutubeDLHDSDump(BaseDownloader):
             log(u'HTTP request failed: %s %s' % (ex.code, ex.reason))
             return RD_FAILED
 
-        self.log_output_file(outputfile, True)
+        if outputfile != '-':
+            self.log_output_file(outputfile, True)
         return RD_SUCCESS
 
 
