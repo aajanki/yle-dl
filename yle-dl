@@ -1132,14 +1132,16 @@ class Areena2014Downloader(AreenaUtils):
             return FailedClip(pageurl, 'Failed to parse media ID')
 
         proto = self.program_protocol(program_info)
-        media = self.yle_media_descriptor(media_id, program_id, proto)
-        if not media:
+        medias = self.yle_media_descriptor(media_id, program_id, proto)
+        if not medias:
             return FailedClip(pageurl, 'Failed to parse media object')
+
+        selected_media = self.select_media(medias, filters)
 
         return Clip(pageurl,
                     self.program_title(program_info),
-                    self.media_streamurl(media, pageurl, filters),
-                    self.media_subtitles(media))
+                    self.media_streamurl(selected_media, pageurl, filters),
+                    self.media_subtitles(selected_media))
 
     def yle_media_descriptor(self, media_id, program_id, protocol):
         media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
@@ -1206,13 +1208,31 @@ class Areena2014Downloader(AreenaUtils):
         else:
             return None
 
-    def media_streamurl(self, media, pageurl, filters):
+    def filter_by_subtitles(self, streams, filters):
+        if filters.hardsubs:
+            substreams = [s for s in streams if s.has_key('hardsubtitle')]
+        else:
+            substreams = [s for s in streams if not s.has_key('hardsubtitle')]
+
+        if filters.sublang == 'all':
+            filtered = substreams
+        else:
+            filtered = [s for s in substreams if s.get('lang') == filters.sublang]
+
+        return filtered or streams
+
+    def select_media(self, media,  filters):
         protocol = media.get('meta', {}).get('protocol') or 'HDS'
         mediaobj = media.get('data', {}).get('media', {}).get(protocol, [])
-        if mediaobj:
-            url = mediaobj[0].get('url')
+        medias = self.filter_by_subtitles(mediaobj, filters)
+
+        if medias:
+            return medias[0]
         else:
-            url = None
+            return {}
+
+    def media_streamurl(self, media, pageurl, filters):
+        url = media.get('url')
         if not url:
             return InvalidStreamUrl('No media URL')
         
@@ -1220,17 +1240,13 @@ class Areena2014Downloader(AreenaUtils):
         if not decodedurl:
             return InvalidStreamUrl('Decrypting media URL failed')
 
-        if protocol == 'HDS':
+        if media.get('protocol') == 'HDS':
             return Areena2014HDSStreamUrl(pageurl, decodedurl, filters, self.backend)
         else:
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
     def media_subtitles(self, media):
-        hds = media.get('data', {}).get('media', {}).get('HDS', [])
-        if hds:
-            subs_json = hds[0].get('subtitles', [])
-        else:
-            subs_json = []
+        subs_json = media.get('subtitles', [])
         subtitles = (Subtitle(s.get('uri'), self.three_letter_language_code(s.get('lang'))) for s in subs_json)
         return [s for s in subtitles if s.url]
 
@@ -1500,16 +1516,15 @@ class ElavaArkistoDownloader(Areena2014Downloader):
         else:
             mediakanta_id = '6-' + mediaitem['mediakantaId']
             media_id = '26-' + mediaitem['id']
-            media = self.yle_media_descriptor(mediakanta_id, media_id, 'HDS')
-            if not media:
+            medias = self.yle_media_descriptor(mediakanta_id, media_id, 'HDS')
+            if not medias:
                 return FailedClip(pageurl, 'Failed to parse media object')
 
-            if debug:
-                log(str(media))
+            selected_media = self.select_media(medias, filters)
 
             return Clip(pageurl, title,
-                        self.media_streamurl(media, pageurl, filters),
-                        self.media_subtitles(media))
+                        self.media_streamurl(selected_media, pageurl, filters),
+                        self.media_subtitles(selected_media))
 
     def embed_url(self, dataid):
         if '-' in dataid:
