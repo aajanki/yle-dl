@@ -1861,6 +1861,7 @@ class HDSDump(ExternalDownloader):
 class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream, clip_title, destdir, extra_argv, maxbitrate):
         BaseDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
+        self.maxbitrate = maxbitrate
 
     def resume_supported(self):
         return True
@@ -1895,6 +1896,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         ydl = youtube_dl.YoutubeDL(ydlopts)
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
         info = {'url': self.stream.to_url()}
+        info.update(self._bitrate_parameter())
         try:
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
@@ -1905,6 +1907,41 @@ class YoutubeDLHDSDump(BaseDownloader):
         if outputfile != '-':
             self.log_output_file(outputfile, True)
         return RD_SUCCESS
+
+    def _stream_bitrates(self):
+        manifest = download_page(self.stream.to_url())
+        if not manifest:
+            return []
+
+        try:
+            manifest_xml = xml.dom.minidom.parseString(manifest)
+        except Exception as exc:
+            log(unicode(exc.message, 'utf-8', 'ignore'))
+            return []
+
+        medias = manifest_xml.getElementsByTagName('media')
+        bitrates = (int_or_else(m.getAttribute('bitrate'), 0) for m in medias)
+        return [br for br in bitrates if br > 0]
+
+    def _bitrate_parameter(self):
+        bitrates = self._stream_bitrates()
+        if debug:
+            log(u'Available bitrates: %s, maxbitrate = %s' %
+                (bitrates, self.maxbitrate))
+
+        if not bitrates:
+            return {}
+
+        acceptable_bitrates = [br for br in bitrates if br <= self.maxbitrate]
+        if not acceptable_bitrates:
+            selected_bitrate = min(bitrates)
+        else:
+            selected_bitrate = max(acceptable_bitrates)
+
+        if debug:
+            log(u'Selected bitrate: %s' % selected_bitrate)
+
+        return {'tbr': selected_bitrate}
 
 
 ### Download a plain HTTP file ###
