@@ -2,6 +2,13 @@ download videos from Yle servers
 Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v2
 
+13 May 2015, Version 2.7.1
+
+- Improved support for piping to stdout
+- Fixed hard/soft subtitle selection
+- Support --maxbitrate on the youtubedl downloader
+- Print the name of the output file
+
 27 Apr 2015, Version 2.7.0
 
 - Support the updated Areena
