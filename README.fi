@@ -80,7 +80,7 @@ Valitsimet:
                 onnistuu lataamaan ohjelman. Voi sisältää useita arvoja
                 pilkuilla eroteltuina. Mahdolliset arvot:
                   hds - lataa käyttäen AdobeHDS.php:ta
-                  hds:youtube-dl - youtube-dl
+                  hds:youtubedl - youtube-dl
                   rtmp - rtmpdump
 
 Muut valitsimet välitetään rtmpdump:lle, jos ladataan RTMP-tyyppistä
