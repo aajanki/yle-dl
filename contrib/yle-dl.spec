@@ -21,9 +21,6 @@ broadcasting company YLE: Yle Areena (http://areena.yle.fi/),
 and Elävä Arkisto (http://yle.fi/aihe/elava-arkisto/) and 
 partial support for Yle Arkivet (http://svenska.yle.fi/arkivet).
 The videos are saved in Flash video (FLV) format. 
-yle-dl is an extension of RTMPDump (http://rtmpdump.mplayerhq.hu/), 
-which is based on XBMC RTMP code used in RTMPDumper by team 
-boxee. 
 
 
 %prep
