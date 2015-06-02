@@ -21,10 +21,10 @@ Installation
 Install dependencies: rtmpdump (version 2.4 or newer, preferably the
 latest development version from the project homepage at
 http://rtmpdump.mplayerhq.hu/), python (2.6 or newer) and pycrypto.
-Either AdobeHDS.php or youtube-dl is required to download videos from
-Yle Areena. Only AdobeHDS.php can download live streams. AdobeHDS.php
-additionally requires php and the following php extensions: bcmath,
-curl and SimpleXML.
+Either AdobeHDS.php or youtube-dl (the Python 2 module) is required to
+download videos from Yle Areena. AdobeHDS.php additionally requires
+php interpreter and the following php extensions: bcmath, curl and
+SimpleXML.
 
 On Debian the required packages can be installed either
 
@@ -91,6 +91,8 @@ yle-dl options:
 
 * `--protocol protos` Downloaders that are tried until one of them succeeds (a comma-separated list). Possible values: `hds` (download a stream using AdobeHDS.php), `hds:youtubedl` (youtube-dl), and `rtmp` (rtmpdump).
 
+* `-V, --verbose`     Show verbose debug output
+
 Type `yle-dl --help` to see the full list of options.
 
 Any unrecognized options will be relayed to rtmpdump process (when
@@ -102,7 +104,11 @@ Examples
 --------
 
 ```
-yle-dl http://areena.yle.fi/tv/1544491 -o video.flv
+yle-dl http://areena.yle.fi/1-1544491 -o video.flv
+```
+
+```
+yle-dl --protocol hds:youtubedl http://areena.yle.fi/1-1544491 -o video.flv
 ```
 
 ```
@@ -112,5 +118,5 @@ yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuut
 Playing in mplayer (or vlc and others) without downloading first:
 
 ```
-yle-dl --pipe http://areena.yle.fi/tv/2409251 | mplayer -cache 1024 -
+yle-dl --pipe http://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
 ```

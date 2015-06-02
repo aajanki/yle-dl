@@ -14,10 +14,9 @@ Asennus
 Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi,
 mieluiten uusin kehitysversio projektin kotisivulta
 http://rtmpdump.mplayerhq.hu/), python (2.6 tai uudempi) ja pycrypto.
-Lisäksi joko AdobeHDS.php tai youtube-dl tarvitaan Yle Areenan
-videoiden lataamiseen. Vain AdobeHDS.php pystyy lataamaan suoria
-lähetyksiä. AdobeHDS.php vaatii lisäksi php-tulkin sekä seuraavat
-php-laajennukset: bcmath, curl ja SimpleXML.
+Lisäksi joko AdobeHDS.php tai youtube-dl (Python 2 -moduuli) tarvitaan
+Yle Areenan videoiden lataamiseen. AdobeHDS.php vaatii lisäksi
+php-tulkin sekä seuraavat php-laajennukset: bcmath, curl ja SimpleXML.
 
 Debianissa tarvittavat paketit voi asentaa komentamalla joko
 
@@ -82,6 +81,7 @@ Valitsimet:
                   hds - lataa käyttäen AdobeHDS.php:ta
                   hds:youtubedl - youtube-dl
                   rtmp - rtmpdump
+-V, --verbose   Tulosta enemmän tietoja latauksen etenemisestä
 
 Muut valitsimet välitetään rtmpdump:lle, jos ladataan RTMP-tyyppistä
 striimiä. Luettelon mahdollisista valitsimista (englanniksi) näkee
@@ -118,7 +118,11 @@ Esimerkkejä
 
 * Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
 
-  yle-dl http://areena.yle.fi/tv/1544491
+  yle-dl http://areena.yle.fi/1-1544491
+
+* Käytä youtube-dl-lataajaa (AdobeHDS.php:n sijaan):
+
+  yle-dl --protocol hds:youtubedl http://areena.yle.fi/1-1544491
 
 * Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 
@@ -126,11 +130,11 @@ Esimerkkejä
 
 * Ohjelman lataaminen tiedostoon uutiset.flv:
 
-  yle-dl http://areena.yle.fi/tv/1544491 -o uutiset.flv
+  yle-dl http://areena.yle.fi/1-1544491 -o uutiset.flv
 
 * Keskeytyneen latauksen jatkaminen tiedostoon uutiset.flv:
 
-  yle-dl http://areena.yle.fi/tv/1544491 -o uutiset.flv --resume
+  yle-dl http://areena.yle.fi/1-1544491 -o uutiset.flv --resume
 
 * Lataa uusimmat uutiset
 
@@ -138,9 +142,9 @@ Esimerkkejä
 
 * Toistaminen suoraan videotoistimessa:
 
-  yle-dl --pipe http://areena.yle.fi/tv/2409251 | mplayer -cache 1024 -
+  yle-dl --pipe http://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
 
 * Ladatulle tiedostolle annetun nimen tulostaminen (esimerkiksi
   jos skripti tarvitseen tiedoston nimen jatkokäsittelyä varten)
 
-  yle-dl http://areena.yle.fi/tv/1864726 2>&1 | grep "Output file:" | cut -d" " -f3-
+  yle-dl http://areena.yle.fi/1-1864726 2>&1 | grep "Output file:" | cut -d" " -f3-
