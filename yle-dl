@@ -109,6 +109,7 @@ def usage():
     log(u'                          rtmp - rtmpdump')
     log(u'--pipe                  Dump stream to stdout for piping to media player')
     log(u'                        E.g. "yle-dl --pipe URL | vlc -"')
+    log(u'-V, --verbose           Show verbose debug output')
 
 def download_page(url):
     """Returns contents of a HTML page at url."""
