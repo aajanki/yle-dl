@@ -2,6 +2,11 @@ download videos from Yle servers
 Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v2
 
+2 Jun 2016, Version 2.7.2
+
+- Fix the -o argument
+- Updated dependencies in contrib/yle-dl.spec
+
 13 May 2015, Version 2.7.1
 
 - Improved support for piping to stdout
