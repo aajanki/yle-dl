@@ -8,7 +8,7 @@ Group:		Applications/Multimedia
 Url:		http://aajanki.github.io/yle-dl/
 Source0:	https://github.com/aajanki/%{name}/archive/%{commit}/%{name}-%{commit}.tar.gz
 
-Requires:		rtmpdump, python-crypto, php, php-bcmath, php-xml
+Requires:		rtmpdump, python-crypto, php-cli, php-bcmath, php-xml
 BuildArch:		noarch
 
 %global commit 158c026271198696a7a329b3c2de3e2197de3e25
