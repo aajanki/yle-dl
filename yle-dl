@@ -182,7 +182,9 @@ def int_or_else(x, default):
         return default
 
 def downloader_factory(url, protocols):
-    if url.startswith('http://yle.fi/aihe/'):
+    if url.startswith('http://yle.fi/aihe/') or \
+            url.startswith('http://areena.yle.fi/26-') or \
+            url.startswith('http://arenan.yle.fi/26-'):
         return RetryingDownloader(ElavaArkistoDownloader, protocols)
     elif url.startswith('http://svenska.yle.fi/artikel/'):
         return RetryingDownloader(ArkivetDownloader, protocols)
