@@ -1715,7 +1715,7 @@ class BaseDownloader:
 class ExternalDownloader(BaseDownloader):
     def save_stream(self):
         args = self.build_args()
-        outputfile = self.outputfile_from_args(args)
+        outputfile = self.outputfile_from_external_args(args)
         self.log_output_file(outputfile)
         retcode = self.external_downloader(args)
         if retcode == RD_SUCCESS:
@@ -1724,6 +1724,9 @@ class ExternalDownloader(BaseDownloader):
 
     def build_args(self):
         return []
+
+    def outputfile_from_external_args(self, args):
+        return self.outputfile_from_args(args)
 
     def external_downloader(self, args):
         """Start an external process such as rtmpdump with argument list args and
@@ -1841,12 +1844,12 @@ class HDSDump(ExternalDownloader):
         self.cleanup_cookies()
         return RD_SUCCESS
 
-    def outputfile_from_args(self, args_in):
+    def outputfile_from_external_args(self, args_in):
         if not args_in:
             return None
 
         try:
-            i = args_in.index('-o')
+            i = args_in.index('--outfile')
         except ValueError:
             i = -1
             
