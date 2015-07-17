@@ -986,6 +986,9 @@ class InvalidStreamUrl:
     def get_error_message(self):
         return self.error
 
+    def to_url(self):
+        return ''
+
 
 class PAPIStream:
     def __init__(self, connect, stream, videoBitrate, audioBitrate, hardSubtitles):
@@ -1474,7 +1477,7 @@ class AreenaLiveRadioStreamUrl(AreenaRTMPStreamUrl):
 class ElavaArkistoDownloader(Areena2014Downloader):
     @staticmethod
     def supported_protocols():
-        return ['hds']
+        return ['hds', 'rtmp']
 
     def get_playlist(self, url, filters):
         dataids = self.get_dataids(url)
@@ -1519,7 +1522,8 @@ class ElavaArkistoDownloader(Areena2014Downloader):
         else:
             mediakanta_id = '6-' + mediaitem['mediakantaId']
             media_id = '26-' + mediaitem['id']
-            medias = self.yle_media_descriptor(mediakanta_id, media_id, 'HDS')
+            proto = 'HDS' if self.backend.startswith('hds') else 'RTMPE'
+            medias = self.yle_media_descriptor(mediakanta_id, media_id, proto)
             if not medias:
                 return FailedClip(pageurl, 'Failed to parse media object')
 
