@@ -198,6 +198,9 @@ def downloader_factory(url, protocols):
         return RetryingDownloader(AreenaNGDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/tv/suorat/'):
         return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
+    elif url.startswith('http://yle.fi/uutiset/') or \
+            url.startswith('http://yle.fi/urheilu/'):
+        return RetryingDownloader(YleUutisetDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/') or \
             url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
@@ -274,7 +277,7 @@ def parse_rtmp_single_component_app(rtmpurl):
     return (app_only_rtmpurl, playpath, ext)
 
 
-class StreamFilters:
+class StreamFilters(object):
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
@@ -290,7 +293,7 @@ class StreamFilters:
 
 # Areena
 
-class AreenaUtils:
+class AreenaUtils(object):
     def areena_decrypt(self, data, aes_key):
         try:
             bytestring = base64.b64decode(str(data))
@@ -957,7 +960,7 @@ class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
         return PAPIStream(streamurl, playpath, 0, 0, False)
 
 
-class HTTPStreamUrl:
+class HTTPStreamUrl(object):
     def __init__(self, url):
         self.url = url
         path = urlparse.urlparse(url)[2]
@@ -976,7 +979,7 @@ class HTTPStreamUrl:
         return HTTPDump(self, clip_title, destdir, extra_argv)
 
 
-class InvalidStreamUrl:
+class InvalidStreamUrl(object):
     def __init__(self, error_message):
         self.error = error_message
 
@@ -990,7 +993,7 @@ class InvalidStreamUrl:
         return ''
 
 
-class PAPIStream:
+class PAPIStream(object):
     def __init__(self, connect, stream, videoBitrate, audioBitrate, hardSubtitles):
         self.connect = connect
         self.stream = stream
@@ -1302,7 +1305,58 @@ class Areena2014LiveTVDownloader(Areena2014Downloader):
         return title
 
 
-class Clip:
+class YleUutisetDownloader(Areena2014Downloader):
+    @staticmethod
+    def supported_protocols():
+        return Areena2014Downloader.supported_protocols()
+
+    def download_episodes(self, url, filters, extra_argv, destdir):
+        return self.delegate_to_areena_downloader(
+            'download_episodes', url, filters=filters, extra_argv=extra_argv,
+            destdir=destdir)
+
+    def print_urls(self, url, print_episode_url, filters):
+        return self.delegate_to_areena_downloader(
+            'print_urls', url, print_episode_url=print_episode_url,
+             filters=filters)
+
+    def pipe(self, url, filters):
+        return self.delegate_to_areena_downloader(
+            'pipe', url, filters=filters)
+
+    def print_titles(self, url, filters):
+        return self.delegate_to_areena_downloader(
+            'print_titles', url, filters=filters)
+
+    def delegate_to_areena_downloader(self, method_name, url, *args, **kwargs):
+        areena_url = self.build_areena_url(url)
+        if areena_url:
+            log(u'Redirecting to ' + areena_url)
+
+            kwargs['url'] = areena_url
+            method = getattr(super(YleUutisetDownloader, self), method_name)
+            return method(*args, **kwargs)
+        else:
+            log(u'No video stream found at ' + url)
+            return RD_FAILED
+
+    def build_areena_url(self, url):
+        html = download_page(url)
+        if not html:
+            return None
+        
+        m = re.search(r'<div class="media yle_areena_player[^>]*data-id="([0-9-]+)"[^>]*>', html)
+        if not m:
+            return None
+
+        areena_id = m.group(1)
+        if '-' not in areena_id:
+            areena_id = '1-' + areena_id
+
+        return 'http://areena.yle.fi/' + areena_id
+
+
+class Clip(object):
     def __init__(self, pageurl, title, streamurl, subtitles):
         self.pageurl = pageurl
         self.title = title
@@ -1315,7 +1369,7 @@ class FailedClip(Clip):
         Clip.__init__(self, pageurl, None, InvalidStreamUrl(errormessage), None)
 
 
-class Subtitle:
+class Subtitle(object):
     def __init__(self, url, language):
         self.url = url
         self.language = language
@@ -1329,7 +1383,7 @@ class Subtitle:
 # AreenaNGDownloader.
 
 
-class AreenaLiveDownloader:
+class AreenaLiveDownloader(object):
     @staticmethod
     def supported_protocols():
         return ['rtmp']
@@ -1404,7 +1458,7 @@ class AreenaLiveStreamUrl(AreenaRTMPStreamUrl):
 ### Areena live radio ###
 
 
-class AreenaLiveRadioDownloader:
+class AreenaLiveRadioDownloader(object):
     @staticmethod
     def supported_protocols():
         return ['rtmp']
@@ -1576,7 +1630,7 @@ class ArkivetDownloader(Areena2014Downloader):
 ### Downloader wrapper class that retries different protocols ###
 
 
-class RetryingDownloader:
+class RetryingDownloader(object):
     def __init__(self, wrapped_class, protocols):
         self.wrapped_class = wrapped_class
         acceptable = wrapped_class.supported_protocols()
@@ -1628,7 +1682,7 @@ class RetryingDownloader:
 ### Download a stream to a local file ###
 
 
-class BaseDownloader:
+class BaseDownloader(object):
     def __init__(self, stream, clip_title, destdir, extra_argv):
         self.stream = stream
         self.clip_title = clip_title or 'ylestream'
