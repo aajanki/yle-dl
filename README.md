@@ -10,10 +10,11 @@ Source code: https://github.com/aajanki/yle-dl
 
 yle-dl is a tool for downloading media files from the video streaming
 services of the Finnish national broadcasting company Yle: [Yle
-Areena] and [Elävä Arkisto].
+Areena], [Elävä Arkisto] and [Yle news].
 
 [Yle Areena]:http://areena.yle.fi/
 [Elävä arkisto]:http://yle.fi/aihe/elava-arkisto
+[Yle news]:http://yle.fi/uutiset/
 
 Installation
 ------------

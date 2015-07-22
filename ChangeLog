@@ -2,7 +2,13 @@ download videos from Yle servers
 Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v2
 
-2 Jun 2016, Version 2.7.2
+22 Jul 2015, Version 2.8.0
+
+- Download clips at http://yle.fi/uutiset/
+- Improved Elävä arkisto support
+- Print the name of the output file
+
+2 Jun 2015, Version 2.7.2
 
 - Fix the -o argument
 - Updated dependencies in contrib/yle-dl.spec
