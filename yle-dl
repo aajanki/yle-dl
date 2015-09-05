@@ -1080,17 +1080,19 @@ class Areena2014Downloader(AreenaUtils):
 
     def get_playlist(self, url, filters):
         """If url is a series page, return a list of included episode pages."""
-        maybe_series_id = self.program_id_from_url(url)
-        path = '/api/programs/v1/items.json?' \
-               'series=%s&type=program&availability=ondemand&' \
-               'order=ondemand.publication.starttime%%253Adesc&' \
-               'app_id=cb021459&app_key=fa6c26b3b3e617b7033c83c108417200&' \
-               'limit=25&offset=0&olang=fi' % (maybe_series_id)
-        series_url = urlparse.urljoin(url, path)
-        series_info = self.load_jsonp(series_url) or {}
-        data = series_info.get('data', [])
-        ids = (d.get('id') for d in data if d.get('id'))
-        playlist = [urlparse.urljoin(url, '/' + eid) for eid in ids]
+        playlist_meta = '<meta property="og:type" content="video.tv_show">'
+        program_list_re = '<ul class="program-list".*?>(.*?)</ul>'
+        episode_re = r'<a itemprop="url" href="([^">]+)"'
+
+        playlist = None
+        html = download_page(url)
+        if html and playlist_meta in html:
+            listmatch = re.search(program_list_re, html, re.DOTALL)
+            if listmatch:
+                programlist = listmatch.group(1)
+                hrefs = (m.group(1) for m in
+                         re.finditer(episode_re, programlist))
+                playlist = [urlparse.urljoin(url, href) for href in hrefs]
 
         if debug:
             if playlist:
@@ -1098,11 +1100,11 @@ class Areena2014Downloader(AreenaUtils):
             else:
                 log('not a playlist')
 
-        if filters.latest_only:
-            playlist = playlist[:1]
-
         if not playlist:
             playlist = [url]
+
+        if filters.latest_only:
+            playlist = playlist[:1]
 
         return playlist
 
