@@ -1080,13 +1080,12 @@ class Areena2014Downloader(AreenaUtils):
 
     def get_playlist(self, url, filters):
         """If url is a series page, return a list of included episode pages."""
-        playlist_meta = '<meta property="og:type" content="video.tv_show">'
         program_list_re = '<ul class="program-list".*?>(.*?)</ul>'
         episode_re = r'<a itemprop="url" href="([^">]+)"'
 
         playlist = None
         html = download_page(url)
-        if html and playlist_meta in html:
+        if html and self.is_playlist_page(html):
             listmatch = re.search(program_list_re, html, re.DOTALL)
             if listmatch:
                 programlist = listmatch.group(1)
@@ -1107,6 +1106,11 @@ class Areena2014Downloader(AreenaUtils):
             playlist = playlist[:1]
 
         return playlist
+
+    def is_playlist_page(self, html):
+        playlist_meta = '<meta property="og:type" content="video.tv_show">'
+        player_class = 'class="yle_areena_player"'
+        return playlist_meta in html or not player_class in html
 
     def process_single_episode(self, clipfunc, url, filters):
         clip = self.clip_for_url(url, filters)
