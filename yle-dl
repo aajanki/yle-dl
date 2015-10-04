@@ -1262,12 +1262,16 @@ class Areena2014Downloader(AreenaUtils):
 
     def media_subtitles(self, media):
         subs_json = media.get('subtitles', [])
-        subtitles = (Subtitle(s.get('uri'), self.three_letter_language_code(s.get('lang'))) for s in subs_json)
+        subtitles = (Subtitle(s.get('uri'), self.three_letter_language_code(s.get('lang'), s.get('type')))
+                      for s in subs_json)
         return [s for s in subtitles if s.url]
 
-    def three_letter_language_code(self, lang):
-        language_map = {'fi': 'fin', 'sv': 'swe'}
-        return language_map.get(lang, lang)
+    def three_letter_language_code(self, lang, subtype):
+        if subtype == 'hearingimpaired':
+            return lang + 'h'
+        else:
+            language_map = {'fi': 'fin', 'sv': 'swe'}
+            return language_map.get(lang, lang)
 
     def load_jsonp(self, url):
         json_string = self.remove_jsonp_padding(download_page(url))
