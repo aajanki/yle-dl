@@ -1132,7 +1132,7 @@ class Areena2014Downloader(AreenaUtils):
 
         if debug:
             log('program data:')
-            log(str(program_info))
+            log(json.dumps(program_info))
 
         return self.create_clip(program_info, pid, pageurl, filters)
 
@@ -1168,7 +1168,7 @@ class Areena2014Downloader(AreenaUtils):
 
         if debug and media:
             log('media:')
-            log(str(media))
+            log(json.dumps(media))
 
         return media
     
@@ -1572,7 +1572,7 @@ class ElavaArkistoDownloader(Areena2014Downloader):
             return FailedClip(pageurl, 'Failed to download embeded media data')
 
         if debug:
-            log(str(mediaitem))
+            log(json.dumps(mediaitem))
 
         if mediaitem.get('status') == 404:
             return FailedClip(pageurl, mediaitem.get('message') or 'Failed with status 404')
