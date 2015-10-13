@@ -1211,11 +1211,19 @@ class Areena2014Downloader(AreenaUtils):
         events = program_info.get('data', {}) \
                              .get('program', {}) \
                              .get('publicationEvent', [])
+
+        has_current = any(self.publish_event_is_current(e) for e in events)
+        if has_current:
+            events = [e for e in events if self.publish_event_is_current(e)]
+
         with_media = [e for e in events if e.get('media')]
         if with_media:
             return with_media[0]
         else:
             return {}
+
+    def publish_event_is_current(self, event):
+        return event.get('temporalStatus') == 'currently'
 
     def localized_text(self, alternatives, language='fi'):
         if alternatives:
