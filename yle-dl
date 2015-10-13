@@ -1142,6 +1142,11 @@ class Areena2014Downloader(AreenaUtils):
             (urllib.quote_plus(program_id))
 
     def create_clip(self, program_info, program_id, pageurl, filters):
+        expired_timestamp = self.program_expired_timestamp(program_info)
+        if expired_timestamp:
+            return FailedClip(pageurl, 'The clip has expired on %s' %
+                              expired_timestamp)
+
         media_id = self.program_media_id(program_info)
         if not media_id:
             return FailedClip(pageurl, 'Failed to parse media ID')
@@ -1179,6 +1184,13 @@ class Areena2014Downloader(AreenaUtils):
     def program_media_id(self, program_info):
         event = self.publish_event(program_info)
         return event.get('media', {}).get('id')
+
+    def program_expired_timestamp(self, program_info):
+        event = self.publish_event(program_info)
+        if event.get('temporalStatus') == 'in-past':
+            return event.get('endTime')
+        else:
+            return None
 
     def program_title(self, program_info):
         program = program_info.get('data', {}).get('program', {})
