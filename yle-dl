@@ -1210,11 +1210,17 @@ class Areena2014Downloader(AreenaUtils):
 
     def program_title(self, program_info):
         program = program_info.get('data', {}).get('program', {})
-        title = self.localized_text(program.get('title')) or \
-                self.localized_text(program.get('itemTitle')) or \
+        titleObject = program.get('title')
+        itemTitleObject = program.get('itemTitle')
+        title = self.localized_text(titleObject) or \
+                self.localized_text(titleObject, 'sv') or \
+                self.localized_text(itemTitleObject) or \
+                self.localized_text(itemTitleObject, 'sv') or \
                 'areena'
 
-        promotionTitle = self.localized_text(program.get('promotionTitle'))
+        promoTitleObject = program.get('promotionTitle')
+        promotionTitle = self.localized_text(promoTitleObject) or \
+          self.localized_text(promoTitleObject, 'sv')
         if promotionTitle and not promotionTitle.startswith(title):
             title += ": " + promotionTitle
 
