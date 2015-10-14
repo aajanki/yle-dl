@@ -1134,7 +1134,23 @@ class Areena2014Downloader(AreenaUtils):
             log('program data:')
             log(json.dumps(program_info))
 
-        return self.create_clip(program_info, pid, pageurl, filters)
+        unavailable = self.unavailable_clip(program_info, pageurl)
+        return unavailable or \
+          self.create_clip(program_info, pid, pageurl, filters)
+
+    def unavailable_clip(self, program_info, pageurl):
+        event = self.publish_event(program_info)
+        expired_timestamp = self.event_expired_timestamp(event)
+        if expired_timestamp:
+            return FailedClip(pageurl, 'The clip has expired on %s' %
+                              expired_timestamp)
+
+        future_timestamp = self.event_in_future_timestamp(event)
+        if future_timestamp:
+            return FailedClip(pageurl, 'The clip will be published at %s' %
+                              future_timestamp)
+
+        return None
 
     def program_info_url(self, program_id):
         return 'http://player.yle.fi/api/v1/programs.jsonp?' \
@@ -1142,11 +1158,6 @@ class Areena2014Downloader(AreenaUtils):
             (urllib.quote_plus(program_id))
 
     def create_clip(self, program_info, program_id, pageurl, filters):
-        expired_timestamp = self.program_expired_timestamp(program_info)
-        if expired_timestamp:
-            return FailedClip(pageurl, 'The clip has expired on %s' %
-                              expired_timestamp)
-
         media_id = self.program_media_id(program_info)
         if not media_id:
             return FailedClip(pageurl, 'Failed to parse media ID')
@@ -1185,10 +1196,15 @@ class Areena2014Downloader(AreenaUtils):
         event = self.publish_event(program_info)
         return event.get('media', {}).get('id')
 
-    def program_expired_timestamp(self, program_info):
-        event = self.publish_event(program_info)
+    def event_expired_timestamp(self, event):
         if event.get('temporalStatus') == 'in-past':
             return event.get('endTime')
+        else:
+            return None
+
+    def event_in_future_timestamp(self, event):
+        if event.get('temporalStatus') == 'in-future':
+            return event.get('startTime')
         else:
             return None
 
