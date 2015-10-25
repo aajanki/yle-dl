@@ -1303,10 +1303,24 @@ class Areena2014Downloader(AreenaUtils):
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
     def media_subtitles(self, media):
-        subs_json = media.get('subtitles', [])
-        subtitles = (Subtitle(s.get('uri'), self.three_letter_language_code(s.get('lang'), s.get('type')))
-                      for s in subs_json)
-        return [s for s in subtitles if s.url]
+        subtitles = []
+        for s in media.get('subtitles', []):
+            uri = s.get('uri')
+            lang = self.language_code_from_subtitle_uri(uri) or \
+              self.three_letter_language_code(s.get('lang'), s.get('type'))
+            if uri:
+                subtitles.append(Subtitle(uri, lang))
+        return subtitles
+
+    def language_code_from_subtitle_uri(self, uri):
+        if uri.endswith('.srt'):
+            ext = uri[:-4].rsplit('.', 1)[-1]
+            if len(ext) <= 3:
+                return ext
+            else:
+                return None
+        else:
+            return None
 
     def three_letter_language_code(self, lang, subtype):
         if subtype == 'hearingimpaired':
