@@ -1381,30 +1381,38 @@ class YleUutisetDownloader(Areena2014Downloader):
             'print_titles', url, filters=filters)
 
     def delegate_to_areena_downloader(self, method_name, url, *args, **kwargs):
-        areena_url = self.build_areena_url(url)
-        if areena_url:
-            log(u'Redirecting to ' + areena_url)
+        areena_urls = self.build_areena_urls(url)
+        if areena_urls:
+            log(u'Found areena URLs: ' + ', '.join(areena_urls))
 
-            kwargs['url'] = areena_url
-            method = getattr(super(YleUutisetDownloader, self), method_name)
-            return method(*args, **kwargs)
+            overall_status = RD_SUCCESS
+            for url in areena_urls:
+                kwcopy = dict(kwargs)
+                kwcopy['url'] = url
+                method = getattr(super(YleUutisetDownloader, self), method_name)
+                res = method(*args, **kwcopy)
+                if res != RD_SUCCESS:
+                    overall_status = res
+
+            return overall_status
         else:
             log(u'No video stream found at ' + url)
             return RD_FAILED
 
-    def build_areena_url(self, url):
+    def build_areena_urls(self, url):
         html = download_page(url)
         if not html:
             return None
-        
-        m = re.search(r'<div class="media yle_areena_player[^>]*data-id="([0-9-]+)"[^>]*>', html)
-        if not m:
-            return None
 
-        areena_id = m.group(1)
-        if '-' not in areena_id:
-            areena_id = '1-' + areena_id
+        player_re = r'<div class="media yle_areena_player[^>]*data-id="([0-9-]+)"[^>]*>'
+        dataids = re.findall(player_re, html)
+        return [self.id_to_areena_url(id) for id in dataids]
 
+    def id_to_areena_url(self, data_id):
+        if '-' in data_id:
+            areena_id = data_id
+        else:
+            areena_id = '1-' + data_id
         return 'http://areena.yle.fi/' + areena_id
 
 
