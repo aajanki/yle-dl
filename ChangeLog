@@ -2,6 +2,13 @@ download videos from Yle servers
 Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v2
 
+25 Oct 2015, Version 2.8.2
+
+- A page at http://yle.fi/uutiset/ can contain several clips
+- Save hearing impaired and translation subtitles to separate files
+- Show a better error message if a clip has expired or not yet available
+- Use Swedish title if Finnish one is unavailable
+
 16 Sep 2015, Version 2.8.1
 
 - Fixed the processing of Areena series pages
