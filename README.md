@@ -2,7 +2,7 @@ download videos from Yle servers
 
 Copyright (C) 2010-2015 Antti Ajanki, antti.ajanki@iki.fi
 
-License: GPLv2
+License: GPLv3
 
 Homepage: http://aajanki.github.com/yle-dl/index-en.html
 

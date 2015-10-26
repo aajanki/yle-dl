@@ -11,6 +11,19 @@ This script downloads video and audio streams from Yle Areena
 (http://yle.fi/aihe/elava-arkisto).
 """
 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import sys
 import urllib
 import urllib2
@@ -78,7 +91,7 @@ def log(msg):
 
 def splashscreen():
     log(u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto' % version)
-    log(u'Copyright (C) 2009-2015 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv2')
+    log(u'Copyright (C) 2009-2015 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3')
 
 def usage():
     """Print the usage message to stderr"""
