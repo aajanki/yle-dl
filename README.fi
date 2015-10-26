@@ -17,11 +17,12 @@ mieluiten uusin kehitysversio projektin kotisivulta
 http://rtmpdump.mplayerhq.hu/), python (2.6 tai uudempi) ja pycrypto.
 Lisäksi joko AdobeHDS.php tai youtube-dl (Python 2 -moduuli) tarvitaan
 Yle Areenan videoiden lataamiseen. AdobeHDS.php vaatii lisäksi
-php-tulkin sekä seuraavat php-laajennukset: bcmath, curl ja SimpleXML.
+php-tulkin sekä seuraavat php-laajennukset: bcmath, curl, mcrypt ja
+SimpleXML.
 
 Debianissa tarvittavat paketit voi asentaa komentamalla joko
 
-apt-get install rtmpdump python python-crypto php5-cli php5-curl
+apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
 make install-adobehds
 
 tai
