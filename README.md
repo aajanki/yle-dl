@@ -29,7 +29,7 @@ and SimpleXML.
 
 On Debian the required packages can be installed either
 
-* by `apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt` and running `make install-adobehds` in the yle-dl directory
+* by `apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt`
 
 * or by `apt-get install rtmpdump python python-crypto youtube-dl`
 

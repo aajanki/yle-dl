@@ -7,15 +7,15 @@ all:
 install:
 	-mkdir -p $(BINDIR)
 	cp yle-dl $(BINDIR)
+	-mkdir -p $(DATADIR)
+	cp AdobeHDS.php $(DATADIR)
 
 install-adobehds:
-	mkdir -p $(DATADIR)
-	if [ ! -f $(DATADIR)/AdobeHDS.php ]; then \
-		curl https://raw.githubusercontent.com/K-S-V/Scripts/master/AdobeHDS.php > $(DATADIR)/AdobeHDS.php ; \
-	fi;
+	@echo "make install-adobehds is no longer needed"
 
 uninstall:
 	rm -f $(BINDIR)/yle-dl
+	rm -f $(DATADIR)/AdobeHDS.php
 
 # Uninstall librtmp and plugin installed by pre-2.0 versions
 plugindir=$(prefix)/lib/librtmp/plugins
