@@ -1,4 +1,4 @@
-download videos from Yle servers
+Download videos from Yle servers
 
 Copyright (C) 2010-2015 Antti Ajanki, antti.ajanki@iki.fi
 
@@ -23,17 +23,17 @@ Install dependencies: rtmpdump (version 2.4 or newer, preferably the
 latest development version from the project homepage at
 http://rtmpdump.mplayerhq.hu/), python (2.6 or newer) and pycrypto.
 Either AdobeHDS.php or youtube-dl (the Python 2 module) is required to
-download videos from Yle Areena. AdobeHDS.php additionally requires
-php interpreter and the following php extensions: bcmath, curl, mcrypt
+download videos from Yle Areena. AdobeHDS.php additionally requires a
+PHP interpreter and the following PHP extensions: bcmath, curl, mcrypt
 and SimpleXML.
 
-On Debian the required packages can be installed either
+On Debian, the required packages can be installed either
 
-* by `apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt`
+* by `apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt` if you want to use AdobeHDS.php
 
-* or by `apt-get install rtmpdump python python-crypto youtube-dl`
+* or by `apt-get install rtmpdump python python-crypto youtube-dl` if you want to use youtube-dl
 
-On OS X install rtmpdump with homebrew: `brew install --HEAD
+On OS X, install rtmpdump with homebrew: `brew install --HEAD
 rtmpdump` and pycrypto with pip: `pip install -r requirements.txt`
 
 To install yle-dl run:
@@ -42,15 +42,15 @@ To install yle-dl run:
 make install
 ```
 
-Starting from version 1.99.9 yle-dl doesn't anymore require a modified
-rtmpdump or plugin. Instead, everything is now downloadable with the
-plain rtmpdump. To remove the remnants of previous versions run `make
-uninstall-old-rtmpdump`.
+Starting from version 1.99.9, yle-dl doesn't anymore require a
+modified rtmpdump or plugin. Instead, everything is now downloadable
+with the plain rtmpdump. To remove the remnants of previous versions
+run `make uninstall-old-rtmpdump`.
 
 Packages for various distros
 ----------------------------
 
-[A list of available installation
+[A list of available
 packages](http://aajanki.github.com/yle-dl/index-en.html)
 
 RPM packaging:
