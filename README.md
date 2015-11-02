@@ -27,20 +27,48 @@ download videos from Yle Areena. AdobeHDS.php additionally requires a
 PHP interpreter and the following PHP extensions: bcmath, curl, mcrypt
 and SimpleXML.
 
-On Debian, the required packages can be installed either
+On some operating systems, you need to enable the PHP extensions by
+appending the following lines with the correct paths to the [php.ini]:
+[php.ini]:https://secure.php.net/manual/en/configuration.file.php
 
-* by `apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt` if you want to use AdobeHDS.php
+```
+extension=/path/to/curl.so
+extension=/path/to/mcrypt.so
+```
 
-* or by `apt-get install rtmpdump python python-crypto youtube-dl` if you want to use youtube-dl
-
-On OS X, install rtmpdump with homebrew: `brew install --HEAD
-rtmpdump` and pycrypto with pip: `pip install -r requirements.txt`
+On Debian, this is not needed because the packaging system enables the
+extensions automatically.
 
 To install yle-dl run:
 
 ```
-make install
+sudo make install
 ```
+
+## Installing dependences on Debian/Ubuntu ##
+
+If you plan to use AdobeHDS.php:
+
+```
+apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
+```
+
+If you plan to use youtube-dl:
+
+```
+apt-get install rtmpdump python python-crypto youtube-dl
+```
+
+## Installing dependences on OS X ##
+
+```
+brew install --HEAD rtmpdump
+brew install homebrew/php/php55-mcrypt
+pip install -r requirements.txt
+```
+
+Removing remains of the previous versions
+-----------------------------------------
 
 Starting from version 1.99.9, yle-dl doesn't anymore require a
 modified rtmpdump or plugin. Instead, everything is now downloadable

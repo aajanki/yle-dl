@@ -20,8 +20,24 @@ Yle Areenan videoiden lataamiseen. AdobeHDS.php vaatii lisäksi
 PHP-tulkin sekä seuraavat PHP-laajennukset: bcmath, curl, mcrypt ja
 SimpleXML.
 
-Debianissa AdobeHDS.php:ta käytettäessä tarvittavat paketit voi
-asentaa komentamalla
+Jossain käyttöjärjestelmissä PHP-laajennukset pitää ottaa käyttöön
+lisäämällä seuraavanlaiset rivit oikeine polkuineen php.ini-tiedostoon
+(https://secure.php.net/manual/en/configuration.file.php):
+
+extension=/polku/curl.so
+extension=/polku/mcrypt.so
+
+Debianissa php.ini-tiedostoon ei tarvitse koskea, koska
+pakettienhallinta tekee tarvittavat muutokset automaattisesti.
+
+Asenna yle-dl komennolla:
+
+sudo make install
+
+## Riippuvuuksien asentaminen Debianissa/Ubuntussa ##
+
+AdobeHDS.php:ta käytettäessä tarvittavat paketit voi asentaa
+komentamalla
 
 apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
 
@@ -29,15 +45,14 @@ tai youtube-dl:ää käytettäessä tarvittavat paketit komentamalla
 
 apt-get install rtmpdump python python-crypto youtube-dl
 
-OS X:ssä rtmpdumpin voi asentaa homebrew:llä "brew install --HEAD
-rtmpdump" ja pycrypton pipillä "pip install -r requirements.txt".
+## Riippuvuuksien asentaminen OS X:ssä ##
 
-Asenna yle-dl komennolla:
+brew install --HEAD rtmpdump
+brew install homebrew/php/php55-mcrypt
+pip install -r requirements.txt
 
-make install
-
-Komento vaatii pääkäyttäjän oikeudet (esim. Debianissa: sudo make
-install).
+Vanhojen versioden poistaminen
+------------------------------
 
 Alkaen versiosta 1.99.9 yle-dl ei enää tarvitse Ylen palvelimia varten
 muunneltua kopiota rtmpdump-ohjelmasta. Aikaisemman yle-dl-version
