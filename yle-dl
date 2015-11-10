@@ -36,7 +36,6 @@ import signal
 import urlparse
 import htmlentitydefs
 import json
-import string
 import xml.dom.minidom
 import time
 import codecs
@@ -44,7 +43,6 @@ import base64
 import ctypes
 import ctypes.util
 import itertools
-from operator import itemgetter
 from Crypto.Cipher import AES
 
 version = '2.9.0'
@@ -376,7 +374,7 @@ class AreenaNGDownloader(AreenaUtils):
     @staticmethod
     def supported_protocols():
         return ['hds', 'rtmp']
-    
+
     def __init__(self, streaming_protocol):
         if streaming_protocol.split(':', 1)[0] == 'hds':
             self.stream_class_factory = \
@@ -419,15 +417,15 @@ class AreenaNGDownloader(AreenaUtils):
         overall_status = RD_SUCCESS
         for clip in playlist:
 
-            # Areena's "all episodes" page does not include subtitle information, only 
-            # the single episode pages do. So read the episode numbers from the "all 
+            # Areena's "all episodes" page does not include subtitle information, only
+            # the single episode pages do. So read the episode numbers from the "all
             # episodes" page and then download the episodes individually.
             if (clip.has_key('id') and not clip['id'] in url and
                 not clip.has_key('subtitles') and optype == self.OP_DOWNLOAD and
                 clip['type'] == 'video'):
                 url = "http://areena.yle.fi/tv/" + clip['id']
                 print url
-                
+
                 res = self.download_episodes(url, filters, rtmpdumpargs, destdir)
             else:
                 res = self.process_single_episode(clip, url, filters,
@@ -533,11 +531,11 @@ class AreenaNGDownloader(AreenaUtils):
         jsonstr = download_page(url)
         if not jsonstr:
             return None
-        
+
         if debug:
             log(url)
             log(jsonstr)
-        
+
         try:
             metadata = json.loads(jsonstr)
         except ValueError:
@@ -569,13 +567,13 @@ class AreenaStreamBase(AreenaUtils):
 
     def is_valid(self):
         return not self.error
-    
+
     def get_error_message(self):
         if self.is_valid():
             return None
         else:
             return self.error or 'Stream not valid'
-    
+
     def to_url(self):
         return ''
 
@@ -739,7 +737,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
             return None
-        
+
         rtmp_connect = stream.connect
         rtmp_stream = stream.stream
         if not rtmp_stream:
@@ -793,7 +791,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
             rtmpparams['live'] = '1'
 
         return rtmpparams
-    
+
     def rtmpurlparse(self, url):
         if '://' not in url:
             raise ValueError("Invalid RTMP URL")
@@ -918,10 +916,8 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
 
     def _parse_hds_url(self, media, pageurl, filters):
         if media.get('live', False):
-            islive = True
             papiurl = 'http://papi.yle.fi/ng/live/hds/' + media['id'] + '/fin'
         else:
-            islive = False
             papiurl = 'http://papi.yle.fi/ng/mod/hds/' + media['id']
 
         stream = self.stream_from_papi(papiurl, self.HDS_AES_KEY, filters)
@@ -943,16 +939,16 @@ class Areena2014HDSStreamUrl(AreenaHDSStreamUrl):
         else:
             self.hds_url = None
         self.error = None
-    
+
     def is_valid(self):
         return not self.error
-    
+
     def get_error_message(self):
         if self.is_valid():
             return None
         else:
             return self.error or 'Stream not valid'
-    
+
     def to_url(self):
         return self.hds_url
 
@@ -1039,7 +1035,7 @@ class Areena2014Downloader(AreenaUtils):
 
     def __init__(self, streaming_protocol):
         self.backend = streaming_protocol
-    
+
     def download_episodes(self, url, filters, extra_argv, destdir):
         def download_clip(clip):
             downloader = clip.streamurl.create_downloader(clip.title, destdir,
@@ -1064,7 +1060,7 @@ class Areena2014Downloader(AreenaUtils):
                 print_url = clip.streamurl.to_url()
             print print_url.encode(enc, 'replace')
             return RD_SUCCESS
-        
+
         return self.process(print_clip_url, url, filters)
 
     def pipe(self, url, filters):
@@ -1079,7 +1075,7 @@ class Areena2014Downloader(AreenaUtils):
             enc = sys.getfilesystemencoding()
             print clip.title.encode(enc, 'replace')
             return RD_SUCCESS
-        
+
         return self.process(print_clip_title, url, filters)
 
     def process(self, clipfunc, url, filters):
@@ -1200,7 +1196,7 @@ class Areena2014Downloader(AreenaUtils):
             log(json.dumps(media))
 
         return media
-    
+
     def program_id_from_url(self, url):
         parsed = urlparse.urlparse(url)
         return parsed.path.split('/')[-1]
@@ -1305,7 +1301,7 @@ class Areena2014Downloader(AreenaUtils):
         url = media.get('url')
         if not url:
             return InvalidStreamUrl('No media URL')
-        
+
         decodedurl = self.areena_decrypt(url, self.AES_KEY)
         if not decodedurl:
             return InvalidStreamUrl('Decrypting media URL failed')
@@ -1357,7 +1353,7 @@ class Areena2014Downloader(AreenaUtils):
     def remove_jsonp_padding(self, jsonp):
         if not jsonp:
             return None
-        
+
         without_padding = re.sub(r'^[\w.]+\(|\);$','', jsonp)
         if without_padding[:1] != '{' or without_padding[-1:] != '}':
             return None
@@ -1791,7 +1787,7 @@ class BaseDownloader(object):
     def outputfile_from_clip_title(self, ext='.flv', resume=False):
         if self._cached_output_file:
             return self._cached_output_file
-        
+
         filename = self.sane_filename(self.clip_title) + ext
         if self.destdir:
             filename = os.path.join(self.destdir, filename)
@@ -1799,7 +1795,7 @@ class BaseDownloader(object):
             filename = self.next_available_filename(filename)
         self._cached_output_file = filename
         return filename
-        
+
     def next_available_filename(self, proposed):
         i = 1
         enc = sys.getfilesystemencoding()
@@ -1993,7 +1989,7 @@ class HDSDump(ExternalDownloader):
             i = args_in.index('--outfile')
         except ValueError:
             i = -1
-            
+
         if i >= 0 and i+1 < len(args_in):
             return args_in[i+1]
         else:
