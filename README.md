@@ -19,16 +19,16 @@ Areena], [Elävä Arkisto] and [Yle news].
 Installation
 ------------
 
-Install dependencies: rtmpdump (version 2.4 or newer, preferably the
-latest development version from the project homepage at
-http://rtmpdump.mplayerhq.hu/), python (2.6 or newer) and pycrypto.
-Either AdobeHDS.php or youtube-dl (the Python 2 module) is required to
-download videos from Yle Areena. AdobeHDS.php additionally requires a
-PHP interpreter and the following PHP extensions: bcmath, curl, mcrypt
-and SimpleXML.
+### 1. Install the dependencies ###
 
-On some operating systems, you need to enable the PHP extensions by
-appending the following lines with the correct paths to the [php.ini]:
+* python (2.6 or newer)
+* pycrypto
+* PHP interpreter
+* PHP extensions: bcmath, curl, mcrypt and SimpleXML
+* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at http://rtmpdump.mplayerhq.hu/)
+
+Enable the PHP extensions by appending the following lines with the
+correct paths in the [php.ini]:
 [php.ini]:https://secure.php.net/manual/en/configuration.file.php
 
 ```
@@ -36,30 +36,33 @@ extension=/path/to/curl.so
 extension=/path/to/mcrypt.so
 ```
 
-On Debian, this is not needed because the packaging system enables the
-extensions automatically.
-
-To install yle-dl run:
+### 2. Install yle-dl ###
 
 ```
 sudo make install
 ```
 
-## Installing dependences on Debian/Ubuntu ##
+Installation on Debian/Ubuntu
+-----------------------------
 
-If you plan to use AdobeHDS.php:
-
-```
-apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
-```
-
-If you plan to use youtube-dl:
+### 1. Install the dependencies ###
 
 ```
-apt-get install rtmpdump python python-crypto youtube-dl
+sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
 ```
 
-## Installing dependences on OS X ##
+### 2. Install yle-dl ###
+
+```
+sudo make install
+```
+
+Installation on Mac OS X
+------------------------
+
+### 1. Install the dependencies ###
+
+[Install the PHP interpreter](https://secure.php.net/manual/en/install.macosx.php) and the other libraries:
 
 ```
 brew install --HEAD rtmpdump
@@ -67,8 +70,39 @@ brew install homebrew/php/php55-mcrypt
 pip install -r requirements.txt
 ```
 
-Removing remains of the previous versions
------------------------------------------
+Enable the PHP extensions by appending the following lines with the
+correct paths in the [php.ini]:
+[php.ini]:https://secure.php.net/manual/en/configuration.file.php
+
+```
+extension=/path/to/curl.so
+extension=/path/to/mcrypt.so
+```
+
+### 2. Install yle-dl ###
+
+```
+make install
+```
+
+Installation with youtube-dl as an alternative downloader backend
+-----------------------------------------------------------------
+
+By default, yle-dl downloads streams from Yle Areena using the
+included copy of AdobeHDS.php. If the default downloader does not work
+for some reason, it is possible to use youtube-dl (for Python 2)
+instead. yle-dl will automatically fall back to youtube-dl if it is
+installed and downloading with AdobeHDS.php fails.
+
+Follow the above installation instructions (except for the PHP and the
+PHP libraries) and additionally install youtube-dl:
+
+* Debian/Ubuntu: `apt-get install youtube-dl`
+* Mac OS X: `brew install youtube-dl`
+* Other operating systems: `pip install --upgrade youtube_dl`
+
+Uninstalling earlier versions
+-----------------------------
 
 Starting from version 1.99.9, yle-dl doesn't anymore require a
 modified rtmpdump or plugin. Instead, everything is now downloadable

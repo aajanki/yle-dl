@@ -12,44 +12,70 @@ yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
 Asennus
 -------
 
-Asenna vaaditut kirjastot ja ohjelmat: rtmpdump (2.4 tai uudempi,
-mieluiten uusin kehitysversio projektin kotisivulta
-http://rtmpdump.mplayerhq.hu/), python (2.6 tai uudempi) ja pycrypto.
-Lisäksi joko AdobeHDS.php tai youtube-dl (Python 2 -moduuli) tarvitaan
-Yle Areenan videoiden lataamiseen. AdobeHDS.php vaatii lisäksi
-PHP-tulkin sekä seuraavat PHP-laajennukset: bcmath, curl, mcrypt ja
-SimpleXML.
+### 1. Riippuvuudet ###
 
-Jossain käyttöjärjestelmissä PHP-laajennukset pitää ottaa käyttöön
-lisäämällä seuraavanlaiset rivit oikeine polkuineen php.ini-tiedostoon
+* rtmpdump (2.4 tai uudempi,mieluiten uusin kehitysversio projektin
+  kotisivulta http://rtmpdump.mplayerhq.hu/)
+* python (2.6 tai uudempi)
+* pycrypto
+* PHP-tulkki
+* PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
+
+Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
+polkuineen php.ini-tiedostoon
 (https://secure.php.net/manual/en/configuration.file.php):
 
 extension=/polku/curl.so
 extension=/polku/mcrypt.so
 
-Debianissa php.ini-tiedostoon ei tarvitse koskea, koska
-pakettienhallinta tekee tarvittavat muutokset automaattisesti.
-
-Asenna yle-dl komennolla:
+### 2. Asenna yle-dl ###
 
 sudo make install
 
-## Riippuvuuksien asentaminen Debianissa/Ubuntussa ##
-
-AdobeHDS.php:ta käytettäessä tarvittavat paketit voi asentaa
-komentamalla
+Asennus Debianissa/Ubuntussa
+----------------------------
 
 apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
 
-tai youtube-dl:ää käytettäessä tarvittavat paketit komentamalla
+sudo make install
 
-apt-get install rtmpdump python python-crypto youtube-dl
+Asennus Mac OS X:ssä
+--------------------
 
-## Riippuvuuksien asentaminen OS X:ssä ##
+### 1. Riippuvuudet ###
+
+Asenna PHP-tulkki: https://secure.php.net/manual/en/install.macosx.php
 
 brew install --HEAD rtmpdump
 brew install homebrew/php/php55-mcrypt
 pip install -r requirements.txt
+
+Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
+polkuineen php.ini-tiedostoon
+(https://secure.php.net/manual/en/configuration.file.php):
+
+extension=/polku/curl.so
+extension=/polku/mcrypt.so
+
+### 2. Asenna yle-dl ###
+
+make install
+
+Asennus, kun lataukseen käytetään youtube-dl:ää
+-----------------------------------------------
+
+Oletuksena Areenan ohjelmien lataamiseen käytetään paketin mukana
+tulevaa AdobeHDS.php-skriptiä. Jos AdobeHDS.php ei jostain syystä
+toimi, on mahdollista ladata videoita youtube-dl:llä. yle-dl siirtyy
+automaattisesti käyttämään youtube-dl:ää, jos se on asennettu eikä
+AdobeHDS.php toimi.
+
+Suorita asennus kuten yllä, mutta jätä PHP-tulkki ja PHP-kirjastot
+pois. Asenna lisäksi youtube-dl:
+
+* Debian/Ubuntu: `apt-get install youtube-dl`
+* Mac OS X: `brew install youtube-dl`
+* Muut käyttöjärjestelmät: `pip install --upgrade youtube_dl`
 
 Vanhojen versioden poistaminen
 ------------------------------
