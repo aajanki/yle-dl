@@ -35,7 +35,8 @@ sudo make install
 Asennus Debianissa/Ubuntussa
 ----------------------------
 
-apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
+sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
+sudo php5enmod mcrypt
 
 sudo make install
 
@@ -71,7 +72,7 @@ automaattisesti käyttämään youtube-dl:ää, jos se on asennettu eikä
 AdobeHDS.php toimi.
 
 Suorita asennus kuten yllä, mutta jätä PHP-tulkki ja PHP-kirjastot
-pois. Asenna lisäksi youtube-dl:
+pois. Asenna lisäksi Python 2 -versio youtube-dl-moduulista:
 
 * Debian/Ubuntu: `apt-get install youtube-dl`
 * Mac OS X: `brew install youtube-dl`

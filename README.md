@@ -49,6 +49,7 @@ Installation on Debian/Ubuntu
 
 ```
 sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
+sudo php5enmod mcrypt
 ```
 
 ### 2. Install yle-dl ###
