@@ -594,52 +594,14 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         return args
 
 
-class AreenaHDSStreamUrl(AreenaStreamBase):
-    # Extracted from
-    # http://areena.yle.fi/static/player/1.3.12/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
-    HDS_AES_KEY = 'C6F258503B21E30A'
-
-    def __init__(self, clip, pageurl, filters, backend):
-        AreenaStreamBase.__init__(self, clip, pageurl)
-        self.hds_url = self._initialize_hds_stream(clip, pageurl, filters)
+class Areena2014HDSStreamUrl(AreenaStreamBase):
+    def __init__(self, pageurl, hdsurl, filters, backend):
+        AreenaStreamBase.__init__(self, {}, pageurl)
         self.maxbitrate = filters.maxbitrate
         if backend == 'hds:youtubedl':
             self.downloader_class = YoutubeDLHDSDump
         else:
             self.downloader_class = HDSDump
-
-    def to_url(self):
-        return self.hds_url or ''
-
-    def create_downloader(self, clip_title, destdir, extra_argv):
-        return self.downloader_class(self, clip_title, destdir, extra_argv, self.maxbitrate)
-
-    def _initialize_hds_stream(self, clip, pageurl, filters):
-        clip = self.full_metadata_if_search_result(clip) or {}
-        media = clip.get('media', {})
-        if media.get('id'):
-            return self._parse_hds_url(media, pageurl, filters)
-        else:
-            self.error = 'Media ID missing'
-            return None
-
-    def _parse_hds_url(self, media, pageurl, filters):
-        if media.get('live', False):
-            papiurl = 'http://papi.yle.fi/ng/live/hds/' + media['id'] + '/fin'
-        else:
-            papiurl = 'http://papi.yle.fi/ng/mod/hds/' + media['id']
-
-        stream = self.stream_from_papi(papiurl, self.HDS_AES_KEY, filters)
-        if not stream or not stream.connect:
-            self.error = 'HDS stream not found'
-            return None
-        else:
-            return stream.connect + '&g=ABCDEFGHIJKL&hdcore=3.3.0&plugin=flowplayer-3.3.0.0'
-
-
-class Areena2014HDSStreamUrl(AreenaHDSStreamUrl):
-    def __init__(self, pageurl, hdsurl, filters, backend):
-        AreenaHDSStreamUrl.__init__(self, {}, pageurl, filters, backend)
         self.episodeurl = pageurl
         if hdsurl:
             sep = '&' if '?' in hdsurl else '?'
@@ -663,6 +625,9 @@ class Areena2014HDSStreamUrl(AreenaHDSStreamUrl):
 
     def to_episode_url(self):
         return self.episodeurl
+
+    def create_downloader(self, clip_title, destdir, extra_argv):
+        return self.downloader_class(self, clip_title, destdir, extra_argv, self.maxbitrate)
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
