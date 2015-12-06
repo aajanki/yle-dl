@@ -1,6 +1,6 @@
 prefix?=/usr/local
-BINDIR=$(DESTDIR)/$(prefix)/bin
-DATADIR=$(DESTDIR)/$(prefix)/share/yle-dl
+BINDIR=$(DESTDIR)$(prefix)/bin
+DATADIR=$(DESTDIR)$(prefix)/share/yle-dl
 
 all:
 
