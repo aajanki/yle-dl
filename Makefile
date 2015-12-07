@@ -1,6 +1,6 @@
 prefix?=/usr/local
-BINDIR=$(DESTDIR)/$(prefix)/bin
-DATADIR=$(DESTDIR)/$(prefix)/share/yle-dl
+BINDIR=$(DESTDIR)$(prefix)/bin
+DATADIR=$(DESTDIR)$(prefix)/share/yle-dl
 
 all:
 
@@ -16,6 +16,7 @@ install-adobehds:
 uninstall:
 	rm -f $(BINDIR)/yle-dl
 	rm -f $(DATADIR)/AdobeHDS.php
+	-rmdir $(DATADIR)
 
 # Uninstall librtmp and plugin installed by pre-2.0 versions
 plugindir=$(prefix)/lib/librtmp/plugins
