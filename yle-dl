@@ -178,7 +178,7 @@ def downloader_factory(url, protocols):
     elif url.startswith('http://areena.yle.fi/tv/suora/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return RetryingDownloader(AreenaLiveDownloader, protocols)
-    elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora/?$', url):
+    elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora', url):
         return RetryingDownloader(AreenaLiveRadioDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/tv/suorat/'):
         return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
@@ -1211,71 +1211,38 @@ class AreenaLiveStreamUrl(AreenaRTMPStreamUrl):
 ### Areena live radio ###
 
 
-class AreenaLiveRadioDownloader(object):
+class AreenaLiveRadioDownloader(Areena2014Downloader):
     @staticmethod
     def supported_protocols():
-        return ['rtmp']
+        return ['hds']
 
-    def __init__(self, streaming_protocols):
-        pass
+    def get_playlist(self, url, filters):
+        return [url]
 
-    def download_episodes(self, url, filters, rtmpdumpargs, destdir):
-        dl = self._downloader(url, filters, rtmpdumpargs, destdir)
-        if not dl:
-            return RD_FAILED
+    def program_info_url(self, program_id):
+        quoted_pid = urllib.quote_plus(program_id)
+        return 'http://player.yle.fi/api/v1/services.jsonp?' \
+            'id=%s&callback=yleEmbed.simulcastJsonpCallback&' \
+            'region=fi&instance=1&dataId=%s' % \
+            (quoted_pid, quoted_pid)
 
-        return dl.save_stream()
-
-    def _downloader(self, url, filters, rtmpdumpargs, destdir):
-        streamurl = AreenaLiveRadioStreamUrl(url, filters)
-        if not streamurl.is_valid():
-            return None
-
-        clip_title = self.get_live_stream_title(url)
-        return streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
-
-    def print_urls(self, url, print_episode_url, filters):
-        printableurl = (url if print_episode_url
-                        else AreenaLiveRadioStreamUrl(url, filters).to_url())
-        enc = sys.getfilesystemencoding()
-        print printableurl.encode(enc, 'replace')
-        return RD_SUCCESS
-
-    def pipe(self, url, filters):
-        dl = self._downloader(url, filters, [], '')
-        return dl.pipe()
-
-    def print_titles(self, url, filters):
-        enc = sys.getfilesystemencoding()
-        print self.get_live_stream_title(url).encode(enc, 'replace')
-        return RD_SUCCESS
-
-    def get_live_stream_title(self, pageurl):
-        m = re.match(r'http://(?:www\.)?yle\.fi/radio/([a-zA-Z0-9]+)/suora/?', pageurl)
-        title = m.group(1) if m else 'yleradio'
-        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
-        return title
-
-
-class AreenaLiveRadioStreamUrl(AreenaRTMPStreamUrl):
-    def __init__(self, pageurl, filters):
-        AreenaRTMPStreamUrl.__init__(self, None, pageurl)
-        self.rtmp_params = self._get_radio_rtmpurl(pageurl, filters)
-
-    def _get_radio_rtmpurl(self, pageurl, filters):
+    def program_id_from_url(self, pageurl):
         html = download_page(pageurl)
         if not html:
             return None
 
-        radioid1 = re.search(r'"id": "/([0-9]+)"', html)
-        radioid2 = re.search(r'id="live-channel".+data-id="([0-9]+)"', html)
-        radioid = radioid1 or radioid2
+        radioid = re.search(r'"id": *"/([0-9]+)"', html)
         if not radioid:
             return None
 
-        streamid = radioid.group(1)
-        papiurl = 'http://papi.yle.fi/ng/radio/rtmp/%s/fi' % streamid
-        return self.rtmp_parameters_from_papi(papiurl, pageurl, True, filters)
+        # Extracted from http://player.yle.fi/assets/js/mainEmbed.js
+        radioid_to_mediaid = {2:"ylex",100:"ylex-video",4:"yle-radio-vega",54:"radio-vega-huvudstadsregionen",59:"radio-vega-ostnyland",55:"radio-vega-aboland",57:"radio-vega-vastnyland",44:"yle-x3m",1:"yle-radio-1",48:"yle-puhe",17:"yle-klassinen",93:"yle-sami-radio",10:"ylen-aikainen",3:"yle-radio-suomi",50:"etela-karjalan-radio",61:"etela-savon-radio",81:"kainuun-radio",51:"kymenlaakson-radio",41:"lahden-radio",90:"lapin-radio",80:"oulu-radio",70:"pohjanmaan-radio",62:"pohjois-karjalan-radio",12:"radio-ita-uusimaa",42:"radio-hame",71:"radio-keski-pohjanmaa",30:"radio-keski-suomi",91:"radio-perameri",60:"radio-savo",21:"satakunnan-radio",40:"tampereen-radio",20:"turun-radio",11:"ylen-lantinen"}
+
+        return radioid_to_mediaid[int(radioid.group(1))]
+
+    def program_media_id(self, program_info):
+        outlets = program_info.get('data', {}).get('outlets') or [{}]
+        return outlets[0].get('outlet', {}).get('media', {}).get('id')
 
 
 ### Elava Arkisto ###
