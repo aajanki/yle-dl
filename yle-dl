@@ -1035,7 +1035,7 @@ class Areena2014Downloader(AreenaUtils):
         return without_padding
 
 
-class Areena2014LiveTVDownloader(Areena2014Downloader):
+class Areena2014LiveDownloader(Areena2014Downloader):
     def program_info_url(self, program_id):
         quoted_pid = urllib.quote_plus(program_id)
         return 'http://player.yle.fi/api/v1/services.jsonp?' \
@@ -1052,6 +1052,10 @@ class Areena2014LiveTVDownloader(Areena2014Downloader):
         title = self.localized_text(service.get('title')) or 'areena'
         title += time.strftime('-%Y-%m-%d-%H:%M:%S')
         return title
+
+
+class Areena2014LiveTVDownloader(Areena2014LiveDownloader):
+    pass
 
 
 class YleUutisetDownloader(Areena2014Downloader):
@@ -1211,20 +1215,13 @@ class AreenaLiveStreamUrl(AreenaRTMPStreamUrl):
 ### Areena live radio ###
 
 
-class AreenaLiveRadioDownloader(Areena2014Downloader):
+class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
     @staticmethod
     def supported_protocols():
         return ['hds']
 
     def get_playlist(self, url, filters):
         return [url]
-
-    def program_info_url(self, program_id):
-        quoted_pid = urllib.quote_plus(program_id)
-        return 'http://player.yle.fi/api/v1/services.jsonp?' \
-            'id=%s&callback=yleEmbed.simulcastJsonpCallback&' \
-            'region=fi&instance=1&dataId=%s' % \
-            (quoted_pid, quoted_pid)
 
     def program_id_from_url(self, pageurl):
         html = download_page(pageurl)
@@ -1239,10 +1236,6 @@ class AreenaLiveRadioDownloader(Areena2014Downloader):
         radioid_to_mediaid = {2:"ylex",100:"ylex-video",4:"yle-radio-vega",54:"radio-vega-huvudstadsregionen",59:"radio-vega-ostnyland",55:"radio-vega-aboland",57:"radio-vega-vastnyland",44:"yle-x3m",1:"yle-radio-1",48:"yle-puhe",17:"yle-klassinen",93:"yle-sami-radio",10:"ylen-aikainen",3:"yle-radio-suomi",50:"etela-karjalan-radio",61:"etela-savon-radio",81:"kainuun-radio",51:"kymenlaakson-radio",41:"lahden-radio",90:"lapin-radio",80:"oulu-radio",70:"pohjanmaan-radio",62:"pohjois-karjalan-radio",12:"radio-ita-uusimaa",42:"radio-hame",71:"radio-keski-pohjanmaa",30:"radio-keski-suomi",91:"radio-perameri",60:"radio-savo",21:"satakunnan-radio",40:"tampereen-radio",20:"turun-radio",11:"ylen-lantinen"}
 
         return radioid_to_mediaid[int(radioid.group(1))]
-
-    def program_media_id(self, program_info):
-        outlets = program_info.get('data', {}).get('outlets') or [{}]
-        return outlets[0].get('outlet', {}).get('media', {}).get('id')
 
 
 ### Elava Arkisto ###
