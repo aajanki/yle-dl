@@ -49,9 +49,6 @@ version = '2.9.0'
 AREENA_NG_SWF = 'http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
-ARKISTO_SWF = 'http://yle.fi/elavaarkisto/flowplayer/flowplayer.commercial-3.2.7.swf?0.7134730119723827'
-RTMPDUMP_OPTIONS_ARKISTO = ['-s', ARKISTO_SWF, '-m', '60']
-
 RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
 
 DEFAULT_PROTOCOLS = ['hds', 'hds:youtubedl', 'rtmp']
@@ -604,7 +601,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         if hdsurl:
             sep = '&' if '?' in hdsurl else '?'
             self.hds_url = hdsurl + sep + \
-                'g=ABCDEFGHIJKL&hdcore=3.3.0&plugin=flowplayer-3.3.0.0'
+                'g=ABCDEFGHIJKL&hdcore=3.8.0&plugin=flowplayer-3.8.0.0'
         else:
             self.hds_url = None
         self.error = None
