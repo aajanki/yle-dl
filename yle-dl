@@ -175,12 +175,10 @@ def downloader_factory(url, protocols):
         return RetryingDownloader(ElavaArkistoDownloader, protocols)
     elif url.startswith('http://svenska.yle.fi/artikel/'):
         return RetryingDownloader(ArkivetDownloader, protocols)
-    elif url.startswith('http://areena.yle.fi/tv/suora/') or \
-            url.startswith('http://arenan.yle.fi/tv/direkt/'):
-        return RetryingDownloader(AreenaLiveDownloader, protocols)
     elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora', url):
         return RetryingDownloader(AreenaLiveRadioDownloader, protocols)
-    elif url.startswith('http://areena.yle.fi/tv/suorat/'):
+    elif url.startswith('http://areena.yle.fi/tv/suorat/') or \
+            url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
     elif url.startswith('http://yle.fi/uutiset/') or \
             url.startswith('http://yle.fi/urheilu/'):
@@ -1134,82 +1132,6 @@ class Subtitle(object):
     def __init__(self, url, language):
         self.url = url
         self.language = language
-
-
-### Areena live TV ###
-#
-# http://areena.yle.fi/tv/suorat/...
-
-class AreenaLiveDownloader(object):
-    @staticmethod
-    def supported_protocols():
-        return ['rtmp']
-
-    def __init__(self, streaming_protocols):
-        pass
-
-    def download_episodes(self, url, filters, rtmpdumpargs, destdir):
-        dl = self._downloader(url, filters, rtmpdumpargs, destdir)
-        if not dl:
-            return RD_FAILED
-        return dl.save_stream()
-
-    def _downloader(self, url, filters, rtmpdumpargs, destdir):
-        streamurl = AreenaLiveStreamUrl(url, filters)
-        if not streamurl.is_valid():
-            return None
-
-        clip_title = self.get_live_stream_title(url)
-        return streamurl.create_downloader(clip_title, destdir, rtmpdumpargs)
-
-    def print_urls(self, url, print_episode_url, filters):
-        """Extract episodes from url and print their
-        librtmp-compatible URLs on stdout."""
-        printableurl = (url if print_episode_url
-                        else AreenaLiveStreamUrl(url, filters).to_url())
-        enc = sys.getfilesystemencoding()
-        print printableurl.encode(enc, 'replace')
-        return RD_SUCCESS
-
-    def pipe(self, url, filters):
-        dl = self._downloader(url, filters, [], '')
-        return dl.pipe()
-
-    def print_titles(self, url, filters):
-        enc = sys.getfilesystemencoding()
-        print self.get_live_stream_title(url).encode(enc, 'replace')
-        return RD_SUCCESS
-
-    def get_live_stream_title(self, url):
-        title = AreenaLiveStreamUrl.extract_live_channel_from_url(url) or 'yleTV'
-        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
-        return title
-
-
-### Areena live stream URL ###
-
-
-class AreenaLiveStreamUrl(AreenaRTMPStreamUrl):
-    def __init__(self, pageurl, filters):
-        AreenaRTMPStreamUrl.__init__(self, None, pageurl)
-        self.rtmp_params = self._get_live_rtmp_parameters(pageurl, filters)
-
-    @staticmethod
-    def extract_live_channel_from_url(url):
-        m = re.search(r'http://(?:areena.yle.fi/tv/suora|arenan.yle.fi/tv/direkt)/(.+)', url)
-        return m and m.group(1)
-
-    def _get_live_rtmp_parameters(self, url, filters):
-        channel = AreenaLiveStreamUrl.extract_live_channel_from_url(url)
-        if channel is None:
-            return None
-
-        default_media_id = 'yle-' + channel
-        fem_mapping = {'fem': 'yle-fem-fi',
-                       'fem?kieli=sv': 'yle-fem-sv'}
-        media_id = fem_mapping.get(channel, default_media_id)
-        papiurl = 'http://papi.yle.fi/ng/live/rtmp/' + media_id + '/fin'
-        return self.rtmp_parameters_from_papi(papiurl, url, True, filters)
 
 
 ### Areena live radio ###
