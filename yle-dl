@@ -360,114 +360,6 @@ class AreenaStreamBase(AreenaUtils):
 
         return 'http://areena.yle.fi/%s/%s' % (urltype, media['id'])
 
-    def get_metadata(self, clip):
-        metadata_page = self.create_pageurl(clip)
-        if not metadata_page:
-            return None
-
-        jsonurl = metadata_page + '.json'
-        jsonstr = download_page(jsonurl)
-        if not jsonstr:
-            return None
-
-        try:
-            clipjson = json.loads(jsonstr)
-        except ValueError:
-            log(u'Invalid JSON file at ' +  jsonurl)
-            return None
-
-        return clipjson
-
-    def full_metadata_if_search_result(self, clip):
-        # Search results don't have the media item so we have to
-        # download clip metadata from the source.
-        if not clip:
-            return {}
-        elif not clip.has_key('media'):
-            clip = self.get_metadata(clip)
-        return clip
-
-    def stream_from_papi(self, papiurl, aes_key, filters):
-        papi = download_page(papiurl)
-        if not papi:
-            log('Failed to download papi')
-            return None
-
-        if papi.startswith('<media>'):
-            papi_decoded = papi
-        else:
-            papi_decoded = self.areena_decrypt(papi, aes_key)
-
-        if debug:
-            log(papi_decoded)
-
-        try:
-            papi_xml = xml.dom.minidom.parseString(papi_decoded)
-        except Exception as exc:
-            log(unicode(exc.message, 'utf-8', 'ignore'))
-            return None
-
-        streams = self.all_streams_from_papi(papi_xml)
-        if not streams:
-            log('No streams found in papi')
-            return None
-
-        withsubs = self.filter_by_hard_subtitles(streams, filters)
-        best = self.select_quality(withsubs, filters)
-        if not best:
-            log('No streams matching the bitrate limit')
-            return None
-
-        if debug:
-            log('Selected stream')
-            log(str(best))
-
-        return best
-
-    def all_streams_from_papi(self, papi):
-        streams = []
-        assets = papi.getElementsByTagName('onlineAsset')
-        for asset in assets:
-            urls = asset.getElementsByTagName('url')
-            if urls and len(urls) >= 1:
-                connect = self.extract_child_content(urls[0], 'connect')
-                stream = self.extract_child_content(urls[0], 'stream')
-                if connect:
-                    videoBR = self.extract_child_content(asset, 'videoBitrate') or ''
-                    audioBR = self.extract_child_content(asset, 'audioBitrate') or ''
-                    subtitles = self.extract_child_content(asset, 'hardSubtitles') or ''
-                    streams.append(PAPIStream(connect, stream, videoBR,
-                                              audioBR, subtitles))
-        return streams
-
-    def extract_child_content(self, node, childName):
-        child = node.getElementsByTagName(childName)
-        if child.length > 0 and child[0].firstChild:
-            return child[0].firstChild.nodeValue
-        else:
-            return None
-
-    def filter_by_hard_subtitles(self, streams, filters):
-        if filters.hardsubs and filters.sublang == 'all':
-            filtered = streams
-        elif filters.hardsubs and filters.sublang != 'none':
-            filtered = [s for s in streams if s.hardSubtitles == filters.sublang]
-        else:
-            filtered = [s for s in streams if not s.hardSubtitles]
-        return filtered or streams
-
-    def select_quality(self, streams, filters):
-        if filters.keep_lowest_bitrate():
-            # lowest quality stream
-            return sorted(streams, key=lambda x: x.bitrate())[0]
-        else:
-            # highest quality stream below maxbitrate
-            below_limit = [x for x in streams if x.bitrate() < filters.maxbitrate]
-            if below_limit:
-                return sorted(below_limit, key=lambda x: x.bitrate())[-1]
-            else:
-                return None
-
 
 class AreenaRTMPStreamUrl(AreenaStreamBase):
     # Extracted from
@@ -495,10 +387,6 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
             return None
         else:
             return RTMPDump(self, clip_title, destdir, extra_argv)
-
-    def rtmp_parameters_from_papi(self, papiurl, pageurl, islive, filters):
-        stream = self.stream_from_papi(papiurl, self.AES_KEY, filters)
-        return self.stream_to_rtmp_parameters(stream, pageurl, islive)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
