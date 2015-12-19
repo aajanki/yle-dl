@@ -663,7 +663,12 @@
                   $stream            = $array;
 
                   if (isset($stream['bitrate']))
-                      $bitrate = floor($stream['bitrate']);
+                    {
+                      if ($stream['bitrate'] > $childManifest['bitrate'])
+                          $bitrate = floor($stream['bitrate']);
+                      else
+                          $bitrate = $childManifest['bitrate'];
+                    }
                   else if ($childManifest['bitrate'] > 0)
                       $bitrate = $childManifest['bitrate'];
                   else
@@ -1988,7 +1993,6 @@
   $fileCount    = 1;
   $fileExt      = ".f4f";
   $filesize     = 0;
-  $fixWindow    = 1000;
   $fragCount    = 0;
   $fragStart    = 0;
   $manifest     = "";
