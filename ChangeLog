@@ -2,6 +2,11 @@ download videos from Yle servers
 Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v3
 
+20 Dec 2015, Version 2.9.1
+
+- Fixed downloading of Areena live radio streams
+- The old areena-v3.yle.fi has been discontinued
+
 27 Oct 2015, Version 2.9.0
 
 - License changed to GPLv3
