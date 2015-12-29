@@ -178,7 +178,8 @@ def downloader_factory(url, protocols):
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
         return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
     elif url.startswith('http://yle.fi/uutiset/') or \
-            url.startswith('http://yle.fi/urheilu/'):
+            url.startswith('http://yle.fi/urheilu/') or \
+            url.startswith('http://yle.fi/saa/'):
         return RetryingDownloader(YleUutisetDownloader, protocols)
     elif url.startswith('http://areena.yle.fi/') or \
             url.startswith('http://arenan.yle.fi/') or \
