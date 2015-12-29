@@ -545,6 +545,13 @@ class HTTPStreamUrl(object):
         return HTTPDump(self, clip_title, destdir, extra_argv)
 
 
+class KalturaHTML5StreamUrl(HTTPStreamUrl):
+    def __init__(self, mediaid):
+        entryid = mediaid.split('-', 1)[-1]
+        self.url = 'http://cdnapi.kaltura.com/p/1955031/sp/195503100/playManifest/entryId/%s/flavorId/0_1zx6zyg1/format/url/protocol/http/a.mp4?referrer=aHR0cDovL2FyZWVuYS55bGUuZmk=&playSessionId=11111111-1111-1111-1111-111111111111&clientTag=html5:v2.37.1&uiConfId=32431531' % (entryid)
+        self.ext = '.mp4'
+
+
 class InvalidStreamUrl(object):
     def __init__(self, error_message):
         self.error = error_message
@@ -728,17 +735,32 @@ class Areena2014Downloader(AreenaUtils):
         if not media_id:
             return FailedClip(pageurl, 'Failed to parse media ID')
 
-        proto = self.program_protocol(program_info)
-        medias = self.yle_media_descriptor(media_id, program_id, proto)
-        if not medias:
-            return FailedClip(pageurl, 'Failed to parse media object')
-
-        selected_media = self.select_media(medias, filters)
+        if media_id.startswith('29-'):
+            if debug:
+                log('Detected an HTML5 video')
+            
+            streamurl = KalturaHTML5StreamUrl(media_id)
+            subtitles = []
+        else:
+            selected_media = self.select_yle_media(program_info, media_id, program_id, filters)
+            if not selected_media:
+                return FailedClip(pageurl, 'Media not found')
+            
+            streamurl = self.media_streamurl(selected_media, pageurl, filters)
+            subtitles = self.media_subtitles(selected_media)
 
         return Clip(pageurl,
                     self.program_title(program_info),
-                    self.media_streamurl(selected_media, pageurl, filters),
-                    self.media_subtitles(selected_media))
+                    streamurl,
+                    subtitles)
+
+    def select_yle_media(self, program_info, media_id, program_id, filters):
+        proto = self.program_protocol(program_info)
+        medias = self.yle_media_descriptor(media_id, program_id, proto)
+        if not medias:
+            return None
+
+        return self.select_media(medias, filters)
 
     def yle_media_descriptor(self, media_id, program_id, protocol):
         media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
