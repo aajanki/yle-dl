@@ -14,12 +14,12 @@ Asennus
 
 ### 1. Riippuvuudet ###
 
-* rtmpdump (2.4 tai uudempi,mieluiten uusin kehitysversio projektin
-  kotisivulta http://rtmpdump.mplayerhq.hu/)
 * python (2.6 tai uudempi)
 * pycrypto
 * PHP-tulkki
 * PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
+* rtmpdump (2.4 tai uudempi. Tarvitaan vain Areenan radio-ohjelmien
+  lataamiseen)
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
 polkuineen php.ini-tiedostoon
@@ -119,12 +119,11 @@ Valitsimet:
 --adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 --pipe          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
---protocol vals Järjestys, jossa lataajia kokeillaan kunnes jokin niistä
+--backend vals  Järjestys, jossa lataajia kokeillaan kunnes jokin niistä
                 onnistuu lataamaan ohjelman. Voi sisältää useita arvoja
                 pilkuilla eroteltuina. Mahdolliset arvot:
-                  hds - lataa käyttäen AdobeHDS.php:ta
-                  hds:youtubedl - youtube-dl
-                  rtmp - rtmpdump
+                  adobehdsphp - lataa käyttäen AdobeHDS.php:ta
+                  youtubedl - lataa HDS-striimi käyttäen youtube-dl:ää
 -V, --verbose   Tulosta enemmän tietoja latauksen etenemisestä
 
 Muut valitsimet välitetään rtmpdump:lle, jos ladataan RTMP-tyyppistä
@@ -166,7 +165,7 @@ Esimerkkejä
 
 * Käytä youtube-dl-lataajaa (AdobeHDS.php:n sijaan):
 
-  yle-dl --protocol hds:youtubedl http://areena.yle.fi/1-1544491
+  yle-dl --backend youtubedl http://areena.yle.fi/1-1544491
 
 * Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 

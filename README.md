@@ -25,7 +25,7 @@ Installation
 * pycrypto
 * PHP interpreter
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
-* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at http://rtmpdump.mplayerhq.hu/)
+* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at http://rtmpdump.mplayerhq.hu/. Required only when downloading Areena audio streams.)
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:
@@ -153,7 +153,7 @@ yle-dl options:
 
 * `--pipe`            Dump stream to stdout for piping to media player. E.g. `yle-dl --pipe URL | vlc -`.
 
-* `--protocol protos` Downloaders that are tried until one of them succeeds (a comma-separated list). Possible values: `hds` (download a stream using AdobeHDS.php), `hds:youtubedl` (youtube-dl), and `rtmp` (rtmpdump).
+* `--backend vals`    Downloaders that are tried until one of them succeeds (a comma-separated list). Possible values: `adobehdsphp` (download HDS streams using AdobeHDS.php), `youtubedl` (download HDS streams using youtube-dl).
 
 * `-V, --verbose`     Show verbose debug output
 
@@ -172,7 +172,7 @@ yle-dl http://areena.yle.fi/1-1544491 -o video.flv
 ```
 
 ```
-yle-dl --protocol hds:youtubedl http://areena.yle.fi/1-1544491 -o video.flv
+yle-dl --backend youtubedl http://areena.yle.fi/1-1544491 -o video.flv
 ```
 
 ```
