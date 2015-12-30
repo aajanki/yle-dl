@@ -145,6 +145,8 @@ yle-dl options:
 
 * `--sublang lang`    Download subtitles, lang = fin, swe, smi, none or all
 
+* `--maxbitrate br`   Maximum bitrate stream to download, integer in kB/s or "best" or "worst". Not all streams support limited bitrates. Only approximate when downloading using AdobeHDS.php.
+
 * `--rtmpdump path`   Set path to rtmpdump binary
 
 * `--adobehds cmd`    Set command for executing AdobeHDS.php script

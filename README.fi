@@ -115,6 +115,7 @@ Valitsimet:
 --vfat          Tuota Windows-yhteensopivia tiedoston nimiä
 --sublang lang  Lataa tekstitykset annetulla kielellä (Yle Areena)
                 lang = fin, swe, smi, none or all (oletus)
+--maxbitrate br Rajoita ladattavan striimin bittinopeutta (kB/s)
 --rtmpdump path Polku rtmpdump-ohjelmaan
 --adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
