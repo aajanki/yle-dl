@@ -271,6 +271,32 @@ class StreamFilters(object):
         return self.maxbitrate <= 0
 
 
+class JSONP(object):
+    @staticmethod
+    def load_jsonp(url):
+        json_string = JSONP.remove_jsonp_padding(download_page(url))
+        if not json_string:
+            return None
+
+        try:
+            json_parsed = json.loads(json_string)
+        except ValueError:
+            return None
+
+        return json_parsed
+
+    @staticmethod
+    def remove_jsonp_padding(jsonp):
+        if not jsonp:
+            return None
+
+        without_padding = re.sub(r'^[\w.]+\(|\);$','', jsonp)
+        if without_padding[:1] != '{' or without_padding[-1:] != '}':
+            return None
+
+        return without_padding
+
+
 # Areena
 
 class AreenaUtils(object):
@@ -322,6 +348,65 @@ class AreenaUtils(object):
         f.write(codecs.BOM_UTF8)
         f.write(content)
         f.close()
+
+
+class KalturaUtils(object):
+    def select_kaltura_flavor(self, media_id, program_id, filters):
+        mw = self.load_mwembed(media_id, program_id)
+        flavors = self.flavors_from_mwembed(mw)
+        return self.pick_matching_flavor(flavors, filters)
+
+    def pick_matching_flavor(self, flavors, filters):
+        if debug:
+            bitrates = [fl.get('bitrate', 0) for fl in flavors]
+            log(u'Available bitrates: %s, maxbitrate = %s' %
+                (bitrates, filters.maxbitrate))
+        
+        valid_bitrates = [fl for fl in flavors
+                          if fl.get('bitrate', 0) <= filters.maxbitrate]
+        if not valid_bitrates and len(flavors) >= 1:
+            valid_bitrates = [min(flavors, key=lambda fl: fl.get('bitrate', 0))]
+
+        if not valid_bitrates:
+            return {}
+
+        selected = max(valid_bitrates, key=lambda fl: fl.get('bitrate', 0))
+        if debug:
+            log(u'Selected bitrate: %s' % selected.get('bitrate', 0))
+
+        return selected
+
+    def load_mwembed(self, media_id, program_id):
+        entryid = self.kaltura_entry_id(media_id)
+        mwembed_url = 'http://cdnapi.kaltura.com/html5/html5lib/v2.37.1/mwEmbedFrame.php?&wid=_1955031&uiconf_id=32431531&cache_st=1442926927&entry_id=%s&flashvars\[streamerType\]=auto&flashvars\[EmbedPlayer.HidePosterOnStart\]=true&flashvars\[EmbedPlayer.OverlayControls\]=true&flashvars\[IframeCustomPluginCss1\]=%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css&flashvars\[mediaProxy.mediaPlayFrom\]=null&flashvars\[autoPlay\]=true&flashvars\[KalturaSupport.LeadWithHTML5\]=true&playerId=kaltura-%s-1&forceMobileHTML5=true&urid=2.37.1&callback=mwi_kaltura1320086810' % \
+                      (urllib.quote_plus(entryid), urllib.quote_plus(program_id))
+        mw = JSONP.load_jsonp(mwembed_url)
+
+        if debug and mw:
+            log('mwembed:')
+            log(json.dumps(mw))
+
+        return (mw or {}).get('content', '')
+
+    def kaltura_entry_id(self, mediaid):
+        return mediaid.split('-', 1)[-1]
+
+    def flavors_from_mwembed(self, mw):
+        m = re.search('\\"flavorAssets\\":.*?(\[.+?\])', mw, re.DOTALL)
+        if not m:
+            return []
+
+        try:
+            flavors_string = m.group(1).decode('unicode_escape').replace('\n', ' ')
+        except UnicodeEncodeError:
+            return []
+            
+        try:
+            flavors = json.loads(flavors_string)
+        except ValueError:
+            return []
+
+        return flavors
 
 
 ### Areena stream URL ###
@@ -547,9 +632,8 @@ class HTTPStreamUrl(object):
 
 
 class KalturaHTML5StreamUrl(HTTPStreamUrl):
-    def __init__(self, mediaid):
-        entryid = mediaid.split('-', 1)[-1]
-        self.url = 'http://cdnapi.kaltura.com/p/1955031/sp/195503100/playManifest/entryId/%s/flavorId/0_1zx6zyg1/format/url/protocol/http/a.mp4?referrer=aHR0cDovL2FyZWVuYS55bGUuZmk=&playSessionId=11111111-1111-1111-1111-111111111111&clientTag=html5:v2.37.1&uiConfId=32431531' % (entryid)
+    def __init__(self, entryid, flavorid):
+        self.url = 'http://cdnapi.kaltura.com/p/1955031/sp/195503100/playManifest/entryId/%s/flavorId/%s/format/url/protocol/http/a.mp4?referrer=aHR0cDovL2FyZWVuYS55bGUuZmk=&playSessionId=11111111-1111-1111-1111-111111111111&clientTag=html5:v2.37.1&uiConfId=32431531' % (entryid, flavorid)
         self.ext = '.mp4'
 
 
@@ -589,7 +673,7 @@ class PAPIStream(object):
 
 ### Areena (the new version with beta introduced in 2014) ###
 
-class Areena2014Downloader(AreenaUtils):
+class Areena2014Downloader(AreenaUtils, KalturaUtils):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = 'yjuap4n5ok9wzg43'
@@ -700,7 +784,7 @@ class Areena2014Downloader(AreenaUtils):
         if not pid:
             return FailedClip(pageurl, 'Failed to parse a program ID')
 
-        program_info = self.load_jsonp(self.program_info_url(pid))
+        program_info = JSONP.load_jsonp(self.program_info_url(pid))
         if not program_info:
             return FailedClip(pageurl, 'Failed to download program data')
 
@@ -739,8 +823,14 @@ class Areena2014Downloader(AreenaUtils):
         if media_id.startswith('29-'):
             if debug:
                 log('Detected an HTML5 video')
-            
-            streamurl = KalturaHTML5StreamUrl(media_id)
+
+            flavor = self.select_kaltura_flavor(media_id, program_id, filters)
+            if not flavor:
+                return FailedClip(pageurl, 'Media not found')
+
+            flavor_id = flavor.get('id', '0_00000000')
+            entry_id = self.kaltura_entry_id(media_id)
+            streamurl = KalturaHTML5StreamUrl(entry_id, flavor_id)
             subtitles = []
         else:
             selected_media = self.select_yle_media(program_info, media_id, program_id, filters)
@@ -769,7 +859,7 @@ class Areena2014Downloader(AreenaUtils):
                           'mediaId=%s&protocol=%s&client=areena-flash-player&instance=1' % \
             (urllib.quote_plus(media_id), urllib.quote_plus(program_id), \
              urllib.quote_plus(protocol))
-        media = self.load_jsonp(media_jsonp_url)
+        media = JSONP.load_jsonp(media_jsonp_url)
 
         if debug and media:
             log('media:')
@@ -917,28 +1007,6 @@ class Areena2014Downloader(AreenaUtils):
         else:
             language_map = {'fi': 'fin', 'sv': 'swe'}
             return language_map.get(lang, lang)
-
-    def load_jsonp(self, url):
-        json_string = self.remove_jsonp_padding(download_page(url))
-        if not json_string:
-            return None
-
-        try:
-            json_parsed = json.loads(json_string)
-        except ValueError:
-            return None
-
-        return json_parsed
-
-    def remove_jsonp_padding(self, jsonp):
-        if not jsonp:
-            return None
-
-        without_padding = re.sub(r'^[\w.]+\(|\);$','', jsonp)
-        if without_padding[:1] != '{' or without_padding[-1:] != '}':
-            return None
-
-        return without_padding
 
 
 class Areena2014LiveDownloader(Areena2014Downloader):
@@ -1100,7 +1168,7 @@ class ElavaArkistoDownloader(Areena2014Downloader):
         return re.findall(r' data-id="([0-9-]+)"', page)
 
     def clip_from_dataid(self, dataid, pageurl, filters):
-        mediaitem = self.load_jsonp(self.embed_url(dataid))
+        mediaitem = JSONP.load_jsonp(self.embed_url(dataid))
         if not mediaitem:
             return FailedClip(pageurl, 'Failed to download embeded media data')
 
