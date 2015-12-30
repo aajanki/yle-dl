@@ -51,7 +51,7 @@ AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
 RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
 
-DEFAULT_PROTOCOLS = ['hds', 'hds:youtubedl', 'rtmp']
+DEFAULT_HDS_BACKENDS = ['adobehdsphp', 'youtubedl']
 
 # list of all options that require an argument
 ARGOPTS = ('--rtmp', '-r', '--host', '-n', '--port', '-c', '--socks',
@@ -109,11 +109,10 @@ def usage():
     log(u'--adobehds cmd          Set command for executing AdobeHDS.php script')
     log(u'                        Default: "php /usr/local/share/yle-dl/AdobeHDS.php"')
     log(u'--destdir dir           Save files to dir')
-    log(u'--protocol protos       Downloaders that are tried until one of them')
+    log(u'--backend be            Downloaders that are tried until one of them')
     log(u'                        succeeds (a comma-separated list). Possible values:')
-    log(u'                          hds - AdobeHDS.php')
-    log(u'                          hds:youtubedl - youtube-dl')
-    log(u'                          rtmp - rtmpdump')
+    log(u'                          adobehdsphp - AdobeHDS.php')
+    log(u'                          youtubedl - youtube-dl (HDS stream)')
     log(u'--pipe                  Dump stream to stdout for piping to media player')
     log(u'                        E.g. "yle-dl --pipe URL | vlc -"')
     log(u'-V, --verbose           Show verbose debug output')
@@ -165,26 +164,26 @@ def int_or_else(x, default):
     except ValueError:
         return default
 
-def downloader_factory(url, protocols):
+def downloader_factory(url, backends):
     if url.startswith('http://yle.fi/aihe/') or \
             url.startswith('http://areena.yle.fi/26-') or \
             url.startswith('http://arenan.yle.fi/26-'):
-        return RetryingDownloader(ElavaArkistoDownloader, protocols)
+        return RetryingDownloader(ElavaArkistoDownloader, backends)
     elif url.startswith('http://svenska.yle.fi/artikel/'):
-        return RetryingDownloader(ArkivetDownloader, protocols)
+        return RetryingDownloader(ArkivetDownloader, backends)
     elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora', url):
-        return RetryingDownloader(AreenaLiveRadioDownloader, protocols)
+        return RetryingDownloader(AreenaLiveRadioDownloader, backends)
     elif url.startswith('http://areena.yle.fi/tv/suorat/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
-        return RetryingDownloader(Areena2014LiveTVDownloader, protocols)
+        return RetryingDownloader(Areena2014LiveTVDownloader, backends)
     elif url.startswith('http://yle.fi/uutiset/') or \
             url.startswith('http://yle.fi/urheilu/') or \
             url.startswith('http://yle.fi/saa/'):
-        return RetryingDownloader(YleUutisetDownloader, protocols)
+        return RetryingDownloader(YleUutisetDownloader, backends)
     elif url.startswith('http://areena.yle.fi/') or \
             url.startswith('http://arenan.yle.fi/') or \
             url.startswith('http://yle.fi/'):
-        return RetryingDownloader(Areena2014Downloader, protocols)
+        return RetryingDownloader(Areena2014Downloader, backends)
     else:
         return None
 
@@ -295,6 +294,25 @@ class JSONP(object):
             return None
 
         return without_padding
+
+
+class BackendFactory(object):
+    ADOBEHDSPHP = 'adobehdsphp'
+    YOUTUBEDL = 'youtubedl'
+
+    @staticmethod
+    def is_valid_hds_backend(hds_backend):
+        return (hds_backend == BackendFactory.ADOBEHDSPHP or
+                hds_backend == BackendFactory.YOUTUBEDL)
+    
+    def __init__(self, hds_backend):
+        self.hds_backend = hds_backend
+
+    def hds(self):
+        if self.hds_backend == self.YOUTUBEDL:
+            return YoutubeDLHDSDump
+        else:
+            return HDSDump
 
 
 # Areena
@@ -567,10 +585,8 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def __init__(self, pageurl, hdsurl, filters, backend):
         AreenaStreamBase.__init__(self, {}, pageurl)
         self.maxbitrate = filters.maxbitrate
-        if backend == 'hds:youtubedl':
-            self.downloader_class = YoutubeDLHDSDump
-        else:
-            self.downloader_class = HDSDump
+        self.downloader_class = backend.hds()
+
         self.episodeurl = pageurl
         if hdsurl:
             sep = '&' if '?' in hdsurl else '?'
@@ -682,8 +698,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def supported_protocols():
         return ['hds']
 
-    def __init__(self, streaming_protocol):
-        self.backend = streaming_protocol
+    def __init__(self, backend_factory):
+        self.backend = backend_factory
 
     def download_episodes(self, url, filters, extra_argv, destdir):
         def download_clip(clip):
@@ -1238,30 +1254,21 @@ class ArkivetDownloader(Areena2014Downloader):
         return dataids
 
 
-### Downloader wrapper class that retries different protocols ###
+### Downloader wrapper class that retries using different backends ###
+### until the download succeeds ###
 
 
 class RetryingDownloader(object):
-    def __init__(self, wrapped_class, protocols):
+    def __init__(self, wrapped_class, backend_factories):
         self.wrapped_class = wrapped_class
-        acceptable = wrapped_class.supported_protocols()
-        is_supported = lambda p: acceptable.count(p.split(':', 1)[0]) > 0
-        defaults = [p for p in DEFAULT_PROTOCOLS \
-                    if any(p.startswith(a) for a in acceptable)]
-        accepted, rejected = partition(is_supported, protocols or defaults)
-        self.protocols = list(accepted)
-
-        rejected = list(rejected)
-        if rejected:
-            log(u'The following protocols are not supported on this source: ' +
-                u', '.join(rejected))
+        self.backends = list(backend_factories)
 
     def _create_next_downloader(self):
-        if self.protocols:
-            proto = self.protocols.pop(0)
+        if self.backends:
+            backend = self.backends.pop(0)
             if debug:
-                log('Streaming protocol %s' % proto)
-            return self.wrapped_class(proto)
+                log('Streaming backend %s' % str(backend))
+            return self.wrapped_class(backend)
         else:
             return None
 
@@ -1663,8 +1670,8 @@ def main():
     show_usage = False
     url = None
     destdir = None
-    streaming_protocols = None
     pipe = False
+    backend_names = list(DEFAULT_HDS_BACKENDS)
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -1710,9 +1717,9 @@ def main():
         elif arg == '--destdir':
             if argv:
                 destdir = argv.pop(0)
-        elif arg == '--protocol':
+        elif arg == '--backend':
             if argv:
-                streaming_protocols = argv.pop(0).split(',')
+                backend_names = argv.pop(0).split(',')
         elif arg == '--pipe':
             pipe = True
         elif arg == '-o':
@@ -1743,8 +1750,15 @@ def main():
         log(u'Error: rtmpdump not found in path, use --rtmpdump for setting the location')
         sys.exit(RD_FAILED)
 
+    backends = []
+    for bn in backend_names:
+        if not BackendFactory.is_valid_hds_backend(bn):
+            log(u'Invalid backend: ' + bn)
+            sys.exit(RD_FAILED)
+        backends.append(BackendFactory(bn))
+        
     url = encode_url_utf8(url)
-    dl = downloader_factory(url, streaming_protocols)
+    dl = downloader_factory(url, backends)
     if not dl:
         log(u'Unsupported URL %s.' % url)
         log(u'Is this really a Yle video page?')
