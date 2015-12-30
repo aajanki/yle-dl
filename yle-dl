@@ -694,10 +694,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = 'yjuap4n5ok9wzg43'
 
-    @staticmethod
-    def supported_protocols():
-        return ['hds']
-
     def __init__(self, backend_factory):
         self.backend = backend_factory
 
@@ -1049,10 +1045,6 @@ class Areena2014LiveTVDownloader(Areena2014LiveDownloader):
 
 
 class YleUutisetDownloader(Areena2014Downloader):
-    @staticmethod
-    def supported_protocols():
-        return Areena2014Downloader.supported_protocols()
-
     def download_episodes(self, url, filters, extra_argv, destdir):
         return self.delegate_to_areena_downloader(
             'download_episodes', url, filters=filters, extra_argv=extra_argv,
@@ -1130,10 +1122,6 @@ class Subtitle(object):
 
 
 class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
-    @staticmethod
-    def supported_protocols():
-        return ['hds']
-
     def get_playlist(self, url, filters):
         return [url]
 
@@ -1156,10 +1144,6 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 
 
 class ElavaArkistoDownloader(Areena2014Downloader):
-    @staticmethod
-    def supported_protocols():
-        return ['hds']
-
     def get_playlist(self, url, filters):
         dataids = self.get_dataids(url)
         playlist = [self.clip_from_dataid(d, url, filters) for d in dataids]
@@ -1230,10 +1214,6 @@ class ElavaArkistoDownloader(Areena2014Downloader):
 
 
 class ArkivetDownloader(Areena2014Downloader):
-    @staticmethod
-    def supported_protocols():
-        return ['hds']
-
     def get_playlist(self, url, filters):
         return [url]
 
