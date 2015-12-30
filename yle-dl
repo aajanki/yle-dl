@@ -1142,7 +1142,7 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 class ElavaArkistoDownloader(Areena2014Downloader):
     @staticmethod
     def supported_protocols():
-        return ['hds', 'rtmp']
+        return ['hds']
 
     def get_playlist(self, url, filters):
         dataids = self.get_dataids(url)
@@ -1187,7 +1187,7 @@ class ElavaArkistoDownloader(Areena2014Downloader):
         else:
             mediakanta_id = '6-' + mediaitem['mediakantaId']
             media_id = '26-' + mediaitem['id']
-            proto = 'HDS' if self.backend.startswith('hds') else 'RTMPE'
+            proto = 'HDS'
             medias = self.yle_media_descriptor(mediakanta_id, media_id, proto)
             if not medias:
                 return FailedClip(pageurl, 'Failed to parse media object')
