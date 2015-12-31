@@ -308,6 +308,9 @@ class BackendFactory(object):
     def __init__(self, hds_backend):
         self.hds_backend = hds_backend
 
+    def __str__(self):
+        return 'HDS backend: %s' % self.hds_backend
+
     def hds(self):
         if self.hds_backend == self.YOUTUBEDL:
             return YoutubeDLHDSDump
@@ -1247,7 +1250,7 @@ class RetryingDownloader(object):
         if self.backends:
             backend = self.backends.pop(0)
             if debug:
-                log('Streaming backend %s' % str(backend))
+                log(str(backend))
             return self.wrapped_class(backend)
         else:
             return None
