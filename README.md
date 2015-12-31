@@ -25,7 +25,10 @@ Installation
 * pycrypto
 * PHP interpreter
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
-* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at http://rtmpdump.mplayerhq.hu/. Required only when downloading Areena audio streams.)
+
+Optionally (for downloading Areena audio streams):
+
+* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at http://rtmpdump.mplayerhq.hu/)
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:

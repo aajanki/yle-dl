@@ -18,8 +18,10 @@ Asennus
 * pycrypto
 * PHP-tulkki
 * PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
-* rtmpdump (2.4 tai uudempi. Tarvitaan vain Areenan radio-ohjelmien
-  lataamiseen)
+
+Areenan radio-ohjelmien lataamiseen tarvitaan lisäksi:
+
+* rtmpdump (2.4 tai uudempi)
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
 polkuineen php.ini-tiedostoon

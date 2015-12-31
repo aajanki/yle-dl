@@ -2,6 +2,13 @@ download videos from Yle servers
 Copyright 2009-2015 Antti Ajanki
 Distributed under the GPL v3
 
+31 Dec 2015, Version 2.10.0
+
+- Support for downloading Areena HTML5 videos
+- Removed the --protocol switch
+- New --backend switch for selecting between AdobeHDS.php and youtube-dl
+- rtmpdump is now required only when downloading Areena audio streams
+
 20 Dec 2015, Version 2.9.1
 
 - Fixed downloading of Areena live radio streams
