@@ -1373,8 +1373,6 @@ class BaseDownloader(object):
         return x or u'ylevideo'
 
     def output_filename(self):
-        import pdb; pdb.set_trace()
-        
         resume_job = (self.is_resume_job(self.extra_argv) and
                       self.resume_supported())
         return (self.outputfile_from_args(self.extra_argv) or
