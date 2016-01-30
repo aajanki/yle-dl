@@ -347,7 +347,6 @@ class AreenaUtils(object):
         decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
         return decrypter.decrypt(ciphertext)[:-padlen]
 
-
     def download_subtitles(self, subtitles, filters, videofilename):
         if not filters.hardsubs:
             preferred_lang = filters.sublang
