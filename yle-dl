@@ -1350,7 +1350,7 @@ class BaseDownloader(object):
             return None
 
         prev = None
-        args = list(args_in) # copy
+        args = list(args_in)  # copy
         while args:
             opt = args.pop()
             if opt in ('-o', '--flv'):
