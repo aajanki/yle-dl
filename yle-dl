@@ -24,6 +24,7 @@ This script downloads video and audio streams from Yle Areena
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 import sys
 import urllib
 import urllib2
@@ -733,7 +734,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 print_url = clip.streamurl.to_episode_url()
             else:
                 print_url = clip.streamurl.to_url()
-            print print_url.encode(enc, 'replace')
+            print(print_url.encode(enc, 'replace'))
             return RD_SUCCESS
 
         return self.process(print_clip_url, url, filters)
@@ -748,7 +749,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def print_titles(self, url, filters):
         def print_clip_title(clip):
             enc = sys.getfilesystemencoding()
-            print clip.title.encode(enc, 'replace')
+            print(clip.title.encode(enc, 'replace'))
             return RD_SUCCESS
 
         return self.process(print_clip_title, url, filters)
