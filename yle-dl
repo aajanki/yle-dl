@@ -1436,13 +1436,13 @@ class ExternalDownloader(BaseDownloader):
             return RD_FAILED
 
     def _sigterm_when_parent_dies(self):
-       PR_SET_PDEATHSIG = 1
+        PR_SET_PDEATHSIG = 1
 
-       try:
-           libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
-       except AttributeError:
-           # libc is None or libc does not contain prctl
-           pass
+        try:
+            libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+        except AttributeError:
+            # libc is None or libc does not contain prctl
+            pass
 
 
 ### Download stream by delegating to rtmpdump ###
