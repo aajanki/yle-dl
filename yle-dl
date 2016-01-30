@@ -364,7 +364,7 @@ class AreenaUtils(object):
                             log(u'Subtitles saved to ' + filename)
                             if preferred_lang != 'all':
                                 return
-                        except IOError, exc:
+                        except IOError as exc:
                             log(u'Failed to download subtitles at %s: %s' % (sub.url, exc))
 
     def add_BOM(self, filename):
@@ -1430,7 +1430,7 @@ class ExternalDownloader(BaseDownloader):
                 # The process died before we killed it.
                 pass
             return RD_INCOMPLETE
-        except OSError, exc:
+        except OSError as exc:
             log(u'Failed to execute ' + ' '.join(args))
             log(unicode(exc.strerror, 'UTF-8', 'replace'))
             return RD_FAILED
@@ -1584,8 +1584,8 @@ class YoutubeDLHDSDump(BaseDownloader):
         try:
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
-        except urllib2.HTTPError, ex:
-            log(u'HTTP request failed: %s %s' % (ex.code, ex.reason))
+        except urllib2.HTTPError as exc:
+            log(u'HTTP request failed: %s %s' % (exc.code, exc.reason))
             return RD_FAILED
 
         if outputfile != '-':
@@ -1642,7 +1642,7 @@ class HTTPDump(BaseDownloader):
         enc = sys.getfilesystemencoding()
         try:
             urllib.urlretrieve(self.stream.to_url(), filename.encode(enc))
-        except IOError, exc:
+        except IOError as exc:
             log(u'Download failed: ' + unicode(exc.message, 'UTF-8', 'replace'))
             return RD_FAILED
 
