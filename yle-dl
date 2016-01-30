@@ -973,9 +973,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def filter_by_subtitles(self, streams, filters):
         if filters.hardsubs:
-            substreams = [s for s in streams if s.has_key('hardsubtitle')]
+            substreams = [s for s in streams if 'hardsubtitle' in s]
         else:
-            substreams = [s for s in streams if not s.has_key('hardsubtitle')]
+            substreams = [s for s in streams if 'hardsubtitle' not in s]
 
         if filters.sublang == 'all':
             filtered = substreams
