@@ -313,7 +313,7 @@ class JSONP(object):
         if not jsonp:
             return None
 
-        without_padding = re.sub(r'^[\w.]+\(|\);$','', jsonp)
+        without_padding = re.sub(r'^[\w.]+\(|\);$', '', jsonp)
         if without_padding[:1] != '{' or without_padding[-1:] != '}':
             return None
 
@@ -1169,7 +1169,40 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
             return None
 
         # Extracted from http://player.yle.fi/assets/js/mainEmbed.js
-        radioid_to_mediaid = {2:"ylex",100:"ylex-video",4:"yle-radio-vega",54:"radio-vega-huvudstadsregionen",59:"radio-vega-ostnyland",55:"radio-vega-aboland",57:"radio-vega-vastnyland",44:"yle-x3m",1:"yle-radio-1",48:"yle-puhe",17:"yle-klassinen",93:"yle-sami-radio",10:"ylen-aikainen",3:"yle-radio-suomi",50:"etela-karjalan-radio",61:"etela-savon-radio",81:"kainuun-radio",51:"kymenlaakson-radio",41:"lahden-radio",90:"lapin-radio",80:"oulu-radio",70:"pohjanmaan-radio",62:"pohjois-karjalan-radio",12:"radio-ita-uusimaa",42:"radio-hame",71:"radio-keski-pohjanmaa",30:"radio-keski-suomi",91:"radio-perameri",60:"radio-savo",21:"satakunnan-radio",40:"tampereen-radio",20:"turun-radio",11:"ylen-lantinen"}
+        radioid_to_mediaid = {
+            2: "ylex",
+            100: "ylex-video",
+            4: "yle-radio-vega",
+            54: "radio-vega-huvudstadsregionen",
+            59: "radio-vega-ostnyland",
+            55: "radio-vega-aboland",
+            57: "radio-vega-vastnyland",
+            44: "yle-x3m",
+            1: "yle-radio-1",
+            48: "yle-puhe",
+            17: "yle-klassinen",
+            93: "yle-sami-radio",
+            10: "ylen-aikainen",
+            3: "yle-radio-suomi",
+            50: "etela-karjalan-radio",
+            61: "etela-savon-radio",
+            81: "kainuun-radio",
+            51: "kymenlaakson-radio",
+            41: "lahden-radio",
+            90: "lapin-radio",
+            80: "oulu-radio",
+            70: "pohjanmaan-radio",
+            62: "pohjois-karjalan-radio",
+            12: "radio-ita-uusimaa",
+            42: "radio-hame",
+            71: "radio-keski-pohjanmaa",
+            30: "radio-keski-suomi",
+            91: "radio-perameri",
+            60: "radio-savo",
+            21: "satakunnan-radio",
+            40: "tampereen-radio",
+            20: "turun-radio",
+            11: "ylen-lantinen"}
 
         return radioid_to_mediaid[int(radioid.group(1))]
 
