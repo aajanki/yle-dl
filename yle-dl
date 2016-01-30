@@ -820,7 +820,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         unavailable = self.unavailable_clip(program_info, pageurl)
         return unavailable or \
-          self.create_clip(program_info, pid, pageurl, filters)
+            self.create_clip(program_info, pid, pageurl, filters)
 
     def unavailable_clip(self, program_info, pageurl):
         event = self.publish_event(program_info)
@@ -918,14 +918,14 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         titleObject = program.get('title')
         itemTitleObject = program.get('itemTitle')
         title = self.localized_text(titleObject) or \
-                self.localized_text(titleObject, 'sv') or \
-                self.localized_text(itemTitleObject) or \
-                self.localized_text(itemTitleObject, 'sv') or \
-                'areena'
+            self.localized_text(titleObject, 'sv') or \
+            self.localized_text(itemTitleObject) or \
+            self.localized_text(itemTitleObject, 'sv') or \
+            'areena'
 
         promoTitleObject = program.get('promotionTitle')
         promotionTitle = self.localized_text(promoTitleObject) or \
-          self.localized_text(promoTitleObject, 'sv')
+            self.localized_text(promoTitleObject, 'sv')
         if promotionTitle and not promotionTitle.startswith(title):
             title += ": " + promotionTitle
 
@@ -1027,7 +1027,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         for s in media.get('subtitles', []):
             uri = s.get('uri')
             lang = self.language_code_from_subtitle_uri(uri) or \
-              normalize_language_code(s.get('lang'), s.get('type'))
+                normalize_language_code(s.get('lang'), s.get('type'))
             if uri:
                 subtitles.append(Subtitle(uri, lang))
         return subtitles
@@ -1201,8 +1201,8 @@ class ElavaArkistoDownloader(Areena2014Downloader):
             return FailedClip(pageurl, mediaitem.get('message') or 'Failed with status 404')
 
         title = mediaitem.get('title') or \
-                mediaitem.get('originalTitle') or \
-                'elavaarkisto'
+            mediaitem.get('originalTitle') or \
+            'elavaarkisto'
         download_url = mediaitem.get('downloadUrl')
         if download_url:
             return Clip(pageurl, title, HTTPStreamUrl(download_url), [])
@@ -1419,8 +1419,8 @@ class ExternalDownloader(BaseDownloader):
             if platform.system() == 'Windows':
                 process = subprocess.Popen(encoded_args)
             else:
-                process = subprocess.Popen(encoded_args,
-                    preexec_fn=self._sigterm_when_parent_dies)
+                process = subprocess.Popen(
+                    encoded_args, preexec_fn=self._sigterm_when_parent_dies)
             return process.wait()
         except KeyboardInterrupt:
             try:
