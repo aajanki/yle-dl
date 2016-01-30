@@ -78,15 +78,18 @@ hds_binary = ['php', '/usr/local/share/yle-dl/AdobeHDS.php']
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
 
+
 def log(msg):
     enc = sys.stderr.encoding or 'UTF-8'
     sys.stderr.write(msg.encode(enc, 'backslashreplace'))
     sys.stderr.write('\n')
     sys.stderr.flush()
 
+
 def splashscreen():
     log(u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto' % version)
     log(u'Copyright (C) 2009-2015 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3')
+
 
 def usage():
     """Print the usage message to stderr"""
@@ -119,6 +122,7 @@ def usage():
     log(u'--resume                Resume a partial download')
     log(u'-V, --verbose           Show verbose debug output')
 
+
 def download_page(url):
     """Returns contents of a HTML page at url."""
     if url.find('://') == -1:
@@ -147,6 +151,7 @@ def download_page(url):
         log(u'Invalid URL: ' + url)
         return None
 
+
 def encode_url_utf8(url):
     """Encode the path component of url to percent-encoded UTF8."""
     (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
@@ -160,11 +165,13 @@ def encode_url_utf8(url):
 
     return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
 
+
 def int_or_else(x, default):
     try:
         return int(x)
     except ValueError:
         return default
+
 
 def downloader_factory(url, backends):
     if url.startswith('http://yle.fi/aihe/') or \
@@ -189,6 +196,7 @@ def downloader_factory(url, backends):
     else:
         return None
 
+
 def bitrate_from_arg(arg):
     if arg == 'best':
         return sys.maxint
@@ -200,6 +208,7 @@ def bitrate_from_arg(arg):
         except ValueError:
             log(u'Invalid bitrate %s, defaulting to best' % arg)
             arg = sys.maxint
+
 
 def which(program):
     """Search for program on $PATH and return the full path if found."""
@@ -221,9 +230,11 @@ def which(program):
 
     return None
 
+
 def partition(pred, iterable):
     it1, it2 = itertools.tee(iterable)
     return (itertools.ifilter(pred, it1), itertools.ifilterfalse(pred, it2))
+
 
 def parse_rtmp_single_component_app(rtmpurl):
     """Extract single path-component app and playpath from rtmpurl."""
@@ -256,6 +267,7 @@ def parse_rtmp_single_component_app(rtmpurl):
         playpath = 'mp3:' + playpath[:-4]
 
     return (app_only_rtmpurl, playpath, ext)
+
 
 def normalize_language_code(lang, subtype):
     if lang == 'all' or lang == 'none':
