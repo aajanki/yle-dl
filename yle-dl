@@ -139,7 +139,7 @@ def download_page(url):
             charset = 'iso-8859-1'
 
         return unicode(content, charset, 'replace')
-    except urllib2.URLError, exc:
+    except urllib2.URLError as exc:
         log(u"Can't read %s: %s" % (url, exc))
         return None
     except ValueError:
@@ -315,7 +315,7 @@ class BackendFactory(object):
     def is_valid_hds_backend(hds_backend):
         return (hds_backend == BackendFactory.ADOBEHDSPHP or
                 hds_backend == BackendFactory.YOUTUBEDL)
-    
+
     def __init__(self, hds_backend):
         self.hds_backend = hds_backend
 
@@ -393,7 +393,7 @@ class KalturaUtils(object):
             bitrates = [fl.get('bitrate', 0) for fl in flavors]
             log(u'Available bitrates: %s, maxbitrate = %s' %
                 (bitrates, filters.maxbitrate))
-        
+
         valid_bitrates = [fl for fl in flavors
                           if fl.get('bitrate', 0) <= filters.maxbitrate]
         if not valid_bitrates and len(flavors) >= 1:
@@ -432,7 +432,7 @@ class KalturaUtils(object):
             flavors_string = m.group(1).decode('unicode_escape').replace('\n', ' ')
         except UnicodeEncodeError:
             return []
-            
+
         try:
             flavors = json.loads(flavors_string)
         except ValueError:
@@ -862,7 +862,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             selected_media = self.select_yle_media(program_info, media_id, program_id, filters)
             if not selected_media:
                 return FailedClip(pageurl, 'Media not found')
-            
+
             streamurl = self.media_streamurl(selected_media, pageurl, filters)
             subtitles = self.media_subtitles(selected_media)
 
@@ -1756,7 +1756,7 @@ def main():
             log(u'Invalid backend: ' + bn)
             sys.exit(RD_FAILED)
         backends.append(BackendFactory(bn))
-        
+
     url = encode_url_utf8(url)
     dl = downloader_factory(url, backends)
     if not dl:
