@@ -423,7 +423,8 @@ class KalturaUtils(object):
     def load_mwembed(self, media_id, program_id):
         entryid = self.kaltura_entry_id(media_id)
         mwembed_url = 'http://cdnapi.kaltura.com/html5/html5lib/v2.37.1/mwEmbedFrame.php?&wid=_1955031&uiconf_id=32431531&cache_st=1442926927&entry_id=%s&flashvars\[streamerType\]=auto&flashvars\[EmbedPlayer.HidePosterOnStart\]=true&flashvars\[EmbedPlayer.OverlayControls\]=true&flashvars\[IframeCustomPluginCss1\]=%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css&flashvars\[mediaProxy.mediaPlayFrom\]=null&flashvars\[autoPlay\]=true&flashvars\[KalturaSupport.LeadWithHTML5\]=true&playerId=kaltura-%s-1&forceMobileHTML5=true&urid=2.37.1&callback=mwi_kaltura1320086810' % \
-                      (urllib.quote_plus(entryid), urllib.quote_plus(program_id))
+                      (urllib.quote_plus(entryid),
+                       urllib.quote_plus(program_id))
         mw = JSONP.load_jsonp(mwembed_url)
 
         if debug and mw:
@@ -441,7 +442,8 @@ class KalturaUtils(object):
             return []
 
         try:
-            flavors_string = m.group(1).decode('unicode_escape').replace('\n', ' ')
+            flavors_string = m.group(1).decode('unicode_escape').replace(
+                '\n', ' ')
         except UnicodeEncodeError:
             return []
 
@@ -638,14 +640,16 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         return self.episodeurl
 
     def create_downloader(self, clip_title, destdir, extra_argv):
-        return self.downloader_class(self, clip_title, destdir, extra_argv, self.maxbitrate)
+        return self.downloader_class(self, clip_title, destdir, extra_argv,
+                                     self.maxbitrate)
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
     def __init__(self, pageurl, streamurl, filters):
         AreenaRTMPStreamUrl.__init__(self, None, pageurl)
         rtmpstream = self.create_rtmpstream(streamurl)
-        self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl, False)
+        self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl,
+                                                          False)
         self.rtmp_params['app'] = self.rtmp_params['app'].split('/', 1)[0]
 
     def create_rtmpstream(self, streamurl):
@@ -694,7 +698,8 @@ class InvalidStreamUrl(object):
 
 
 class PAPIStream(object):
-    def __init__(self, connect, stream, videoBitrate, audioBitrate, hardSubtitles):
+    def __init__(self, connect, stream, videoBitrate, audioBitrate,
+                 hardSubtitles):
         self.connect = connect
         self.stream = stream
         self.videoBitrate = int_or_else(videoBitrate, 0)
@@ -871,7 +876,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             streamurl = KalturaHTML5StreamUrl(entry_id, flavor_id)
             subtitles = []
         else:
-            selected_media = self.select_yle_media(program_info, media_id, program_id, filters)
+            selected_media = self.select_yle_media(program_info, media_id,
+                                                   program_id, filters)
             if not selected_media:
                 return FailedClip(pageurl, 'Media not found')
 
@@ -1030,7 +1036,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return InvalidStreamUrl('Decrypting media URL failed')
 
         if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(pageurl, decodedurl, filters, self.backend)
+            return Areena2014HDSStreamUrl(pageurl, decodedurl, filters,
+                                          self.backend)
         else:
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
@@ -1106,7 +1113,8 @@ class YleUutisetDownloader(Areena2014Downloader):
             for url in areena_urls:
                 kwcopy = dict(kwargs)
                 kwcopy['url'] = url
-                method = getattr(super(YleUutisetDownloader, self), method_name)
+                method = getattr(super(YleUutisetDownloader, self),
+                                 method_name)
                 res = method(*args, **kwcopy)
                 if res != RD_SUCCESS:
                     overall_status = res
@@ -1143,7 +1151,8 @@ class Clip(object):
 
 class FailedClip(Clip):
     def __init__(self, pageurl, errormessage):
-        Clip.__init__(self, pageurl, None, InvalidStreamUrl(errormessage), None)
+        Clip.__init__(self, pageurl, None, InvalidStreamUrl(errormessage),
+                      None)
 
 
 class Subtitle(object):
@@ -1523,7 +1532,8 @@ class RTMPDump(ExternalDownloader):
 
 class HDSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, destdir, extra_argv, maxbitrate):
-        ExternalDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
+        ExternalDownloader.__init__(self, stream, clip_title, destdir,
+                                    extra_argv)
         self.quality_options = self._bitrate_to_quality(maxbitrate)
 
     def resume_supported(self):
@@ -1688,7 +1698,8 @@ class HTTPDump(BaseDownloader):
         try:
             urllib.urlretrieve(self.stream.to_url(), filename.encode(enc))
         except IOError as exc:
-            log(u'Download failed: ' + unicode(exc.message, 'UTF-8', 'replace'))
+            log(u'Download failed: ' +
+                unicode(exc.message, 'UTF-8', 'replace'))
             return RD_FAILED
 
         self.log_output_file(filename, True)
