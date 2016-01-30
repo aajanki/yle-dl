@@ -795,7 +795,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def is_playlist_page(self, html):
         playlist_meta = '<meta property="og:type" content="video.tv_show">'
         player_class = 'class="yle_areena_player"'
-        return playlist_meta in html or not player_class in html
+        return playlist_meta in html or player_class not in html
 
     def process_single_episode(self, clipfunc, url, filters):
         clip = self.clip_for_url(url, filters)
