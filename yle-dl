@@ -883,7 +883,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
                           'id=%s&callback=yleEmbed.startPlayerCallback&' \
                           'mediaId=%s&protocol=%s&client=areena-flash-player&instance=1' % \
-            (urllib.quote_plus(media_id), urllib.quote_plus(program_id), \
+            (urllib.quote_plus(media_id), urllib.quote_plus(program_id),
              urllib.quote_plus(protocol))
         media = JSONP.load_jsonp(media_jsonp_url)
 
@@ -1573,7 +1573,7 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         dlopts = {
             'nopart': True,
-            'continuedl': outputfile != '-' and \
+            'continuedl': outputfile != '-' and
                 self.is_resume_job(self.extra_argv)
         }
 
