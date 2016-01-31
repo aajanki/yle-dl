@@ -1,5 +1,7 @@
 Download videos from Yle servers
 
+[![Build Status](https://travis-ci.org/aajanki/yle-dl.svg?branch=master)](https://travis-ci.org/aajanki/yle-dl)
+
 Copyright (C) 2010-2015 Antti Ajanki, antti.ajanki@iki.fi
 
 License: GPLv3
