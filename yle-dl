@@ -795,7 +795,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def is_playlist_page(self, html):
         playlist_meta = '<meta property="og:type" content="video.tv_show">'
         player_class = 'class="yle_areena_player"'
-        return playlist_meta in html or not player_class in html
+        return playlist_meta in html or player_class not in html
 
     def process_single_episode(self, clipfunc, url, filters):
         clip = self.clip_for_url(url, filters)
@@ -973,9 +973,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def filter_by_subtitles(self, streams, filters):
         if filters.hardsubs:
-            substreams = [s for s in streams if s.has_key('hardsubtitle')]
+            substreams = [s for s in streams if 'hardsubtitle' in s]
         else:
-            substreams = [s for s in streams if not s.has_key('hardsubtitle')]
+            substreams = [s for s in streams if 'hardsubtitle' not in s]
 
         if filters.sublang == 'all':
             filtered = substreams
