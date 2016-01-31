@@ -1,0 +1,28 @@
+language: python
+
+python:
+ - pypy
+ - pypy3
+ - 2.6
+ - 2.7
+ - 3.2
+ - 3.3
+ - 3.4
+ - 3.5
+
+sudo: false
+
+install:
+ - pip install pyflakes
+
+script:
+ - pyflakes yle-dl
+
+after_script:
+ - pip install pep8
+ - pep8 --statistics --count yle-dl
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - python: 3.2
