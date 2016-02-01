@@ -78,15 +78,18 @@ hds_binary = ['php', '/usr/local/share/yle-dl/AdobeHDS.php']
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
 
+
 def log(msg):
     enc = sys.stderr.encoding or 'UTF-8'
     sys.stderr.write(msg.encode(enc, 'backslashreplace'))
     sys.stderr.write('\n')
     sys.stderr.flush()
 
+
 def splashscreen():
     log(u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto' % version)
     log(u'Copyright (C) 2009-2015 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3')
+
 
 def usage():
     """Print the usage message to stderr"""
@@ -119,6 +122,7 @@ def usage():
     log(u'--resume                Resume a partial download')
     log(u'-V, --verbose           Show verbose debug output')
 
+
 def download_page(url):
     """Returns contents of a HTML page at url."""
     if url.find('://') == -1:
@@ -147,6 +151,7 @@ def download_page(url):
         log(u'Invalid URL: ' + url)
         return None
 
+
 def encode_url_utf8(url):
     """Encode the path component of url to percent-encoded UTF8."""
     (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
@@ -160,11 +165,13 @@ def encode_url_utf8(url):
 
     return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
 
+
 def int_or_else(x, default):
     try:
         return int(x)
     except ValueError:
         return default
+
 
 def downloader_factory(url, backends):
     if url.startswith('http://yle.fi/aihe/') or \
@@ -189,6 +196,7 @@ def downloader_factory(url, backends):
     else:
         return None
 
+
 def bitrate_from_arg(arg):
     if arg == 'best':
         return sys.maxint
@@ -200,6 +208,7 @@ def bitrate_from_arg(arg):
         except ValueError:
             log(u'Invalid bitrate %s, defaulting to best' % arg)
             arg = sys.maxint
+
 
 def which(program):
     """Search for program on $PATH and return the full path if found."""
@@ -221,9 +230,11 @@ def which(program):
 
     return None
 
+
 def partition(pred, iterable):
     it1, it2 = itertools.tee(iterable)
     return (itertools.ifilter(pred, it1), itertools.ifilterfalse(pred, it2))
+
 
 def parse_rtmp_single_component_app(rtmpurl):
     """Extract single path-component app and playpath from rtmpurl."""
@@ -256,6 +267,7 @@ def parse_rtmp_single_component_app(rtmpurl):
         playpath = 'mp3:' + playpath[:-4]
 
     return (app_only_rtmpurl, playpath, ext)
+
 
 def normalize_language_code(lang, subtype):
     if lang == 'all' or lang == 'none':
@@ -301,7 +313,7 @@ class JSONP(object):
         if not jsonp:
             return None
 
-        without_padding = re.sub(r'^[\w.]+\(|\);$','', jsonp)
+        without_padding = re.sub(r'^[\w.]+\(|\);$', '', jsonp)
         if without_padding[:1] != '{' or without_padding[-1:] != '}':
             return None
 
@@ -346,7 +358,6 @@ class AreenaUtils(object):
 
         decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
         return decrypter.decrypt(ciphertext)[:-padlen]
-
 
     def download_subtitles(self, subtitles, filters, videofilename):
         if not filters.hardsubs:
@@ -412,7 +423,8 @@ class KalturaUtils(object):
     def load_mwembed(self, media_id, program_id):
         entryid = self.kaltura_entry_id(media_id)
         mwembed_url = 'http://cdnapi.kaltura.com/html5/html5lib/v2.37.1/mwEmbedFrame.php?&wid=_1955031&uiconf_id=32431531&cache_st=1442926927&entry_id=%s&flashvars\[streamerType\]=auto&flashvars\[EmbedPlayer.HidePosterOnStart\]=true&flashvars\[EmbedPlayer.OverlayControls\]=true&flashvars\[IframeCustomPluginCss1\]=%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css&flashvars\[mediaProxy.mediaPlayFrom\]=null&flashvars\[autoPlay\]=true&flashvars\[KalturaSupport.LeadWithHTML5\]=true&playerId=kaltura-%s-1&forceMobileHTML5=true&urid=2.37.1&callback=mwi_kaltura1320086810' % \
-                      (urllib.quote_plus(entryid), urllib.quote_plus(program_id))
+                      (urllib.quote_plus(entryid),
+                       urllib.quote_plus(program_id))
         mw = JSONP.load_jsonp(mwembed_url)
 
         if debug and mw:
@@ -430,7 +442,8 @@ class KalturaUtils(object):
             return []
 
         try:
-            flavors_string = m.group(1).decode('unicode_escape').replace('\n', ' ')
+            flavors_string = m.group(1).decode('unicode_escape').replace(
+                '\n', ' ')
         except UnicodeEncodeError:
             return []
 
@@ -627,14 +640,16 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         return self.episodeurl
 
     def create_downloader(self, clip_title, destdir, extra_argv):
-        return self.downloader_class(self, clip_title, destdir, extra_argv, self.maxbitrate)
+        return self.downloader_class(self, clip_title, destdir, extra_argv,
+                                     self.maxbitrate)
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
     def __init__(self, pageurl, streamurl, filters):
         AreenaRTMPStreamUrl.__init__(self, None, pageurl)
         rtmpstream = self.create_rtmpstream(streamurl)
-        self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl, False)
+        self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl,
+                                                          False)
         self.rtmp_params['app'] = self.rtmp_params['app'].split('/', 1)[0]
 
     def create_rtmpstream(self, streamurl):
@@ -683,7 +698,8 @@ class InvalidStreamUrl(object):
 
 
 class PAPIStream(object):
-    def __init__(self, connect, stream, videoBitrate, audioBitrate, hardSubtitles):
+    def __init__(self, connect, stream, videoBitrate, audioBitrate,
+                 hardSubtitles):
         self.connect = connect
         self.stream = stream
         self.videoBitrate = int_or_else(videoBitrate, 0)
@@ -821,7 +837,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         unavailable = self.unavailable_clip(program_info, pageurl)
         return unavailable or \
-          self.create_clip(program_info, pid, pageurl, filters)
+            self.create_clip(program_info, pid, pageurl, filters)
 
     def unavailable_clip(self, program_info, pageurl):
         event = self.publish_event(program_info)
@@ -860,7 +876,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             streamurl = KalturaHTML5StreamUrl(entry_id, flavor_id)
             subtitles = []
         else:
-            selected_media = self.select_yle_media(program_info, media_id, program_id, filters)
+            selected_media = self.select_yle_media(program_info, media_id,
+                                                   program_id, filters)
             if not selected_media:
                 return FailedClip(pageurl, 'Media not found')
 
@@ -919,14 +936,14 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         titleObject = program.get('title')
         itemTitleObject = program.get('itemTitle')
         title = self.localized_text(titleObject) or \
-                self.localized_text(titleObject, 'sv') or \
-                self.localized_text(itemTitleObject) or \
-                self.localized_text(itemTitleObject, 'sv') or \
-                'areena'
+            self.localized_text(titleObject, 'sv') or \
+            self.localized_text(itemTitleObject) or \
+            self.localized_text(itemTitleObject, 'sv') or \
+            'areena'
 
         promoTitleObject = program.get('promotionTitle')
         promotionTitle = self.localized_text(promoTitleObject) or \
-          self.localized_text(promoTitleObject, 'sv')
+            self.localized_text(promoTitleObject, 'sv')
         if promotionTitle and not promotionTitle.startswith(title):
             title += ": " + promotionTitle
 
@@ -1019,7 +1036,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return InvalidStreamUrl('Decrypting media URL failed')
 
         if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(pageurl, decodedurl, filters, self.backend)
+            return Areena2014HDSStreamUrl(pageurl, decodedurl, filters,
+                                          self.backend)
         else:
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
@@ -1028,7 +1046,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         for s in media.get('subtitles', []):
             uri = s.get('uri')
             lang = self.language_code_from_subtitle_uri(uri) or \
-              normalize_language_code(s.get('lang'), s.get('type'))
+                normalize_language_code(s.get('lang'), s.get('type'))
             if uri:
                 subtitles.append(Subtitle(uri, lang))
         return subtitles
@@ -1095,7 +1113,8 @@ class YleUutisetDownloader(Areena2014Downloader):
             for url in areena_urls:
                 kwcopy = dict(kwargs)
                 kwcopy['url'] = url
-                method = getattr(super(YleUutisetDownloader, self), method_name)
+                method = getattr(super(YleUutisetDownloader, self),
+                                 method_name)
                 res = method(*args, **kwcopy)
                 if res != RD_SUCCESS:
                     overall_status = res
@@ -1132,7 +1151,8 @@ class Clip(object):
 
 class FailedClip(Clip):
     def __init__(self, pageurl, errormessage):
-        Clip.__init__(self, pageurl, None, InvalidStreamUrl(errormessage), None)
+        Clip.__init__(self, pageurl, None, InvalidStreamUrl(errormessage),
+                      None)
 
 
 class Subtitle(object):
@@ -1158,7 +1178,40 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
             return None
 
         # Extracted from http://player.yle.fi/assets/js/mainEmbed.js
-        radioid_to_mediaid = {2:"ylex",100:"ylex-video",4:"yle-radio-vega",54:"radio-vega-huvudstadsregionen",59:"radio-vega-ostnyland",55:"radio-vega-aboland",57:"radio-vega-vastnyland",44:"yle-x3m",1:"yle-radio-1",48:"yle-puhe",17:"yle-klassinen",93:"yle-sami-radio",10:"ylen-aikainen",3:"yle-radio-suomi",50:"etela-karjalan-radio",61:"etela-savon-radio",81:"kainuun-radio",51:"kymenlaakson-radio",41:"lahden-radio",90:"lapin-radio",80:"oulu-radio",70:"pohjanmaan-radio",62:"pohjois-karjalan-radio",12:"radio-ita-uusimaa",42:"radio-hame",71:"radio-keski-pohjanmaa",30:"radio-keski-suomi",91:"radio-perameri",60:"radio-savo",21:"satakunnan-radio",40:"tampereen-radio",20:"turun-radio",11:"ylen-lantinen"}
+        radioid_to_mediaid = {
+            2: "ylex",
+            100: "ylex-video",
+            4: "yle-radio-vega",
+            54: "radio-vega-huvudstadsregionen",
+            59: "radio-vega-ostnyland",
+            55: "radio-vega-aboland",
+            57: "radio-vega-vastnyland",
+            44: "yle-x3m",
+            1: "yle-radio-1",
+            48: "yle-puhe",
+            17: "yle-klassinen",
+            93: "yle-sami-radio",
+            10: "ylen-aikainen",
+            3: "yle-radio-suomi",
+            50: "etela-karjalan-radio",
+            61: "etela-savon-radio",
+            81: "kainuun-radio",
+            51: "kymenlaakson-radio",
+            41: "lahden-radio",
+            90: "lapin-radio",
+            80: "oulu-radio",
+            70: "pohjanmaan-radio",
+            62: "pohjois-karjalan-radio",
+            12: "radio-ita-uusimaa",
+            42: "radio-hame",
+            71: "radio-keski-pohjanmaa",
+            30: "radio-keski-suomi",
+            91: "radio-perameri",
+            60: "radio-savo",
+            21: "satakunnan-radio",
+            40: "tampereen-radio",
+            20: "turun-radio",
+            11: "ylen-lantinen"}
 
         return radioid_to_mediaid[int(radioid.group(1))]
 
@@ -1202,8 +1255,8 @@ class ElavaArkistoDownloader(Areena2014Downloader):
             return FailedClip(pageurl, mediaitem.get('message') or 'Failed with status 404')
 
         title = mediaitem.get('title') or \
-                mediaitem.get('originalTitle') or \
-                'elavaarkisto'
+            mediaitem.get('originalTitle') or \
+            'elavaarkisto'
         download_url = mediaitem.get('downloadUrl')
         if download_url:
             return Clip(pageurl, title, HTTPStreamUrl(download_url), [])
@@ -1351,7 +1404,7 @@ class BaseDownloader(object):
             return None
 
         prev = None
-        args = list(args_in) # copy
+        args = list(args_in)  # copy
         while args:
             opt = args.pop()
             if opt in ('-o', '--flv'):
@@ -1420,8 +1473,8 @@ class ExternalDownloader(BaseDownloader):
             if platform.system() == 'Windows':
                 process = subprocess.Popen(encoded_args)
             else:
-                process = subprocess.Popen(encoded_args,
-                    preexec_fn=self._sigterm_when_parent_dies)
+                process = subprocess.Popen(
+                    encoded_args, preexec_fn=self._sigterm_when_parent_dies)
             return process.wait()
         except KeyboardInterrupt:
             try:
@@ -1437,13 +1490,13 @@ class ExternalDownloader(BaseDownloader):
             return RD_FAILED
 
     def _sigterm_when_parent_dies(self):
-       PR_SET_PDEATHSIG = 1
+        PR_SET_PDEATHSIG = 1
 
-       try:
-           libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
-       except AttributeError:
-           # libc is None or libc does not contain prctl
-           pass
+        try:
+            libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
+        except AttributeError:
+            # libc is None or libc does not contain prctl
+            pass
 
 
 ### Download stream by delegating to rtmpdump ###
@@ -1479,7 +1532,8 @@ class RTMPDump(ExternalDownloader):
 
 class HDSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, destdir, extra_argv, maxbitrate):
-        ExternalDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
+        ExternalDownloader.__init__(self, stream, clip_title, destdir,
+                                    extra_argv)
         self.quality_options = self._bitrate_to_quality(maxbitrate)
 
     def resume_supported(self):
@@ -1644,7 +1698,8 @@ class HTTPDump(BaseDownloader):
         try:
             urllib.urlretrieve(self.stream.to_url(), filename.encode(enc))
         except IOError as exc:
-            log(u'Download failed: ' + unicode(exc.message, 'UTF-8', 'replace'))
+            log(u'Download failed: ' +
+                unicode(exc.message, 'UTF-8', 'replace'))
             return RD_FAILED
 
         self.log_output_file(filename, True)
