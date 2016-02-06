@@ -73,7 +73,7 @@ Installation on Mac OS X
 ```
 brew install --HEAD rtmpdump
 brew install homebrew/php/php55-mcrypt
-pip install -r requirements.txt
+pip install pycrypto
 ```
 
 Enable the PHP extensions by appending the following lines with the

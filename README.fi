@@ -51,7 +51,7 @@ Asenna PHP-tulkki: https://secure.php.net/manual/en/install.macosx.php
 
 brew install --HEAD rtmpdump
 brew install homebrew/php/php55-mcrypt
-pip install -r requirements.txt
+pip install pycrypto
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
 polkuineen php.ini-tiedostoon
