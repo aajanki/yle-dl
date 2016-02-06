@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from setuptools import setup
 
 long_description = \
@@ -12,8 +13,12 @@ Requires a PHP interpreter and the following PHP extensions: bcmath,
 curl, mcrypt and SimpleXML.
 """
 
+version = re.\
+  search(r"^version *= *'(.+)'$", open('yle-dl').read(), re.MULTILINE).\
+  group(1)
+
 setup(name='yle-dl',
-      version='2.10.0',
+      version=version,
       description='Download videos from Yle servers',
       long_description=long_description,
       author='Antti Ajanki',
