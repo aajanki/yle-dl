@@ -74,6 +74,7 @@ excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
 hds_binary = ['php', '/usr/local/share/yle-dl/AdobeHDS.php']
+manifest_proxy = None
 
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
@@ -112,6 +113,8 @@ def usage():
     log(u'--rtmpdump path         Set path to rtmpdump binary')
     log(u'--adobehds cmd          Set command for executing AdobeHDS.php script')
     log(u'                        Default: "php /usr/local/share/yle-dl/AdobeHDS.php"')
+    log(u'--proxy uri             Proxy for downloading stream manifests')
+    log(u'                        Example: --proxy socks5://localhost:7777')
     log(u'--destdir dir           Save files to dir')
     log(u'--backend be            Downloaders that are tried until one of them')
     log(u'                        succeeds (a comma-separated list). Possible values:')
@@ -1550,28 +1553,32 @@ class HDSDump(ExternalDownloader):
             return []
 
     def build_args(self):
-        args = list(hds_binary)
-        args.append('--manifest')
-        args.append(self.stream.to_url())
-        args.append('--delete')
-        args.append('--outfile')
-        args.append(self.output_filename())
-        args.extend(self.quality_options)
-        if debug:
-            args.append('--debug')
-        return args
+        return self.adobehds_command_line([
+            '--delete',
+            '--outfile', self.output_filename()])
 
     def pipe(self):
-        args = list(hds_binary)
-        args.append('--manifest')
-        args.append(self.stream.to_url())
-        args.extend(self.quality_options)
-        args.append('--play')
-        if debug:
-            args.append('--debug')
+        args = self.adobehds_command_line(['--play'])
         self.external_downloader(args)
         self.cleanup_cookies()
         return RD_SUCCESS
+
+    def adobehds_command_line(self, extra_args):
+        global hds_binary
+        global manifest_proxy
+
+        args = list(hds_binary)
+        args.append('--manifest')
+        args.append(self.stream.to_url())
+        args.extend(self.quality_options)
+        if manifest_proxy:
+            args.append('--proxy')
+            args.append(manifest_proxy)
+        if debug:
+            args.append('--debug')
+        if extra_args:
+            args.extend(extra_args)
+        return args
 
     def outputfile_from_external_args(self, args_in):
         if not args_in:
@@ -1718,6 +1725,7 @@ def main():
     global debug
     global rtmpdump_binary
     global hds_binary
+    global manifest_proxy
     latest_episode = False
     url_only = False
     title_only = False
@@ -1786,6 +1794,9 @@ def main():
                 rtmpdumpargs.extend([arg, outputfile])
                 if outputfile == '-':
                     pipe = True
+        elif arg == '--proxy':
+            if argv:
+                manifest_proxy = argv.pop(0)
         else:
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:

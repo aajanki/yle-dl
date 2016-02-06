@@ -156,6 +156,8 @@ yle-dl options:
 
 * `--adobehds cmd`    Set command for executing AdobeHDS.php script
 
+* `--proxy uri`       Proxy for downloading stream manifests. Example: `--proxy socks5://localhost:7777`
+
 * `--destdir dir`     Save files to dir
 
 * `--pipe`            Dump stream to stdout for piping to media player. E.g. `yle-dl --pipe URL | vlc -`.

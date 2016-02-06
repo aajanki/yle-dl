@@ -120,6 +120,8 @@ Valitsimet:
 --maxbitrate br Rajoita ladattavan striimin bittinopeutta (kB/s)
 --rtmpdump path Polku rtmpdump-ohjelmaan
 --adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
+--proxy uri     Käytä SOCKS-proxyä striimin metadatan lataamiseen
+                Esimerkki --proxy socks5://localhost:7777
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 --pipe          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
 --backend vals  Järjestys, jossa lataajia kokeillaan kunnes jokin niistä
