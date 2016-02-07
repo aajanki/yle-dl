@@ -19,8 +19,8 @@
         <h2>Lataa videoita Yle Areenasta</h2>
 
         <section id="downloads">
-          <a href="https://github.com/aajanki/yle-dl/zipball/2.10.0" class="btn">Download as .zip</a>
-          <a href="https://github.com/aajanki/yle-dl/tarball/2.10.0" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/aajanki/yle-dl/zipball/2.10.1" class="btn">Download as .zip</a>
+          <a href="https://github.com/aajanki/yle-dl/tarball/2.10.1" class="btn">Download as .tar.gz</a>
           <a href="https://github.com/aajanki/yle-dl" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
@@ -67,10 +67,17 @@ valitsimia. Tärkeimmät valitsimet:</p>
 
 <p>
 <dl>
+<dt>-o filename</dt>
+<dd>Tallenna striimi nimettyyn tiedostoon</dd>
+<dt>--destdir dir</dt>
+<dd>Aseta hakemisto mihin tiedostot tallennetaan</dd>
 <dt>--latestepisode</dt>
 <dd>Lataa viimeisimmän jakson sivulta.</dd>
-<dt>--showurl</dt>
-<dd>Tulostaa librtmp-yhteensopivan video-URLin, ei lataa tiedostoa.</dd>
+<dt>--showtitle</dt>
+<dd>Tulostaa videon otsikon, ei lataa tiedostoa</dd>
+<dt>--proxy uri</dt>
+<dd>Käytä SOCKS-proxyä striimin metadatan lataamiseen. Esimerkiksi
+<code>--proxy socks5://localhost:7777</code></dd>
 </dl>
 </p>
 
@@ -105,7 +112,7 @@ komentamalla <code>yle-dl --help</code></p>
 
 <h3>Lataa lähdekoodi</h3>
 
-<p><a href="https://github.com/aajanki/yle-dl/tarball/2.10.0">Vakaa versio: yle-dl 2.10.0</a> (31.12.2015)</p>
+<p><a href="https://github.com/aajanki/yle-dl/tarball/2.10.1">Vakaa versio: yle-dl 2.10.1</a> (7.2.2016)</p>
 
 <p><a href="https://github.com/aajanki/yle-dl/tarball/master">Kehitysversio</a></p>
 
