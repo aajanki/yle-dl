@@ -584,7 +584,8 @@
               LogError("Access Denied! Unable to download the manifest.");
           else if ($status != 200)
               LogError("Unable to download the manifest");
-          $xml = simplexml_load_string(trim($cc->response));
+          $xml = preg_replace('/&(?!amp;)/', '&amp;', trim($cc->response));
+          $xml = simplexml_load_string($xml);
           if (!$xml)
               LogError("Failed to load xml");
           $namespace = $xml->getDocNamespaces();
@@ -679,7 +680,7 @@
                   $mediaEntry =& $this->media[$bitrate];
 
                   $mediaEntry['baseUrl'] = $baseUrl;
-                  $mediaEntry['url']     = $stream['url'];
+                  $mediaEntry['url']     = preg_replace('/ /', '%20', $stream['url']);
                   if (isRtmpUrl($mediaEntry['baseUrl']) or isRtmpUrl($mediaEntry['url']))
                       LogError("Provided manifest is not a valid HDS manifest");
 
