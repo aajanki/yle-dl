@@ -1,6 +1,12 @@
 download videos from Yle servers
-Copyright 2009-2015 Antti Ajanki
+Copyright 2009-2016 Antti Ajanki
 Distributed under the GPL v3
+
+7 Feb 2016, Version 2.10.1
+
+- Subtitle language selection was broken
+- Resume HDS streams with --resume
+- Support for SOCKS and HTTP proxies with --proxy
 
 31 Dec 2015, Version 2.10.0
 
