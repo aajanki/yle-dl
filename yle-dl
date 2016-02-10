@@ -74,7 +74,7 @@ excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
 hds_binary = ['php', '/usr/local/share/yle-dl/AdobeHDS.php']
-manifest_proxy = None
+stream_proxy = None
 
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
@@ -113,7 +113,7 @@ def usage():
     log(u'--rtmpdump path         Set path to rtmpdump binary')
     log(u'--adobehds cmd          Set command for executing AdobeHDS.php script')
     log(u'                        Default: "php /usr/local/share/yle-dl/AdobeHDS.php"')
-    log(u'--proxy uri             Proxy for downloading stream manifests')
+    log(u'--proxy uri             Proxy for downloading streams')
     log(u'                        Example: --proxy socks5://localhost:7777')
     log(u'--destdir dir           Save files to dir')
     log(u'--backend be            Downloaders that are tried until one of them')
@@ -1565,15 +1565,16 @@ class HDSDump(ExternalDownloader):
 
     def adobehds_command_line(self, extra_args):
         global hds_binary
-        global manifest_proxy
+        global stream_proxy
 
         args = list(hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
-        if manifest_proxy:
+        if stream_proxy:
             args.append('--proxy')
-            args.append(manifest_proxy)
+            args.append(stream_proxy)
+            args.append('--fproxy')
         if debug:
             args.append('--debug')
         if extra_args:
@@ -1629,12 +1630,12 @@ class YoutubeDLHDSDump(BaseDownloader):
             self.log_output_file(outputfile)
 
         proxy = None
-        if manifest_proxy:
-            if (manifest_proxy.startswith('socks4://') or
-                 manifest_proxy.startswith('socks5://')):
+        if stream_proxy:
+            if (stream_proxy.startswith('socks4://') or
+                 stream_proxy.startswith('socks5://')):
                 log(u'Warning: youtube-dl does not support a SOCKS proxy')
             else:
-                proxy = manifest_proxy
+                proxy = stream_proxy
 
         ydlopts = {
             'logtostderr': True,
@@ -1734,7 +1735,7 @@ def main():
     global debug
     global rtmpdump_binary
     global hds_binary
-    global manifest_proxy
+    global stream_proxy
     latest_episode = False
     url_only = False
     title_only = False
@@ -1805,7 +1806,7 @@ def main():
                     pipe = True
         elif arg == '--proxy':
             if argv:
-                manifest_proxy = argv.pop(0)
+                stream_proxy = argv.pop(0)
         else:
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:
