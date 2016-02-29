@@ -761,6 +761,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def pipe(self, url, filters):
         def pipe_clip(clip):
             dl = clip.streamurl.create_downloader(clip.title, '', [])
+            outputfile = dl.output_filename()
+            self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe()
 
         return self.process(pipe_clip, url, filters)
@@ -1740,7 +1742,7 @@ def main():
     url_only = False
     title_only = False
     print_episode_url = False
-    sublang = 'all'
+    sublang = ''
     hardsubs = False
     bitratearg = sys.maxint
     show_usage = False
@@ -1840,6 +1842,9 @@ def main():
         log(u'Unsupported URL %s.' % url)
         log(u'Is this really a Yle video page?')
         sys.exit(RD_FAILED)
+
+    if sublang == '':
+        sublang = 'none' if pipe else 'all'
 
     maxbitrate = bitrate_from_arg(bitratearg)
     sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
