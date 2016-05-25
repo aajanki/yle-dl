@@ -47,8 +47,24 @@ extension=/path/to/mcrypt.so
 sudo make install
 ```
 
-Installation on Debian/Ubuntu
------------------------------
+Installation on Debian unstable (may 2016)/Ubuntu 16.04
+-------------------------------------------------------
+
+### 1. Install the dependencies ###
+
+```
+sudo apt-get install rtmpdump python python-crypto php-cli php-curl php-mcrypt php-xml php-bcmath
+sudo phpenmod mcrypt
+```
+
+### 2. Install yle-dl ###
+
+```
+sudo make install
+```
+
+Installation on Debian 8/Ubuntu 15.10 or older
+----------------------------------------------
 
 ### 1. Install the dependencies ###
 
