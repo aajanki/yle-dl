@@ -47,7 +47,7 @@ extension=/path/to/mcrypt.so
 sudo make install
 ```
 
-Installation on Debian unstable (may 2016)/Ubuntu 16.04
+Installation on Debian unstable (May 2016)/Ubuntu 16.04
 -------------------------------------------------------
 
 ### 1. Install the dependencies ###
