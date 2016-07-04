@@ -97,10 +97,12 @@ def usage():
     splashscreen()
     log(u'')
     log(u'%s [options] URL' % sys.argv[0])
+    log(u'%s [options] -i filename' % sys.argv[0])
     log(u'')
     log(u'options:')
     log(u'')
     log(u'-o filename             Save stream to the named file')
+    log(u'-i filename             Read input URLs to process from the named file')
     log(u'--latestepisode         Download the latest episode')
     log(u"--showurl               Print URL, don't download")
     log(u"--showtitle             Print stream title, don't download")
@@ -153,6 +155,10 @@ def download_page(url):
     except ValueError:
         log(u'Invalid URL: ' + url)
         return None
+
+
+def read_urls_from_file(f):
+    return [x.strip() for x in codecs.open(f, 'r', 'utf-8').readlines()]
 
 
 def encode_url_utf8(url):
@@ -1775,7 +1781,7 @@ def main():
     hardsubs = False
     bitratearg = sys.maxint
     show_usage = False
-    url = None
+    urls = []
     destdir = None
     pipe = False
     backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
@@ -1788,7 +1794,10 @@ def main():
     while argv:
         arg = argv.pop(0)
         if not arg.startswith('-'):
-            url = encode_url_utf8(arg)
+            urls = [encode_url_utf8(arg)]
+        elif arg == '-i':
+            if argv:
+                urls = read_urls_from_file(argv.pop(0))
         elif arg in ['--verbose', '-V', '--debug', '-z']:
             debug = True
             rtmpdumpargs.append(arg)
@@ -1851,7 +1860,7 @@ def main():
     if not rtmpdump_binary:
         rtmpdump_binary = 'rtmpdump'
 
-    if show_usage or url is None:
+    if show_usage or len(urls) == 0:
         usage()
         sys.exit(RD_SUCCESS)
 
@@ -1866,9 +1875,16 @@ def main():
 
     maxbitrate = bitrate_from_arg(bitratearg)
     stream_filters = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
+    exit_status = RD_SUCCESS
 
-    sys.exit(process_url(url, destdir, url_only, title_only, print_episode_url,
-        pipe, rtmpdumpargs, stream_filters, backends))
+    for url in urls:
+        res = process_url(url, destdir, url_only, title_only, print_episode_url,
+            pipe, rtmpdumpargs, stream_filters, backends)
+
+        if exit_status == RD_SUCCESS:
+            exit_status = res
+
+    sys.exit(exit_status)
 
 
 if __name__ == '__main__':
