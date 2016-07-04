@@ -183,7 +183,7 @@ def int_or_else(x, default):
 
 
 def process_url(url, destdir, url_only, title_only, print_episode_url, pipe,
-                    rtmpdumpargs, stream_filters, backends):
+                rtmpdumpargs, stream_filters, backends):
     dl = downloader_factory(url, backends)
     if not dl:
         log(u'Unsupported URL %s.' % url)
@@ -1134,7 +1134,7 @@ class YleUutisetDownloader(Areena2014Downloader):
     def print_urls(self, url, print_episode_url, filters):
         return self.delegate_to_areena_downloader(
             'print_urls', url, print_episode_url=print_episode_url,
-             filters=filters)
+            filters=filters)
 
     def pipe(self, url, filters):
         return self.delegate_to_areena_downloader(
@@ -1669,7 +1669,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         proxy = None
         if stream_proxy:
             if (stream_proxy.startswith('socks4://') or
-                 stream_proxy.startswith('socks5://')):
+                    stream_proxy.startswith('socks5://')):
                 log(u'Warning: youtube-dl does not support a SOCKS proxy')
             else:
                 proxy = stream_proxy
@@ -1682,8 +1682,8 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         dlopts = {
             'nopart': True,
-            'continuedl': outputfile != '-' and
-            self.is_resume_job(self.extra_argv)
+            'continuedl': (outputfile != '-' and
+                           self.is_resume_job(self.extra_argv))
         }
 
         ydl = youtube_dl.YoutubeDL(ydlopts)
@@ -1879,7 +1879,7 @@ def main():
 
     for url in urls:
         res = process_url(url, destdir, url_only, title_only, print_episode_url,
-            pipe, rtmpdumpargs, stream_filters, backends)
+                          pipe, rtmpdumpargs, stream_filters, backends)
 
         if exit_status == RD_SUCCESS:
             exit_status = res
