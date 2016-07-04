@@ -176,6 +176,24 @@ def int_or_else(x, default):
         return default
 
 
+def process_url(url, destdir, url_only, title_only, print_episode_url, pipe,
+                    rtmpdumpargs, stream_filters, backends):
+    dl = downloader_factory(url, backends)
+    if not dl:
+        log(u'Unsupported URL %s.' % url)
+        log(u'Is this really a Yle video page?')
+        return RD_FAILED
+
+    if url_only:
+        return dl.print_urls(url, print_episode_url, stream_filters)
+    elif title_only:
+        return dl.print_titles(url, stream_filters)
+    elif pipe:
+        return dl.pipe(url, stream_filters)
+    else:
+        return dl.download_episodes(url, stream_filters, rtmpdumpargs, destdir)
+
+
 def downloader_factory(url, backends):
     if url.startswith('http://yle.fi/aihe/') or \
             url.startswith('http://areena.yle.fi/26-') or \
@@ -1759,7 +1777,7 @@ def main():
     while argv:
         arg = argv.pop(0)
         if not arg.startswith('-'):
-            url = arg
+            url = encode_url_utf8(arg)
         elif arg in ['--verbose', '-V', '--debug', '-z']:
             debug = True
             rtmpdumpargs.append(arg)
@@ -1836,26 +1854,14 @@ def main():
             sys.exit(RD_FAILED)
         backends.append(BackendFactory(bn))
 
-    url = encode_url_utf8(url)
-    dl = downloader_factory(url, backends)
-    if not dl:
-        log(u'Unsupported URL %s.' % url)
-        log(u'Is this really a Yle video page?')
-        sys.exit(RD_FAILED)
-
     if sublang == '':
         sublang = 'none' if pipe else 'all'
 
     maxbitrate = bitrate_from_arg(bitratearg)
-    sfilt = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
-    if url_only:
-        sys.exit(dl.print_urls(url, print_episode_url, sfilt))
-    elif title_only:
-        sys.exit(dl.print_titles(url, sfilt))
-    elif pipe:
-        sys.exit(dl.pipe(url, sfilt))
-    else:
-        sys.exit(dl.download_episodes(url, sfilt, rtmpdumpargs, destdir))
+    stream_filters = StreamFilters(latest_episode, sublang, hardsubs, maxbitrate)
+
+    sys.exit(process_url(url, destdir, url_only, title_only, print_episode_url,
+        pipe, rtmpdumpargs, stream_filters, backends))
 
 
 if __name__ == '__main__':
