@@ -350,6 +350,17 @@ class BackendFactory(object):
         return (hds_backend == BackendFactory.ADOBEHDSPHP or
                 hds_backend == BackendFactory.YOUTUBEDL)
 
+    @staticmethod
+    def parse_backends(backend_names):
+        backends = []
+        for bn in backend_names:
+            if not BackendFactory.is_valid_hds_backend(bn):
+                log(u'Invalid backend: ' + bn)
+                continue
+
+            backends.append(BackendFactory(bn))
+        return backends
+
     def __init__(self, hds_backend):
         self.hds_backend = hds_backend
 
@@ -1767,7 +1778,7 @@ def main():
     url = None
     destdir = None
     pipe = False
-    backend_names = list(DEFAULT_HDS_BACKENDS)
+    backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -1815,7 +1826,7 @@ def main():
                 destdir = argv.pop(0)
         elif arg == '--backend':
             if argv:
-                backend_names = argv.pop(0).split(',')
+                backends = BackendFactory.parse_backends(argv.pop(0).split(','))
         elif arg == '--pipe':
             pipe = True
         elif arg == '-o':
@@ -1844,15 +1855,11 @@ def main():
         usage()
         sys.exit(RD_SUCCESS)
 
+    if len(backends) == 0:
+        sys.exit(RD_FAILED)
+
     if debug or not (url_only or title_only):
         splashscreen()
-
-    backends = []
-    for bn in backend_names:
-        if not BackendFactory.is_valid_hds_backend(bn):
-            log(u'Invalid backend: ' + bn)
-            sys.exit(RD_FAILED)
-        backends.append(BackendFactory(bn))
 
     if sublang == '':
         sublang = 'none' if pipe else 'all'
