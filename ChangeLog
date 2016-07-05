@@ -2,6 +2,13 @@ download videos from Yle servers
 Copyright 2009-2016 Antti Ajanki
 Distributed under the GPL v3
 
+5 Jul 2016, Version 2.10.2
+
+- Updated installation instructions for Ubuntu 16.04
+- Process several URLs read from a file using the -i argument
+- Use --proxy also for video data, not just for metadata
+- Download subtitles when writing the output to a pipe
+
 7 Feb 2016, Version 2.10.1
 
 - Subtitle language selection was broken
