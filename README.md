@@ -149,12 +149,20 @@ Usage
 yle-dl [options] URL
 ```
 
+or
+
+```
+yle-dl [options] -i filename
+```
+
 where URL is the address of the Areena or Elävä arkisto web page where
 you would normally watch the video in a browser.
 
 yle-dl options:
 
 * `-o filename`       Save stream to the named file
+
+* `-i filename`       Read input URLs to process from the named file, one URL per line
 
 * `--latestepisode`   Download the latest episodes
 

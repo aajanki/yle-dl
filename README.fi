@@ -112,6 +112,11 @@ Käyttö
 
 yle-dl [valitsimet] URL
 
+tai
+
+yle-dl [valitsimet] -i tiedosto
+
+
 Korvaa URL webbi-osoitteella, missä ladatavaa ohjelmaa voisi katsoa
 nettiselaimen kautta. URL voi olla joko Yle Areenan tai Elävän
 arkiston osoite.
@@ -119,6 +124,7 @@ arkiston osoite.
 Valitsimet:
 
 -o filename     Tallenna striimi nimettyyn tiedostoon
+-i filename     Lue käsiteltävät URLit tiedostosta, yksi URL per rivi
 --latestepisode Lataa viimeisimmän jakson sivulta
 --showurl       Tulostaa videon URL, ei lataa tiedostoa
 --showtitle     Tulostaa ohjelman nimen, ei lataa tiedostoa
