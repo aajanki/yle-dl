@@ -1170,8 +1170,8 @@ class YleUutisetDownloader(Areena2014Downloader):
         if not html:
             return None
 
-        player_re = r'<div class="media yle_areena_player[^>]*data-id="([0-9-]+)"[^>]*>'
-        dataids = re.findall(player_re, html)
+        player_re = r'<div[^>]*class="[^>]*yle_areena_player[^>]*data-id="([0-9-]+)"[^>]*>'
+        dataids = re.findall(player_re, html, re.DOTALL)
         return [self.id_to_areena_url(id) for id in dataids]
 
     def id_to_areena_url(self, data_id):
