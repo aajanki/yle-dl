@@ -116,6 +116,7 @@ def usage():
     log(u'--rtmpdump path         Set path to rtmpdump binary')
     log(u'--adobehds cmd          Set command for executing AdobeHDS.php script')
     log(u'                        Default: "php /usr/local/share/yle-dl/AdobeHDS.php"')
+    log(u'--postprocess cmd       Execute a command cmd after a successful download')
     log(u'--proxy uri             Proxy for downloading streams')
     log(u'                        Example: --proxy socks5://localhost:7777')
     log(u'--destdir dir           Save files to dir')
@@ -184,7 +185,7 @@ def int_or_else(x, default):
 
 
 def process_url(url, destdir, url_only, title_only, print_episode_url, pipe,
-                rtmpdumpargs, stream_filters, backends):
+                rtmpdumpargs, stream_filters, backends, postprocess_command):
     dl = downloader_factory(url, backends)
     if not dl:
         log(u'Unsupported URL %s.' % url)
@@ -198,7 +199,8 @@ def process_url(url, destdir, url_only, title_only, print_episode_url, pipe,
     elif pipe:
         return dl.pipe(url, stream_filters)
     else:
-        return dl.download_episodes(url, stream_filters, rtmpdumpargs, destdir)
+        return dl.download_episodes(url, stream_filters, rtmpdumpargs, destdir,
+                                    postprocess_command)
 
 
 def downloader_factory(url, backends):
@@ -399,6 +401,7 @@ class AreenaUtils(object):
         return decrypter.decrypt(ciphertext)[:-padlen]
 
     def download_subtitles(self, subtitles, filters, videofilename):
+        subtitlefile = None
         if not filters.hardsubs:
             preferred_lang = filters.sublang
             basename = os.path.splitext(videofilename)[0]
@@ -408,15 +411,16 @@ class AreenaUtils(object):
                     if sub.url:
                         try:
                             enc = sys.getfilesystemencoding()
-                            filename = basename + '.' + lang + '.srt'
-                            subtitlefile = filename.encode(enc, 'replace')
+                            subtitlefile = basename + '.' + lang + '.srt'
+                            subtitlefile = subtitlefile.encode(enc, 'replace')
                             urllib.urlretrieve(sub.url, subtitlefile)
                             self.add_BOM(subtitlefile)
-                            log(u'Subtitles saved to ' + filename)
+                            log(u'Subtitles saved to ' + subtitlefile)
                             if preferred_lang != 'all':
-                                return
+                                return subtitlefile
                         except IOError as exc:
                             log(u'Failed to download subtitles at %s: %s' % (sub.url, exc))
+        return subtitlefile
 
     def add_BOM(self, filename):
         """Add byte-order mark into a file.
@@ -767,7 +771,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def __init__(self, backend_factory):
         self.backend = backend_factory
 
-    def download_episodes(self, url, filters, extra_argv, destdir):
+    def download_episodes(self, url, filters, extra_argv, destdir,
+                          postprocess_command):
         def download_clip(clip):
             downloader = clip.streamurl.create_downloader(clip.title, destdir,
                                                           extra_argv)
@@ -777,8 +782,13 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return RD_FAILED
 
             outputfile = downloader.output_filename()
-            self.download_subtitles(clip.subtitles, filters, outputfile)
-            return downloader.save_stream()
+            subtitlefile = \
+                self.download_subtitles(clip.subtitles, filters, outputfile)
+            dl_result = downloader.save_stream()
+            if dl_result == RD_SUCCESS:
+                self.postprocess(postprocess_command, outputfile, subtitlefile)
+
+            return dl_result
 
         return self.process(download_clip, url, filters)
 
@@ -1102,6 +1112,13 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         else:
             return None
 
+    def postprocess(self, postprocess_command, videofile, subtitlefile):
+        if postprocess_command:
+            args = [postprocess_command, videofile]
+            if subtitlefile:
+                args.append(subtitlefile)
+            return Subprocess().execute(args)
+
 
 class Areena2014LiveDownloader(Areena2014Downloader):
     def program_info_url(self, program_id):
@@ -1127,10 +1144,11 @@ class Areena2014LiveTVDownloader(Areena2014LiveDownloader):
 
 
 class YleUutisetDownloader(Areena2014Downloader):
-    def download_episodes(self, url, filters, extra_argv, destdir):
+    def download_episodes(self, url, filters, extra_argv, destdir,
+                          postprocess_command):
         return self.delegate_to_areena_downloader(
             'download_episodes', url, filters=filters, extra_argv=extra_argv,
-            destdir=destdir)
+            destdir=destdir, postprocess_command=postprocess_command)
 
     def print_urls(self, url, print_episode_url, filters):
         return self.delegate_to_areena_downloader(
@@ -1500,8 +1518,13 @@ class ExternalDownloader(BaseDownloader):
         return self.outputfile_from_args(args)
 
     def external_downloader(self, args):
-        """Start an external process such as rtmpdump with argument list args and
-        wait until completion.
+        return Subprocess().execute(args)
+
+
+class Subprocess(object):
+    def execute(self, args):
+        """Start an external process such as rtmpdump with argument list args
+        and wait until completion.
         """
         if debug:
             log('Executing:')
@@ -1786,6 +1809,7 @@ def main():
     destdir = None
     pipe = False
     backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
+    postprocess = None
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -1848,6 +1872,9 @@ def main():
         elif arg == '--proxy':
             if argv:
                 stream_proxy = argv.pop(0)
+        elif arg == '--postprocess':
+            if argv:
+                postprocess = argv.pop(0)
         else:
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:
@@ -1880,7 +1907,8 @@ def main():
 
     for url in urls:
         res = process_url(url, destdir, url_only, title_only, print_episode_url,
-                          pipe, rtmpdumpargs, stream_filters, backends)
+                          pipe, rtmpdumpargs, stream_filters, backends,
+                          postprocess)
 
         if exit_status == RD_SUCCESS:
             exit_status = res
