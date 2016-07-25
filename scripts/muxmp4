@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -x
+
+INPUTVIDEOFILE="$1"
+SUBTITLEFILE="$2"
+
+OUTPUTFILE=$(echo "$INPUTVIDEOFILE" | sed 's/.flv$//').mp4
+
+ffmpeg -i "file://$PWD/$INPUTVIDEOFILE" -codec copy -c:s mov_text "file://$PWD/$OUTPUTFILE"
+
+if [ $? -eq 0 ]; then
+    rm "$INPUTVIDEOFILE"
+    rm "$SUBTITLEFILE"
+fi
