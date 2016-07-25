@@ -401,7 +401,7 @@ class AreenaUtils(object):
         return decrypter.decrypt(ciphertext)[:-padlen]
 
     def download_subtitles(self, subtitles, filters, videofilename):
-        subtitlefile = None
+        subtitlefiles = []
         if not filters.hardsubs:
             preferred_lang = filters.sublang
             basename = os.path.splitext(videofilename)[0]
@@ -416,11 +416,12 @@ class AreenaUtils(object):
                             urllib.urlretrieve(sub.url, subtitlefile)
                             self.add_BOM(subtitlefile)
                             log(u'Subtitles saved to ' + subtitlefile)
+                            subtitlefiles.append(subtitlefile)
                             if preferred_lang != 'all':
-                                return subtitlefile
+                                return subtitlefiles
                         except IOError as exc:
                             log(u'Failed to download subtitles at %s: %s' % (sub.url, exc))
-        return subtitlefile
+        return subtitlefiles
 
     def add_BOM(self, filename):
         """Add byte-order mark into a file.
@@ -782,11 +783,11 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return RD_FAILED
 
             outputfile = downloader.output_filename()
-            subtitlefile = \
+            subtitlefiles = \
                 self.download_subtitles(clip.subtitles, filters, outputfile)
             dl_result = downloader.save_stream()
             if dl_result == RD_SUCCESS:
-                self.postprocess(postprocess_command, outputfile, subtitlefile)
+                self.postprocess(postprocess_command, outputfile, subtitlefiles)
 
             return dl_result
 
@@ -1112,11 +1113,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         else:
             return None
 
-    def postprocess(self, postprocess_command, videofile, subtitlefile):
+    def postprocess(self, postprocess_command, videofile, subtitlefiles):
         if postprocess_command:
             args = [postprocess_command, videofile]
-            if subtitlefile:
-                args.append(subtitlefile)
+            args.extend(subtitlefiles)
             return Subprocess().execute(args)
 
 
