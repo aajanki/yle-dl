@@ -2,12 +2,22 @@
 
 set -x
 
+absolute_path() {
+    case "$1" in
+	/*) echo "$1";;
+	*)  echo "$PWD/$1";;
+    esac
+}
+
 INPUTVIDEOFILE="$1"
 SUBTITLEFILE="$2"
 
 OUTPUTFILE=$(echo "$INPUTVIDEOFILE" | sed 's/.flv$//').mp4
 
-ffmpeg -i "file://$PWD/$INPUTVIDEOFILE" -codec copy -c:s mov_text "file://$PWD/$OUTPUTFILE"
+ABS_INPUT=$(absolute_path "$INPUTVIDEOFILE")
+ABS_OUTPUT=$(absolute_path "$OUTPUTFILE")
+
+ffmpeg -i "file://$ABS_INPUT" -codec copy -c:s mov_text "file://$ABS_OUTPUT"
 
 if [ $? -eq 0 ]; then
     rm "$INPUTVIDEOFILE"
