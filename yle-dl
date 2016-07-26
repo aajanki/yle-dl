@@ -411,12 +411,12 @@ class AreenaUtils(object):
                     if sub.url:
                         try:
                             enc = sys.getfilesystemencoding()
-                            subtitlefile = basename + '.' + lang + '.srt'
-                            subtitlefile = subtitlefile.encode(enc, 'replace')
+                            filename = basename + '.' + lang + '.srt'
+                            subtitlefile = filename.encode(enc, 'replace')
                             urllib.urlretrieve(sub.url, subtitlefile)
                             self.add_BOM(subtitlefile)
-                            log(u'Subtitles saved to ' + subtitlefile)
-                            subtitlefiles.append(subtitlefile)
+                            log(u'Subtitles saved to ' + filename)
+                            subtitlefiles.append(filename)
                             if preferred_lang != 'all':
                                 return subtitlefiles
                         except IOError as exc:
