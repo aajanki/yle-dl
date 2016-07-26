@@ -16,12 +16,10 @@ OUTPUTFILE=$(echo "$INPUTVIDEOFILE" | sed 's/.flv$//').mp4
 
 ABS_INPUT=$(absolute_path "$INPUTVIDEOFILE")
 ABS_OUTPUT=$(absolute_path "$OUTPUTFILE")
+ABS_SUBTITLE=$(absolute_path "$SUBTITLEFILE")
 
-ffmpeg -i "file://$ABS_INPUT" -codec copy -c:s mov_text "file://$ABS_OUTPUT"
+ffmpeg -i "file://$ABS_INPUT" -f srt -i "file://$ABS_SUBTITLE" -codec copy -c:s mov_text "file://$ABS_OUTPUT"
 
 if [ $? -eq 0 ]; then
-    rm "$INPUTVIDEOFILE"
-    if [ -n "$SUBTITLEFILE" ]; then
-	rm "$SUBTITLEFILE"
-    fi
+    rm "$@"
 fi
