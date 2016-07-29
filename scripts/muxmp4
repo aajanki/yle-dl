@@ -11,14 +11,17 @@ absolute_path() {
 
 INPUTVIDEOFILE="$1"
 SUBTITLEFILE="$2"
-
 OUTPUTFILE=$(echo "$INPUTVIDEOFILE" | sed 's/.flv$//').mp4
-
 ABS_INPUT=$(absolute_path "$INPUTVIDEOFILE")
 ABS_OUTPUT=$(absolute_path "$OUTPUTFILE")
-ABS_SUBTITLE=$(absolute_path "$SUBTITLEFILE")
 
-ffmpeg -i "file://$ABS_INPUT" -f srt -i "file://$ABS_SUBTITLE" -codec copy -c:s mov_text "file://$ABS_OUTPUT"
+if [ -n "$SUBTITLEFILE" ]; then
+    ABS_SUBTITLE=$(absolute_path "$SUBTITLEFILE")
+
+    ffmpeg -i "file://$ABS_INPUT" -f srt -i "file://$ABS_SUBTITLE" -codec copy -c:s mov_text "file://$ABS_OUTPUT"
+else
+    ffmpeg -i "file://$ABS_INPUT" -codec copy "file://$ABS_OUTPUT"
+fi
 
 if [ $? -eq 0 ]; then
     rm "$@"
