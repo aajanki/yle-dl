@@ -134,6 +134,9 @@ Valitsimet:
 --maxbitrate br Rajoita ladattavan striimin bittinopeutta (kB/s)
 --rtmpdump path Polku rtmpdump-ohjelmaan
 --adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
+--postprocess c Suorita ohjelma c onnistuneen latauksen jälkeen.
+                Ohjelmalle c annetaan parametriksi ladatun FLV tiedoston nimi
+		ja mahdollisten tekstitystiedostojen nimet.
 --proxy uri     Käytä SOCKS-proxyä striimin metadatan lataamiseen
                 Esimerkki --proxy socks5://localhost:7777
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
@@ -206,7 +209,7 @@ Esimerkkejä
 
   yle-dl --pipe http://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
 
-* Ladatulle tiedostolle annetun nimen tulostaminen (esimerkiksi
-  jos skripti tarvitseen tiedoston nimen jatkokäsittelyä varten)
+* Ladatun tiedoston jatkokäsitteleminen skriptillä (katso esimerkki
+  scripts/muxmp4-tiedostossa):
 
-  yle-dl http://areena.yle.fi/1-1864726 2>&1 | grep "Output file:" | cut -d" " -f3-
+  yle-dl --postprocess scripts/muxmp4 http://areena.yle.fi/1-1864726

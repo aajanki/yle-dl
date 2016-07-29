@@ -1,6 +1,13 @@
 #!/bin/sh
 
-set -x
+# Remux a video into a mp4 container and delete the original.
+#
+# This is part of yle-dl. This is an example of a postprocessing
+# script.
+#
+# Usage:
+#
+# muxmp4 videofile.flv subtitlefile.srt
 
 absolute_path() {
     case "$1" in

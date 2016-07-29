@@ -180,6 +180,8 @@ yle-dl options:
 
 * `--adobehds cmd`    Set command for executing AdobeHDS.php script
 
+* `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded FLV file as the first parameter and subtitle files (if any) as the following parameters.
+
 * `--proxy uri`       Proxy for downloading stream manifests. Example: `--proxy socks5://localhost:7777`
 
 * `--destdir dir`     Save files to dir
@@ -216,4 +218,10 @@ Playing in mplayer (or vlc and others) without downloading first:
 
 ```
 yle-dl --pipe http://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
+```
+
+Executing a script to postprocess a downloaded video (see the example postprocessing script at scripts/muxmp4):
+
+```
+yle-dl --postprocess scripts/muxmp4 http://areena.yle.fi/1-1864726
 ```
