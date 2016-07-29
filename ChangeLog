@@ -2,6 +2,11 @@ download videos from Yle servers
 Copyright 2009-2016 Antti Ajanki
 Distributed under the GPL v3
 
+29 Jul 2016, Version 2.10.3
+
+- Ability to call a postprocessing script after a successful download
+- Improve video detection on yle.fi/uutiset
+
 5 Jul 2016, Version 2.10.2
 
 - Updated installation instructions for Ubuntu 16.04
