@@ -63,8 +63,8 @@ sudo phpenmod mcrypt
 sudo make install
 ```
 
-Installation on Debian 8/Ubuntu 15.10 or older
-----------------------------------------------
+Installation on Debian Jessie (8.5)/Ubuntu 15.10 or older
+---------------------------------------------------------
 
 ### 1. Install the dependencies ###
 
