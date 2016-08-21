@@ -1130,8 +1130,14 @@ class Areena2014LiveDownloader(Areena2014Downloader):
             (quoted_pid, quoted_pid)
 
     def program_media_id(self, program_info):
-        outlets = program_info.get('data', {}).get('outlets') or [{}]
-        return outlets[0].get('outlet', {}).get('media', {}).get('id')
+        outlets = program_info.get('data', {}).get('outlets', [{}])
+        sorted_outlets = sorted(outlets, key=self.outlet_sort_key)
+        return sorted_outlets[0].get('outlet', {}).get('media', {}).get('id')
+
+    def outlet_sort_key(self, outlet):
+        preferred_ordering = {"fi": 1, None: 2, "sv": 3}
+        language = outlet.get("outlet", {}).get("language", [None])[0]
+        return preferred_ordering.get(language) or 99
 
     def program_title(self, program_info):
         service = program_info.get('data', {}).get('service', {})
