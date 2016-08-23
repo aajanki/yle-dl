@@ -172,7 +172,9 @@ yle-dl options:
 
 * `--vfat`            Create Windows-compatible filenames
 
-* `--sublang lang`    Download subtitles, lang = fin, swe, smi, none or all
+* `--audiolang lang`  Select stream's audio language if available, lang = fin (default) or swe
+
+* `--sublang lang`    Download stream's subtitle language, lang = fin, swe, smi, none or all (default)
 
 * `--maxbitrate br`   Maximum bitrate stream to download, integer in kB/s or "best" or "worst". Not all streams support limited bitrates. Only approximate when downloading using AdobeHDS.php.
 
