@@ -997,15 +997,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         program = program_info.get('data', {}).get('program', {})
         titleObject = program.get('title')
         itemTitleObject = program.get('itemTitle')
-        title = self.localized_text(titleObject) or \
-            self.localized_text(titleObject, 'sv') or \
-            self.localized_text(itemTitleObject) or \
-            self.localized_text(itemTitleObject, 'sv') or \
+        title = self.fi_or_sv_text(titleObject) or \
+            self.fi_or_sv_text(itemTitleObject) or \
             'areena'
 
         promoTitleObject = program.get('promotionTitle')
-        promotionTitle = self.localized_text(promoTitleObject) or \
-            self.localized_text(promoTitleObject, 'sv')
+        promotionTitle = self.fi_or_sv_text(promoTitleObject)
         if promotionTitle and not promotionTitle.startswith(title):
             title += ": " + promotionTitle
 
@@ -1049,6 +1046,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return alternatives.get(language) or alternatives.get('fi')
         else:
             return None
+
+    def fi_or_sv_text(self, alternatives):
+        return self.localized_text(alternatives, 'fi') or \
+            self.localized_text(alternatives, 'sv')
 
     def filter_by_subtitles(self, streams, filters):
         if filters.hardsubs:
@@ -1159,7 +1160,7 @@ class Areena2014LiveDownloader(Areena2014Downloader):
 
     def program_title(self, program_info):
         service = program_info.get('data', {}).get('service', {})
-        title = self.localized_text(service.get('title')) or 'areena'
+        title = self.fi_or_sv_text(service.get('title')) or 'areena'
         title += time.strftime('-%Y-%m-%d-%H:%M:%S')
         return title
 
