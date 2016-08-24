@@ -216,7 +216,7 @@ def downloader_factory(url, backends):
         return RetryingDownloader(AreenaLiveRadioDownloader, backends)
     elif url.startswith('http://areena.yle.fi/tv/suorat/') or \
             url.startswith('http://arenan.yle.fi/tv/direkt/'):
-        return RetryingDownloader(Areena2014LiveTVDownloader, backends)
+        return RetryingDownloader(Areena2014LiveDownloader, backends)
     elif url.startswith('http://yle.fi/uutiset/') or \
             url.startswith('http://yle.fi/urheilu/') or \
             url.startswith('http://yle.fi/saa/'):
@@ -1162,10 +1162,6 @@ class Areena2014LiveDownloader(Areena2014Downloader):
         title = self.localized_text(service.get('title')) or 'areena'
         title += time.strftime('-%Y-%m-%d-%H:%M:%S')
         return title
-
-
-class Areena2014LiveTVDownloader(Areena2014LiveDownloader):
-    pass
 
 
 class YleUutisetDownloader(Areena2014Downloader):
