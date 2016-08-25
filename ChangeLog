@@ -2,6 +2,11 @@ download videos from Yle servers
 Copyright 2009-2016 Antti Ajanki
 Distributed under the GPL v3
 
+25 Aug 2016, Version 2.11
+
+- Ability to select the audio language if multiple ones are available
+- Fix output file names of Swedish language streams
+
 29 Jul 2016, Version 2.10.3
 
 - Ability to call a postprocessing script after a successful download
