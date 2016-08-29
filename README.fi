@@ -84,7 +84,7 @@ AdobeHDS.php toimi.
 Suorita asennus kuten yllä, mutta jätä PHP-tulkki ja PHP-kirjastot
 pois. Asenna lisäksi Python 2 -versio youtube-dl-moduulista:
 
-* Debian/Ubuntu: `apt-get install youtube-dl`
+* Debian/Ubuntu: `pip install --upgrade youtube_dl`
 * Mac OS X: `brew install youtube-dl`
 * Muut käyttöjärjestelmät: `pip install --upgrade youtube_dl`
 

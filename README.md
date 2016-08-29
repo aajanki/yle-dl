@@ -119,7 +119,7 @@ installed and downloading with AdobeHDS.php fails.
 Follow the above installation instructions (except for the PHP and the
 PHP libraries) and additionally install youtube-dl:
 
-* Debian/Ubuntu: `apt-get install youtube-dl`
+* Debian/Ubuntu: `pip install --upgrade youtube_dl`
 * Mac OS X: `brew install youtube-dl`
 * Other operating systems: `pip install --upgrade youtube_dl`
 
