@@ -159,27 +159,6 @@ yle-dl --help
 Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
 ulospäin menevä liikenne porteissa 80 ja 1935.
 
-Integroiminen Firefox-selaimeen
--------------------------------
-
-yle-dl on mahdollista asentaa käynnistymään suoraan
-Firefox-selaimesta Launchy-laajennuksen avulla.
-
-Asenna ensin yle-dl normaalisti ja sitten Launchy-laajennus
-Firefoxiin (http://gemal.dk/mozilla/launchy.html). Kopioi
-contrib/launchy.xml Firefoxin profiilihakemiston alle
-chrome-alihakemistoon. Hakemiston sijainnin saa selville Launchyn
-asetusikkunasta launchy.xml-välilehdeltä. Osoitteessa
-http://gemal.dk/mozilla/profile.html on lisää ohjeita hakemiston
-paikallistamiseen.
-
-Asennuksen jälkeen videon latauksen voi käynnistää selaimesta
-klikkaamalla hiiren oikealla näppäimellä Areenan videosivun linkkiä ja
-valitsemalla avautuvasta valikosta Launchy > Download Link with
-yle-dl. Lataus käynnistyy taustalla. Toistaiseksi latauksen
-edistymisestä (tai epäonnistumisesta) ei näy mitään tietoa
-käyttäjälle. Video tallennetaan kotihakemistoon.
-
 Esimerkkejä
 -----------
 
