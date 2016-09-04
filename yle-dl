@@ -1805,6 +1805,31 @@ class HTTPDump(BaseDownloader):
         self.log_output_file(filename, True)
         return RD_SUCCESS
 
+    def pipe(self):
+        url = self.stream.to_url()
+        if debug:
+            log('URL: %s' % url)
+
+        request = urllib2.Request(url, headers=AREENA_NG_HTTP_HEADERS)
+        try:
+            urlreader = urllib2.urlopen(request)
+            while True:
+                buf = urlreader.read(4196)
+                if not buf:
+                    break
+                sys.stdout.write(buf)
+
+            sys.stdout.flush()
+            urlreader.close()
+        except urllib2.URLError as exc:
+            log(u"Can't read %s: %s" % (url, exc))
+            return RD_FAILED
+        except ValueError:
+            log(u'Invalid URL: ' + url)
+            return RD_FAILED
+
+        return RD_SUCCESS
+
     def output_filename(self):
         ext = self.stream.ext or '.flv'
         return (self.outputfile_from_args(self.extra_argv) or
