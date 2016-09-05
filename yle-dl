@@ -79,6 +79,9 @@ stream_proxy = None
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
 
+class YleDlURLopener(urllib.FancyURLopener):
+    version = AREENA_NG_HTTP_HEADERS['User-Agent']
+urllib._urlopener = YleDlURLopener()
 
 def log(msg):
     enc = sys.stderr.encoding or 'UTF-8'
