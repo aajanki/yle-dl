@@ -209,24 +209,19 @@ def process_url(url, destdir, url_only, title_only, print_episode_url, pipe,
 
 
 def downloader_factory(url, backends):
-    if url.startswith('http://yle.fi/aihe/') or \
-            url.startswith('http://areena.yle.fi/26-') or \
-            url.startswith('http://arenan.yle.fi/26-'):
+    if re.match(r'^https?://yle\.fi/aihe/', url) or \
+            re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url):
         return RetryingDownloader(ElavaArkistoDownloader, backends)
-    elif url.startswith('http://svenska.yle.fi/artikel/'):
+    elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
         return RetryingDownloader(ArkivetDownloader, backends)
-    elif re.match(r'^http://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora', url):
+    elif re.match(r'^https?://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora', url):
         return RetryingDownloader(AreenaLiveRadioDownloader, backends)
-    elif url.startswith('http://areena.yle.fi/tv/suorat/') or \
-            url.startswith('http://arenan.yle.fi/tv/direkt/'):
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return RetryingDownloader(Areena2014LiveDownloader, backends)
-    elif url.startswith('http://yle.fi/uutiset/') or \
-            url.startswith('http://yle.fi/urheilu/') or \
-            url.startswith('http://yle.fi/saa/'):
+    elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
         return RetryingDownloader(YleUutisetDownloader, backends)
-    elif url.startswith('http://areena.yle.fi/') or \
-            url.startswith('http://arenan.yle.fi/') or \
-            url.startswith('http://yle.fi/'):
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
+            re.match(r'^https?://yle\.fi/', url):
         return RetryingDownloader(Areena2014Downloader, backends)
     else:
         return None
