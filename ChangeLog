@@ -2,8 +2,9 @@ download videos from Yle servers
 Copyright 2009-2016 Antti Ajanki
 Distributed under the GPL v3
 
-Next release
+24 Sep 2016, Version 2.12
 
+- Support Areena HTTPS URLs
 - Implement piping for HTTP streams
 
 25 Aug 2016, Version 2.11
