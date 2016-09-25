@@ -1712,11 +1712,7 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         proxy = None
         if stream_proxy:
-            if (stream_proxy.startswith('socks4://') or
-                    stream_proxy.startswith('socks5://')):
-                log(u'Warning: youtube-dl does not support a SOCKS proxy')
-            else:
-                proxy = stream_proxy
+            proxy = stream_proxy
 
         ydlopts = {
             'logtostderr': True,
