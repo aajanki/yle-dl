@@ -1,11 +1,11 @@
 Apuohjelma videoiden lataamiseen Yle Areenasta
 Copyright (C) 2010-2016 Antti Ajanki, antti.ajanki@iki.fi
 Ohjelmistolisenssi: GPLv3
-Kotisivu: http://aajanki.github.com/yle-dl/
+Kotisivu: https://aajanki.github.com/yle-dl/
 Lähdekoodi: https://github.com/aajanki/yle-dl
 
 yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
-(http://areena.yle.fi), Elävästä arkistosta
+(https://areena.yle.fi), Elävästä arkistosta
 (http://yle.fi/aihe/elava-arkisto) ja Ylen uutissivustolta
 (http://yle.fi/uutiset/).
 
@@ -100,7 +100,7 @@ Valmiit asennuspaketit
 ----------------------
 
 Katso lista saatavilla olevista asennuspaketeista osoitteesta
-http://aajanki.github.io/yle-dl/
+https://aajanki.github.io/yle-dl/
 
 RPM-paketointi:
 
@@ -164,11 +164,11 @@ Esimerkkejä
 
 * Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
 
-  yle-dl http://areena.yle.fi/1-1544491
+  yle-dl https://areena.yle.fi/1-1544491
 
 * Käytä youtube-dl-lataajaa (AdobeHDS.php:n sijaan):
 
-  yle-dl --backend youtubedl http://areena.yle.fi/1-1544491
+  yle-dl --backend youtubedl https://areena.yle.fi/1-1544491
 
 * Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 
@@ -176,21 +176,21 @@ Esimerkkejä
 
 * Ohjelman lataaminen tiedostoon uutiset.flv:
 
-  yle-dl http://areena.yle.fi/1-1544491 -o uutiset.flv
+  yle-dl https://areena.yle.fi/1-1544491 -o uutiset.flv
 
 * Keskeytyneen latauksen jatkaminen tiedostoon uutiset.flv:
 
-  yle-dl http://areena.yle.fi/1-1544491 -o uutiset.flv --resume
+  yle-dl https://areena.yle.fi/1-1544491 -o uutiset.flv --resume
 
 * Lataa uusimmat uutiset
 
-  yle-dl --latestepisode http://areena.yle.fi/?q=uutiset
+  yle-dl --latestepisode https://areena.yle.fi/?q=uutiset
 
 * Toistaminen suoraan videotoistimessa:
 
-  yle-dl --pipe http://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
+  yle-dl --pipe https://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
 
 * Ladatun tiedoston jatkokäsitteleminen skriptillä (katso esimerkki
   scripts/muxmp4-tiedostossa):
 
-  yle-dl --postprocess scripts/muxmp4 http://areena.yle.fi/1-1864726
+  yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726

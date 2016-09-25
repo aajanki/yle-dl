@@ -7,7 +7,7 @@ yle-dl - download videos from Yle servers
 Copyright (C) 2010-2016 Antti Ajanki <antti.ajanki@iki.fi>
 
 This script downloads video and audio streams from Yle Areena
-(http://areena.yle.fi) and Elävä Arkisto
+(https://areena.yle.fi) and Elävä Arkisto
 (http://yle.fi/aihe/elava-arkisto).
 """
 
@@ -47,7 +47,7 @@ from Crypto.Cipher import AES
 
 version = '2.12'
 
-AREENA_NG_SWF = 'http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
+AREENA_NG_SWF = 'https://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf'
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
 RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
@@ -542,7 +542,7 @@ class AreenaStreamBase(AreenaUtils):
         else:
             urltype = 'tv'
 
-        return 'http://areena.yle.fi/%s/%s' % (urltype, media['id'])
+        return 'https://areena.yle.fi/%s/%s' % (urltype, media['id'])
 
 
 class AreenaRTMPStreamUrl(AreenaStreamBase):
@@ -1217,7 +1217,7 @@ class YleUutisetDownloader(Areena2014Downloader):
             areena_id = data_id
         else:
             areena_id = '1-' + data_id
-        return 'http://areena.yle.fi/' + areena_id
+        return 'https://areena.yle.fi/' + areena_id
 
 
 class Clip(object):

@@ -6,7 +6,7 @@ Copyright (C) 2010-2016 Antti Ajanki, antti.ajanki@iki.fi
 
 License: GPLv3
 
-Homepage: http://aajanki.github.com/yle-dl/index-en.html
+Homepage: https://aajanki.github.com/yle-dl/index-en.html
 
 Source code: https://github.com/aajanki/yle-dl
 
@@ -14,7 +14,7 @@ yle-dl is a tool for downloading media files from the video streaming
 services of the Finnish national broadcasting company Yle: [Yle
 Areena], [Elävä Arkisto] and [Yle news].
 
-[Yle Areena]:http://areena.yle.fi/
+[Yle Areena]:https://areena.yle.fi/
 [Elävä arkisto]:http://yle.fi/aihe/elava-arkisto
 [Yle news]:http://yle.fi/uutiset/
 
@@ -30,7 +30,7 @@ Installation
 
 Optionally (for downloading Areena audio streams):
 
-* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at http://rtmpdump.mplayerhq.hu/)
+* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at https://rtmpdump.mplayerhq.hu/)
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:
@@ -135,7 +135,7 @@ Packages for various distros
 ----------------------------
 
 [A list of available
-packages](http://aajanki.github.com/yle-dl/index-en.html)
+packages](https://aajanki.github.com/yle-dl/index-en.html)
 
 RPM packaging:
 
@@ -205,11 +205,11 @@ Examples
 --------
 
 ```
-yle-dl http://areena.yle.fi/1-1544491 -o video.flv
+yle-dl https://areena.yle.fi/1-1544491 -o video.flv
 ```
 
 ```
-yle-dl --backend youtubedl http://areena.yle.fi/1-1544491 -o video.flv
+yle-dl --backend youtubedl https://areena.yle.fi/1-1544491 -o video.flv
 ```
 
 ```
@@ -219,11 +219,11 @@ yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuut
 Playing in mplayer (or vlc and others) without downloading first:
 
 ```
-yle-dl --pipe http://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
+yle-dl --pipe https://areena.yle.fi/1-2409251 | mplayer -cache 1024 -
 ```
 
 Executing a script to postprocess a downloaded video (see the example postprocessing script at scripts/muxmp4):
 
 ```
-yle-dl --postprocess scripts/muxmp4 http://areena.yle.fi/1-1864726
+yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
 ```
