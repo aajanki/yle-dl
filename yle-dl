@@ -453,15 +453,21 @@ class KalturaUtils(object):
         return self.pick_matching_flavor(flavors, filters)
 
     def pick_matching_flavor(self, flavors, filters):
+        flavors2 = [fl for fl in flavors if fl.get('isWeb', True)]
+        num_non_web = len(flavors) - len(flavors2)
+
+        if debug and num_non_web > 0:
+            log(u'Ignored %d non-web flavors' % num_non_web)
+
         if debug:
-            bitrates = [fl.get('bitrate', 0) for fl in flavors]
+            bitrates = [fl.get('bitrate', 0) for fl in flavors2]
             log(u'Available bitrates: %s, maxbitrate = %s' %
                 (bitrates, filters.maxbitrate))
 
-        valid_bitrates = [fl for fl in flavors
+        valid_bitrates = [fl for fl in flavors2
                           if fl.get('bitrate', 0) <= filters.maxbitrate]
-        if not valid_bitrates and len(flavors) >= 1:
-            valid_bitrates = [min(flavors, key=lambda fl: fl.get('bitrate', 0))]
+        if not valid_bitrates and len(flavors2) >= 1:
+            valid_bitrates = [min(flavors2, key=lambda fl: fl.get('bitrate', 0))]
 
         if not valid_bitrates:
             return {}
