@@ -2,6 +2,11 @@ download videos from Yle servers
 Copyright 2009-2016 Antti Ajanki
 Distributed under the GPL v3
 
+6 Dec 2016, Version 2.13
+
+- Fix downloading of Areena HTTP streams
+- Support SOCKS proxies on youtube-dl backend
+
 24 Sep 2016, Version 2.12
 
 - Support Areena HTTPS URLs
