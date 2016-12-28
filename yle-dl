@@ -1000,15 +1000,32 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def program_title(self, program_info):
         program = program_info.get('data', {}).get('program', {})
         titleObject = program.get('title')
+        title = self.fi_or_sv_text(titleObject) or 'areena'
+
+        partOfSeasonObject = program.get('partOfSeason')
+
+        if partOfSeasonObject:
+            seasonNumberObject = partOfSeasonObject.get('seasonNumber')
+        else:
+            seasonNumberObject = program.get('seasonNumber')
+
+        episodeNumberObject = program.get('episodeNumber')
+
+        if seasonNumberObject and episodeNumberObject:
+            title += ': S%02dE%02d' % (seasonNumberObject, episodeNumberObject)
+        elif episodeNumberObject:
+            title += ': E%02d' % (episodeNumberObject)
+
         itemTitleObject = program.get('itemTitle')
-        title = self.fi_or_sv_text(titleObject) or \
-            self.fi_or_sv_text(itemTitleObject) or \
-            'areena'
+        itemTitle = self.fi_or_sv_text(itemTitleObject)
 
         promoTitleObject = program.get('promotionTitle')
         promotionTitle = self.fi_or_sv_text(promoTitleObject)
-        if promotionTitle and not promotionTitle.startswith(title):
-            title += ": " + promotionTitle
+
+        if itemTitle and not title.endswith(itemTitle):
+            title += ': ' + itemTitle
+        elif promotionTitle and not promotionTitle.startswith(title):
+            title += ': ' + promotionTitle
 
         date = self.publish_date(program_info)
         if date:
