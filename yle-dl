@@ -113,7 +113,7 @@ def usage():
     log('')
     log('-o filename             Save stream to the named file')
     log('-i filename             Read input URLs to process from the named '
-        'file,')
+                                'file,')
     log('                        one URL per line')
     log('--latestepisode         Download the latest episode')
     log("--showurl               Print URL, don't download")
@@ -121,33 +121,33 @@ def usage():
     log('--showepisodepage       Print web page for each episode')
     log('--vfat                  Create Windows-compatible filenames')
     log('--audiolang lang        Select stream\'s audio language, lang = fin '
-        'or swe')
+                                'or swe')
     log('--sublang lang          Download subtitles, lang = fin, swe, smi, '
-        'none or all')
+                                'none or all')
     log('--hardsubs              Download stream with hard subs if available')
     log('--maxbitrate br         Maximum bitrate stream to download, integer '
-        'in kB/s')
+                                'in kB/s')
     log('                        or "best" or "worst". Not exact on HDS '
-        'streams.')
+                                'streams.')
     log('--rtmpdump path         Set path to rtmpdump binary')
     log('--adobehds cmd          Set command for executing AdobeHDS.php '
-        'script')
+                                'script')
     log('                        Default: "php '
-        '/usr/local/share/yle-dl/AdobeHDS.php"')
+                                '/usr/local/share/yle-dl/AdobeHDS.php"')
     log('--postprocess cmd       Execute a command cmd after a successful '
-        'download.')
+                                'download.')
     log('                        cmd is called with arguments: video, '
-        'subtitle files')
+                                'subtitle files')
     log('--proxy uri             Proxy for downloading streams')
     log('                        Example: --proxy socks5://localhost:7777')
     log('--destdir dir           Save files to dir')
     log('--backend be            Downloaders that are tried until one of them')
     log('                        succeeds (a comma-separated list). Possible '
-        'values:')
+                                'values:')
     log('                          adobehdsphp - AdobeHDS.php')
     log('                          youtubedl - youtube-dl (HDS stream)')
     log('--pipe                  Dump stream to stdout for piping to media '
-        'player')
+                                'player')
     log('                        E.g. "yle-dl --pipe URL | vlc -"')
     log('--resume                Resume a partial download')
     log('-V, --verbose           Show verbose debug output')
