@@ -1,17 +1,23 @@
+dist: trusty
+
 language: python
 
 python:
- - pypy
- - 2.6
  - 2.7
+ - 2.6
 
-sudo: false
+sudo: true
 
 install:
  - pip install pyflakes
+ - pip install pycrypto
+ - sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
+ - sudo php5enmod mcrypt
+ - sudo make install
 
 script:
  - pyflakes yle-dl
+ - yle-dl --help
 
 after_script:
  - pip install pep8
