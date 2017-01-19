@@ -1436,12 +1436,38 @@ class ArkivetDownloader(Areena2014Downloader):
     def get_playlist(self, url, filters):
         return [url]
 
+    def program_info_url(self, program_id):
+        plain_id = program_id.split('-')[-1]
+        return 'https://player.yle.fi/api/v1/arkivet.jsonp?' \
+            'id=%s&callback=yleEmbed.eaJsonpCallback&instance=1&lang=sv' % \
+            (urllib.quote_plus(plain_id))
+
+    def program_media_id(self, program_info, filters):
+        mediakanta_id = program_info.get('data', {}) \
+                                    .get('ea', {}) \
+                                    .get('mediakantaId')
+        return "6-" + mediakanta_id if mediakanta_id else None
+
+    def select_yle_media(self, program_info, media_id, program_id, filters):
+        medias = self.yle_media_descriptor(media_id, program_id, 'HDS')
+        if not medias:
+            return None
+
+        return self.select_media(medias, filters)
+
     def program_id_from_url(self, pageurl):
         dataids = self.get_dataids(pageurl)
         if dataids:
             return dataids[0]
         else:
             return None
+
+    def program_title(self, program_info):
+        ea = program_info.get('data', {}).get('ea', {})
+        return (ea.get('otsikko') or
+                ea.get('title') or
+                ea.get('originalTitle') or
+                'yle-arkivet')
 
     def get_dataids(self, url):
         page = download_page(url)
