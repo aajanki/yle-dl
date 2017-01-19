@@ -1434,7 +1434,7 @@ class ElavaArkistoDownloader(Areena2014Downloader):
 
 class ArkivetDownloader(Areena2014Downloader):
     def get_playlist(self, url, filters):
-        return [url]
+        return self.get_dataids(url)
 
     def program_info_url(self, program_id):
         plain_id = program_id.split('-')[-1]
@@ -1455,12 +1455,8 @@ class ArkivetDownloader(Areena2014Downloader):
 
         return self.select_media(medias, filters)
 
-    def program_id_from_url(self, pageurl):
-        dataids = self.get_dataids(pageurl)
-        if dataids:
-            return dataids[0]
-        else:
-            return None
+    def program_id_from_url(self, program_id):
+        return program_id
 
     def program_title(self, program_info):
         ea = program_info.get('data', {}).get('ea', {})
