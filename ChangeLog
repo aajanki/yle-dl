@@ -1,6 +1,11 @@
 download videos from Yle servers
-Copyright 2009-2016 Antti Ajanki
+Copyright 2009-2017 Antti Ajanki
 Distributed under the GPL v3
+
+21 Jan 2017, Version 2.14
+
+- Better support for Yle Arkivet
+- Include episode number in the output filename
 
 6 Dec 2016, Version 2.13
 

@@ -4,7 +4,7 @@
 """
 yle-dl - download videos from Yle servers
 
-Copyright (C) 2010-2016 Antti Ajanki <antti.ajanki@iki.fi>
+Copyright (C) 2010-2017 Antti Ajanki <antti.ajanki@iki.fi>
 
 This script downloads video and audio streams from Yle Areena
 (https://areena.yle.fi) and Elävä Arkisto
@@ -45,7 +45,7 @@ import ctypes.util
 import itertools
 from Crypto.Cipher import AES
 
-version = '2.13'
+version = '2.14'
 
 AREENA_NG_SWF = ('https://areena.yle.fi/static/player/1.2.8/flowplayer/'
                  'flowplayer.commercial-3.2.7-encrypted.swf')
@@ -98,7 +98,7 @@ def log(msg):
 def splashscreen():
     log(u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto' %
         version)
-    log(u'Copyright (C) 2009-2016 Antti Ajanki <antti.ajanki@iki.fi>, license: '
+    log(u'Copyright (C) 2009-2017 Antti Ajanki <antti.ajanki@iki.fi>, license: '
         u'GPLv3')
 
 
