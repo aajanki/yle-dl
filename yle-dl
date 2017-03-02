@@ -526,7 +526,7 @@ class KalturaUtils(object):
         return mediaid.split('-', 1)[-1]
 
     def flavors_from_mwembed(self, mw):
-        m = re.search('\\"flavorAssets\\":.*?(\[.+?\])', mw, re.DOTALL)
+        m = re.search('\\"flavorAssets\\":.*?(\[.*?\])', mw, re.DOTALL)
         if not m:
             return []
 
@@ -970,10 +970,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             if debug:
                 log('Detected an HTML5 video')
 
-            flavor = self.select_kaltura_flavor(media_id, program_id, filters)
-            if not flavor:
-                return FailedClip(pageurl, 'Media not found')
-
+            flavor = self.select_kaltura_flavor(media_id, program_id, filters) or {}
             flavor_id = flavor.get('id', '0_00000000')
             entry_id = self.kaltura_entry_id(media_id)
             streamurl = KalturaHTML5StreamUrl(entry_id, flavor_id)
