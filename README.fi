@@ -57,8 +57,9 @@ Asennus Mac OS X:ssä
 
 Asenna PHP-tulkki: https://secure.php.net/manual/en/install.macosx.php
 
+brew install python
 brew install --HEAD rtmpdump
-brew install homebrew/php/php55-mcrypt
+brew install homebrew/php/php70-mcrypt
 pip install pycrypto
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine

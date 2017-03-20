@@ -87,8 +87,9 @@ Installation on Mac OS X
 [Install the PHP interpreter](https://secure.php.net/manual/en/install.macosx.php) and the other libraries:
 
 ```
+brew install python
 brew install --HEAD rtmpdump
-brew install homebrew/php/php55-mcrypt
+brew install homebrew/php/php70-mcrypt
 pip install pycrypto
 ```
 
