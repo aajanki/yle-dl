@@ -129,6 +129,7 @@ def usage():
                                 'in kB/s')
     log('                        or "best" or "worst". Not exact on HDS '
                                 'streams.')
+    log('--ratelimit br          Maximum bandwidth consumption, interger in kB/s')
     log('--rtmpdump path         Set path to rtmpdump binary')
     log('--adobehds cmd          Set command for executing AdobeHDS.php '
                                 'script')
@@ -329,12 +330,13 @@ class StreamFilters(object):
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
-    def __init__(self, latest_only, audiolang, sublang, hardsubs, maxbitrate):
+    def __init__(self, latest_only, audiolang, sublang, hardsubs, maxbitrate, ratelimit):
         self.latest_only = latest_only
         self.audiolang = audiolang
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
+        self.ratelimit = ratelimit
 
     def sublang_matches(self, langcode, subtype):
         return self._lang_matches(self.sublang, langcode, subtype)
@@ -701,7 +703,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
 class Areena2014HDSStreamUrl(AreenaStreamBase):
     def __init__(self, pageurl, hdsurl, filters, backend):
         AreenaStreamBase.__init__(self, {}, pageurl)
-        self.maxbitrate = filters.maxbitrate
+        self.filters = filters
         self.downloader_class = backend.hds()
 
         self.episodeurl = pageurl
@@ -730,7 +732,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
 
     def create_downloader(self, clip_title, destdir, extra_argv):
         return self.downloader_class(self, clip_title, destdir, extra_argv,
-                                     self.maxbitrate)
+                                     self.filters)
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
@@ -1698,10 +1700,11 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, destdir, extra_argv, maxbitrate):
+    def __init__(self, stream, clip_title, destdir, extra_argv, filters):
         ExternalDownloader.__init__(self, stream, clip_title, destdir,
                                     extra_argv)
-        self.quality_options = self._bitrate_to_quality(maxbitrate)
+        self.quality_options = self._bitrate_to_quality(filters.maxbitrate)
+        self.ratelimit_options = self._ratelimit(filters.ratelimit)
 
     def resume_supported(self):
         return True
@@ -1713,6 +1716,12 @@ class HDSDump(ExternalDownloader):
             return ['--quality', 'low']
         elif maxbitrate < 2000:
             return ['--quality', 'medium']
+        else:
+            return []
+
+    def _ratelimit(self, limit):
+        if limit:
+            return ['--maxspeed', str(limit)]
         else:
             return []
 
@@ -1735,6 +1744,7 @@ class HDSDump(ExternalDownloader):
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
+        args.extend(self.ratelimit_options)
         if stream_proxy:
             args.append('--proxy')
             args.append(stream_proxy)
@@ -1770,9 +1780,10 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, stream, clip_title, destdir, extra_argv, maxbitrate):
+    def __init__(self, stream, clip_title, destdir, extra_argv, filters):
         BaseDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
-        self.maxbitrate = maxbitrate
+        self.maxbitrate = filters.maxbitrate
+        self.ratelimit = filters.ratelimit
 
     def resume_supported(self):
         return True
@@ -1808,6 +1819,7 @@ class YoutubeDLHDSDump(BaseDownloader):
             'continuedl': (outputfile != '-' and
                            self.is_resume_job(self.extra_argv))
         }
+        dlopts.update(self._ratelimit_parameter())
 
         ydl = youtube_dl.YoutubeDL(ydlopts)
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
@@ -1858,6 +1870,12 @@ class YoutubeDLHDSDump(BaseDownloader):
             log(u'Selected bitrate: %s' % selected_bitrate)
 
         return {'tbr': selected_bitrate}
+
+    def _ratelimit_parameter(self):
+        if self.ratelimit:
+            return {'ratelimit': self.ratelimit*1024}
+        else:
+            return {}
 
 
 ### Download a plain HTTP file ###
@@ -1929,6 +1947,7 @@ def main():
     sublang = ''
     hardsubs = False
     bitratearg = sys.maxint
+    ratelimit = None
     show_usage = False
     urls = []
     destdir = None
@@ -1977,6 +1996,9 @@ def main():
         elif arg == '--maxbitrate':
             if argv:
                 bitratearg = argv.pop(0)
+        elif arg == '--ratelimit':
+            if argv:
+                ratelimit = int_or_else(argv.pop(0), None)
         elif arg == '--rtmpdump':
             if argv:
                 rtmpdump_binary = argv.pop(0)
@@ -2032,7 +2054,7 @@ def main():
 
     maxbitrate = bitrate_from_arg(bitratearg)
     stream_filters = StreamFilters(latest_episode, audiolang, sublang,
-                                   hardsubs, maxbitrate)
+                                   hardsubs, maxbitrate, ratelimit)
     exit_status = RD_SUCCESS
 
     for url in urls:
