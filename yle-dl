@@ -1469,9 +1469,7 @@ class ArkivetDownloader(Areena2014Downloader):
         if not page:
             return []
 
-        dataids = re.findall(r' data-id="([0-9-]+)"', page)
-        dataids = [d if '-' in d else '1-' + d for d in dataids]
-        return dataids
+        return re.findall(r' data-id="(26-[0-9]+)"', page)
 
 
 ### Downloader wrapper class that retries using different backends ###
