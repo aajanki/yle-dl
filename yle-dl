@@ -1360,72 +1360,45 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 
 class ElavaArkistoDownloader(Areena2014Downloader):
     def get_playlist(self, url, filters):
-        dataids = self.get_dataids(url)
-        playlist = [self.clip_from_dataid(d, url, filters) for d in dataids]
-        if len(playlist) == 0:
-            log(u"Can't find streams at %s." % url)
-            return []
-
-        if filters.latest_only:
-            playlist = playlist[:1]
-
-        if debug:
-            log(u'playlist')
-            log(str([p.streamurl.to_url() for p in playlist]))
-
-        return playlist
-
-    def get_dataids(self, url):
         page = download_page(url)
-        if not page:
-            return []
+        return re.findall(r' data-id="((?:1-|26-)[0-9]+)"', page or '')
 
-        return re.findall(r' data-id="([0-9-]+)"', page)
+    def program_info_url(self, program_id):
+        if program_id.startswith('26-'):
+            did = program_id.split('-')[-1]
+            return ('http://yle.fi/elavaarkisto/embed/%s.jsonp'
+                    '?callback=yleEmbed.eaJsonpCallback'
+                    '&instance=1&id=%s&lang=fi' %
+                    (urllib.quote_plus(did), urllib.quote_plus(did)))
+        else:
+            return super(ElavaArkistoDownloader, self).program_info_url(
+                program_id)
 
-    def clip_from_dataid(self, dataid, pageurl, filters):
-        mediaitem = JSONP.load_jsonp(self.embed_url(dataid))
-        if not mediaitem:
-            return FailedClip(pageurl, 'Failed to download embeded media data')
-
-        if debug:
-            log(json.dumps(mediaitem))
-
-        if mediaitem.get('status') == 404:
-            return FailedClip(
-                pageurl, mediaitem.get('message') or 'Failed with status 404')
-
-        title = mediaitem.get('title') or \
-            mediaitem.get('originalTitle') or \
-            'elavaarkisto'
-        download_url = mediaitem.get('downloadUrl')
+    def create_clip(self, program_info, program_id, pageurl, filters):
+        download_url = program_info.get('downloadUrl')
         if download_url:
+            title = self.program_title(program_info)
             return Clip(pageurl, title, HTTPStreamUrl(download_url), [])
         else:
-            mediakanta_id = '6-' + mediaitem['mediakantaId']
-            media_id = '26-' + mediaitem['id']
-            proto = 'HDS'
-            medias = self.yle_media_descriptor(mediakanta_id, media_id, proto)
-            if not medias:
-                return FailedClip(pageurl, 'Failed to parse media object')
+            return super(ElavaArkistoDownloader, self).create_clip(
+                program_info, program_id, pageurl, filters)
 
-            selected_media = self.select_media(medias, filters)
-
-            return Clip(pageurl, title,
-                        self.media_streamurl(selected_media, pageurl, filters),
-                        self.media_subtitles(selected_media))
-
-    def embed_url(self, dataid):
-        if '-' in dataid:
-            did = dataid.split('-')[-1]
+    def program_media_id(self, program_info, filters):
+        mediakanta_id = program_info.get('mediakantaId')
+        if mediakanta_id:
+            return '6-' + mediakanta_id
         else:
-            did = dataid
+            return super(ElavaArkistoDownloader, self).program_media_id(
+                program_info, filters)
 
-        return ('http://yle.fi/elavaarkisto/embed/%s.jsonp'
-                '?callback=yleEmbed.eaJsonpCallback'
-                '&instance=1&id=%s&lang=fi') % (did, did)
+    def program_id_from_url(self, program_id):
+        return program_id
 
-    def clip_for_url(self, clip, filters):
-        return clip
+    def program_title(self, program_info):
+        return program_info.get('title') or \
+            program_info.get('originalTitle') or \
+            super(ElavaArkistoDownloader, self).program_title(program_info) or \
+            'elavaarkisto'
 
 
 ### Svenska Arkivet ###

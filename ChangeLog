@@ -4,8 +4,8 @@ Distributed under the GPL v3
 
 xx xxx 2017, Version next
 
+- Improved support for the Elävä arkisto and Svenska Arkivet
 - Option --ratelimit for limiting bandwidth consumption during download
-- Improved support for the Svenska Arkivet
 
 7 Mar 2017, Version 2.15
 
