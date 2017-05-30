@@ -2,9 +2,9 @@ download videos from Yle servers
 Copyright 2009-2017 Antti Ajanki
 Distributed under the GPL v3
 
-xx xxx 2017, Version next
+30 May 2017, Version 2.16
 
-- Improved support for the Elävä arkisto and Svenska Arkivet
+- Improved support for Elävä arkisto and Svenska Arkivet
 - Option --ratelimit for limiting bandwidth consumption during download
 
 7 Mar 2017, Version 2.15
