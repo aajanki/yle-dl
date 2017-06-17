@@ -1863,6 +1863,7 @@ class YoutubeDLHDSDump(BaseDownloader):
 class HLSDump(ExternalDownloader):
     def build_args(self):
         args = [ffmpeg_binary, '-y', '-i', self.stream.to_url(),
+                '-bsf:a', 'aac_adtstoasc',
                 '-vcodec', 'copy', '-acodec', 'copy',
                 'file:' + self.output_filename()]
         return args
