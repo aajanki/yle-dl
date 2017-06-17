@@ -1864,7 +1864,7 @@ class HLSDump(ExternalDownloader):
     def build_args(self):
         args = [ffmpeg_binary, '-y', '-i', self.stream.to_url(),
                 '-vcodec', 'copy', '-acodec', 'copy',
-                self.output_filename()]
+                'file:' + self.output_filename()]
         return args
 
     def output_filename(self):
