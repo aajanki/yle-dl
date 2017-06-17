@@ -75,6 +75,7 @@ excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
 hds_binary = ['php', '/usr/local/share/yle-dl/AdobeHDS.php']
+ffmpeg_binary = 'ffmpeg'
 stream_proxy = None
 
 libcname = ctypes.util.find_library('c')
@@ -131,6 +132,7 @@ def usage():
                                 'streams.')
     log('--ratelimit br          Maximum bandwidth consumption, interger in kB/s')
     log('--rtmpdump path         Set path to rtmpdump binary')
+    log('--ffmpeg path           Set path to ffmpeg binary')
     log('--adobehds cmd          Set command for executing AdobeHDS.php '
                                 'script')
     log('                        Default: "php '
@@ -501,7 +503,7 @@ class KalturaUtils(object):
 
     def load_mwembed(self, media_id, program_id):
         entryid = self.kaltura_entry_id(media_id)
-        mwembed_url = ('http://cdnapi.kaltura.com/html5/html5lib/v2.37.1/'
+        mwembed_url = ('http://cdnapi.kaltura.com/html5/html5lib/v2.56/'
                        'mwEmbedFrame.php?&wid=_1955031&uiconf_id=32431531'
                        '&cache_st=1442926927&entry_id=%s'
                        '&flashvars\[streamerType\]=auto'
@@ -513,7 +515,7 @@ class KalturaUtils(object):
                        '&flashvars\[autoPlay\]=true'
                        '&flashvars\[KalturaSupport.LeadWithHTML5\]=true'
                        '&playerId=kaltura-%s-1&forceMobileHTML5=true'
-                       '&urid=2.37.1&callback=mwi_kaltura1320086810') % \
+                       '&urid=2.56&callback=mwi_kaltura1320086810') % \
                       (urllib.quote_plus(entryid),
                        urllib.quote_plus(program_id))
         mw = JSONP.load_jsonp(mwembed_url)
@@ -768,15 +770,18 @@ class HTTPStreamUrl(object):
         return HTTPDump(self, clip_title, destdir, extra_argv)
 
 
-class KalturaHTML5StreamUrl(HTTPStreamUrl):
+class KalturaHLSStreamUrl(HTTPStreamUrl):
     def __init__(self, entryid, flavorid):
         self.url = ('http://cdnapi.kaltura.com/p/1955031/sp/195503100/'
-                    'playManifest/entryId/%s/flavorId/%s/format/url/protocol/'
-                    'http/a.mp4?referrer=aHR0cDovL2FyZWVuYS55bGUuZmk='
+                    'playManifest/entryId/%s/flavorIds/%s/format/applehttp/'
+                    'protocol/http/a.m3u8?referrer=aHR0cDovL2FyZW5hbi55bGUuZmk='
                     '&playSessionId=11111111-1111-1111-1111-111111111111'
-                    '&clientTag=html5:v2.37.1&uiConfId=32431531') % (
-                        entryid, flavorid)
+                    '&clientTag=html5:v2.56&preferredBitrate=600'
+                    '&uiConfId=37558971') %(entryid, flavorid)
         self.ext = '.mp4'
+
+    def create_downloader(self, clip_title, destdir, extra_argv):
+        return HLSDump(self, clip_title, destdir, extra_argv)
 
 
 class InvalidStreamUrl(object):
@@ -975,7 +980,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             flavor = self.select_kaltura_flavor(media_id, program_id, filters) or {}
             flavor_id = flavor.get('id', '0_00000000')
             entry_id = self.kaltura_entry_id(media_id)
-            streamurl = KalturaHTML5StreamUrl(entry_id, flavor_id)
+            streamurl = KalturaHLSStreamUrl(entry_id, flavor_id)
             subtitles = []
         else:
             selected_media = self.select_yle_media(program_info, media_id,
@@ -1852,6 +1857,24 @@ class YoutubeDLHDSDump(BaseDownloader):
             return {}
 
 
+### Download a HLS stream by delegating to ffmpeg ###
+
+
+class HLSDump(ExternalDownloader):
+    def build_args(self):
+        args = [ffmpeg_binary, '-y', '-i', self.stream.to_url(),
+                '-vcodec', 'copy', '-acodec', 'copy',
+                self.output_filename()]
+        return args
+
+    def output_filename(self):
+        ext = self.stream.ext or '.mp4'
+        return (self.outputfile_from_args(self.extra_argv) or
+                self.outputfile_from_clip_title(ext=ext))
+
+    def outputfile_from_external_args(self, args):
+        return args[-1]
+
 ### Download a plain HTTP file ###
 
 
@@ -1911,6 +1934,7 @@ class HTTPDump(BaseDownloader):
 def main():
     global debug
     global rtmpdump_binary
+    global ffmpeg_binary
     global hds_binary
     global stream_proxy
     latest_episode = False
@@ -1979,6 +2003,9 @@ def main():
         elif arg == '--adobehds':
             if argv:
                 hds_binary = argv.pop(0).split(' ')
+        elif arg == '--ffmpeg':
+            if argv:
+                ffmpeg_binary = argv.pop(0)
         elif arg == '--destdir':
             if argv:
                 destdir = argv.pop(0)

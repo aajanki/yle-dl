@@ -25,6 +25,7 @@ Installation
 
 * python (2.6 or newer)
 * pycrypto
+* ffmpeg
 * PHP interpreter
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
 

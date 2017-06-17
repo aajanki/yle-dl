@@ -16,6 +16,7 @@ Asennus
 
 * python (2.6 tai uudempi)
 * pycrypto
+* ffmpeg
 * PHP-tulkki
 * PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
 

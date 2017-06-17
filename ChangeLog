@@ -2,6 +2,11 @@ download videos from Yle servers
 Copyright 2009-2017 Antti Ajanki
 Distributed under the GPL v3
 
+xx Jun 2017, Version Next
+
+- Support for the HLS streams on Areena
+- New dependency: ffmpeg
+
 30 May 2017, Version 2.16
 
 - Improved support for Elävä arkisto and Svenska Arkivet
