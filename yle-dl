@@ -156,14 +156,19 @@ def usage():
     log('-V, --verbose           Show verbose debug output')
 
 
-def download_page(url):
+def download_page(url, headers=None):
     """Returns contents of a HTML page at url."""
     if url.find('://') == -1:
         url = 'http://' + url
     if '#' in url:
         url = url[:url.find('#')]
 
-    request = urllib2.Request(url, headers=AREENA_NG_HTTP_HEADERS)
+    combined_headers = dict(
+        AREENA_NG_HTTP_HEADERS.items() +
+        (headers or {}).items()
+    )
+
+    request = urllib2.Request(url, headers=combined_headers)
     try:
         urlreader = urllib2.urlopen(request)
         content = urlreader.read()
@@ -354,8 +359,8 @@ class StreamFilters(object):
 
 class JSONP(object):
     @staticmethod
-    def load_jsonp(url):
-        json_string = JSONP.remove_jsonp_padding(download_page(url))
+    def load_jsonp(url, headers=None):
+        json_string = JSONP.remove_jsonp_padding(download_page(url, headers))
         if not json_string:
             return None
 
@@ -469,8 +474,8 @@ class AreenaUtils(object):
 
 
 class KalturaUtils(object):
-    def select_kaltura_flavor(self, media_id, program_id, filters):
-        mw = self.load_mwembed(media_id, program_id)
+    def select_kaltura_flavor(self, media_id, program_id, referer, filters):
+        mw = self.load_mwembed(media_id, program_id, referer)
         flavors = self.flavors_from_mwembed(mw)
         return self.pick_matching_flavor(flavors, filters)
 
@@ -501,24 +506,41 @@ class KalturaUtils(object):
 
         return selected
 
-    def load_mwembed(self, media_id, program_id):
+    def load_mwembed(self, media_id, program_id, referer):
         entryid = self.kaltura_entry_id(media_id)
         mwembed_url = ('http://cdnapi.kaltura.com/html5/html5lib/v2.56/'
                        'mwEmbedFrame.php?&wid=_1955031&uiconf_id=32431531'
-                       '&cache_st=1442926927&entry_id=%s'
+                       '&cache_st=1442926927&entry_id={entry_id}'
                        '&flashvars\[streamerType\]=auto'
                        '&flashvars\[EmbedPlayer.HidePosterOnStart\]=true'
                        '&flashvars\[EmbedPlayer.OverlayControls\]=true'
                        '&flashvars\[IframeCustomPluginCss1\]='
                        '%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css'
-                       '&flashvars\[mediaProxy.mediaPlayFrom\]=null'
+                       '&flashvars\[mediaProxy\]='
+                       '%7B%22mediaPlayFrom%22%3Anull%7D'
                        '&flashvars\[autoPlay\]=true'
                        '&flashvars\[KalturaSupport.LeadWithHTML5\]=true'
-                       '&playerId=kaltura-%s-1&forceMobileHTML5=true'
-                       '&urid=2.56&callback=mwi_kaltura1320086810') % \
-                      (urllib.quote_plus(entryid),
-                       urllib.quote_plus(program_id))
-        mw = JSONP.load_jsonp(mwembed_url)
+                       '&flashvars\[loop\]=false'
+                       '&flashvars\[sourceSelector\]='
+                       '%7B%22hideSource%22%3Atrue%7D'
+                       '&flashvars\[comScoreStreamingTag\]='
+                       '%7B%22logUrl%22%3A%22%2F%2Fda.yle.fi%2Fyle%2Fareena%2Fs'
+                       '%3Fname%3Dareena.kaltura.prod%22%2C%22plugin%22%3Atrue'
+                       '%2C%22position%22%3A%22before%22%2C%22persistentLabels'
+                       '%22%3A%22ns_st_mp%3Dareena.kaltura.prod%22%2C%22debug'
+                       '%22%3Atrue%2C%22asyncInit%22%3Atrue%2C%22relativeTo%22'
+                       '%3A%22video%22%2C%22trackEventMonitor%22%3A'
+                       '%22trackEvent%22%7D'
+                       '&flashvars\[closedCaptions\]='
+                       '%7B%22hideWhenEmpty%22%3Atrue%7D'
+                       '&flashvars\[Kaltura.LeadHLSOnAndroid\]=true'
+                       '&playerId=kaltura-{program_id}-1&forceMobileHTML5=true'
+                       '&urid=2.56'
+                       '&protocol=http'
+                       '&callback=mwi_kaltura1320086810'.format(
+                           entry_id = urllib.quote_plus(entryid),
+                           program_id = urllib.quote_plus(program_id)))
+        mw = JSONP.load_jsonp(mwembed_url, {'Referer': referer})
 
         if debug and mw:
             log('mwembed:')
@@ -977,7 +999,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             if debug:
                 log('Detected an HTML5 video')
 
-            flavor = self.select_kaltura_flavor(media_id, program_id, filters) or {}
+            flavor = self.select_kaltura_flavor(media_id, program_id,
+                                                pageurl, filters) or {}
             flavor_id = flavor.get('id', '0_00000000')
             entry_id = self.kaltura_entry_id(media_id)
             streamurl = KalturaHLSStreamUrl(entry_id, flavor_id)
