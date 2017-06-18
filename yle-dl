@@ -577,6 +577,7 @@ class AreenaStreamBase(AreenaUtils):
     def __init__(self, clip, pageurl):
         self.error = None
         self.episodeurl = self.create_pageurl(clip) or pageurl
+        self.ext = '.flv'
 
     def is_valid(self):
         return not self.error
@@ -809,6 +810,7 @@ class KalturaHLSStreamUrl(HTTPStreamUrl):
 class InvalidStreamUrl(object):
     def __init__(self, error_message):
         self.error = error_message
+        self.ext = None
 
     def is_valid(self):
         return False
