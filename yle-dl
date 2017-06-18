@@ -1545,10 +1545,11 @@ class BaseDownloader(object):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
-    def outputfile_from_clip_title(self, ext='.flv', resume=False):
+    def outputfile_from_clip_title(self, resume=False):
         if self._cached_output_file:
             return self._cached_output_file
 
+        ext = self.stream.ext or '.flv'
         filename = self.sane_filename(self.clip_title) + ext
         if self.destdir:
             filename = os.path.join(self.destdir, filename)
@@ -1895,11 +1896,6 @@ class HLSDump(ExternalDownloader):
                 'file:' + self.output_filename()]
         return args
 
-    def output_filename(self):
-        ext = self.stream.ext or '.mp4'
-        return (self.outputfile_from_args(self.extra_argv) or
-                self.outputfile_from_clip_title(ext=ext))
-
     def outputfile_from_external_args(self, args):
         return args[-1]
 
@@ -1949,11 +1945,6 @@ class HTTPDump(BaseDownloader):
             return RD_FAILED
 
         return RD_SUCCESS
-
-    def output_filename(self):
-        ext = self.stream.ext or '.flv'
-        return (self.outputfile_from_args(self.extra_argv) or
-                self.outputfile_from_clip_title(ext=ext))
 
 
 ### main program ###
