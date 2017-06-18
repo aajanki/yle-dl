@@ -1004,10 +1004,13 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             flavor_id = flavor.get('id', '0_00000000')
             entry_id = self.kaltura_entry_id(media_id)
             streamurl = KalturaHLSStreamUrl(entry_id, flavor_id)
-            subtitles = []
+
+            subtitle_media = self.select_yle_media(program_info, media_id,
+                                                   program_id, 'HLS', filters)
+            subtitles = self.media_subtitles(subtitle_media)
         else:
             selected_media = self.select_yle_media(program_info, media_id,
-                                                   program_id, filters)
+                                                   program_id, 'HDS', filters)
             if not selected_media:
                 return FailedClip(pageurl, 'Media not found')
 
@@ -1019,11 +1022,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                     streamurl,
                     subtitles)
 
-    def select_yle_media(self, program_info, media_id, program_id, filters):
-        proto = self.program_protocol(program_info)
+    def select_yle_media(self, program_info, media_id, program_id,
+                         default_video_proto, filters):
+        proto = self.program_protocol(program_info, default_video_proto)
         medias = self.yle_media_descriptor(media_id, program_id, proto)
         if not medias:
-            return None
+            return {}
 
         return self.select_media(medias, filters)
 
@@ -1098,12 +1102,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return title
 
-    def program_protocol(self, program_info):
+    def program_protocol(self, program_info, default_video_proto):
         event = self.publish_event(program_info)
         if event.get('media', {}).get('type') == 'AudioObject':
             return 'RTMPE'
         else:
-            return 'HDS'
+            return default_video_proto
 
     def publish_date(self, program_info):
         event = self.publish_event(program_info)
