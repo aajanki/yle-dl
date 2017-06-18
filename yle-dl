@@ -1890,14 +1890,25 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 class HLSDump(ExternalDownloader):
     def build_args(self):
+        return self.ffmpeg_command_line(['file:' + self.output_filename()])
+
+    def pipe(self):
+        args = self.ffmpeg_command_line(['-f', 'matroska', 'pipe:1'])
+        self.external_downloader(args)
+        return RD_SUCCESS
+
+    def ffmpeg_command_line(self, output_options):
+        global ffmpeg_binary
+
         args = [ffmpeg_binary, '-y', '-i', self.stream.to_url(),
                 '-bsf:a', 'aac_adtstoasc',
-                '-vcodec', 'copy', '-acodec', 'copy',
-                'file:' + self.output_filename()]
+                '-vcodec', 'copy', '-acodec', 'copy']
+        args.extend(output_options)
         return args
 
     def outputfile_from_external_args(self, args):
         return args[-1]
+
 
 ### Download a plain HTTP file ###
 
