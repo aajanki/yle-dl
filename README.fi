@@ -35,8 +35,8 @@ extension=/polku/mcrypt.so
 
 sudo make install
 
-Asennus Debian unstablessa (toukokuu 2016)/Ubuntu 16.04:ssa
------------------------------------------------------------
+Asennus Debian stretch (9.0)/Ubuntu 16.04
+-----------------------------------------
 
 sudo apt-get install rtmpdump python python-crypto php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
