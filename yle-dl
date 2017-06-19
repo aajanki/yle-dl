@@ -1908,7 +1908,10 @@ class HLSDump(ExternalDownloader):
     def ffmpeg_command_line(self, output_options):
         global ffmpeg_binary
 
-        args = [ffmpeg_binary, '-y', '-i', self.stream.to_url(),
+        loglevel = 'info' if debug else 'error'
+        args = [ffmpeg_binary, '-y',
+                '-loglevel', loglevel, '-stats',
+                '-i', self.stream.to_url(),
                 '-bsf:a', 'aac_adtstoasc',
                 '-vcodec', 'copy', '-acodec', 'copy']
         args.extend(output_options)
