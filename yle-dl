@@ -1581,9 +1581,15 @@ class BaseDownloader(object):
         while args:
             opt = args.pop()
             if opt in ('-o', '--flv'):
-                return prev
+                return self.append_ext_if_missing(prev, self.stream.ext)
             prev = opt
         return None
+
+    def append_ext_if_missing(self, filename, default_ext):
+        if '.' in filename:
+            return filename
+        else:
+            return filename + (default_ext or '.flv')
 
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':
