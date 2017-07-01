@@ -565,7 +565,7 @@ class KalturaUtils(object):
         entry_id = selected_flavor.get('entryId')
         flavor_id = selected_flavor.get('id', '0_00000000')
         ext = '.' + selected_flavor.get('fileExt', 'mp4')
-        return KalturaHLSStreamUrl(entry_id, flavor_id, stream_format, ext)
+        return self.stream_factory(entry_id, flavor_id, stream_format, ext)
 
     def filter_flavors_by_bitrate(self, flavors, filters):
         valid_bitrates = [fl for fl in flavors
@@ -593,6 +593,27 @@ class KalturaUtils(object):
         except ValueError:
             log('Failed to parse kalturaIframePackageData!')
             return {}
+
+    def stream_factory(self, entry_id, flavor_id, stream_format, ext):
+        if stream_format == 'applehttp':
+            return KalturaHLSStreamUrl(entry_id, flavor_id, ext)
+        else:
+            return KalturaHTTPStreamUrl(entry_id, flavor_id, stream_format, ext)
+
+
+class KalturaStreamUtils(object):
+    def manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
+        return ('http://cdnapi.kaltura.com/p/1955031/sp/195503100/'
+                'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
+                'format/{stream_format}/protocol/http/a{ext}?'
+                'referrer=aHR0cDovL2FyZW5hbi55bGUuZmk='
+                '&playSessionId=11111111-1111-1111-1111-111111111111'
+                '&clientTag=html5:v2.56&preferredBitrate=600'
+                '&uiConfId=37558971'.format(
+                    entry_id=entry_id,
+                    flavor_id=flavor_id,
+                    stream_format=stream_format,
+                    ext=manifest_ext))
 
 
 ### Areena stream URL ###
@@ -818,28 +839,19 @@ class HTTPStreamUrl(object):
         return HTTPDump(self, clip_title, destdir, extra_argv)
 
 
-class KalturaHLSStreamUrl(HTTPStreamUrl):
-    def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
-        if stream_format == 'applehttp':
-            manifest_ext = '.m3u8'
-        else:
-            manifest_ext = ext
-
+class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
+    def __init__(self, entryid, flavorid, ext='.mp4'):
         self.ext = ext
-        self.url = ('http://cdnapi.kaltura.com/p/1955031/sp/195503100/'
-                    'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
-                    'format/{stream_format}/protocol/http/a{ext}?'
-                    'referrer=aHR0cDovL2FyZW5hbi55bGUuZmk='
-                    '&playSessionId=11111111-1111-1111-1111-111111111111'
-                    '&clientTag=html5:v2.56&preferredBitrate=600'
-                    '&uiConfId=37558971'.format(
-                        entry_id=entryid,
-                        flavor_id=flavorid,
-                        stream_format=stream_format,
-                        ext=manifest_ext))
+        self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
 
     def create_downloader(self, clip_title, destdir, extra_argv):
         return HLSDump(self, clip_title, destdir, extra_argv)
+
+
+class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
+    def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
+        self.ext = ext
+        self.url = self.manifest_url(entryid, flavorid, stream_format, ext)
 
 
 class InvalidStreamUrl(object):
