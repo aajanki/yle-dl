@@ -584,7 +584,7 @@ class KalturaUtils(object):
         return selected
 
     def package_data_from_mwembed(self, mw):
-        m = re.search('window.kalturaIframePackageData *= *(.*?);', mw, re.DOTALL)
+        m = re.search('window.kalturaIframePackageData *= *({.*?});', mw, re.DOTALL)
         if not m:
             return {}
 
