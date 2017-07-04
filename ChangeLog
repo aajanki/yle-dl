@@ -2,6 +2,10 @@ download videos from Yle servers
 Copyright 2009-2017 Antti Ajanki
 Distributed under the GPL v3
 
+xx xxx 2017, Version 2.19
+
+- Fixed a bug introduced in the previous version that caused some videos to fail
+
 2 Jul 2017, Version 2.18
 
 - Some HTML5 streams were not being downloaded correctly

@@ -584,12 +584,14 @@ class KalturaUtils(object):
         return selected
 
     def package_data_from_mwembed(self, mw):
-        m = re.search('window.kalturaIframePackageData *= *({.*?});', mw, re.DOTALL)
+        m = re.search('window.kalturaIframePackageData\s*=\s*', mw, re.DOTALL)
         if not m:
             return {}
 
         try:
-            return json.loads(m.group(1))
+            # The string contains extra stuff after the JSON object,
+            # so let's use raw_decode()
+            return json.JSONDecoder().raw_decode(mw[m.end():])[0]
         except ValueError:
             log('Failed to parse kalturaIframePackageData!')
             return {}
