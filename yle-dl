@@ -215,7 +215,7 @@ def int_or_else(x, default):
         return default
 
 
-def process_url(url, destdir, url_only, title_only, print_episode_url, pipe,
+def process_url(url, destdir, url_only, title_only, from_file, print_episode_url, pipe,
                 rtmpdumpargs, stream_filters, backends, postprocess_command):
     dl = downloader_factory(url, backends)
     if not dl:
@@ -230,6 +230,9 @@ def process_url(url, destdir, url_only, title_only, print_episode_url, pipe,
     elif pipe:
         return dl.pipe(url, stream_filters)
     else:
+        if from_file:
+            log('')
+            log(u'Now downloading from URL %s:' % url)
         return dl.download_episodes(url, stream_filters, rtmpdumpargs, destdir,
                                     postprocess_command)
 
@@ -2038,6 +2041,7 @@ def main():
     pipe = False
     backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
     postprocess = None
+    from_file = False
 
     # Is sys.getfilesystemencoding() the correct encoding for
     # sys.argv?
@@ -2050,6 +2054,7 @@ def main():
             urls = [encode_url_utf8(arg)]
         elif arg == '-i':
             if argv:
+                from_file = True
                 urls = read_urls_from_file(argv.pop(0))
         elif arg in ['--verbose', '-V', '--debug', '-z']:
             debug = True
@@ -2145,7 +2150,7 @@ def main():
     exit_status = RD_SUCCESS
 
     for url in urls:
-        res = process_url(url, destdir, url_only, title_only,
+        res = process_url(url, destdir, url_only, title_only, from_file,
                           print_episode_url, pipe, rtmpdumpargs,
                           stream_filters, backends, postprocess)
 
