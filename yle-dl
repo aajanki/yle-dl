@@ -45,7 +45,7 @@ import ctypes.util
 import itertools
 from Crypto.Cipher import AES
 
-version = '2.18'
+version = '2.19'
 
 AREENA_NG_SWF = ('https://areena.yle.fi/static/player/1.2.8/flowplayer/'
                  'flowplayer.commercial-3.2.7-encrypted.swf')
