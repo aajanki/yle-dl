@@ -44,8 +44,9 @@ import ctypes
 import ctypes.util
 import itertools
 from Crypto.Cipher import AES
+from pkg_resources import resource_filename
 
-version = '2.19'
+version = '2.20dev'
 
 AREENA_NG_SWF = ('https://areena.yle.fi/static/player/1.2.8/flowplayer/'
                  'flowplayer.commercial-3.2.7-encrypted.swf')
@@ -74,7 +75,7 @@ excludechars_linux = '*/|'
 excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
 rtmpdump_binary = None
-hds_binary = ['php', '/usr/local/share/yle-dl/AdobeHDS.php']
+hds_binary = ['php', resource_filename(__name__, 'AdobeHDS.php')]
 ffmpeg_binary = 'ffmpeg'
 stream_proxy = None
 
@@ -2157,8 +2158,8 @@ def main():
         if exit_status == RD_SUCCESS:
             exit_status = res
 
-    sys.exit(exit_status)
+    return exit_status
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
