@@ -30,6 +30,9 @@ setup(
     install_requires=[
         'pycrypto'
     ],
+    extras_require = {
+        'youtubedl-backend': ['youtube_dl']
+    },
     entry_points = {
         'console_scripts': [
             'yle-dl = yledl.yledl:main'
