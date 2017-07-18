@@ -45,7 +45,7 @@ extension=/path/to/mcrypt.so
 ### 2. Install yle-dl ###
 
 ```
-sudo make install
+sudo python setup.py install
 ```
 
 Installation on Debian stretch (9.0)/Ubuntu 16.04
@@ -61,10 +61,10 @@ sudo phpenmod mcrypt
 ### 2. Install yle-dl ###
 
 ```
-sudo make install
+sudo python setup.py install
 ```
 
-Installation on Debian Jessie (8.5)/Ubuntu 15.10 or older
+Installation on Debian Jessie (8.0)/Ubuntu 15.10 or older
 ---------------------------------------------------------
 
 ### 1. Install the dependencies ###
@@ -77,7 +77,7 @@ sudo php5enmod mcrypt
 ### 2. Install yle-dl ###
 
 ```
-sudo make install
+sudo python setup.py install
 ```
 
 Installation on Mac OS X
@@ -91,7 +91,6 @@ Installation on Mac OS X
 brew install python
 brew install --HEAD rtmpdump
 brew install homebrew/php/php70-mcrypt
-pip install pycrypto
 ```
 
 Enable the PHP extensions by appending the following lines with the
@@ -106,7 +105,7 @@ extension=/path/to/mcrypt.so
 ### 2. Install yle-dl ###
 
 ```
-make install
+sudo python setup.py install
 ```
 
 Installation with youtube-dl as an alternative downloader backend
@@ -124,14 +123,6 @@ PHP libraries) and additionally install youtube-dl:
 * Debian/Ubuntu: `pip install --upgrade youtube_dl`
 * Mac OS X: `brew install youtube-dl`
 * Other operating systems: `pip install --upgrade youtube_dl`
-
-Uninstalling earlier versions
------------------------------
-
-Starting from version 1.99.9, yle-dl doesn't anymore require a
-modified rtmpdump or plugin. Instead, everything is now downloadable
-with the plain rtmpdump. To remove the remnants of previous versions
-run `make uninstall-old-rtmpdump`.
 
 Packages for various distros
 ----------------------------

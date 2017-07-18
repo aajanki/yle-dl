@@ -33,23 +33,21 @@ extension=/polku/mcrypt.so
 
 ### 2. Asenna yle-dl ###
 
-sudo make install
-
 Asennus Debian stretch (9.0)/Ubuntu 16.04
 -----------------------------------------
 
 sudo apt-get install rtmpdump python python-crypto php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 
-sudo make install
+sudo python setup.py install
 
-Asennus Debian Jessie (8.5)/Ubuntu 15.10 ja vanhemmat
+Asennus Debian Jessie (8.0)/Ubuntu 15.10 ja vanhemmat
 -----------------------------------------------------
 
 sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 
-sudo make install
+sudo python setup.py install
 
 Asennus Mac OS X:ssä
 --------------------
@@ -61,7 +59,6 @@ Asenna PHP-tulkki: https://secure.php.net/manual/en/install.macosx.php
 brew install python
 brew install --HEAD rtmpdump
 brew install homebrew/php/php70-mcrypt
-pip install pycrypto
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
 polkuineen php.ini-tiedostoon
@@ -72,7 +69,7 @@ extension=/polku/mcrypt.so
 
 ### 2. Asenna yle-dl ###
 
-make install
+sudo python setup.py install
 
 Asennus, kun lataukseen käytetään youtube-dl:ää
 -----------------------------------------------
@@ -89,14 +86,6 @@ pois. Asenna lisäksi Python 2 -versio youtube-dl-moduulista:
 * Debian/Ubuntu: `pip install --upgrade youtube_dl`
 * Mac OS X: `brew install youtube-dl`
 * Muut käyttöjärjestelmät: `pip install --upgrade youtube_dl`
-
-Vanhojen versioden poistaminen
-------------------------------
-
-Alkaen versiosta 1.99.9 yle-dl ei enää tarvitse Ylen palvelimia varten
-muunneltua kopiota rtmpdump-ohjelmasta. Aikaisemman yle-dl-version
-mukana asennetun rtmpdumpin ja pluginin voi poistaa komentamalla
-pääkäyttäjänä "make uninstall-old-rtmpdump".
 
 Valmiit asennuspaketit
 ----------------------
