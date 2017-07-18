@@ -42,7 +42,6 @@ import codecs
 import base64
 import ctypes
 import ctypes.util
-import itertools
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 
@@ -287,11 +286,6 @@ def which(program):
                 return exe_file
 
     return None
-
-
-def partition(pred, iterable):
-    it1, it2 = itertools.tee(iterable)
-    return (itertools.ifilter(pred, it1), itertools.ifilterfalse(pred, it2))
 
 
 def parse_rtmp_single_component_app(rtmpurl):
