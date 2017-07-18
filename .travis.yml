@@ -16,9 +16,9 @@ install:
  - sudo python setup.py install
 
 script:
- - pyflakes yle-dl
+ - pyflakes yledl/yledl.py
  - yle-dl --help
 
 after_script:
  - pip install pep8
- - pep8 --statistics --count yle-dl
+ - pep8 --statistics --count yledl/yledl.py
