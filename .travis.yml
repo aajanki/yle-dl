@@ -6,19 +6,15 @@ python:
  - 2.7
  - 2.6
 
-sudo: true
+sudo: false
 
 install:
- - pip install pyflakes
- - pip install pycrypto
- - sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
- - sudo php5enmod mcrypt
- - sudo python setup.py install
+ - pip install pyflakes pep8
+ - python setup.py install
 
 script:
  - pyflakes yledl/yledl.py
  - yle-dl --help
 
 after_script:
- - pip install pep8
  - pep8 --statistics --count yledl/yledl.py
