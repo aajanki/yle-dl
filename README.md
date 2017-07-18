@@ -95,6 +95,7 @@ brew install homebrew/php/php70-mcrypt
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:
+
 [php.ini]:https://secure.php.net/manual/en/configuration.file.php
 
 ```
