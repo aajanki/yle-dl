@@ -45,7 +45,7 @@ import ctypes.util
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 
-version = '2.20dev'
+version = '2.20'
 
 AREENA_NG_SWF = ('https://areena.yle.fi/static/player/1.2.8/flowplayer/'
                  'flowplayer.commercial-3.2.7-encrypted.swf')
