@@ -19,8 +19,7 @@
         <h2>Download videos from Yle Areena</h2>
 
         <section id="downloads">
-          <a href="https://github.com/aajanki/yle-dl/zipball/2.19" class="btn">Download as .zip</a>
-          <a href="https://github.com/aajanki/yle-dl/tarball/2.19" class="btn">Download as .tar.gz</a>
+          <a href="https://pypi.python.org/packages/34/d7/2c9b7a72421d6c663b2e21d6baa6b35c2c6f4b89bcdd0954cc1256da0d3b/yle-dl-2.20.tar.gz" class="btn">Download sources</a>
           <a href="https://github.com/aajanki/yle-dl" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
         </section>
       </div>
@@ -36,6 +35,17 @@
 <p>The videos are saved in Flash video (FLV) or in MP4 format. At
 least <a href="http://www.videolan.org/vlc/">VLC</a> player is able to
 play them back. </p>
+
+<h2>Installation</h2>
+
+<p><code>sudo pip install yle-dl</code></p>
+
+<p>Required packages: python (version 2.6 or newer), pycrypto, ffmpeg,
+a PHP interpreter and the following PHP extensions: bcmath, curl,
+mcrypt and SimpleXML. Optionally, for downloading Areena audio
+streams, rtmpdump (version 2.4 or newer, the latest development
+version from the <a href="http://rtmpdump.mplayerhq.hu/">project
+homepage</a> is recommended).</p>
 
 <h2>Usage</h2>
 
@@ -69,30 +79,17 @@ socks5://localhost:7777</code></dd>
 
 <p><code>yle-dl http://areena.yle.fi/tv/1515302 -o /your/video/dir/video.mp4</code></p>
 
-<h2>Download</h2>
+<h2>Source codes</h2>
 
-<h3>Source code</h3>
-
-<p><a href="https://github.com/aajanki/yle-dl/tarball/2.19">Stable yle-dl 2.19</a> (4.7.2017)</p>
+<p><a href="https://pypi.python.org/packages/34/d7/2c9b7a72421d6c663b2e21d6baa6b35c2c6f4b89bcdd0954cc1256da0d3b/yle-dl-2.20.tar.gz">Stable yle-dl 2.20</a> (19.7.2017)</p>
 
 <p><a href="https://github.com/aajanki/yle-dl/tarball/master">Development version</a></p>
 
 <p>The source code is available under <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU GPLv3 license</a>.</p>
 
-<p>Required packages: python (version 2.6 or newer), pycrypto, ffmpeg,
-a PHP interpreter and the following PHP extensions: bcmath, curl,
-mcrypt and SimpleXML. Optionally, for downloading Areena audio
-streams, rtmpdump (version 2.4 or newer, the latest development
-version from the <a href="http://rtmpdump.mplayerhq.hu/">project
-homepage</a> is recommended).</p>
+<h2>Installer and frontend packages created by others</h2>
 
-<h3>Installation</h3>
-
-<p>Install yle-dl by running (requires root privileges): <code>make install</code></p>
-
-<h3>Installer and frontend packages created by others</h3>
-
-<h4>Linux</h4>
+<h3>Linux</h3>
 
 <p>
 <ul>
@@ -104,7 +101,7 @@ href="https://github.com/juippis/jps-gentoo/tree/master/media-video/yle-dl">Gent
 </ul>
 </p>
 
-<h4>macOS</h4>
+<h3>macOS</h3>
 
 <p>
 <ul>
