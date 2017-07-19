@@ -103,10 +103,6 @@ Packages for various distros
 [A list of available
 packages](https://aajanki.github.com/yle-dl/index-en.html)
 
-RPM packaging:
-
-contrib/yle-dl.spec is a spec file for creating a RPM-package for
-Fedora.
 
 Usage
 -----

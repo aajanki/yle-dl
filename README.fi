@@ -87,11 +87,6 @@ Valmiit asennuspaketit
 Katso lista saatavilla olevista asennuspaketeista osoitteesta
 https://aajanki.github.io/yle-dl/
 
-RPM-paketointi:
-
-Tiedoston contrib/yle-dl.spec avulla on mahdollista luoda RPM-paketti
-Fedoraan.
-
 
 Käyttö
 ------
