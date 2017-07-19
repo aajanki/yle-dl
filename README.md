@@ -35,6 +35,7 @@ Optionally (for downloading Areena audio streams):
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:
+
 [php.ini]:https://secure.php.net/manual/en/configuration.file.php
 
 ```
@@ -42,48 +43,21 @@ extension=/path/to/curl.so
 extension=/path/to/mcrypt.so
 ```
 
-### 2. Install yle-dl ###
-
-```
-sudo python setup.py install
-```
-
-Installation on Debian stretch (9.0)/Ubuntu 16.04
--------------------------------------------------
-
-### 1. Install the dependencies ###
+#### Dependencies on Debian 9 (Stretch)/Ubuntu 16.04 ####
 
 ```
 sudo apt-get install rtmpdump python python-crypto php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 ```
 
-### 2. Install yle-dl ###
-
-```
-sudo python setup.py install
-```
-
-Installation on Debian Jessie (8.0)/Ubuntu 15.10 or older
----------------------------------------------------------
-
-### 1. Install the dependencies ###
+#### Dependencies on Debian 8 (Jessie)/Ubuntu 15.10 or older ####
 
 ```
 sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 ```
 
-### 2. Install yle-dl ###
-
-```
-sudo python setup.py install
-```
-
-Installation on Mac OS X
-------------------------
-
-### 1. Install the dependencies ###
+#### Dependencies on Mac OS X ####
 
 [Install the PHP interpreter](https://secure.php.net/manual/en/install.macosx.php) and the other libraries:
 
@@ -93,18 +67,17 @@ brew install --HEAD rtmpdump
 brew install homebrew/php/php70-mcrypt
 ```
 
-Enable the PHP extensions by appending the following lines with the
-correct paths in the [php.ini]:
-
-[php.ini]:https://secure.php.net/manual/en/configuration.file.php
-
-```
-extension=/path/to/curl.so
-extension=/path/to/mcrypt.so
-```
+Edit the php.ini as instructed above.
 
 ### 2. Install yle-dl ###
 
+Easier way (installation without downloading source codes):
+```
+sudo pip install yle-dl
+```
+
+Installation from sources. Download the sources and run the following
+on the source directory:
 ```
 sudo python setup.py install
 ```
@@ -121,9 +94,8 @@ installed and downloading with AdobeHDS.php fails.
 Follow the above installation instructions (except for the PHP and the
 PHP libraries) and additionally install youtube-dl:
 
-* Debian/Ubuntu: `pip install --upgrade youtube_dl`
 * Mac OS X: `brew install youtube-dl`
-* Other operating systems: `pip install --upgrade youtube_dl`
+* Debian/Ubuntu/other operating systems: `pip install --upgrade youtube_dl`
 
 Packages for various distros
 ----------------------------

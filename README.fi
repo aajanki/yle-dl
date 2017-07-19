@@ -9,10 +9,8 @@ yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
 (http://yle.fi/aihe/elava-arkisto) ja Ylen uutissivustolta
 (http://yle.fi/uutiset/).
 
-Asennus
--------
-
-### 1. Riippuvuudet ###
+Asenna riippuvuudet
+-------------------
 
 * python (2.6 tai uudempi)
 * pycrypto
@@ -31,30 +29,20 @@ polkuineen php.ini-tiedostoon
 extension=/polku/curl.so
 extension=/polku/mcrypt.so
 
-### 2. Asenna yle-dl ###
+Yksityiskohtaisemmat ohjeet riippuvuuksien asentamiseen eri
+käyttöjärjestelmissä:
 
-sudo python setup.py install
-
-Asennus Debian stretch (9.0)/Ubuntu 16.04
------------------------------------------
+## Debian 9 (Stretch)/Ubuntu 16.04
 
 sudo apt-get install rtmpdump python python-crypto php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 
-sudo python setup.py install
-
-Asennus Debian Jessie (8.0)/Ubuntu 15.10 ja vanhemmat
------------------------------------------------------
+## Debian 8 (Jessie)/Ubuntu 15.10 ja vanhemmat
 
 sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 
-sudo python setup.py install
-
-Asennus Mac OS X:ssä
---------------------
-
-### 1. Riippuvuudet ###
+## Mac OS X
 
 Asenna PHP-tulkki: https://secure.php.net/manual/en/install.macosx.php
 
@@ -62,16 +50,20 @@ brew install python
 brew install --HEAD rtmpdump
 brew install homebrew/php/php70-mcrypt
 
-Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
-polkuineen php.ini-tiedostoon
-(https://secure.php.net/manual/en/configuration.file.php):
+Muokkaa php.ini-tiedostoa kuten yllä on neuvottu.
 
-extension=/polku/curl.so
-extension=/polku/mcrypt.so
 
-### 2. Asenna yle-dl ###
+Asenna yle-dl
+-------------
+
+Yksinkertainen tapa (ei vaadi lähdekoodien lataamista):
+
+sudo pip install yle-dl
+
+Vaihtoehtoinen tapa: lataa lähdekoodit ja aja lähdekoodihakemistossa:
 
 sudo python setup.py install
+
 
 Asennus, kun lataukseen käytetään youtube-dl:ää
 -----------------------------------------------
@@ -85,9 +77,9 @@ AdobeHDS.php toimi.
 Suorita asennus kuten yllä, mutta jätä PHP-tulkki ja PHP-kirjastot
 pois. Asenna lisäksi Python 2 -versio youtube-dl-moduulista:
 
-* Debian/Ubuntu: `pip install --upgrade youtube_dl`
 * Mac OS X: `brew install youtube-dl`
-* Muut käyttöjärjestelmät: `pip install --upgrade youtube_dl`
+* Debian/Ubuntu/muut käyttöjärjestelmät: `pip install --upgrade youtube_dl`
+
 
 Valmiit asennuspaketit
 ----------------------
@@ -99,6 +91,7 @@ RPM-paketointi:
 
 Tiedoston contrib/yle-dl.spec avulla on mahdollista luoda RPM-paketti
 Fedoraan.
+
 
 Käyttö
 ------
@@ -151,6 +144,7 @@ yle-dl --help
 
 Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
 ulospäin menevä liikenne porteissa 80 ja 1935.
+
 
 Esimerkkejä
 -----------
