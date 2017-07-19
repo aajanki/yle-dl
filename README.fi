@@ -33,6 +33,8 @@ extension=/polku/mcrypt.so
 
 ### 2. Asenna yle-dl ###
 
+sudo python setup.py install
+
 Asennus Debian stretch (9.0)/Ubuntu 16.04
 -----------------------------------------
 
