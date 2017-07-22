@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import re
+import sys
 from setuptools import setup
+
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
+maybe_pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 long_description = \
 u"""\
@@ -33,6 +37,10 @@ setup(
     extras_require = {
         'youtubedl-backend': ['youtube_dl']
     },
+    setup_requires = maybe_pytest_runner,
+    tests_require = [
+        'pytest',
+    ],
     entry_points = {
         'console_scripts': [
             'yle-dl = yledl.yledl:main'

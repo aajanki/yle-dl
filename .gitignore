@@ -1,3 +1,7 @@
-build
-dist
-yle_dl.egg-info
+*.pyc
+__pycache__
+/build
+/dist
+/yle_dl.egg-info
+/.cache
+/.eggs
