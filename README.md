@@ -71,7 +71,7 @@ Edit the php.ini as instructed above.
 
 ### 2. Install yle-dl ###
 
-Easier way (installation without downloading source codes):
+Easier way (installation without downloading the source codes):
 ```
 sudo pip install yle-dl
 ```

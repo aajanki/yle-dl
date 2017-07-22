@@ -130,6 +130,8 @@ def usage():
                                 'in kB/s')
     log('                        or "best" or "worst". Not exact on HDS '
                                 'streams.')
+    log('--duration s            Stop downloading after the specified number '
+                                'of seconds')
     log('--ratelimit br          Maximum bandwidth consumption, interger in kB/s')
     log('--rtmpdump path         Set path to rtmpdump binary')
     log('--ffmpeg path           Set path to ffmpeg binary')
@@ -335,13 +337,15 @@ class StreamFilters(object):
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
-    def __init__(self, latest_only, audiolang, sublang, hardsubs, maxbitrate, ratelimit):
+    def __init__(self, latest_only, audiolang, sublang, hardsubs, maxbitrate,
+                 ratelimit, duration):
         self.latest_only = latest_only
         self.audiolang = audiolang
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
         self.ratelimit = ratelimit
+        self.duration = duration
 
     def sublang_matches(self, langcode, subtype):
         return self._lang_matches(self.sublang, langcode, subtype)
@@ -563,7 +567,7 @@ class KalturaUtils(object):
         entry_id = selected_flavor.get('entryId')
         flavor_id = selected_flavor.get('id', '0_00000000')
         ext = '.' + selected_flavor.get('fileExt', 'mp4')
-        return self.stream_factory(entry_id, flavor_id, stream_format, ext)
+        return self.stream_factory(entry_id, flavor_id, stream_format, filters, ext)
 
     def filter_flavors_by_bitrate(self, flavors, filters):
         valid_bitrates = [fl for fl in flavors
@@ -594,9 +598,9 @@ class KalturaUtils(object):
             log('Failed to parse kalturaIframePackageData!')
             return {}
 
-    def stream_factory(self, entry_id, flavor_id, stream_format, ext):
+    def stream_factory(self, entry_id, flavor_id, stream_format, filters, ext):
         if stream_format == 'applehttp':
-            return KalturaHLSStreamUrl(entry_id, flavor_id, ext)
+            return KalturaHLSStreamUrl(entry_id, flavor_id, filters, ext)
         else:
             return KalturaHTTPStreamUrl(entry_id, flavor_id, stream_format, ext)
 
@@ -840,12 +844,13 @@ class HTTPStreamUrl(object):
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
-    def __init__(self, entryid, flavorid, ext='.mp4'):
+    def __init__(self, entryid, flavorid, filters, ext='.mp4'):
         self.ext = ext
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
+        self.filters = filters
 
     def create_downloader(self, clip_title, destdir, extra_argv):
-        return HLSDump(self, clip_title, destdir, extra_argv)
+        return HLSDump(self, clip_title, destdir, extra_argv, self.filters)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -1761,27 +1766,28 @@ class HDSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, destdir, extra_argv, filters):
         ExternalDownloader.__init__(self, stream, clip_title, destdir,
                                     extra_argv)
-        self.quality_options = self._bitrate_to_quality(filters.maxbitrate)
-        self.ratelimit_options = self._ratelimit(filters.ratelimit)
+        self.quality_options = self._filter_options(filters)
 
     def resume_supported(self):
         return True
 
-    def _bitrate_to_quality(self, maxbitrate):
+    def _filter_options(self, filters):
+        options = []
+
         # Approximate because there is no easy way to find out the
         # available bitrates in the HDS stream
-        if maxbitrate < 1000:
-            return ['--quality', 'low']
-        elif maxbitrate < 2000:
-            return ['--quality', 'medium']
-        else:
-            return []
+        if filters.maxbitrate < 1000:
+            options.extend(['--quality', 'low'])
+        elif filters.maxbitrate < 2000:
+            options.extend(['--quality', 'medium'])
 
-    def _ratelimit(self, limit):
-        if limit:
-            return ['--maxspeed', str(limit)]
-        else:
-            return []
+        if filters.ratelimit:
+            options.extend(['--maxspeed', str(filters.ratelimit)])
+
+        if filters.duration:
+            options.extend(['--duration', str(filters.duration)])
+
+        return options
 
     def build_args(self):
         return self.adobehds_command_line([
@@ -1802,7 +1808,6 @@ class HDSDump(ExternalDownloader):
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
-        args.extend(self.ratelimit_options)
         if stream_proxy:
             args.append('--proxy')
             args.append(stream_proxy)
@@ -1842,6 +1847,10 @@ class YoutubeDLHDSDump(BaseDownloader):
         BaseDownloader.__init__(self, stream, clip_title, destdir, extra_argv)
         self.maxbitrate = filters.maxbitrate
         self.ratelimit = filters.ratelimit
+
+        if filters.duration:
+            log(u'Warning: --duration will be ignored when using the '
+                u'youtube-dl backend')
 
     def resume_supported(self):
         return True
@@ -1940,6 +1949,17 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
+    def __init__(self, stream, clip_title, destdir, extra_argv, filters):
+        ExternalDownloader.__init__(self, stream, clip_title, destdir,
+                                    extra_argv)
+        self.duration_options = self._filter_options(filters)
+
+    def _filter_options(self, filters):
+        if filters.duration:
+            return ['-t', str(filters.duration)]
+        else:
+            return []
+
     def build_args(self):
         return self.ffmpeg_command_line(['file:' + self.output_filename()])
 
@@ -1957,6 +1977,7 @@ class HLSDump(ExternalDownloader):
                 '-i', self.stream.to_url(),
                 '-bsf:a', 'aac_adtstoasc',
                 '-vcodec', 'copy', '-acodec', 'copy']
+        args.extend(self.duration_options)
         args.extend(output_options)
         return args
 
@@ -2030,6 +2051,7 @@ def main():
     hardsubs = False
     bitratearg = sys.maxint
     ratelimit = None
+    duration = None
     show_usage = False
     urls = []
     destdir = None
@@ -2083,6 +2105,9 @@ def main():
         elif arg == '--ratelimit':
             if argv:
                 ratelimit = int_or_else(argv.pop(0), None)
+        elif arg == '--duration':
+            if argv:
+                duration = int_or_else(argv.pop(0), None)
         elif arg == '--rtmpdump':
             if argv:
                 rtmpdump_binary = argv.pop(0)
@@ -2141,7 +2166,7 @@ def main():
 
     maxbitrate = bitrate_from_arg(bitratearg)
     stream_filters = StreamFilters(latest_episode, audiolang, sublang,
-                                   hardsubs, maxbitrate, ratelimit)
+                                   hardsubs, maxbitrate, ratelimit, duration)
     exit_status = RD_SUCCESS
 
     for url in urls:
