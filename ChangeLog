@@ -4,6 +4,7 @@ Distributed under the GPL v3
 
 xx xxx 2017, Version Next
 
+- Fixed the recording of live radio streams
 - New option --duration for limitting the max duration to download
 
 19 Jul 2017, Version 2.20

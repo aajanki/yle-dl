@@ -245,7 +245,7 @@ def downloader_factory(url, backends):
         return RetryingDownloader(ElavaArkistoDownloader, backends)
     elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
         return RetryingDownloader(ArkivetDownloader, backends)
-    elif re.match(r'^https?://(www\.)?yle\.fi/radio/[a-zA-Z0-9]+/suora', url):
+    elif re.match(r'^https?://(www\.)?yle\.fi/radio/[a-zA-Z0-9/]+/suora', url):
         return RetryingDownloader(AreenaLiveRadioDownloader, backends)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return RetryingDownloader(Areena2014LiveDownloader, backends)
@@ -1394,47 +1394,8 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
         if not html:
             return None
 
-        radioid = re.search(r'"id": *"/([0-9]+)"', html)
-        if not radioid:
-            return None
-
-        # Extracted from http://player.yle.fi/assets/js/mainEmbed.js
-        radioid_to_mediaid = {
-            2: "ylex",
-            100: "ylex-video",
-            4: "yle-radio-vega",
-            54: "radio-vega-huvudstadsregionen",
-            59: "radio-vega-ostnyland",
-            55: "radio-vega-aboland",
-            57: "radio-vega-vastnyland",
-            44: "yle-x3m",
-            1: "yle-radio-1",
-            48: "yle-puhe",
-            17: "yle-klassinen",
-            93: "yle-sami-radio",
-            10: "ylen-aikainen",
-            3: "yle-radio-suomi",
-            50: "etela-karjalan-radio",
-            61: "etela-savon-radio",
-            81: "kainuun-radio",
-            51: "kymenlaakson-radio",
-            41: "lahden-radio",
-            90: "lapin-radio",
-            80: "oulu-radio",
-            70: "pohjanmaan-radio",
-            62: "pohjois-karjalan-radio",
-            12: "radio-ita-uusimaa",
-            42: "radio-hame",
-            71: "radio-keski-pohjanmaa",
-            30: "radio-keski-suomi",
-            91: "radio-perameri",
-            60: "radio-savo",
-            21: "satakunnan-radio",
-            40: "tampereen-radio",
-            20: "turun-radio",
-            11: "ylen-lantinen"}
-
-        return radioid_to_mediaid[int(radioid.group(1))]
+        stream_id = re.search(r"channelAreenaStreamId: *'(.*?)'", html)
+        return stream_id.group(1) if stream_id else None
 
 
 ### Elava Arkisto ###
