@@ -42,6 +42,7 @@ import codecs
 import base64
 import ctypes
 import ctypes.util
+import logging
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 
@@ -69,7 +70,6 @@ RD_SUCCESS = 0
 RD_FAILED = 1
 RD_INCOMPLETE = 2
 
-debug = False
 excludechars_linux = '*/|'
 excludechars_windows = '\"*/:<>?|'
 excludechars = excludechars_linux
@@ -88,74 +88,98 @@ class YleDlURLopener(urllib.FancyURLopener):
 
 urllib._urlopener = YleDlURLopener()
 
+def yledl_logger():
+    class PlainInfoFormatter(logging.Formatter):
+        def format(self, record):
+            if record.levelno == logging.INFO:
+                return record.getMessage()
+            else:
+                return super(PlainInfoFormatter, self).format(record)
 
-def log(msg):
-    enc = sys.stderr.encoding or 'UTF-8'
-    sys.stderr.write(msg.encode(enc, 'backslashreplace'))
-    sys.stderr.write('\n')
-    sys.stderr.flush()
+    logger = logging.getLogger('yledl')
+    handler = logging.StreamHandler()
+    formatter = PlainInfoFormatter('%(levelname)s: %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    return logger
+
+
+logger = yledl_logger()
+
+
+def print_enc(msg):
+    if hasattr(sys.stdout, 'encoding'):
+        enc = sys.stdout.encoding or 'UTF-8'
+    else:
+        enc = 'UTF-8'
+    sys.stdout.write(msg.encode(enc, 'backslashreplace'))
+    sys.stdout.write('\n')
+    sys.stdout.flush()
 
 
 def splashscreen():
-    log(u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto' %
-        version)
-    log(u'Copyright (C) 2009-2017 Antti Ajanki <antti.ajanki@iki.fi>, license: '
-        u'GPLv3')
+    print_enc(u'yle-dl %s: Download media files from Yle Areena and '
+             u'Elävä Arkisto' % version)
+    print_enc(u'Copyright (C) 2009-2017 Antti Ajanki '
+             u'<antti.ajanki@iki.fi>, license: GPLv3')
 
 
 def usage():
-    """Print the usage message to stderr"""
+    """Print the usage message to stdout"""
     splashscreen()
-    log('')
-    log(u'%s [options] URL' % sys.argv[0])
-    log(u'%s [options] -i filename' % sys.argv[0])
-    log('')
-    log('options:')
-    log('')
-    log('-o filename             Save stream to the named file')
-    log('-i filename             Read input URLs to process from the named '
-                                'file,')
-    log('                        one URL per line')
-    log('--latestepisode         Download the latest episode')
-    log("--showurl               Print URL, don't download")
-    log("--showtitle             Print stream title, don't download")
-    log('--showepisodepage       Print web page for each episode')
-    log('--vfat                  Create Windows-compatible filenames')
-    log('--audiolang lang        Select stream\'s audio language, lang = fin '
-                                'or swe')
-    log('--sublang lang          Download subtitles, lang = fin, swe, smi, '
-                                'none or all')
-    log('--hardsubs              Download stream with hard subs if available')
-    log('--maxbitrate br         Maximum bitrate stream to download, integer '
-                                'in kB/s')
-    log('                        or "best" or "worst". Not exact on HDS '
-                                'streams.')
-    log('--duration s            Stop downloading after the specified number '
-                                'of seconds')
-    log('--ratelimit br          Maximum bandwidth consumption, interger in kB/s')
-    log('--rtmpdump path         Set path to rtmpdump binary')
-    log('--ffmpeg path           Set path to ffmpeg binary')
-    log('--adobehds cmd          Set command for executing AdobeHDS.php '
-                                'script')
-    log('                        Default: "php '
-                                '/usr/local/share/yle-dl/AdobeHDS.php"')
-    log('--postprocess cmd       Execute a command cmd after a successful '
-                                'download.')
-    log('                        cmd is called with arguments: video, '
-                                'subtitle files')
-    log('--proxy uri             Proxy for downloading streams')
-    log('                        Example: --proxy socks5://localhost:7777')
-    log('--destdir dir           Save files to dir')
-    log('--backend be            Downloaders that are tried until one of them')
-    log('                        succeeds (a comma-separated list). Possible '
-                                'values:')
-    log('                          adobehdsphp - AdobeHDS.php')
-    log('                          youtubedl - youtube-dl (HDS stream)')
-    log('--pipe                  Dump stream to stdout for piping to media '
-                                'player')
-    log('                        E.g. "yle-dl --pipe URL | vlc -"')
-    log('--resume                Resume a partial download')
-    log('-V, --verbose           Show verbose debug output')
+    print_enc('')
+    print_enc(u'%s [options] URL' % sys.argv[0])
+    print_enc(u'%s [options] -i filename' % sys.argv[0])
+    print_enc('')
+    print_enc('options:')
+    print_enc('')
+    print_enc('-o filename             Save stream to the named file')
+    print_enc('-i filename             Read input URLs to process from the '
+                                      'named file,')
+    print_enc('                        one URL per line')
+    print_enc('--latestepisode         Download the latest episode')
+    print_enc("--showurl               Print URL, don't download")
+    print_enc("--showtitle             Print stream title, don't download")
+    print_enc('--showepisodepage       Print web page for each episode')
+    print_enc('--vfat                  Create Windows-compatible filenames')
+    print_enc('--audiolang lang        Select stream\'s audio language, '
+                                      'lang = fin or swe')
+    print_enc('--sublang lang          Download subtitles, '
+                                      'lang = fin, swe, smi, none or all')
+    print_enc('--hardsubs              Download stream with hard subs '
+                                      'if available')
+    print_enc('--maxbitrate br         Maximum bitrate stream to download, '
+                                      'integer in kB/s')
+    print_enc('                        or "best" or "worst". Not exact on HDS '
+                                      'streams.')
+    print_enc('--duration s            Stop downloading after the specified '
+                                      'number of seconds')
+    print_enc('--ratelimit br          Maximum bandwidth consumption, '
+                                      'interger in kB/s')
+    print_enc('--rtmpdump path         Set path to rtmpdump binary')
+    print_enc('--ffmpeg path           Set path to ffmpeg binary')
+    print_enc('--adobehds cmd          Set command for executing AdobeHDS.php '
+                                      'script')
+    print_enc('                        Default: "php '
+                                      '/usr/local/share/yle-dl/AdobeHDS.php"')
+    print_enc('--postprocess cmd       Execute a command cmd after a successful '
+                                      'download.')
+    print_enc('                        cmd is called with arguments: video, '
+                                      'subtitle files')
+    print_enc('--proxy uri             Proxy for downloading streams')
+    print_enc('                        Example: --proxy socks5://localhost:7777')
+    print_enc('--destdir dir           Save files to dir')
+    print_enc('--backend be            Downloaders that are tried until one of '
+                                      'them succeeds')
+    print_enc('                        (a comma-separated list). '
+                                      'Possible values:')
+    print_enc('                          adobehdsphp - AdobeHDS.php')
+    print_enc('                          youtubedl - youtube-dl (HDS stream)')
+    print_enc('--pipe                  Dump stream to stdout for piping to '
+                                      'media player')
+    print_enc('                        E.g. "yle-dl --pipe URL | vlc -"')
+    print_enc('--resume                Resume a partial download')
+    print_enc('-V, --verbose           Show verbose debug output')
 
 
 def download_page(url, headers=None):
@@ -185,10 +209,10 @@ def download_page(url, headers=None):
 
         return unicode(content, charset, 'replace')
     except urllib2.URLError as exc:
-        log(u"Can't read %s: %s" % (url, exc))
+        logger.exception(u"Can't read %s" % url)
         return None
     except ValueError:
-        log(u'Invalid URL: ' + url)
+        logger.error(u'Invalid URL: ' + url)
         return None
 
 
@@ -221,8 +245,8 @@ def process_url(url, destdir, url_only, title_only, from_file, print_episode_url
                 rtmpdumpargs, stream_filters, backends, postprocess_command):
     dl = downloader_factory(url, backends)
     if not dl:
-        log(u'Unsupported URL %s.' % url)
-        log(u'Is this really a Yle video page?')
+        logger.error(u'Unsupported URL %s.' % url)
+        logger.error(u'Is this really a Yle video page?')
         return RD_FAILED
 
     if url_only:
@@ -233,8 +257,8 @@ def process_url(url, destdir, url_only, title_only, from_file, print_episode_url
         return dl.pipe(url, stream_filters)
     else:
         if from_file:
-            log('')
-            log(u'Now downloading from URL %s:' % url)
+            logger.info('')
+            logger.info(u'Now downloading from URL %s:' % url)
         return dl.download_episodes(url, stream_filters, rtmpdumpargs, destdir,
                                     postprocess_command)
 
@@ -267,7 +291,7 @@ def bitrate_from_arg(arg):
         try:
             return int(arg)
         except ValueError:
-            log(u'Invalid bitrate %s, defaulting to best' % arg)
+            logger.warning(u'Invalid bitrate %s, defaulting to best' % arg)
             arg = sys.maxint
 
 
@@ -399,7 +423,7 @@ class BackendFactory(object):
         backends = []
         for bn in backend_names:
             if not BackendFactory.is_valid_hds_backend(bn):
-                log(u'Invalid backend: ' + bn)
+                logger.warning(u'Invalid backend: ' + bn)
                 continue
 
             backends.append(BackendFactory(bn))
@@ -451,13 +475,13 @@ class AreenaUtils(object):
                             subtitlefile = filename.encode(enc, 'replace')
                             urllib.urlretrieve(sub.url, subtitlefile)
                             self.add_BOM(subtitlefile)
-                            log(u'Subtitles saved to ' + filename)
+                            logger.info(u'Subtitles saved to ' + filename)
                             subtitlefiles.append(filename)
                             if preferred_lang != 'all':
                                 return subtitlefiles
                         except IOError as exc:
-                            log(u'Failed to download subtitles at %s: %s' %
-                                (sub.url, exc))
+                            logger.exception(u'Failed to download subtitles '
+                                             u'at %s' % sub.url)
         return subtitlefiles
 
     def add_BOM(self, filename):
@@ -516,9 +540,9 @@ class KalturaUtils(object):
                            program_id = urllib.quote_plus(program_id)))
         mw = JSONP.load_jsonp(mwembed_url, {'Referer': referer})
 
-        if debug and mw:
-            log('mwembed:')
-            log(json.dumps(mw))
+        if mw:
+            logger.debug('mwembed:')
+            logger.debug(json.dumps(mw))
 
         return (mw or {}).get('content', '')
 
@@ -536,13 +560,12 @@ class KalturaUtils(object):
         web_flavors = [fl for fl in flavors if fl.get('isWeb', True)]
         num_non_web = len(flavors) - len(web_flavors)
 
-        if debug and num_non_web > 0:
-            log(u'Ignored %d non-web flavors' % num_non_web)
+        if num_non_web > 0:
+            logger.debug(u'Ignored %d non-web flavors' % num_non_web)
 
-        if debug:
-            bitrates = [fl.get('bitrate', 0) for fl in web_flavors]
-            log(u'Available bitrates: %s, maxbitrate = %s' %
-                (bitrates, filters.maxbitrate))
+        bitrates = [fl.get('bitrate', 0) for fl in web_flavors]
+        logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
+                     (bitrates, filters.maxbitrate))
 
         return self.select_matching_stream(web_flavors, meta, filters)
 
@@ -580,8 +603,7 @@ class KalturaUtils(object):
             return {}
 
         selected = max(valid_bitrates, key=lambda fl: fl.get('bitrate', 0))
-        if debug:
-            log(u'Selected bitrate: %s' % selected.get('bitrate', 0))
+        logger.debug(u'Selected bitrate: %s' % selected.get('bitrate', 0))
 
         return selected
 
@@ -595,7 +617,7 @@ class KalturaUtils(object):
             # so let's use raw_decode()
             return json.JSONDecoder().raw_decode(mw[m.end():])[0]
         except ValueError:
-            log('Failed to parse kalturaIframePackageData!')
+            logger.error('Failed to parse kalturaIframePackageData!')
             return {}
 
     def stream_factory(self, entry_id, flavor_id, stream_format, filters, ext):
@@ -693,32 +715,31 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         rtmp_connect = stream.connect
         rtmp_stream = stream.stream
         if not rtmp_stream:
-            log('No rtmp stream')
+            logger.error('No rtmp stream')
             return None
 
         try:
             scheme, edgefcs, rtmppath = self.rtmpurlparse(rtmp_connect)
         except ValueError as exc:
-            log(unicode(exc.message, 'utf-8', 'ignore'))
+            logger.error(unicode(exc.message, 'utf-8', 'ignore'))
             return None
 
         ident = download_page('http://%s/fcs/ident' % edgefcs)
         if ident is None:
-            log('Failed to read ident')
+            logger.error('Failed to read ident')
             return None
 
-        if debug:
-            log(ident)
+        logger.debug(ident)
 
         try:
             identxml = xml.dom.minidom.parseString(ident)
         except Exception as exc:
-            log(unicode(exc.message, 'utf-8', 'ignore'))
+            logger.error(unicode(exc.message, 'utf-8', 'ignore'))
             return None
 
         nodelist = identxml.getElementsByTagName('ip')
         if len(nodelist) < 1 or len(nodelist[0].childNodes) < 1:
-            log('No <ip> node!')
+            logger.error('No <ip> node!')
             return None
         rtmp_ip = nodelist[0].firstChild.nodeValue
 
@@ -911,8 +932,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             downloader = clip.streamurl.create_downloader(clip.title, destdir,
                                                           extra_argv)
             if not downloader:
-                log(u'Downloading the stream at %s is not yet supported.' % url)
-                log(u'Try --showurl')
+                logger.error(u'Downloading the stream at %s is not yet '
+                             u'supported.' % url)
+                logger.error(u'Try --showurl')
                 return RD_FAILED
 
             outputfile = downloader.output_filename()
@@ -929,12 +951,11 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def print_urls(self, url, print_episode_url, filters):
         def print_clip_url(clip):
-            enc = sys.getfilesystemencoding()
             if print_episode_url:
                 print_url = clip.streamurl.to_episode_url()
             else:
                 print_url = clip.streamurl.to_url()
-            print(print_url.encode(enc, 'replace'))
+            print_enc(print_url)
             return RD_SUCCESS
 
         return self.process(print_clip_url, url, filters)
@@ -950,8 +971,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def print_titles(self, url, filters):
         def print_clip_title(clip):
-            enc = sys.getfilesystemencoding()
-            print(clip.title.encode(enc, 'replace'))
+            print_enc(clip.title)
             return RD_SUCCESS
 
         return self.process(print_clip_title, url, filters)
@@ -980,11 +1000,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                          re.finditer(episode_re, programlist))
                 playlist = [urlparse.urljoin(url, href) for href in hrefs]
 
-        if debug:
-            if playlist:
-                log('playlist page with %d clips' % len(playlist))
-            else:
-                log('not a playlist')
+        if playlist:
+            logger.debug('playlist page with %d clips' % len(playlist))
+        else:
+            logger.debug('not a playlist')
 
         if not playlist:
             playlist = [url]
@@ -1004,8 +1023,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         if clip.streamurl.is_valid():
             return clipfunc(clip)
         else:
-            log(u'Unsupported stream: %s' %
-                clip.streamurl.get_error_message())
+            logger.error(u'Unsupported stream: %s' %
+                         clip.streamurl.get_error_message())
             return RD_FAILED
 
     def clip_for_url(self, pageurl, filters):
@@ -1017,9 +1036,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         if not program_info:
             return FailedClip(pageurl, 'Failed to download program data')
 
-        if debug:
-            log('program data:')
-            log(json.dumps(program_info))
+        logger.debug('program data:')
+        logger.debug(json.dumps(program_info))
 
         unavailable = self.unavailable_clip(program_info, pageurl)
         return unavailable or \
@@ -1050,8 +1068,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return FailedClip(pageurl, 'Failed to parse media ID')
 
         if media_id.startswith('29-'):
-            if debug:
-                log('Detected an HTML5 video')
+            logger.debug('Detected an HTML5 video')
 
             streamurl = self.select_kaltura_stream(
                 media_id, program_id, pageurl, filters)
@@ -1090,9 +1107,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
              urllib.quote_plus(protocol))
         media = JSONP.load_jsonp(media_jsonp_url)
 
-        if debug and media:
-            log('media:')
-            log(json.dumps(media))
+        if media:
+            logger.debug('media:')
+            logger.debug(json.dumps(media))
 
         return media
 
@@ -1328,7 +1345,7 @@ class YleUutisetDownloader(Areena2014Downloader):
     def delegate_to_areena_downloader(self, method_name, url, *args, **kwargs):
         areena_urls = self.build_areena_urls(url)
         if areena_urls:
-            log(u'Found areena URLs: ' + ', '.join(areena_urls))
+            logger.debug(u'Found areena URLs: ' + ', '.join(areena_urls))
 
             overall_status = RD_SUCCESS
             for url in areena_urls:
@@ -1342,7 +1359,7 @@ class YleUutisetDownloader(Areena2014Downloader):
 
             return overall_status
         else:
-            log(u'No video stream found at ' + url)
+            logger.error(u'No video stream found at ' + url)
             return RD_FAILED
 
     def build_areena_urls(self, url):
@@ -1503,8 +1520,7 @@ class RetryingDownloader(object):
     def _create_next_downloader(self):
         if self.backends:
             backend = self.backends.pop(0)
-            if debug:
-                log(str(backend))
+            logger.debug(str(backend))
             return self.wrapped_class(backend)
         else:
             return None
@@ -1546,7 +1562,7 @@ class BaseDownloader(object):
         self._cached_output_file = None
 
         if self.is_resume_job(extra_argv) and not self.resume_supported():
-            log('Warning: Resume not supported on this stream')
+            logger.warning('Resume not supported on this stream')
 
     def save_stream(self):
         """Deriving classes override this to perform the download"""
@@ -1575,7 +1591,7 @@ class BaseDownloader(object):
         filename = proposed
         basename, ext = os.path.splitext(filename)
         while os.path.exists(filename.encode(enc, 'replace')):
-            log(u'%s exists, trying an alternative name' % filename)
+            logger.info(u'%s exists, trying an alternative name' % filename)
             filename = basename + '-' + str(i) + ext
             i += 1
 
@@ -1603,9 +1619,9 @@ class BaseDownloader(object):
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':
             if done:
-                log(u'Stream saved to ' + outputfile)
+                logger.info(u'Stream saved to ' + outputfile)
             else:
-                log(u'Output file: ' + outputfile)
+                logger.info(u'Output file: ' + outputfile)
 
     def sane_filename(self, name):
         if isinstance(name, str):
@@ -1655,9 +1671,8 @@ class Subprocess(object):
         """Start an external process such as rtmpdump with argument list args
         and wait until completion.
         """
-        if debug:
-            log('Executing:')
-            log(' '.join(args))
+        logger.debug('Executing:')
+        logger.debug(' '.join(args))
 
         enc = sys.getfilesystemencoding()
         encoded_args = [x.encode(enc, 'replace') for x in args]
@@ -1678,8 +1693,8 @@ class Subprocess(object):
                 pass
             return RD_INCOMPLETE
         except OSError as exc:
-            log(u'Failed to execute ' + ' '.join(args))
-            log(unicode(exc.strerror, 'UTF-8', 'replace'))
+            logger.error(u'Failed to execute ' + ' '.join(args))
+            logger.error(unicode(exc.strerror, 'UTF-8', 'replace'))
             return RD_FAILED
 
     def _sigterm_when_parent_dies(self):
@@ -1773,7 +1788,7 @@ class HDSDump(ExternalDownloader):
             args.append('--proxy')
             args.append(stream_proxy)
             args.append('--fproxy')
-        if debug:
+        if logger.isEnabledFor(logging.DEBUG):
             args.append('--debug')
         if extra_args:
             args.extend(extra_args)
@@ -1810,8 +1825,8 @@ class YoutubeDLHDSDump(BaseDownloader):
         self.ratelimit = filters.ratelimit
 
         if filters.duration:
-            log(u'Warning: --duration will be ignored when using the '
-                u'youtube-dl backend')
+            logger.warning(u'--duration will be ignored when using the '
+                           u'youtube-dl backend')
 
     def resume_supported(self):
         return True
@@ -1826,7 +1841,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         try:
             import youtube_dl
         except ImportError:
-            log(u'Failed to import youtube_dl')
+            logger.error(u'Failed to import youtube_dl')
             return RD_FAILED
 
         if outputfile != '-':
@@ -1839,7 +1854,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         ydlopts = {
             'logtostderr': True,
             'proxy': proxy,
-            'verbose': debug
+            'verbose': logger.isEnabledFor(logging.DEBUG)
         }
 
         dlopts = {
@@ -1857,7 +1872,7 @@ class YoutubeDLHDSDump(BaseDownloader):
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
         except urllib2.HTTPError as exc:
-            log(u'HTTP request failed: %s %s' % (exc.code, exc.reason))
+            logger.exception(u'HTTP request failed')
             return RD_FAILED
 
         if outputfile != '-':
@@ -1872,7 +1887,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         try:
             manifest_xml = xml.dom.minidom.parseString(manifest)
         except Exception as exc:
-            log(unicode(exc.message, 'utf-8', 'ignore'))
+            logger.error(unicode(exc.message, 'utf-8', 'ignore'))
             return []
 
         medias = manifest_xml.getElementsByTagName('media')
@@ -1881,9 +1896,8 @@ class YoutubeDLHDSDump(BaseDownloader):
 
     def _bitrate_parameter(self):
         bitrates = self._stream_bitrates()
-        if debug:
-            log(u'Available bitrates: %s, maxbitrate = %s' %
-                (bitrates, self.maxbitrate))
+        logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
+                     (bitrates, self.maxbitrate))
 
         if not bitrates:
             return {}
@@ -1894,8 +1908,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         else:
             selected_bitrate = max(acceptable_bitrates)
 
-        if debug:
-            log(u'Selected bitrate: %s' % selected_bitrate)
+        logger.debug(u'Selected bitrate: %s' % selected_bitrate)
 
         return {'tbr': selected_bitrate}
 
@@ -1932,6 +1945,7 @@ class HLSDump(ExternalDownloader):
     def ffmpeg_command_line(self, output_options):
         global ffmpeg_binary
 
+        debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
         args = [ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
@@ -1951,9 +1965,8 @@ class HLSDump(ExternalDownloader):
 
 class HTTPDump(BaseDownloader):
     def save_stream(self):
-        log('Downloading from HTTP server...')
-        if debug:
-            log('URL: %s' % self.stream.to_url())
+        logger.debug('Downloading from HTTP server...')
+        logger.debug('URL: %s' % self.stream.to_url())
         filename = self.output_filename()
         self.log_output_file(filename)
 
@@ -1961,8 +1974,8 @@ class HTTPDump(BaseDownloader):
         try:
             urllib.urlretrieve(self.stream.to_url(), filename.encode(enc))
         except IOError as exc:
-            log(u'Download failed: ' +
-                unicode(exc.message, 'UTF-8', 'replace'))
+            logger.error(u'Download failed: ' +
+                         unicode(exc.message, 'UTF-8', 'replace'))
             return RD_FAILED
 
         self.log_output_file(filename, True)
@@ -1970,8 +1983,7 @@ class HTTPDump(BaseDownloader):
 
     def pipe(self):
         url = self.stream.to_url()
-        if debug:
-            log('URL: %s' % url)
+        logger.debug('URL: %s' % url)
 
         request = urllib2.Request(url, headers=AREENA_NG_HTTP_HEADERS)
         try:
@@ -1985,10 +1997,10 @@ class HTTPDump(BaseDownloader):
             sys.stdout.flush()
             urlreader.close()
         except urllib2.URLError as exc:
-            log(u"Can't read %s: %s" % (url, exc))
+            logger.exception(u"Can't read %s" % url)
             return RD_FAILED
         except ValueError:
-            log(u'Invalid URL: ' + url)
+            logger.error(u'Invalid URL: ' + url)
             return RD_FAILED
 
         return RD_SUCCESS
@@ -1998,11 +2010,11 @@ class HTTPDump(BaseDownloader):
 
 
 def main():
-    global debug
     global rtmpdump_binary
     global ffmpeg_binary
     global hds_binary
     global stream_proxy
+    debug = False
     latest_episode = False
     url_only = False
     title_only = False
@@ -2103,6 +2115,9 @@ def main():
             rtmpdumpargs.append(arg)
             if arg in ARGOPTS and argv:
                 rtmpdumpargs.append(argv.pop(0))
+
+    loglevel = logging.DEBUG if debug else logging.INFO
+    logger.setLevel(loglevel)
 
     if not rtmpdump_binary:
         if sys.platform == 'win32':
