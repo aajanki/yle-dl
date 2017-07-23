@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import sys
+import pytest
 from utils import fetch_title, fetch_stream_url
 
 
@@ -18,6 +20,8 @@ def test_areena_stream_url():
     assert 'manifest.f4m' in streamurl[0]
 
 
+@pytest.mark.skipif(sys.version_info < (2,7),
+                    reason="SSL broken on Python 2.6")
 def test_areena_series_titles():
     titles = fetch_title('https://areena.yle.fi/1-3826480')
 
@@ -25,6 +29,8 @@ def test_areena_series_titles():
     assert all(['Suomi on ruotsalainen' in t for t in titles])
 
 
+@pytest.mark.skipif(sys.version_info < (2,7),
+                    reason="SSL broken on Python 2.6")
 def test_areena_series_urls():
     urls = fetch_stream_url('https://areena.yle.fi/1-3826480')
 
