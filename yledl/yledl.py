@@ -43,6 +43,7 @@ import base64
 import ctypes
 import ctypes.util
 import logging
+import argparse
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 
@@ -117,69 +118,94 @@ def print_enc(msg):
     sys.stdout.flush()
 
 
-def splashscreen():
-    print_enc(u'yle-dl %s: Download media files from Yle Areena and '
-             u'Elävä Arkisto' % version)
-    print_enc(u'Copyright (C) 2009-2017 Antti Ajanki '
-             u'<antti.ajanki@iki.fi>, license: GPLv3')
+def arg_parser():
+    description = \
+        (u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto\n'
+         u'Copyright (C) 2009-2017 Antti Ajanki <antti.ajanki@iki.fi>, '
+         u'license: GPLv3' % version)
 
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-V', '-z', '--verbose', '--debug',
+                        action='store_true', dest='debug',
+                        help='Show verbose debug output')
 
-def usage():
-    """Print the usage message to stdout"""
-    splashscreen()
-    print_enc('')
-    print_enc(u'%s [options] URL' % sys.argv[0])
-    print_enc(u'%s [options] -i filename' % sys.argv[0])
-    print_enc('')
-    print_enc('options:')
-    print_enc('')
-    print_enc('-o filename             Save stream to the named file')
-    print_enc('-i filename             Read input URLs to process from the '
-                                      'named file,')
-    print_enc('                        one URL per line')
-    print_enc('--latestepisode         Download the latest episode')
-    print_enc("--showurl               Print URL, don't download")
-    print_enc("--showtitle             Print stream title, don't download")
-    print_enc('--showepisodepage       Print web page for each episode')
-    print_enc('--vfat                  Create Windows-compatible filenames')
-    print_enc('--audiolang lang        Select stream\'s audio language, '
-                                      'lang = fin or swe')
-    print_enc('--sublang lang          Download subtitles, '
-                                      'lang = fin, swe, smi, none or all')
-    print_enc('--hardsubs              Download stream with hard subs '
-                                      'if available')
-    print_enc('--maxbitrate br         Maximum bitrate stream to download, '
-                                      'integer in kB/s')
-    print_enc('                        or "best" or "worst". Not exact on HDS '
-                                      'streams.')
-    print_enc('--duration s            Stop downloading after the specified '
-                                      'number of seconds')
-    print_enc('--ratelimit br          Maximum bandwidth consumption, '
-                                      'interger in kB/s')
-    print_enc('--rtmpdump path         Set path to rtmpdump binary')
-    print_enc('--ffmpeg path           Set path to ffmpeg binary')
-    print_enc('--adobehds cmd          Set command for executing AdobeHDS.php '
-                                      'script')
-    print_enc('                        Default: "php '
-                                      '/usr/local/share/yle-dl/AdobeHDS.php"')
-    print_enc('--postprocess cmd       Execute a command cmd after a successful '
-                                      'download.')
-    print_enc('                        cmd is called with arguments: video, '
-                                      'subtitle files')
-    print_enc('--proxy uri             Proxy for downloading streams')
-    print_enc('                        Example: --proxy socks5://localhost:7777')
-    print_enc('--destdir dir           Save files to dir')
-    print_enc('--backend be            Downloaders that are tried until one of '
-                                      'them succeeds')
-    print_enc('                        (a comma-separated list). '
-                                      'Possible values:')
-    print_enc('                          adobehdsphp - AdobeHDS.php')
-    print_enc('                          youtubedl - youtube-dl (HDS stream)')
-    print_enc('--pipe                  Dump stream to stdout for piping to '
-                                      'media player')
-    print_enc('                        E.g. "yle-dl --pipe URL | vlc -"')
-    print_enc('--resume                Resume a partial download')
-    print_enc('-V, --verbose           Show verbose debug output')
+    io_group = parser.add_argument_group('Input and output')
+    url_group = io_group.add_mutually_exclusive_group()
+    url_group.add_argument('url', nargs='?',
+        help=u'Address of an Areena, Elävä Arkisto, or Yle news web page')
+    url_group.add_argument('-i', metavar='FILENAME', dest='inputfile',
+                           help='Read input URLs to process from the named file,'
+                           ' one URL per line')
+    io_group.add_argument('-o', metavar='FILENAME', dest='outputfile',
+                          help='Save stream to the named file')
+    io_group.add_argument('--pipe', action='store_true',
+                          help='Dump stream to stdout for piping to media '
+                          'player. E.g. "yle-dl --pipe URL | vlc -"')
+    io_group.add_argument('--destdir', metavar='DIR',
+                          help='Save files to DIR')
+    io_group.add_argument('--showurl', action='store_true',
+                          help="Print URL, don't download")
+    io_group.add_argument('--showtitle', action='store_true',
+                          help="Print stream title, don't download")
+    io_group.add_argument('--showepisodepage', action='store_true',
+                          help='Print web page for each episode')
+    io_group.add_argument('--vfat', action='store_true',
+                          help='Output Windows-compatible filenames')
+    io_group.add_argument('--resume', action='store_true',
+                          help='Resume a partial download')
+    io_group.add_argument('--ratelimit', metavar='BR', type=int,
+                          help='Maximum bandwidth consumption, '
+                          'interger in kB/s')
+    io_group.add_argument('--proxy', metavar='URI',
+                          help='Proxy for downloading streams. '
+                          'Example: --proxy socks5://localhost:7777')
+    io_group.add_argument('--postprocess', metavar='CMD',
+                          help='Execute the command CMD after a successful '
+                          'download. CMD is called with two arguments: '
+                          'video, subtitle')
+
+    qual_group = parser.add_argument_group('Stream type and quality')
+    qual_group.add_argument('--audiolang', metavar='LANG',
+                            choices=['fin', 'swe'], default='',
+                            help='Select stream\'s audio language, "fin" or '
+                            '"swe"')
+    qual_group.add_argument('--sublang', metavar='LANG',
+                            choices=['fin', 'swe', 'smi', 'none', 'all'],
+                            help='Download subtitles. LANG is one of "fin", '
+                            '"swe", "smi", "none", or "all"')
+    qual_group.add_argument('--hardsubs', action='store_true',
+                            help='Download stream with hard subs if available')
+    qual_group.add_argument('--latestepisode', action='store_true',
+                            help='Download the latest episode of a series')
+    qual_group.add_argument('--maxbitrate', metavar='RATE',
+                            help='Maximum bitrate stream to download, '
+                            'integer in kB/s or "best" or "worst". '
+                            'Not exact on HDS streams.')
+    qual_group.add_argument('--duration', metavar='S', type=int,
+                            help='Record only the first S seconds of '
+                            'the stream')
+
+    dl_group = parser.add_argument_group('Downloader backends')
+    dl_group.add_argument('--backend', metavar='BE',
+                        choices=['adobehdsphp', 'youtubedl'],
+                        help='Downloaders that are tried until one of them '
+                        ' succeeds (a comma-separated list).\n'
+                        'Possible values: '
+                        '"adobehdsphp" = AdobeHDS.php, '
+                        '"youtubedl" = youtube-dl')
+    dl_group.add_argument('--rtmpdump', metavar='PATH',
+                        help='Set path to rtmpdump binary')
+    dl_group.add_argument('--ffmpeg', metavar='PATH',
+                        help='Set path to ffmpeg binary')
+    dl_group.add_argument('--adobehds', metavar='CMD',
+                        default='',
+                        help='Set command for executing AdobeHDS.php')
+    dl_group.add_argument('rtmpdumpargs', nargs=argparse.REMAINDER,
+                          help='Remaining arguments are passed to rtmpdump')
+
+    return parser
 
 
 def download_page(url, headers=None):
@@ -2014,110 +2040,49 @@ def main():
     global ffmpeg_binary
     global hds_binary
     global stream_proxy
-    debug = False
-    latest_episode = False
-    url_only = False
-    title_only = False
-    print_episode_url = False
-    audiolang = ''
-    sublang = ''
-    hardsubs = False
-    bitratearg = sys.maxint
-    ratelimit = None
-    duration = None
-    show_usage = False
-    urls = []
-    destdir = None
-    pipe = False
-    backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
-    postprocess = None
-    from_file = False
 
-    # Is sys.getfilesystemencoding() the correct encoding for
-    # sys.argv?
-    encoding = sys.getfilesystemencoding()
-    argv = [unicode(x, encoding, 'ignore') for x in sys.argv[1:]]
-    rtmpdumpargs = []
-    while argv:
-        arg = argv.pop(0)
-        if not arg.startswith('-'):
-            urls = [encode_url_utf8(arg)]
-        elif arg == '-i':
-            if argv:
-                from_file = True
-                urls = read_urls_from_file(argv.pop(0))
-        elif arg in ['--verbose', '-V', '--debug', '-z']:
-            debug = True
-            rtmpdumpargs.append(arg)
-        elif arg in ['--help', '-h']:
-            show_usage = True
-        elif arg in ['--latestepisode']:
-            latest_episode = True
-        elif arg == '--showurl':
-            url_only = True
-        elif arg == '--showtitle':
-            title_only = True
-        elif arg == '--showepisodepage':
-            url_only = True
-            print_episode_url = True
-        elif arg == '--vfat':
-            global excludechars
-            global excludechars_windows
-            excludechars = excludechars_windows
-        elif arg == '--audiolang':
-            if argv:
-                audiolang = argv.pop(0)
-        elif arg == '--sublang':
-            if argv:
-                sublang = argv.pop(0)
-        elif arg == '--hardsubs':
-            hardsubs = True
-        elif arg == '--maxbitrate':
-            if argv:
-                bitratearg = argv.pop(0)
-        elif arg == '--ratelimit':
-            if argv:
-                ratelimit = int_or_else(argv.pop(0), None)
-        elif arg == '--duration':
-            if argv:
-                duration = int_or_else(argv.pop(0), None)
-        elif arg == '--rtmpdump':
-            if argv:
-                rtmpdump_binary = argv.pop(0)
-        elif arg == '--adobehds':
-            if argv:
-                hds_binary = argv.pop(0).split(' ')
-        elif arg == '--ffmpeg':
-            if argv:
-                ffmpeg_binary = argv.pop(0)
-        elif arg == '--destdir':
-            if argv:
-                destdir = argv.pop(0)
-        elif arg == '--backend':
-            if argv:
-                backends = BackendFactory.parse_backends(
-                    argv.pop(0).split(','))
-        elif arg == '--pipe':
-            pipe = True
-        elif arg == '-o':
-            if argv:
-                outputfile = argv.pop(0)
-                rtmpdumpargs.extend([arg, outputfile])
-                if outputfile == '-':
-                    pipe = True
-        elif arg == '--proxy':
-            if argv:
-                stream_proxy = argv.pop(0)
-        elif arg == '--postprocess':
-            if argv:
-                postprocess = argv.pop(0)
-        else:
-            rtmpdumpargs.append(arg)
-            if arg in ARGOPTS and argv:
-                rtmpdumpargs.append(argv.pop(0))
+    parser = arg_parser()
+    args = parser.parse_args()
 
-    loglevel = logging.DEBUG if debug else logging.INFO
+    loglevel = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(loglevel)
+
+    rtmpdumpargs = list(args.rtmpdumpargs)
+    if args.resume:
+        rtmpdumpargs.append('--resume')
+
+    pipe = args.pipe
+    if args.outputfile:
+        rtmpdumpargs.extend(['-o', args.outputfile])
+        if args.outputfile == '-':
+            pipe = True
+
+    urls = []
+    if args.url:
+        urls = [encode_url_utf8(args.url)]
+
+    from_file = False
+    if args.inputfile:
+        from_file = True
+        urls = read_urls_from_file(args.inputfile)
+
+    if not urls:
+        parser.print_help()
+        sys.exit(RD_SUCCESS)
+
+    showurl = args.showurl or args.showepisodepage
+    stream_proxy = args.proxy
+
+    backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
+    if args.backend:
+        backends = BackendFactory.parse_backends(args.backend.split(','))
+
+    if args.rtmpdump:
+        rtmpdump_binary = args.rtmpdump
+    if args.ffmpeg:
+        ffmpeg_binary = args.ffmpeg
+    if args.adobehds:
+        hds_binary = args.adobehds.split(' ')
 
     if not rtmpdump_binary:
         if sys.platform == 'win32':
@@ -2127,28 +2092,32 @@ def main():
     if not rtmpdump_binary:
         rtmpdump_binary = 'rtmpdump'
 
-    if show_usage or len(urls) == 0:
-        usage()
-        sys.exit(RD_SUCCESS)
-
     if len(backends) == 0:
         sys.exit(RD_FAILED)
 
-    if debug or not (url_only or title_only):
-        splashscreen()
+    if args.vfat:
+        global excludechars
+        global excludechars_windows
+        excludechars = excludechars_windows
 
-    if sublang == '':
+    if not pipe and (args.debug or not (showurl or args.showtitle)):
+        print_enc(parser.description)
+
+    if args.sublang:
+        sublang = args.sublang
+    else:
         sublang = 'none' if pipe else 'all'
 
-    maxbitrate = bitrate_from_arg(bitratearg)
-    stream_filters = StreamFilters(latest_episode, audiolang, sublang,
-                                   hardsubs, maxbitrate, ratelimit, duration)
+    maxbitrate = bitrate_from_arg(args.maxbitrate or sys.maxint)
+    stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
+                                   args.hardsubs, maxbitrate, args.ratelimit,
+                                   args.duration)
     exit_status = RD_SUCCESS
 
     for url in urls:
-        res = process_url(url, destdir, url_only, title_only, from_file,
-                          print_episode_url, pipe, rtmpdumpargs,
-                          stream_filters, backends, postprocess)
+        res = process_url(url, args.destdir, showurl, args.showtitle, from_file,
+                          args.showepisodepage, pipe, rtmpdumpargs,
+                          stream_filters, backends, args.postprocess)
 
         if exit_status == RD_SUCCESS:
             exit_status = res
