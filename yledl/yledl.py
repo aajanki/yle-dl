@@ -2119,7 +2119,7 @@ def main():
                           args.showepisodepage, pipe, rtmpdumpargs,
                           stream_filters, backends, args.postprocess)
 
-        if exit_status == RD_SUCCESS:
+        if res != RD_SUCCESS:
             exit_status = res
 
     return exit_status
