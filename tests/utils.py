@@ -37,7 +37,12 @@ def fetch_stream_url(url):
 
 
 def fetch_stream_title_or_url(url, get_title):
-    io = IOContext(outputfilename=None, destdir='/tmp/', pipe=False)
+    io = IOContext(
+        outputfilename=None,
+        destdir='/tmp/',
+        resume=False,
+        pipe=False)
+
     with Capturing() as output:
         res = process_url(url,
                           io,

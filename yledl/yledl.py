@@ -410,9 +410,10 @@ class StreamFilters(object):
 
 
 class IOContext(object):
-    def __init__(self, outputfilename, destdir, pipe):
+    def __init__(self, outputfilename, destdir, resume, pipe):
         self.outputfilename = outputfilename
         self.destdir = destdir
+        self.resume = resume
         self.pipe = pipe
 
 
@@ -740,7 +741,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
             return None
         else:
             return RTMPDump(self, clip_title, io.destdir, io.outputfilename,
-                            extra_argv)
+                            io.resume, extra_argv)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -862,7 +863,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
 
     def create_downloader(self, io, clip_title, extra_argv):
         return self.downloader_class(
-            self, clip_title, io.destdir, io.outputfilename, extra_argv,
+            self, clip_title, io.destdir, io.outputfilename, io.resume, extra_argv,
             self.filters)
 
 
@@ -896,7 +897,8 @@ class HTTPStreamUrl(object):
         return self.url
 
     def create_downloader(self, io, clip_title, extra_argv):
-        return HTTPDump(self, clip_title, io.destdir, io.outputfilename, extra_argv)
+        return HTTPDump(self, clip_title, io.destdir, io.outputfilename,
+                        io.resume, extra_argv)
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -906,7 +908,8 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.filters = filters
 
     def create_downloader(self, io, clip_title, extra_argv):
-        return HLSDump(self, clip_title, io.destdir, io.outputfilename, extra_argv, self.filters)
+        return HLSDump(self, clip_title, io.destdir, io.outputfilename,
+                       io.resume, extra_argv, self.filters)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -1589,7 +1592,8 @@ class RetryingDownloader(object):
 
 
 class BaseDownloader(object):
-    def __init__(self, stream, clip_title, destdir, preferred_name, extra_argv):
+    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
+                 extra_argv):
         self.stream = stream
         self.clip_title = clip_title or 'ylestream'
         self.extra_argv = extra_argv or []
@@ -1600,8 +1604,9 @@ class BaseDownloader(object):
         else:
             self.preferred_name = None
         self._cached_output_file = None
+        self.resume = resume
 
-        if self.is_resume_job(extra_argv) and not self.resume_supported():
+        if resume and not self.resume_supported():
             logger.warning('Resume not supported on this stream')
 
     def save_stream(self):
@@ -1658,16 +1663,12 @@ class BaseDownloader(object):
         return x or u'ylevideo'
 
     def output_filename(self):
-        resume_job = (self.is_resume_job(self.extra_argv) and
-                      self.resume_supported())
+        resume_job = self.resume and self.resume_supported()
         return (self.preferred_name or
                 self.outputfile_from_clip_title(resume=resume_job))
 
     def resume_supported(self):
         return False
-
-    def is_resume_job(self, args):
-        return '--resume' in args or '-e' in args
 
 
 ### Dumping a stream to a file using external programs ###
@@ -1742,6 +1743,8 @@ class RTMPDump(ExternalDownloader):
         args = [rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', self.output_filename()]
+        if self.resume:
+            args.append('-e')
         args += self.extra_argv
         return args
 
@@ -1757,9 +1760,10 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, destdir, preferred_name, extra_argv, filters):
+    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
+                 extra_argv, filters):
         ExternalDownloader.__init__(self, stream, clip_title, destdir,
-                                    preferred_name, extra_argv)
+                                    preferred_name, resume, extra_argv)
         self.quality_options = self._filter_options(filters)
 
     def resume_supported(self):
@@ -1823,8 +1827,10 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, stream, clip_title, destdir, preferred_name, extra_argv, filters):
-        BaseDownloader.__init__(self, stream, clip_title, destdir, preferred_name, extra_argv)
+    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
+                 extra_argv, filters):
+        BaseDownloader.__init__(self, stream, clip_title, destdir, resume,
+                                preferred_name, extra_argv)
         self.maxbitrate = filters.maxbitrate
         self.ratelimit = filters.ratelimit
 
@@ -1863,8 +1869,7 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         dlopts = {
             'nopart': True,
-            'continuedl': (outputfile != '-' and
-                           self.is_resume_job(self.extra_argv))
+            'continuedl': outputfile != '-' and self.resume
         }
         dlopts.update(self._ratelimit_parameter())
 
@@ -1927,9 +1932,10 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, destdir, preferred_name, extra_argv, filters):
+    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
+                 extra_argv, filters):
         ExternalDownloader.__init__(self, stream, clip_title, destdir,
-                                    preferred_name, extra_argv)
+                                    preferred_name, resume, extra_argv)
         self.duration_options = self._filter_options(filters)
 
     def _filter_options(self, filters):
@@ -2023,13 +2029,11 @@ def main():
     logger.setLevel(loglevel)
 
     rtmpdumpargs = list(args.rtmpdumpargs)
-    if args.resume:
-        rtmpdumpargs.append('--resume')
 
     if args.outputfile:
         rtmpdumpargs.extend(['-o', args.outputfile])
     pipe = args.pipe or (args.outputfile == '-')
-    io = IOContext(args.outputfile, args.destdir, pipe)
+    io = IOContext(args.outputfile, args.destdir, args.resume, pipe)
 
     urls = []
     if args.url:
