@@ -24,10 +24,12 @@ Installation
 ### 1. Install the dependencies ###
 
 * python (2.6 or newer)
+* pip
 * pycrypto
 * ffmpeg
 * PHP interpreter
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
+* setuptools (when installing from the sources)
 
 Optionally (for downloading Areena audio streams):
 
@@ -46,14 +48,16 @@ extension=/path/to/mcrypt.so
 #### Dependencies on Debian 9 (Stretch)/Ubuntu 16.04 ####
 
 ```
-sudo apt-get install rtmpdump python python-crypto php-cli php-curl php-mcrypt php-xml php-bcmath
+sudo apt-get install rtmpdump python python-setuptools python-pip \
+    python-crypto php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 ```
 
 #### Dependencies on Debian 8 (Jessie)/Ubuntu 15.10 or older ####
 
 ```
-sudo apt-get install rtmpdump python python-crypto php5-cli php5-curl php5-mcrypt
+sudo apt-get install rtmpdump python python-setuptools python-pip \
+    python-crypto php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 ```
 
