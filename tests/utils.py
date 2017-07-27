@@ -1,6 +1,7 @@
 import sys
 from cStringIO import StringIO
-from yledl.yledl import process_url, StreamFilters, BackendFactory, RD_SUCCESS
+from yledl.yledl import process_url, StreamFilters, BackendFactory, IOContext, \
+    RD_SUCCESS
 
 backends = [BackendFactory(BackendFactory.ADOBEHDSPHP)]
 basic_filters = StreamFilters(
@@ -36,14 +37,14 @@ def fetch_stream_url(url):
 
 
 def fetch_stream_title_or_url(url, get_title):
+    io = IOContext(outputfilename=None, destdir='/tmp/', pipe=False)
     with Capturing() as output:
         res = process_url(url,
-                          destdir = '/tmp/',
+                          io,
                           url_only = not get_title,
                           title_only = get_title,
                           from_file = None,
                           print_episode_url = False,
-                          pipe = False,
                           rtmpdumpargs = [],
                           stream_filters = basic_filters,
                           backends = backends,

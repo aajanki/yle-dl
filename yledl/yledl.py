@@ -267,7 +267,7 @@ def int_or_else(x, default):
         return default
 
 
-def process_url(url, io, destdir, url_only, title_only, from_file, print_episode_url,
+def process_url(url, io, url_only, title_only, from_file, print_episode_url,
                 rtmpdumpargs, stream_filters, backends, postprocess_command):
     dl = downloader_factory(url, backends)
     if not dl:
@@ -286,7 +286,7 @@ def process_url(url, io, destdir, url_only, title_only, from_file, print_episode
             logger.info('')
             logger.info(u'Now downloading from URL %s:' % url)
         return dl.download_episodes(url, io, stream_filters, rtmpdumpargs,
-                                    destdir, postprocess_command)
+                                    postprocess_command)
 
 
 def downloader_factory(url, backends):
@@ -410,8 +410,9 @@ class StreamFilters(object):
 
 
 class IOContext(object):
-    def __init__(self, outputfilename, pipe):
+    def __init__(self, outputfilename, destdir, pipe):
         self.outputfilename = outputfilename
+        self.destdir = destdir
         self.pipe = pipe
 
 
@@ -734,11 +735,12 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
-    def create_downloader(self, io, clip_title, destdir, extra_argv):
+    def create_downloader(self, io, clip_title, extra_argv):
         if not self.to_rtmpdump_args():
             return None
         else:
-            return RTMPDump(self, clip_title, destdir, io.outputfilename, extra_argv)
+            return RTMPDump(self, clip_title, io.destdir, io.outputfilename,
+                            extra_argv)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -858,9 +860,10 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_episode_url(self):
         return self.episodeurl
 
-    def create_downloader(self, io, clip_title, destdir, extra_argv):
+    def create_downloader(self, io, clip_title, extra_argv):
         return self.downloader_class(
-            self, clip_title, destdir, io.outputfilename, extra_argv, self.filters)
+            self, clip_title, io.destdir, io.outputfilename, extra_argv,
+            self.filters)
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
@@ -892,8 +895,8 @@ class HTTPStreamUrl(object):
     def to_url(self):
         return self.url
 
-    def create_downloader(self, io, clip_title, destdir, extra_argv):
-        return HTTPDump(self, clip_title, destdir, io.outputfilename, extra_argv)
+    def create_downloader(self, io, clip_title, extra_argv):
+        return HTTPDump(self, clip_title, io.destdir, io.outputfilename, extra_argv)
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -902,8 +905,8 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
         self.filters = filters
 
-    def create_downloader(self, io, clip_title, destdir, extra_argv):
-        return HLSDump(self, clip_title, destdir, io.outputfilename, extra_argv, self.filters)
+    def create_downloader(self, io, clip_title, extra_argv):
+        return HLSDump(self, clip_title, io.destdir, io.outputfilename, extra_argv, self.filters)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -958,11 +961,11 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def __init__(self, backend_factory):
         self.backend = backend_factory
 
-    def download_episodes(self, url, io, filters, extra_argv, destdir,
+    def download_episodes(self, url, io, filters, extra_argv,
                           postprocess_command):
         def download_clip(clip):
             downloader = clip.streamurl.create_downloader(
-                io, clip.title, destdir, extra_argv)
+                io, clip.title, extra_argv)
             if not downloader:
                 logger.error(u'Downloading the stream at %s is not yet '
                              u'supported.' % url)
@@ -994,7 +997,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
-            dl = clip.streamurl.create_downloader(io, clip.title, '', [])
+            dl = clip.streamurl.create_downloader(io, clip.title, [])
             outputfile = dl.output_filename()
             self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe()
@@ -1355,11 +1358,11 @@ class Areena2014LiveDownloader(Areena2014Downloader):
 
 
 class YleUutisetDownloader(Areena2014Downloader):
-    def download_episodes(self, url, io, filters, extra_argv, destdir,
+    def download_episodes(self, url, io, filters, extra_argv,
                           postprocess_command):
         return self.delegate_to_areena_downloader(
             'download_episodes', url, io=io, filters=filters, extra_argv=extra_argv,
-            destdir=destdir, postprocess_command=postprocess_command)
+            postprocess_command=postprocess_command)
 
     def print_urls(self, url, print_episode_url, filters):
         return self.delegate_to_areena_downloader(
@@ -2026,7 +2029,7 @@ def main():
     if args.outputfile:
         rtmpdumpargs.extend(['-o', args.outputfile])
     pipe = args.pipe or (args.outputfile == '-')
-    io = IOContext(args.outputfile, pipe)
+    io = IOContext(args.outputfile, args.destdir, pipe)
 
     urls = []
     if args.url:
@@ -2086,7 +2089,7 @@ def main():
     exit_status = RD_SUCCESS
 
     for url in urls:
-        res = process_url(url, io, args.destdir, showurl, args.showtitle,
+        res = process_url(url, io, showurl, args.showtitle,
                           from_file, args.showepisodepage, rtmpdumpargs,
                           stream_filters, backends, args.postprocess)
 
