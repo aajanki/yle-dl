@@ -223,7 +223,7 @@ def download_page(url, headers=None):
             charset = 'iso-8859-1'
 
         return unicode(content, charset, 'replace')
-    except urllib2.URLError as exc:
+    except urllib2.URLError:
         logger.exception(u"Can't read %s" % url)
         return None
     except ValueError:
@@ -502,7 +502,7 @@ class AreenaUtils(object):
                             subtitlefiles.append(filename)
                             if preferred_lang != 'all':
                                 return subtitlefiles
-                        except IOError as exc:
+                        except IOError:
                             logger.exception(u'Failed to download subtitles '
                                              u'at %s' % sub.url)
         return subtitlefiles
@@ -1863,7 +1863,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         try:
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
-        except urllib2.HTTPError as exc:
+        except urllib2.HTTPError:
             logger.exception(u'HTTP request failed')
             return RD_FAILED
 
@@ -1986,7 +1986,7 @@ class HTTPDump(BaseDownloader):
 
             sys.stdout.flush()
             urlreader.close()
-        except urllib2.URLError as exc:
+        except urllib2.URLError:
             logger.exception(u"Can't read %s" % url)
             return RD_FAILED
         except ValueError:
