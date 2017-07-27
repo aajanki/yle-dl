@@ -57,15 +57,6 @@ RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
 
 DEFAULT_HDS_BACKENDS = ['adobehdsphp', 'youtubedl']
 
-# list of all options that require an argument
-ARGOPTS = ('--rtmp', '-r', '--host', '-n', '--port', '-c', '--socks',
-           '-S', '--swfUrl', '-s', '--tcUrl', '-t', '--pageUrl', '-p',
-           '--app', '-a', '--swfhash', '-w', '--swfsize', '-x', '--swfVfy',
-           '-W', '--swfAge', '-X', '--auth', '-u', '--conn', '-C',
-           '--flashVer', '-f', '--subscribe', '-d', '--flv', '-o',
-           '--timeout', '-m', '--start', '-A', '--stop', '-B', '--token',
-           '-T', '--skip', '-k', '--buffer', '-b')
-
 # rtmpdump exit codes
 RD_SUCCESS = 0
 RD_FAILED = 1
@@ -202,8 +193,6 @@ def arg_parser():
     dl_group.add_argument('--adobehds', metavar='CMD',
                         default='',
                         help='Set command for executing AdobeHDS.php')
-    dl_group.add_argument('rtmpdumpargs', nargs=argparse.REMAINDER,
-                          help='Remaining arguments are passed to rtmpdump')
 
     return parser
 
@@ -268,7 +257,7 @@ def int_or_else(x, default):
 
 
 def process_url(url, io, url_only, title_only, from_file, print_episode_url,
-                rtmpdumpargs, stream_filters, backends, postprocess_command):
+                stream_filters, backends, postprocess_command):
     dl = downloader_factory(url, backends)
     if not dl:
         logger.error(u'Unsupported URL %s.' % url)
@@ -285,7 +274,7 @@ def process_url(url, io, url_only, title_only, from_file, print_episode_url,
         if from_file:
             logger.info('')
             logger.info(u'Now downloading from URL %s:' % url)
-        return dl.download_episodes(url, io, stream_filters, rtmpdumpargs,
+        return dl.download_episodes(url, io, stream_filters,
                                     postprocess_command)
 
 
@@ -736,12 +725,12 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
-    def create_downloader(self, io, clip_title, extra_argv):
+    def create_downloader(self, io, clip_title):
         if not self.to_rtmpdump_args():
             return None
         else:
             return RTMPDump(self, clip_title, io.destdir, io.outputfilename,
-                            io.resume, extra_argv)
+                            io.resume)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -861,9 +850,9 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_episode_url(self):
         return self.episodeurl
 
-    def create_downloader(self, io, clip_title, extra_argv):
+    def create_downloader(self, io, clip_title):
         return self.downloader_class(
-            self, clip_title, io.destdir, io.outputfilename, io.resume, extra_argv,
+            self, clip_title, io.destdir, io.outputfilename, io.resume,
             self.filters)
 
 
@@ -896,9 +885,9 @@ class HTTPStreamUrl(object):
     def to_url(self):
         return self.url
 
-    def create_downloader(self, io, clip_title, extra_argv):
+    def create_downloader(self, io, clip_title):
         return HTTPDump(self, clip_title, io.destdir, io.outputfilename,
-                        io.resume, extra_argv)
+                        io.resume)
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -907,9 +896,9 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
         self.filters = filters
 
-    def create_downloader(self, io, clip_title, extra_argv):
+    def create_downloader(self, io, clip_title):
         return HLSDump(self, clip_title, io.destdir, io.outputfilename,
-                       io.resume, extra_argv, self.filters)
+                       io.resume, self.filters)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -964,11 +953,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def __init__(self, backend_factory):
         self.backend = backend_factory
 
-    def download_episodes(self, url, io, filters, extra_argv,
-                          postprocess_command):
+    def download_episodes(self, url, io, filters, postprocess_command):
         def download_clip(clip):
-            downloader = clip.streamurl.create_downloader(
-                io, clip.title, extra_argv)
+            downloader = clip.streamurl.create_downloader(io, clip.title)
             if not downloader:
                 logger.error(u'Downloading the stream at %s is not yet '
                              u'supported.' % url)
@@ -1000,7 +987,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
-            dl = clip.streamurl.create_downloader(io, clip.title, [])
+            dl = clip.streamurl.create_downloader(io, clip.title)
             outputfile = dl.output_filename()
             self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe()
@@ -1361,10 +1348,9 @@ class Areena2014LiveDownloader(Areena2014Downloader):
 
 
 class YleUutisetDownloader(Areena2014Downloader):
-    def download_episodes(self, url, io, filters, extra_argv,
-                          postprocess_command):
+    def download_episodes(self, url, io, filters, postprocess_command):
         return self.delegate_to_areena_downloader(
-            'download_episodes', url, io=io, filters=filters, extra_argv=extra_argv,
+            'download_episodes', url, io=io, filters=filters,
             postprocess_command=postprocess_command)
 
     def print_urls(self, url, print_episode_url, filters):
@@ -1592,11 +1578,9 @@ class RetryingDownloader(object):
 
 
 class BaseDownloader(object):
-    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
-                 extra_argv):
+    def __init__(self, stream, clip_title, destdir, preferred_name, resume):
         self.stream = stream
         self.clip_title = clip_title or 'ylestream'
-        self.extra_argv = extra_argv or []
         self.destdir = destdir or ''
         if preferred_name:
             self.preferred_name = self.append_ext_if_missing(
@@ -1745,7 +1729,6 @@ class RTMPDump(ExternalDownloader):
         args += ['-o', self.output_filename()]
         if self.resume:
             args.append('-e')
-        args += self.extra_argv
         return args
 
     def pipe(self):
@@ -1761,9 +1744,9 @@ class RTMPDump(ExternalDownloader):
 
 class HDSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, destdir, preferred_name, resume,
-                 extra_argv, filters):
+                 filters):
         ExternalDownloader.__init__(self, stream, clip_title, destdir,
-                                    preferred_name, resume, extra_argv)
+                                    preferred_name, resume)
         self.quality_options = self._filter_options(filters)
 
     def resume_supported(self):
@@ -1828,9 +1811,9 @@ class HDSDump(ExternalDownloader):
 
 class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream, clip_title, destdir, preferred_name, resume,
-                 extra_argv, filters):
+                 filters):
         BaseDownloader.__init__(self, stream, clip_title, destdir, resume,
-                                preferred_name, extra_argv)
+                                preferred_name)
         self.maxbitrate = filters.maxbitrate
         self.ratelimit = filters.ratelimit
 
@@ -1933,9 +1916,9 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 class HLSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, destdir, preferred_name, resume,
-                 extra_argv, filters):
+                 filters):
         ExternalDownloader.__init__(self, stream, clip_title, destdir,
-                                    preferred_name, resume, extra_argv)
+                                    preferred_name, resume)
         self.duration_options = self._filter_options(filters)
 
     def _filter_options(self, filters):
@@ -2028,10 +2011,6 @@ def main():
     loglevel = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(loglevel)
 
-    rtmpdumpargs = list(args.rtmpdumpargs)
-
-    if args.outputfile:
-        rtmpdumpargs.extend(['-o', args.outputfile])
     pipe = args.pipe or (args.outputfile == '-')
     io = IOContext(args.outputfile, args.destdir, args.resume, pipe)
 
@@ -2094,7 +2073,7 @@ def main():
 
     for url in urls:
         res = process_url(url, io, showurl, args.showtitle,
-                          from_file, args.showepisodepage, rtmpdumpargs,
+                          from_file, args.showepisodepage,
                           stream_filters, backends, args.postprocess)
 
         if res != RD_SUCCESS:

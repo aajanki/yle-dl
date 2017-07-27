@@ -50,7 +50,6 @@ def fetch_stream_title_or_url(url, get_title):
                           title_only = get_title,
                           from_file = None,
                           print_episode_url = False,
-                          rtmpdumpargs = [],
                           stream_filters = basic_filters,
                           backends = backends,
                           postprocess_command = None)

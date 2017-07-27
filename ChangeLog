@@ -8,6 +8,9 @@ xx xxx 2017, Version Next
 - New option --duration for limitting the max duration to download
 - Stricter parsing of command line. URL must be last. Some invalid argument
   combinations that were previously silently ignored now result in error.
+- Unknown arguments are no longer passed to rtmpdump (use a wrapper script
+  and --rtmpdump, instead)
+- Some rtmpdump arguments aliases are no longer supported, for example -e or -z
 
 19 Jul 2017, Version 2.20
 
