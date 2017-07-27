@@ -118,7 +118,7 @@ def arg_parser():
     parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-V', '-z', '--verbose', '--debug',
+    parser.add_argument('-V', '--verbose', '--debug',
                         action='store_true', dest='debug',
                         help='Show verbose debug output')
 
