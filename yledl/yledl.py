@@ -62,9 +62,6 @@ RD_SUCCESS = 0
 RD_FAILED = 1
 RD_INCOMPLETE = 2
 
-excludechars_linux = '*/|'
-excludechars_windows = '\"*/:<>?|'
-excludechars = excludechars_linux
 rtmpdump_binary = None
 hds_binary = ['php', resource_filename(__name__, 'AdobeHDS.php')]
 ffmpeg_binary = 'ffmpeg'
@@ -425,11 +422,12 @@ class StreamFilters(object):
 
 
 class IOContext(object):
-    def __init__(self, outputfilename, destdir, resume, pipe):
+    def __init__(self, outputfilename, destdir, resume, pipe, excludechars):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
         self.pipe = pipe
+        self.excludechars = excludechars
 
 
 class JSONP(object):
@@ -1603,12 +1601,13 @@ class BaseDownloader(object):
         self.stream = stream
         self.clip_title = clip_title or 'ylestream'
         self.destdir = io.destdir or ''
-        if io.preferred_name:
+        if io.outputfilename:
             self.preferred_name = self.append_ext_if_missing(
-                io.preferred_name, self.stream.ext)
+                io.outputfilename, self.stream.ext)
         else:
             self.preferred_name = None
         self._cached_output_file = None
+        self.excludechars = io.excludechars
         self.resume = io.resume
 
         if self.resume and not self.resume_supported():
@@ -1627,7 +1626,7 @@ class BaseDownloader(object):
             return self._cached_output_file
 
         ext = self.stream.ext or '.flv'
-        filename = self.sane_filename(self.clip_title) + ext
+        filename = self.sane_filename(self.clip_title, self.excludechars) + ext
         if self.destdir:
             filename = os.path.join(self.destdir, filename)
         if not resume:
@@ -1660,7 +1659,7 @@ class BaseDownloader(object):
             else:
                 logger.info(u'Output file: ' + outputfile)
 
-    def sane_filename(self, name):
+    def sane_filename(self, name, excludechars):
         if isinstance(name, str):
             name = unicode(name, 'utf-8', 'ignore')
         tr = dict((ord(c), ord(u'_')) for c in excludechars)
@@ -2027,7 +2026,8 @@ def main():
     logger.setLevel(loglevel)
 
     pipe = args.pipe or (args.outputfile == '-')
-    io = IOContext(args.outputfile, args.destdir, args.resume, pipe)
+    excludechars = '\"*/:<>?|' if args.vfat else '*/|'
+    io = IOContext(args.outputfile, args.destdir, args.resume, pipe, excludechars)
 
     urls = []
     if args.url:
@@ -2066,11 +2066,6 @@ def main():
 
     if len(backends) == 0:
         sys.exit(RD_FAILED)
-
-    if args.vfat:
-        global excludechars
-        global excludechars_windows
-        excludechars = excludechars_windows
 
     if not io.pipe and (args.debug or not (showurl or args.showtitle)):
         print_enc(parser.description)
