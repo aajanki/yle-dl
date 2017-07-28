@@ -99,17 +99,29 @@ def yledl_logger():
 logger = yledl_logger()
 
 
-def print_enc(msg):
-    if hasattr(sys.stdout, 'encoding'):
-        enc = sys.stdout.encoding or 'UTF-8'
+def print_enc(msg, out=None, linefeed_and_flush=True):
+    if out is None:
+        out = sys.stdout
+
+    if hasattr(out, 'encoding'):
+        enc = out.encoding or 'UTF-8'
     else:
         enc = 'UTF-8'
-    sys.stdout.write(msg.encode(enc, 'backslashreplace'))
-    sys.stdout.write('\n')
-    sys.stdout.flush()
+
+    out.write(msg.encode(enc, 'backslashreplace'))
+    if linefeed_and_flush:
+        out.write('\n')
+        out.flush()
 
 
 def arg_parser():
+    class ArgumentParserEncoded(argparse.ArgumentParser):
+        def _print_message(self, message, file=None):
+            if message:
+                if file is None:
+                    file = sys.stderr
+                print_enc(message, file, False)
+
     def unicode_arg(bytes):
         return unicode(bytes, sys.getfilesystemencoding())
 
@@ -118,7 +130,7 @@ def arg_parser():
          u'Copyright (C) 2009-2017 Antti Ajanki <antti.ajanki@iki.fi>, '
          u'license: GPLv3' % version)
 
-    parser = argparse.ArgumentParser(
+    parser = ArgumentParserEncoded(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-V', '--verbose', '--debug',
