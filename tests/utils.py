@@ -10,7 +10,6 @@ basic_filters = StreamFilters(
     sublang='all',
     hardsubs=False,
     maxbitrate=0,
-    ratelimit=None,
     duration=None)
 
 
@@ -41,6 +40,7 @@ def fetch_stream_title_or_url(url, get_title):
         outputfilename=None,
         destdir='/tmp/',
         resume=False,
+        ratelimit=None,
         excludechars='*/|')
 
     with Capturing() as output:
