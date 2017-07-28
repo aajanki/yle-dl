@@ -401,13 +401,12 @@ class StreamFilters(object):
     versions to download.
     """
     def __init__(self, latest_only, audiolang, sublang, hardsubs, maxbitrate,
-                 ratelimit, duration):
+                 duration):
         self.latest_only = latest_only
         self.audiolang = audiolang
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
-        self.ratelimit = ratelimit
         self.duration = duration
 
     def sublang_matches(self, langcode, subtype):
@@ -423,10 +422,12 @@ class StreamFilters(object):
 
 
 class IOContext(object):
-    def __init__(self, outputfilename, destdir, resume, excludechars):
+    def __init__(self, outputfilename, destdir, resume, ratelimit,
+                 excludechars):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
+        self.ratelimit = ratelimit
         self.excludechars = excludechars
 
 
@@ -1765,12 +1766,12 @@ class RTMPDump(ExternalDownloader):
 class HDSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io, filters):
         ExternalDownloader.__init__(self, stream, clip_title, io)
-        self.quality_options = self._filter_options(filters)
+        self.quality_options = self._filter_options(filters, io)
 
     def resume_supported(self):
         return True
 
-    def _filter_options(self, filters):
+    def _filter_options(self, filters, io):
         options = []
 
         # Approximate because there is no easy way to find out the
@@ -1780,8 +1781,8 @@ class HDSDump(ExternalDownloader):
         elif filters.maxbitrate < 2000:
             options.extend(['--quality', 'medium'])
 
-        if filters.ratelimit:
-            options.extend(['--maxspeed', str(filters.ratelimit)])
+        if io.ratelimit:
+            options.extend(['--maxspeed', str(io.ratelimit)])
 
         if filters.duration:
             options.extend(['--duration', str(filters.duration)])
@@ -1831,7 +1832,7 @@ class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream, clip_title, io, filters):
         BaseDownloader.__init__(self, stream, clip_title, io)
         self.maxbitrate = filters.maxbitrate
-        self.ratelimit = filters.ratelimit
+        self.ratelimit = io.ratelimit
 
         if filters.duration:
             logger.warning(u'--duration will be ignored when using the '
@@ -2027,7 +2028,8 @@ def main():
 
     pipe = args.pipe or (args.outputfile == '-')
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
-    io = IOContext(args.outputfile, args.destdir, args.resume, excludechars)
+    io = IOContext(args.outputfile, args.destdir, args.resume, args.ratelimit,
+                   excludechars)
 
     urls = []
     if args.url:
@@ -2077,8 +2079,7 @@ def main():
 
     maxbitrate = bitrate_from_arg(args.maxbitrate or sys.maxint)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
-                                   args.hardsubs, maxbitrate, args.ratelimit,
-                                   args.duration)
+                                   args.hardsubs, maxbitrate, args.duration)
     exit_status = RD_SUCCESS
 
     for url in urls:
