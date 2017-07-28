@@ -755,8 +755,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         if not self.to_rtmpdump_args():
             return None
         else:
-            return RTMPDump(self, clip_title, io.destdir, io.outputfilename,
-                            io.resume)
+            return RTMPDump(self, clip_title, io)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -877,9 +876,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         return self.episodeurl
 
     def create_downloader(self, io, clip_title):
-        return self.downloader_class(
-            self, clip_title, io.destdir, io.outputfilename, io.resume,
-            self.filters)
+        return self.downloader_class(self, clip_title, io, self.filters)
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
@@ -912,8 +909,7 @@ class HTTPStreamUrl(object):
         return self.url
 
     def create_downloader(self, io, clip_title):
-        return HTTPDump(self, clip_title, io.destdir, io.outputfilename,
-                        io.resume)
+        return HTTPDump(self, clip_title, io)
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -923,8 +919,7 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.filters = filters
 
     def create_downloader(self, io, clip_title):
-        return HLSDump(self, clip_title, io.destdir, io.outputfilename,
-                       io.resume, self.filters)
+        return HLSDump(self, clip_title, io, self.filters)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -1604,19 +1599,19 @@ class RetryingDownloader(object):
 
 
 class BaseDownloader(object):
-    def __init__(self, stream, clip_title, destdir, preferred_name, resume):
+    def __init__(self, stream, clip_title, io):
         self.stream = stream
         self.clip_title = clip_title or 'ylestream'
-        self.destdir = destdir or ''
-        if preferred_name:
+        self.destdir = io.destdir or ''
+        if io.preferred_name:
             self.preferred_name = self.append_ext_if_missing(
-                preferred_name, self.stream.ext)
+                io.preferred_name, self.stream.ext)
         else:
             self.preferred_name = None
         self._cached_output_file = None
-        self.resume = resume
+        self.resume = io.resume
 
-        if resume and not self.resume_supported():
+        if self.resume and not self.resume_supported():
             logger.warning('Resume not supported on this stream')
 
     def save_stream(self):
@@ -1769,10 +1764,8 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
-                 filters):
-        ExternalDownloader.__init__(self, stream, clip_title, destdir,
-                                    preferred_name, resume)
+    def __init__(self, stream, clip_title, io, filters):
+        ExternalDownloader.__init__(self, stream, clip_title, io)
         self.quality_options = self._filter_options(filters)
 
     def resume_supported(self):
@@ -1836,10 +1829,8 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
-                 filters):
-        BaseDownloader.__init__(self, stream, clip_title, destdir, resume,
-                                preferred_name)
+    def __init__(self, stream, clip_title, io, filters):
+        BaseDownloader.__init__(self, stream, clip_title, io)
         self.maxbitrate = filters.maxbitrate
         self.ratelimit = filters.ratelimit
 
@@ -1941,10 +1932,8 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, destdir, preferred_name, resume,
-                 filters):
-        ExternalDownloader.__init__(self, stream, clip_title, destdir,
-                                    preferred_name, resume)
+    def __init__(self, stream, clip_title, io, filters):
+        ExternalDownloader.__init__(self, stream, clip_title, io)
         self.duration_options = self._filter_options(filters)
 
     def _filter_options(self, filters):
