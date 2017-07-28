@@ -41,12 +41,12 @@ def fetch_stream_title_or_url(url, get_title):
         outputfilename=None,
         destdir='/tmp/',
         resume=False,
-        pipe=False,
         excludechars='*/|')
 
     with Capturing() as output:
         res = process_url(url,
                           io,
+                          pipe = False,
                           url_only = not get_title,
                           title_only = get_title,
                           from_file = None,

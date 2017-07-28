@@ -279,8 +279,9 @@ def int_or_else(x, default):
         return default
 
 
-def process_url(url, io, url_only, title_only, from_file, print_episode_url,
-                stream_filters, backends, postprocess_command):
+def process_url(url, io, pipe, url_only, title_only, from_file,
+                print_episode_url, stream_filters, backends,
+                postprocess_command):
     dl = downloader_factory(url, backends)
     if not dl:
         logger.error(u'Unsupported URL %s.' % url)
@@ -291,8 +292,8 @@ def process_url(url, io, url_only, title_only, from_file, print_episode_url,
         return dl.print_urls(url, print_episode_url, stream_filters)
     elif title_only:
         return dl.print_titles(url, stream_filters)
-    elif io.pipe:
-        return dl.pipe(url, stream_filters)
+    elif pipe:
+        return dl.pipe(url, io, stream_filters)
     else:
         if from_file:
             logger.info('')
@@ -422,11 +423,10 @@ class StreamFilters(object):
 
 
 class IOContext(object):
-    def __init__(self, outputfilename, destdir, resume, pipe, excludechars):
+    def __init__(self, outputfilename, destdir, resume, excludechars):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
-        self.pipe = pipe
         self.excludechars = excludechars
 
 
@@ -2027,7 +2027,7 @@ def main():
 
     pipe = args.pipe or (args.outputfile == '-')
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
-    io = IOContext(args.outputfile, args.destdir, args.resume, pipe, excludechars)
+    io = IOContext(args.outputfile, args.destdir, args.resume, excludechars)
 
     urls = []
     if args.url:
@@ -2067,13 +2067,13 @@ def main():
     if len(backends) == 0:
         sys.exit(RD_FAILED)
 
-    if not io.pipe and (args.debug or not (showurl or args.showtitle)):
+    if not pipe and (args.debug or not (showurl or args.showtitle)):
         print_enc(parser.description)
 
     if args.sublang:
         sublang = args.sublang
     else:
-        sublang = 'none' if io.pipe else 'all'
+        sublang = 'none' if pipe else 'all'
 
     maxbitrate = bitrate_from_arg(args.maxbitrate or sys.maxint)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
@@ -2082,7 +2082,7 @@ def main():
     exit_status = RD_SUCCESS
 
     for url in urls:
-        res = process_url(url, io, showurl, args.showtitle,
+        res = process_url(url, io, pipe, showurl, args.showtitle,
                           from_file, args.showepisodepage,
                           stream_filters, backends, args.postprocess)
 
