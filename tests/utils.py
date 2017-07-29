@@ -1,16 +1,7 @@
 import sys
 from cStringIO import StringIO
-from yledl.yledl import process_url, StreamFilters, BackendFactory, IOContext, \
+from yledl import process_url, StreamFilters, BackendFactory, IOContext, \
     RD_SUCCESS
-
-backends = [BackendFactory(BackendFactory.ADOBEHDSPHP)]
-basic_filters = StreamFilters(
-    latest_only=False,
-    audiolang='',
-    sublang='all',
-    hardsubs=False,
-    maxbitrate=0,
-    duration=None)
 
 
 # Context manager for capturing stdout output. See
@@ -36,6 +27,14 @@ def fetch_stream_url(url):
 
 
 def fetch_stream_title_or_url(url, get_title):
+    backends = [BackendFactory(BackendFactory.ADOBEHDSPHP)]
+    basic_filters = StreamFilters(
+        latest_only=False,
+        audiolang='',
+        sublang='all',
+        hardsubs=False,
+        maxbitrate=0,
+        duration=None)
     io = IOContext(
         outputfilename=None,
         destdir='/tmp/',
