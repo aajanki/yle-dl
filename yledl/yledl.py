@@ -279,9 +279,17 @@ def int_or_else(x, default):
         return default
 
 
-def process_url(url, io, pipe, url_only, title_only, from_file,
-                print_episode_url, stream_filters, backends,
-                postprocess_command):
+def download(url, io, pipe, url_only, title_only, from_file, print_episode_url,
+             stream_filters, backends, postprocess_command):
+    """Parse a web page and download the enclosed stream.
+
+    url is an Areena, Elävä Arkisto or Yle news web page.
+
+    Returns RD_SUCCESS if a stream was successfully downloaded,
+    RD_FAIL is no stream was detected or the download failed, or
+    RD_INCOMPLETE if a stream was downloaded partially but the
+    download was interrupted.
+    """
     dl = downloader_factory(url, backends)
     if not dl:
         logger.error(u'Unsupported URL %s.' % url)
@@ -2083,9 +2091,9 @@ def main():
     exit_status = RD_SUCCESS
 
     for url in urls:
-        res = process_url(url, io, pipe, showurl, args.showtitle,
-                          from_file, args.showepisodepage,
-                          stream_filters, backends, args.postprocess)
+        res = download(url, io, pipe, showurl, args.showtitle,
+                       from_file, args.showepisodepage,
+                       stream_filters, backends, args.postprocess)
 
         if res != RD_SUCCESS:
             exit_status = res

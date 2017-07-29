@@ -1,6 +1,6 @@
 import sys
 from cStringIO import StringIO
-from yledl import process_url, StreamFilters, BackendFactory, IOContext, \
+from yledl import download, StreamFilters, BackendFactory, IOContext, \
     RD_SUCCESS
 
 
@@ -43,16 +43,16 @@ def fetch_stream_title_or_url(url, get_title):
         excludechars='*/|')
 
     with Capturing() as output:
-        res = process_url(url,
-                          io,
-                          pipe = False,
-                          url_only = not get_title,
-                          title_only = get_title,
-                          from_file = None,
-                          print_episode_url = False,
-                          stream_filters = basic_filters,
-                          backends = backends,
-                          postprocess_command = None)
+        res = download(url,
+                       io,
+                       pipe = False,
+                       url_only = not get_title,
+                       title_only = get_title,
+                       from_file = None,
+                       print_episode_url = False,
+                       stream_filters = basic_filters,
+                       backends = backends,
+                       postprocess_command = None)
         assert res == RD_SUCCESS
 
     return output
