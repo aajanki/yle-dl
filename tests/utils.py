@@ -40,7 +40,8 @@ def fetch_stream_title_or_url(url, action):
         destdir='/tmp/',
         resume=False,
         ratelimit=None,
-        excludechars='*/|')
+        excludechars='*/|',
+        proxy = None)
 
     with Capturing() as output:
         res = download(url,

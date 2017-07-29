@@ -74,7 +74,6 @@ class StreamAction(object):
 rtmpdump_binary = None
 hds_binary = ['php', resource_filename(__name__, 'AdobeHDS.php')]
 ffmpeg_binary = 'ffmpeg'
-stream_proxy = None
 
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
@@ -441,12 +440,13 @@ class StreamFilters(object):
 
 class IOContext(object):
     def __init__(self, outputfilename, destdir, resume, ratelimit,
-                 excludechars):
+                 excludechars, proxy):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
         self.ratelimit = ratelimit
         self.excludechars = excludechars
+        self.proxy = proxy
 
 
 class JSONP(object):
@@ -1628,6 +1628,7 @@ class BaseDownloader(object):
         self._cached_output_file = None
         self.excludechars = io.excludechars
         self.resume = io.resume
+        self.proxy = io.proxy
 
         if self.resume and not self.resume_supported():
             logger.warning('Resume not supported on this stream')
@@ -1820,15 +1821,14 @@ class HDSDump(ExternalDownloader):
 
     def adobehds_command_line(self, extra_args):
         global hds_binary
-        global stream_proxy
 
         args = list(hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
-        if stream_proxy:
+        if self.proxy:
             args.append('--proxy')
-            args.append(stream_proxy)
+            args.append(self.proxy)
             args.append('--fproxy')
         if logger.isEnabledFor(logging.DEBUG):
             args.append('--debug')
@@ -1875,13 +1875,9 @@ class YoutubeDLHDSDump(BaseDownloader):
         if outputfile != '-':
             self.log_output_file(outputfile)
 
-        proxy = None
-        if stream_proxy:
-            proxy = stream_proxy
-
         ydlopts = {
             'logtostderr': True,
-            'proxy': proxy,
+            'proxy': self.proxy,
             'verbose': logger.isEnabledFor(logging.DEBUG)
         }
 
@@ -2036,7 +2032,6 @@ def main():
     global rtmpdump_binary
     global ffmpeg_binary
     global hds_binary
-    global stream_proxy
 
     parser = arg_parser()
     args = parser.parse_args()
@@ -2046,7 +2041,7 @@ def main():
 
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     io = IOContext(args.outputfile, args.destdir, args.resume, args.ratelimit,
-                   excludechars)
+                   excludechars, args.proxy)
 
     urls = []
     if args.url:
@@ -2075,8 +2070,6 @@ def main():
                                        StreamAction.PRINT_STREAM_TITLE,
                                        StreamAction.PRINT_EPISODE_PAGES]))):
         print_enc(parser.description)
-
-    stream_proxy = args.proxy
 
     backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
     if args.backend:
