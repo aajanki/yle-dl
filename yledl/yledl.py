@@ -1960,7 +1960,7 @@ class HLSDump(ExternalDownloader):
         return self.ffmpeg_command_line(['file:' + self.output_filename()])
 
     def pipe(self):
-        args = self.ffmpeg_command_line(['-f', 'matroska', 'pipe:1'])
+        args = self.ffmpeg_command_line(['-f', 'mpegts', 'pipe:1'])
         self.external_downloader(args)
         return RD_SUCCESS
 
@@ -1972,7 +1972,6 @@ class HLSDump(ExternalDownloader):
         args = [ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
                 '-i', self.stream.to_url(),
-                '-bsf:a', 'aac_adtstoasc',
                 '-vcodec', 'copy', '-acodec', 'copy']
         args.extend(self.duration_options)
         args.extend(output_options)
