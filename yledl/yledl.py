@@ -62,6 +62,15 @@ RD_SUCCESS = 0
 RD_FAILED = 1
 RD_INCOMPLETE = 2
 
+
+class StreamAction(object):
+    DOWNLOAD = 1
+    PIPE = 2
+    PRINT_STREAM_URL = 3
+    PRINT_STREAM_TITLE = 4
+    PRINT_EPISODE_PAGES = 5
+
+
 rtmpdump_binary = None
 hds_binary = ['php', resource_filename(__name__, 'AdobeHDS.php')]
 ffmpeg_binary = 'ffmpeg'
@@ -279,11 +288,14 @@ def int_or_else(x, default):
         return default
 
 
-def download(url, io, pipe, url_only, title_only, from_file, print_episode_url,
+def download(url, action, io, from_file,
              stream_filters, backends, postprocess_command):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
+
+    action is one of StreamAction constants that specifies what exactly
+    is done with the stream (save to a file, print the title, ...)
 
     Returns RD_SUCCESS if a stream was successfully downloaded,
     RD_FAIL is no stream was detected or the download failed, or
@@ -296,11 +308,13 @@ def download(url, io, pipe, url_only, title_only, from_file, print_episode_url,
         logger.error(u'Is this really a Yle video page?')
         return RD_FAILED
 
-    if url_only:
-        return dl.print_urls(url, print_episode_url, stream_filters)
-    elif title_only:
+    if action == StreamAction.PRINT_STREAM_URL:
+        return dl.print_urls(url, False, stream_filters)
+    elif action == StreamAction.PRINT_EPISODE_PAGES:
+        return dl.print_urls(url, True, stream_filters)
+    elif action == StreamAction.PRINT_STREAM_TITLE:
         return dl.print_titles(url, stream_filters)
-    elif pipe:
+    elif action == StreamAction.PIPE:
         return dl.pipe(url, io, stream_filters)
     else:
         if from_file:
@@ -2034,7 +2048,6 @@ def main():
     loglevel = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(loglevel)
 
-    pipe = args.pipe or (args.outputfile == '-')
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     io = IOContext(args.outputfile, args.destdir, args.resume, args.ratelimit,
                    excludechars)
@@ -2052,7 +2065,23 @@ def main():
         parser.print_help()
         sys.exit(RD_SUCCESS)
 
-    showurl = args.showurl or args.showepisodepage
+    if args.showurl:
+        action = StreamAction.PRINT_STREAM_URL
+    elif args.showepisodepage:
+        action = StreamAction.PRINT_EPISODE_PAGES
+    elif args.showtitle:
+        action = StreamAction.PRINT_STREAM_TITLE
+    elif args.pipe or (args.outputfile == '-'):
+        action = StreamAction.PIPE
+    else:
+        action = StreamAction.DOWNLOAD
+
+    if (action != StreamAction.PIPE and
+        (args.debug or not (action in [StreamAction.PRINT_STREAM_URL,
+                                       StreamAction.PRINT_STREAM_TITLE,
+                                       StreamAction.PRINT_EPISODE_PAGES]))):
+        print_enc(parser.description)
+
     stream_proxy = args.proxy
 
     backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
@@ -2077,13 +2106,10 @@ def main():
     if len(backends) == 0:
         sys.exit(RD_FAILED)
 
-    if not pipe and (args.debug or not (showurl or args.showtitle)):
-        print_enc(parser.description)
-
     if args.sublang:
         sublang = args.sublang
     else:
-        sublang = 'none' if pipe else 'all'
+        sublang = 'none' if action == StreamAction.PIPE else 'all'
 
     maxbitrate = bitrate_from_arg(args.maxbitrate or sys.maxint)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
@@ -2091,9 +2117,8 @@ def main():
     exit_status = RD_SUCCESS
 
     for url in urls:
-        res = download(url, io, pipe, showurl, args.showtitle,
-                       from_file, args.showepisodepage,
-                       stream_filters, backends, args.postprocess)
+        res = download(url, action, io, from_file, stream_filters, backends,
+                       args.postprocess)
 
         if res != RD_SUCCESS:
             exit_status = res

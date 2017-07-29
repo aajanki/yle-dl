@@ -1,7 +1,7 @@
 import sys
 from cStringIO import StringIO
 from yledl import download, StreamFilters, BackendFactory, IOContext, \
-    RD_SUCCESS
+    StreamAction, RD_SUCCESS
 
 
 # Context manager for capturing stdout output. See
@@ -19,14 +19,14 @@ class Capturing(list):
 
 
 def fetch_title(url):
-    return fetch_stream_title_or_url(url, True)
+    return fetch_stream_title_or_url(url, StreamAction.PRINT_STREAM_TITLE)
 
 
 def fetch_stream_url(url):
-    return fetch_stream_title_or_url(url, False)
+    return fetch_stream_title_or_url(url, StreamAction.PRINT_STREAM_URL)
 
 
-def fetch_stream_title_or_url(url, get_title):
+def fetch_stream_title_or_url(url, action):
     backends = [BackendFactory(BackendFactory.ADOBEHDSPHP)]
     basic_filters = StreamFilters(
         latest_only=False,
@@ -44,12 +44,9 @@ def fetch_stream_title_or_url(url, get_title):
 
     with Capturing() as output:
         res = download(url,
+                       action,
                        io,
-                       pipe = False,
-                       url_only = not get_title,
-                       title_only = get_title,
                        from_file = None,
-                       print_episode_url = False,
                        stream_filters = basic_filters,
                        backends = backends,
                        postprocess_command = None)
