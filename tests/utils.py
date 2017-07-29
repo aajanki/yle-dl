@@ -46,7 +46,6 @@ def fetch_stream_title_or_url(url, action):
         res = download(url,
                        action,
                        io,
-                       from_file = None,
                        stream_filters = basic_filters,
                        backends = backends,
                        postprocess_command = None)

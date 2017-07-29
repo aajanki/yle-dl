@@ -288,8 +288,7 @@ def int_or_else(x, default):
         return default
 
 
-def download(url, action, io, from_file,
-             stream_filters, backends, postprocess_command):
+def download(url, action, io, stream_filters, backends, postprocess_command):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -317,9 +316,6 @@ def download(url, action, io, from_file,
     elif action == StreamAction.PIPE:
         return dl.pipe(url, io, stream_filters)
     else:
-        if from_file:
-            logger.info('')
-            logger.info(u'Now downloading from URL %s:' % url)
         return dl.download_episodes(url, io, stream_filters,
                                     postprocess_command)
 
@@ -2056,9 +2052,7 @@ def main():
     if args.url:
         urls = [encode_url_utf8(args.url)]
 
-    from_file = False
     if args.inputfile:
-        from_file = True
         urls = read_urls_from_file(args.inputfile)
 
     if not urls:
@@ -2117,7 +2111,11 @@ def main():
     exit_status = RD_SUCCESS
 
     for url in urls:
-        res = download(url, action, io, from_file, stream_filters, backends,
+        if args.inputfile:
+            logger.info('')
+            logger.info(u'Now downloading from URL %s:' % url)
+
+        res = download(url, action, io, stream_filters, backends,
                        args.postprocess)
 
         if res != RD_SUCCESS:
