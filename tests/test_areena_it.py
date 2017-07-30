@@ -2,7 +2,7 @@
 
 import sys
 import pytest
-from utils import fetch_title, fetch_stream_url
+from utils import fetch_title, fetch_stream_url, fetch_episode_pages
 
 
 def test_areena_title():
@@ -57,3 +57,10 @@ def test_areena_html5_clip_stream_url():
 
     assert len(streamurl) == 1
     assert 'cdnapi.kaltura.com' in streamurl[0]
+
+
+def test_areena_episode_pages():
+    episodes = fetch_episode_pages('https://areena.yle.fi/1-3439855')
+
+    assert len(episodes) >= 12
+    assert all(u.startswith('https://areena.yle.fi/1-') for u in episodes)

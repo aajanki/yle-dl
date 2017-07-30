@@ -19,14 +19,18 @@ class Capturing(list):
 
 
 def fetch_title(url):
-    return fetch_stream_title_or_url(url, StreamAction.PRINT_STREAM_TITLE)
+    return fetch(url, StreamAction.PRINT_STREAM_TITLE)
 
 
 def fetch_stream_url(url):
-    return fetch_stream_title_or_url(url, StreamAction.PRINT_STREAM_URL)
+    return fetch(url, StreamAction.PRINT_STREAM_URL)
 
 
-def fetch_stream_title_or_url(url, action):
+def fetch_episode_pages(url):
+    return fetch(url, StreamAction.PRINT_EPISODE_PAGES)
+
+
+def fetch(url, action):
     backends = [BackendFactory(BackendFactory.ADOBEHDSPHP)]
     basic_filters = StreamFilters(
         latest_only=False,

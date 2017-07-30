@@ -307,9 +307,9 @@ def download(url, action, io, stream_filters, backends, postprocess_command):
         return RD_FAILED
 
     if action == StreamAction.PRINT_STREAM_URL:
-        return dl.print_urls(url, False, stream_filters)
+        return dl.print_urls(url, stream_filters)
     elif action == StreamAction.PRINT_EPISODE_PAGES:
-        return dl.print_urls(url, True, stream_filters)
+        return dl.print_episode_pages(url, stream_filters)
     elif action == StreamAction.PRINT_STREAM_TITLE:
         return dl.print_titles(url, stream_filters)
     elif action == StreamAction.PIPE:
@@ -712,9 +712,8 @@ class KalturaStreamUtils(object):
 
 
 class AreenaStreamBase(AreenaUtils):
-    def __init__(self, clip, pageurl):
+    def __init__(self):
         self.error = None
-        self.episodeurl = self.create_pageurl(clip) or pageurl
         self.ext = '.flv'
 
     def is_valid(self):
@@ -729,22 +728,8 @@ class AreenaStreamBase(AreenaUtils):
     def to_url(self):
         return ''
 
-    def to_episode_url(self):
-        return self.episodeurl
-
     def to_rtmpdump_args(self):
         return None
-
-    def create_pageurl(self, media):
-        if not media or 'type' not in media or 'id' not in media:
-            return ''
-
-        if media['type'] == 'audio':
-            urltype = 'radio'
-        else:
-            urltype = 'tv'
-
-        return 'https://areena.yle.fi/%s/%s' % (urltype, media['id'])
 
 
 class AreenaRTMPStreamUrl(AreenaStreamBase):
@@ -752,8 +737,8 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
     # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
     AES_KEY = 'hjsadf89hk123ghk'
 
-    def __init__(self, clip, pageurl):
-        AreenaStreamBase.__init__(self, clip, pageurl)
+    def __init__(self):
+        AreenaStreamBase.__init__(self)
         self.rtmp_params = None
 
     def is_valid(self):
@@ -863,12 +848,11 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
 
 
 class Areena2014HDSStreamUrl(AreenaStreamBase):
-    def __init__(self, pageurl, hdsurl, filters, backend):
-        AreenaStreamBase.__init__(self, {}, pageurl)
+    def __init__(self, hdsurl, filters, backend):
+        AreenaStreamBase.__init__(self)
         self.filters = filters
         self.downloader_class = backend.hds()
 
-        self.episodeurl = pageurl
         if hdsurl:
             sep = '&' if '?' in hdsurl else '?'
             self.hds_url = hdsurl + sep + \
@@ -889,16 +873,13 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_url(self):
         return self.hds_url
 
-    def to_episode_url(self):
-        return self.episodeurl
-
     def create_downloader(self, io, clip_title):
         return self.downloader_class(self, clip_title, io, self.filters)
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
     def __init__(self, pageurl, streamurl, filters):
-        AreenaRTMPStreamUrl.__init__(self, None, pageurl)
+        AreenaRTMPStreamUrl.__init__(self)
         rtmpstream = self.create_rtmpstream(streamurl)
         self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl,
                                                           False)
@@ -1012,16 +993,19 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return self.process(download_clip, url, filters)
 
-    def print_urls(self, url, print_episode_url, filters):
+    def print_urls(self, url, filters):
         def print_clip_url(clip):
-            if print_episode_url:
-                print_url = clip.streamurl.to_episode_url()
-            else:
-                print_url = clip.streamurl.to_url()
-            print_enc(print_url)
+            print_enc(clip.streamurl.to_url())
             return RD_SUCCESS
 
         return self.process(print_clip_url, url, filters)
+
+    def print_episode_pages(self, url, filters):
+        playlist = self.get_playlist(url, filters)
+        for clipurl in playlist:
+            print_enc(clipurl)
+
+        return RD_SUCCESS
 
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
@@ -1319,8 +1303,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return InvalidStreamUrl('Decrypting media URL failed')
 
         if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(pageurl, decodedurl, filters,
-                                          self.backend)
+            return Areena2014HDSStreamUrl(decodedurl, filters, self.backend)
         else:
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
@@ -1391,10 +1374,13 @@ class YleUutisetDownloader(Areena2014Downloader):
             'download_episodes', url, io=io, filters=filters,
             postprocess_command=postprocess_command)
 
-    def print_urls(self, url, print_episode_url, filters):
+    def print_urls(self, url, filters):
         return self.delegate_to_areena_downloader(
-            'print_urls', url, print_episode_url=print_episode_url,
-            filters=filters)
+            'print_urls', url, filters=filters)
+
+    def print_episode_pages(self, url, filters):
+        return self.delegate_to_areena_downloader(
+            'print_episode_pages', url, filters=filters)
 
     def pipe(self, url, io, filters):
         return self.delegate_to_areena_downloader(
@@ -1601,6 +1587,9 @@ class RetryingDownloader(object):
 
     def print_urls(self, *args, **kwargs):
         return self._retry_call('print_urls', *args, **kwargs)
+
+    def print_episode_pages(self, *args, **kwargs):
+        return self._retry_call('print_episode_pages', *args, **kwargs)
 
     def print_titles(self, *args, **kwargs):
         return self._retry_call('print_titles', *args, **kwargs)
