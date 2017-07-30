@@ -438,8 +438,8 @@ class StreamFilters(object):
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
-    def __init__(self, latest_only, audiolang, sublang, hardsubs, maxbitrate,
-                 duration):
+    def __init__(self, latest_only=False, audiolang='', sublang='all',
+                 hardsubs=False, maxbitrate=sys.maxint, duration=None):
         self.latest_only = latest_only
         self.audiolang = audiolang
         self.sublang = sublang
@@ -460,9 +460,9 @@ class StreamFilters(object):
 
 
 class IOContext(object):
-    def __init__(self, outputfilename, destdir, resume, ratelimit,
-                 excludechars, proxy, rtmpdump_binary=None, hds_binary=None,
-                 ffmpeg_binary = 'ffmpeg'):
+    def __init__(self, outputfilename=None, destdir=None, resume=False,
+                 ratelimit=None, excludechars='*/|', proxy=None,
+                 rtmpdump_binary=None, hds_binary=None, ffmpeg_binary='ffmpeg'):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume

@@ -32,20 +32,8 @@ def fetch_episode_pages(url):
 
 def fetch(url, action):
     backends = [BackendFactory(BackendFactory.ADOBEHDSPHP)]
-    basic_filters = StreamFilters(
-        latest_only=False,
-        audiolang='',
-        sublang='all',
-        hardsubs=False,
-        maxbitrate=0,
-        duration=None)
-    io = IOContext(
-        outputfilename=None,
-        destdir='/tmp/',
-        resume=False,
-        ratelimit=None,
-        excludechars='*/|',
-        proxy = None)
+    basic_filters = StreamFilters()
+    io = IOContext(destdir='/tmp/')
 
     with Capturing() as output:
         res = download(url,
