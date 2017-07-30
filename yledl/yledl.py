@@ -71,10 +71,6 @@ class StreamAction(object):
     PRINT_EPISODE_PAGES = 5
 
 
-rtmpdump_binary = None
-hds_binary = ['php', resource_filename(__name__, 'AdobeHDS.php')]
-ffmpeg_binary = 'ffmpeg'
-
 libcname = ctypes.util.find_library('c')
 libc = libcname and ctypes.CDLL(libcname)
 
@@ -370,6 +366,31 @@ def which(program):
     return None
 
 
+def find_rtmpdump(rtmpdump_arg):
+    binary = rtmpdump_arg
+
+    if not binary:
+        if sys.platform == 'win32':
+            binary = which('rtmpdump.exe')
+        else:
+            binary = which('rtmpdump')
+    if not binary:
+        binary = 'rtmpdump'
+
+    return binary
+
+
+def find_adobehds(adobehds_arg):
+    if adobehds_arg:
+        return adobehds_arg.split(' ')
+    else:
+        return None
+
+
+def find_ffmpeg(ffmpeg_arg):
+    return ffmpeg_arg or 'ffmpeg'
+
+
 def parse_rtmp_single_component_app(rtmpurl):
     """Extract single path-component app and playpath from rtmpurl."""
     # YLE server requires that app is the first path component
@@ -440,13 +461,22 @@ class StreamFilters(object):
 
 class IOContext(object):
     def __init__(self, outputfilename, destdir, resume, ratelimit,
-                 excludechars, proxy):
+                 excludechars, proxy, rtmpdump_binary=None, hds_binary=None,
+                 ffmpeg_binary = 'ffmpeg'):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
         self.ratelimit = ratelimit
         self.excludechars = excludechars
         self.proxy = proxy
+
+        self.rtmpdump_binary = rtmpdump_binary
+        self.ffmpeg_binary = ffmpeg_binary
+        if hds_binary:
+            self.hds_binary = hds_binary
+        else:
+            self.hds_binary = \
+                ['php', resource_filename(__name__, 'AdobeHDS.php')]
 
 
 class JSONP(object):
@@ -1749,11 +1779,15 @@ class Subprocess(object):
 
 
 class RTMPDump(ExternalDownloader):
+    def __init__(self, stream, clip_title, io):
+        ExternalDownloader.__init__(self, stream, clip_title, io)
+        self.rtmpdump_binary = io.rtmpdump_binary
+
     def resume_supported(self):
         return True
 
     def build_args(self):
-        args = [rtmpdump_binary]
+        args = [self.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', self.output_filename()]
         if self.resume:
@@ -1761,7 +1795,7 @@ class RTMPDump(ExternalDownloader):
         return args
 
     def pipe(self):
-        args = [rtmpdump_binary]
+        args = [self.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', '-']
         self.external_downloader(args)
@@ -1775,6 +1809,7 @@ class HDSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io, filters):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.quality_options = self._filter_options(filters, io)
+        self.hds_binary = io.hds_binary
 
     def resume_supported(self):
         return True
@@ -1809,9 +1844,7 @@ class HDSDump(ExternalDownloader):
         return RD_SUCCESS
 
     def adobehds_command_line(self, extra_args):
-        global hds_binary
-
-        args = list(hds_binary)
+        args = list(self.hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
@@ -1938,6 +1971,7 @@ class HLSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io, filters):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.duration_options = self._filter_options(filters)
+        self.ffmpeg_binary = io.ffmpeg_binary
 
     def _filter_options(self, filters):
         if filters.duration:
@@ -1954,11 +1988,9 @@ class HLSDump(ExternalDownloader):
         return RD_SUCCESS
 
     def ffmpeg_command_line(self, output_options):
-        global ffmpeg_binary
-
         debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
-        args = [ffmpeg_binary, '-y',
+        args = [self.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
                 '-i', self.stream.to_url(),
                 '-vcodec', 'copy', '-acodec', 'copy']
@@ -2017,10 +2049,6 @@ class HTTPDump(BaseDownloader):
 
 
 def main():
-    global rtmpdump_binary
-    global ffmpeg_binary
-    global hds_binary
-
     parser = arg_parser()
     args = parser.parse_args()
 
@@ -2029,7 +2057,8 @@ def main():
 
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     io = IOContext(args.outputfile, args.destdir, args.resume, args.ratelimit,
-                   excludechars, args.proxy)
+                   excludechars, args.proxy, find_rtmpdump(args.rtmpdump),
+                   find_adobehds(args.adobehds), find_ffmpeg(args.ffmpeg))
 
     urls = []
     if args.url:
@@ -2062,21 +2091,6 @@ def main():
     backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
     if args.backend:
         backends = BackendFactory.parse_backends(args.backend.split(','))
-
-    if args.rtmpdump:
-        rtmpdump_binary = args.rtmpdump
-    if args.ffmpeg:
-        ffmpeg_binary = args.ffmpeg
-    if args.adobehds:
-        hds_binary = args.adobehds.split(' ')
-
-    if not rtmpdump_binary:
-        if sys.platform == 'win32':
-            rtmpdump_binary = which('rtmpdump.exe')
-        else:
-            rtmpdump_binary = which('rtmpdump')
-    if not rtmpdump_binary:
-        rtmpdump_binary = 'rtmpdump'
 
     if len(backends) == 0:
         sys.exit(RD_FAILED)
