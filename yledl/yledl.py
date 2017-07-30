@@ -197,7 +197,7 @@ def arg_parser():
     dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument('--backend', metavar='BE',
                           type=unicode_arg,
-                          choices=['adobehdsphp', 'youtubedl'],
+                          default="adobehdsphp,youtubedl",
                           help='Downloaders that are tried until one of them '
                           ' succeeds (a comma-separated list).\n'
                           'Possible values: '
@@ -2087,10 +2087,7 @@ def main():
                                        StreamAction.PRINT_EPISODE_PAGES]))):
         print_enc(parser.description)
 
-    backends = [BackendFactory(['adobehdsphp', 'youtubedl'])]
-    if args.backend:
-        backends = BackendFactory.parse_backends(args.backend.split(','))
-
+    backends = BackendFactory.parse_backends(args.backend.split(','))
     if len(backends) == 0:
         sys.exit(RD_FAILED)
 
