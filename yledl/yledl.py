@@ -49,37 +49,13 @@ from pkg_resources import resource_filename
 
 version = '2.20'
 
-AREENA_NG_SWF = ('https://areena.yle.fi/static/player/1.2.8/flowplayer/'
-                 'flowplayer.commercial-3.2.7-encrypted.swf')
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
-
-RTMP_SCHEMES = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
-
-DEFAULT_HDS_BACKENDS = ['adobehdsphp', 'youtubedl']
 
 # rtmpdump exit codes
 RD_SUCCESS = 0
 RD_FAILED = 1
 RD_INCOMPLETE = 2
 
-
-class StreamAction(object):
-    DOWNLOAD = 1
-    PIPE = 2
-    PRINT_STREAM_URL = 3
-    PRINT_STREAM_TITLE = 4
-    PRINT_EPISODE_PAGES = 5
-
-
-libcname = ctypes.util.find_library('c')
-libc = libcname and ctypes.CDLL(libcname)
-
-
-class YleDlURLopener(urllib.FancyURLopener):
-    version = AREENA_NG_HTTP_HEADERS['User-Agent']
-
-
-urllib._urlopener = YleDlURLopener()
 
 def yledl_logger():
     class PlainInfoFormatter(logging.Formatter):
@@ -98,6 +74,21 @@ def yledl_logger():
 
 
 logger = yledl_logger()
+
+
+class StreamAction(object):
+    DOWNLOAD = 1
+    PIPE = 2
+    PRINT_STREAM_URL = 3
+    PRINT_STREAM_TITLE = 4
+    PRINT_EPISODE_PAGES = 5
+
+
+class YleDlURLopener(urllib.FancyURLopener):
+    version = AREENA_NG_HTTP_HEADERS['User-Agent']
+
+
+urllib._urlopener = YleDlURLopener()
 
 
 def print_enc(msg, out=None, linefeed_and_flush=True):
@@ -835,12 +826,14 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         rtmpbase = '%s://%s/%s' % (scheme, edgefcs, baseapp)
         tcurl = '%s://%s/%s' % (scheme, rtmp_ip, app)
 
+        areena_swf = ('https://areena.yle.fi/static/player/1.2.8/flowplayer/'
+                      'flowplayer.commercial-3.2.7-encrypted.swf')
         rtmpparams = {'rtmp': rtmpbase,
                       'app': app,
                       'playpath': rtmp_stream,
                       'tcUrl': tcurl,
                       'pageUrl': pageurl,
-                      'swfUrl': AREENA_NG_SWF}
+                      'swfUrl': areena_swf}
         if islive:
             rtmpparams['live'] = '1'
 
@@ -851,7 +844,8 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
             raise ValueError("Invalid RTMP URL")
 
         scheme, rest = url.split('://', 1)
-        if scheme not in RTMP_SCHEMES:
+        rtmp_scemes = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
+        if scheme not in rtmp_scemes:
             raise ValueError("Invalid RTMP URL")
 
         if '/' not in rest:
@@ -1768,6 +1762,9 @@ class Subprocess(object):
     def _sigterm_when_parent_dies(self):
         PR_SET_PDEATHSIG = 1
 
+        libcname = ctypes.util.find_library('c')
+        libc = libcname and ctypes.CDLL(libcname)
+
         try:
             libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
         except AttributeError:
@@ -2089,7 +2086,7 @@ def main():
                                        StreamAction.PRINT_EPISODE_PAGES]))):
         print_enc(parser.description)
 
-    backends = [BackendFactory(DEFAULT_HDS_BACKENDS)]
+    backends = [BackendFactory(['adobehdsphp', 'youtubedl'])]
     if args.backend:
         backends = BackendFactory.parse_backends(args.backend.split(','))
 
