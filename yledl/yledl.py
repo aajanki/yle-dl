@@ -1980,7 +1980,8 @@ class HLSDump(ExternalDownloader):
             return []
 
     def build_args(self):
-        return self.ffmpeg_command_line(['file:' + self.output_filename()])
+        return self.ffmpeg_command_line(
+            ['-bsf:a', 'aac_adtstoasc', 'file:' + self.output_filename()])
 
     def pipe(self):
         args = self.ffmpeg_command_line(['-f', 'mpegts', 'pipe:1'])
