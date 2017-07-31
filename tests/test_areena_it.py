@@ -19,7 +19,7 @@ def test_areena_stream_url():
 
 
 def test_areena_html5_stream_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/1-2018012')
+    streamurl = fetch_stream_url('https://areena.yle.fi/1-403848')
 
     assert len(streamurl) == 1
     assert 'cdnapi.kaltura.com' in streamurl[0]
