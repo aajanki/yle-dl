@@ -20,6 +20,13 @@ def test_areena_stream_url():
     assert 'manifest.f4m' in streamurl[0]
 
 
+def test_areena_html5_stream_url():
+    streamurl = fetch_stream_url('https://areena.yle.fi/1-2018012')
+
+    assert len(streamurl) == 1
+    assert 'cdnapi.kaltura.com' in streamurl[0]
+
+
 @pytest.mark.skipif(sys.version_info < (2,7),
                     reason="SSL broken on Python 2.6")
 def test_areena_series_titles():

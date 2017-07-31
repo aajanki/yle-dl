@@ -26,14 +26,14 @@ Installation
 * python (2.6 or newer)
 * pip
 * pycrypto
-* ffmpeg
 * PHP interpreter
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
 * setuptools (when installing from the sources)
 
-Optionally (for downloading Areena audio streams):
+Optionally for certain type of streams:
 
-* rtmpdump (version 2.4 or newer, preferably the latest development version from the project homepage at https://rtmpdump.mplayerhq.hu/)
+* rtmpdump (for downloading Areena audio streams. Version 2.4 or newer, preferably the latest development version from the project homepage at https://rtmpdump.mplayerhq.hu/)
+* ffmpeg (might be needed very rarely for some Areena video streams)
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:

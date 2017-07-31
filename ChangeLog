@@ -4,13 +4,14 @@ Distributed under the GPL v3
 
 xx xxx 2017, Version Next
 
+- Get non-adaptive MP4 when available. ffmpeg is need only rarely (never?)
 - Fixed the recording of live radio streams
 - New option --duration for limitting the max duration to download
 - Some invalid argument combinations that were previously silently ignored
   now result in error
 - Unrecognized arguments are no longer passed to rtmpdump (use --rtmpdump
   with a script instead)
-- Some rtmpdump arguments aliases are no longer supported, for example -e or -z
+- Some rtmpdump argument aliases are no longer supported, for example -e or -z
 - --showepisodepage was broken and slow
 - Pipe HLS stream on a TS container. Better lip sync and compatibility
 

@@ -660,13 +660,28 @@ class KalturaUtils(object):
     def select_matching_stream(self, flavors, meta, filters):
         # See http://cdnapi.kaltura.com/html5/html5lib/v2.56/load.php
         # for the actual Areena stream selection logic
-
-        if meta.get('duration', 0) < 10:
+        h264flavors = [f for f in flavors if self.is_h264_flavor(f)]
+        if h264flavors:
+            # Prefer non-adaptive HTTP stream
             stream_format = 'url'
+            filtered_flavors = h264flavors
+        elif meta.get('duration', 0) < 10:
+            # short and durationless streams are not available as HLS
+            stream_format = 'url'
+            filtered_flavors = flavors
         else:
+            # fallback to HLS if nothing else is available
             stream_format = 'applehttp'
+            filtered_flavors = flavors
 
-        return self.select_stream(flavors, stream_format, filters)
+        return self.select_stream(filtered_flavors, stream_format, filters)
+
+    def is_h264_flavor(self, flavor):
+        tags = flavor.get('tags', '').split(',')
+        ipad_h264 = 'ipad' in tags or 'iphone' in tags
+        web_h264 = (('web' in tags or 'mbr' in tags) and
+                    (flavor.get('fileExt') == 'mp4'))
+        return ipad_h264 or web_h264
 
     def select_stream(self, flavors, stream_format, filters):
         selected_flavor = self.filter_flavors_by_bitrate(flavors, filters)

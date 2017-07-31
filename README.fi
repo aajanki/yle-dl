@@ -15,14 +15,14 @@ Asenna riippuvuudet
 * python (2.6 tai uudempi)
 * pip
 * pycrypto
-* ffmpeg
 * PHP-tulkki
 * PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
 * setuptools (jos asennat lähdekoodeista)
 
-Areenan radio-ohjelmien lataamiseen tarvitaan lisäksi:
+Joidenkin ohjelmien lataamiseen tarvitaan lisäksi:
 
-* rtmpdump (2.4 tai uudempi)
+* rtmpdump (Areenan radio-ohjelmien lataamiseen. Version 2.4 tai uudempi)
+* ffmpeg (saatetaan tarvita joidenkin harvojen Areenan TV-ohjelmien lataamiseen)
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
 polkuineen php.ini-tiedostoon
