@@ -23,7 +23,7 @@ Installation
 
 ### 1. Install the dependencies ###
 
-* python (2.6 or newer)
+* python (2.7 or newer)
 * pip
 * pycrypto
 * PHP interpreter

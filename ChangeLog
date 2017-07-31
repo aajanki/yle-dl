@@ -4,6 +4,7 @@ Distributed under the GPL v3
 
 xx xxx 2017, Version Next
 
+- Requires Python 2.7
 - Get non-adaptive MP4 when available. ffmpeg is need only rarely (never?)
 - Fixed the recording of live radio streams
 - New option --duration for limitting the max duration to download

@@ -12,7 +12,7 @@ yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
 Asenna riippuvuudet
 -------------------
 
-* python (2.6 tai uudempi)
+* python (2.7 tai uudempi)
 * pip
 * pycrypto
 * PHP-tulkki
