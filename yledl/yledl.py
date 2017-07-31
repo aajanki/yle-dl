@@ -47,7 +47,7 @@ import argparse
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 
-version = '2.20'
+version = '2.21'
 
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
