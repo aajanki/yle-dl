@@ -251,7 +251,8 @@ def download_page(url, headers=None):
 
 
 def read_urls_from_file(f):
-    return [x.strip() for x in codecs.open(f, 'r', 'utf-8').readlines()]
+    with codecs.open(f, 'r', 'utf-8') as infile:
+        return [x.strip() for x in infile.readlines()]
 
 
 def encode_url_utf8(url):
@@ -577,14 +578,14 @@ class AreenaUtils(object):
 
         Assumes (but does not check!) that the file is UTF-8 encoded.
         """
-        content = open(filename, 'r').read()
-        if content.startswith(codecs.BOM_UTF8):
-            return
+        with open(filename, 'r') as infile:
+            content = infile.read()
+            if content.startswith(codecs.BOM_UTF8):
+                return
 
-        f = open(filename, 'w')
-        f.write(codecs.BOM_UTF8)
-        f.write(content)
-        f.close()
+            with open(filename, 'w') as outfile:
+                outfile.write(codecs.BOM_UTF8)
+                outfile.write(content)
 
 
 class KalturaUtils(object):
