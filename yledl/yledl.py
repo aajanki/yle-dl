@@ -1555,7 +1555,11 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 class ElavaArkistoDownloader(Areena2014Downloader):
     def get_playlist(self, url, filters):
         page = download_page(url)
-        return re.findall(r' data-id="((?:1-|26-)[0-9]+)"', page or '')
+        ids = re.findall(r' data-id="((?:1-|26-)[0-9]+)"', page or '')
+
+        # TODO: The 26- IDs will point to non-existing pages. This
+        # only shows up on --showepisodepage, everything else works.
+        return ['https://areena.yle.fi/' + x for x in ids]
 
     def program_info_url(self, program_id):
         if program_id.startswith('26-'):
@@ -1585,9 +1589,6 @@ class ElavaArkistoDownloader(Areena2014Downloader):
             return super(ElavaArkistoDownloader, self).program_media_id(
                 program_info, filters)
 
-    def program_id_from_url(self, program_id):
-        return program_id
-
     def program_title(self, program_info):
         return program_info.get('title') or \
             program_info.get('originalTitle') or \
@@ -1600,7 +1601,10 @@ class ElavaArkistoDownloader(Areena2014Downloader):
 
 class ArkivetDownloader(Areena2014Downloader):
     def get_playlist(self, url, filters):
-        return self.get_dataids(url)
+        # The note about '26-' in ElavaArkistoDownloader applies here
+        # as well
+        ids = self.get_dataids(url)
+        return ['https://areena.yle.fi/' + x for x in ids]
 
     def program_info_url(self, program_id):
         if program_id.startswith('26-'):
@@ -1620,9 +1624,6 @@ class ArkivetDownloader(Areena2014Downloader):
         else:
             return super(ArkivetDownloader, self).program_media_id(
                 program_info, filters)
-
-    def program_id_from_url(self, program_id):
-        return program_id
 
     def program_title(self, program_info):
         ea = program_info.get('data', {}).get('ea', {})
