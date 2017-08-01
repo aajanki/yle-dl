@@ -1074,31 +1074,77 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def get_playlist(self, url, filters):
         """If url is a series page, return a list of included episode pages."""
-        program_list_re = '<ul class="program-list".*?>(.*?)</ul>'
-        episode_re = r'<a itemprop="url" href="([^">]+)"'
-
-        playlist = None
+        playlist = []
         html = download_page(url)
         if html and self.is_playlist_page(html):
-            listmatch = re.search(program_list_re, html, re.DOTALL)
-            if listmatch:
-                programlist = listmatch.group(1)
-                hrefs = (m.group(1) for m in
-                         re.finditer(episode_re, programlist))
-                playlist = [urlparse.urljoin(url, href) for href in hrefs]
+            series_id = self.program_id_from_url(url)
+            playlist = self.playlist_episode_urls(series_id)
 
-        if playlist:
+        if playlist is None:
+            logger.error('Failed to parse a playlist')
+            return []
+        elif playlist:
             logger.debug('playlist page with %d clips' % len(playlist))
         else:
             logger.debug('not a playlist')
-
-        if not playlist:
             playlist = [url]
 
         if filters.latest_only:
             playlist = playlist[:1]
 
         return playlist
+
+    def playlist_episode_urls(self, series_id):
+        # Areena server fails (502 Bad gateway) if page_size is larger
+        # than 100.
+        offset = 0
+        page_size = 100
+        playlist = []
+        has_next_page = True
+        while has_next_page:
+            page = self.playlist_page(series_id, page_size, offset)
+            if page is None:
+                return None
+
+            playlist.extend(page)
+            offset += page_size
+            has_next_page = len(page) == page_size
+        return playlist
+
+    def playlist_page(self, series_id, page_size, offset):
+        logger.debug('Getting a playlist page {series_id}, '
+                     'size = {size}, offset = {offset}'.format(
+                         series_id=series_id, size=page_size, offset=offset))
+
+        playlist_json = download_page(
+            self.playlist_url(series_id, page_size, offset))
+        if not playlist_json:
+            return None
+
+        try:
+            playlist = json.loads(playlist_json)
+        except ValueError:
+            return None
+
+        playlist_data = playlist.get('data', [])
+        episode_ids = (x['id'] for x in playlist_data if 'id' in x)
+        return ['https://areena.yle.fi/' + x for x in episode_ids]
+
+    def playlist_url(self, series_id, page_size=100, offset=0):
+        if offset:
+            offset_param = '&offset={offset}'.format(offset=unicode(offset))
+        else:
+            offset_param = ''
+
+        return ('https://areena.yle.fi/api/programs/v1/items.json?'
+                'series={series_id}&type=program&availability=ondemand&'
+                'order=episode.hash%3Adesc%2C'
+                'publication.starttime%3Adesc%2Ctitle.fi%3Aasc&'
+                'app_id=89868a18&app_key=54bb4ea4d92854a2a45e98f961f0d7da&'
+                'limit={limit}{offset_param}'.format(
+                    series_id=urllib.quote_plus(series_id),
+                    limit=unicode(page_size),
+                    offset_param=offset_param))
 
     def is_playlist_page(self, html):
         playlist_meta = '<meta property="og:type" content="video.tv_show">'

@@ -63,5 +63,6 @@ def test_areena_html5_clip_stream_url():
 def test_areena_episode_pages():
     episodes = fetch_episode_pages('https://areena.yle.fi/1-3439855')
 
-    assert len(episodes) >= 12
+    # The first page contains 12 episodes, make sure we get several pages
+    assert len(episodes) > 50
     assert all(u.startswith('https://areena.yle.fi/1-') for u in episodes)
