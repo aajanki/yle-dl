@@ -19,11 +19,11 @@ import base64
 import ctypes
 import ctypes.util
 import logging
+import requests
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
 from utils import print_enc
-
 
 AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
 
@@ -67,25 +67,25 @@ def download_page(url, headers=None):
         (headers or {}).items()
     )
 
-    request = urllib2.Request(url, headers=combined_headers)
     try:
-        urlreader = urllib2.urlopen(request)
-        content = urlreader.read()
-
-        charset = urlreader.info().getparam('charset')
-        if not charset:
-            metacharset = re.search(r'<meta [^>]*?charset="(.*?)"', content)
-            if metacharset:
-                charset = metacharset.group(1)
-        if not charset:
-            charset = 'iso-8859-1'
-
-        return unicode(content, charset, 'replace')
-    except urllib2.URLError:
-        logger.exception(u"Can't read %s" % url)
+        r = requests.get(url, headers=combined_headers)
+        r.raise_for_status()
+    except requests.exceptions.RequestException:
+        logger.exception(u"Can't read {}".format(url))
         return None
-    except ValueError:
-        logger.error(u'Invalid URL: ' + url)
+
+    metacharset = html_meta_charset(r.content)
+    if metacharset:
+        r.encoding = metacharset
+
+    return r.text
+
+
+def html_meta_charset(html_bytes):
+    metacharset = re.search(r'<meta [^>]*?charset="(.*?)"', html_bytes)
+    if metacharset:
+        return metacharset.group(1)
+    else:
         return None
 
 
