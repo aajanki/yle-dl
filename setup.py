@@ -17,7 +17,7 @@ Requires ffmpeg, rtmpdump, a PHP interpreter and the following PHP
 extensions: bcmath, curl, mcrypt and SimpleXML."""
 
 version = re.\
-  search(r"^version *= *'(.+)'$", open('yledl/yledl.py').read(), re.MULTILINE).\
+  search(r"^version *= *'(.+)'$", open('yledl/version.py').read(), re.MULTILINE).\
   group(1)
 
 setup(

@@ -20,9 +20,9 @@ install:
  - python setup.py install
 
 script:
- - pyflakes yledl/yledl.py
+ - pyflakes yledl/*.py
  - python setup.py pytest
  - yle-dl --help
 
 after_script:
- - pep8 --statistics --count yledl/yledl.py
+ - pep8 --statistics --count yledl/*.py
