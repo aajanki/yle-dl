@@ -82,9 +82,13 @@ def download_to_file(url, destination_filename):
     enc = sys.getfilesystemencoding()
     encoded_filename = destination_filename.encode(enc, 'replace')
     with open(encoded_filename, 'w') as output:
-        r = requests.get(url, headers=yledl_headers(), stream=True)
-        for chunk in r.iter_content(chunk_size=4196):
-            output.write(chunk)
+        urlretrieve(url, output)
+
+
+def urlretrieve(url, destination):
+    r = requests.get(url, headers=yledl_headers(), stream=True)
+    for chunk in r.iter_content(chunk_size=4196):
+        destination.write(chunk)
 
 
 def yledl_headers():
@@ -1812,10 +1816,7 @@ class HTTPDump(BaseDownloader):
         logger.debug('URL: %s' % url)
 
         try:
-            r = requests.get(url, headers=yledl_headers(), stream=True)
-            for chunk in r.iter_content(chunk_size=4196):
-                sys.stdout.write(chunk)
-
+            urlretrieve(url, sys.stdout)
             sys.stdout.flush()
         except requests.exceptions.RequestException:
             logger.exception(u"Can't read {}".format(url))
