@@ -87,6 +87,8 @@ def download_to_file(url, destination_filename):
 
 def urlretrieve(url, destination):
     r = requests.get(url, headers=yledl_headers(), stream=True)
+    r.raise_for_status()
+
     for chunk in r.iter_content(chunk_size=4196):
         destination.write(chunk)
 
