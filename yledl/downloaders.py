@@ -55,20 +55,19 @@ def downloader_factory(url, backends):
         return None
 
 
-def download_page(url, headers=None):
+def download_page(url, extra_headers=None):
     """Returns contents of a HTML page at url."""
     if url.find('://') == -1:
         url = 'http://' + url
     if '#' in url:
         url = url[:url.find('#')]
 
-    combined_headers = dict(
-        AREENA_NG_HTTP_HEADERS.items() +
-        (headers or {}).items()
-    )
+    headers = yledl_headers()
+    if extra_headers:
+        headers.update(extra_headers)
 
     try:
-        r = requests.get(url, headers=combined_headers)
+        r = requests.get(url, headers=headers)
         r.raise_for_status()
     except requests.exceptions.RequestException:
         logger.exception(u"Can't read {}".format(url))
@@ -79,6 +78,12 @@ def download_page(url, headers=None):
         r.encoding = metacharset
 
     return r.text
+
+
+def yledl_headers():
+    headers = requests.utils.default_headers()
+    headers.update(AREENA_NG_HTTP_HEADERS)
+    return headers
 
 
 def html_meta_charset(html_bytes):
