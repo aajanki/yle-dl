@@ -78,6 +78,15 @@ def download_page(url, extra_headers=None):
     return r.text
 
 
+def download_to_file(url, destination_filename):
+    enc = sys.getfilesystemencoding()
+    encoded_filename = destination_filename.encode(enc, 'replace')
+    with open(encoded_filename, 'w') as output:
+        r = requests.get(url, headers=yledl_headers(), stream=True)
+        for chunk in r.iter_content(chunk_size=4196):
+            output.write(chunk)
+
+
 def yledl_headers():
     headers = requests.utils.default_headers()
     headers.update({'User-Agent': 'yle-dl/' + version.split(' ')[0]})
@@ -276,9 +285,8 @@ class AreenaUtils(object):
                         try:
                             enc = sys.getfilesystemencoding()
                             filename = basename + '.' + lang + '.srt'
-                            subtitlefile = filename.encode(enc, 'replace')
-                            urllib.urlretrieve(sub.url, subtitlefile)
-                            self.add_BOM(subtitlefile)
+                            download_to_file(sub.url, filename)
+                            self.add_BOM(filename)
                             logger.info(u'Subtitles saved to ' + filename)
                             subtitlefiles.append(filename)
                             if preferred_lang != 'all':
@@ -293,14 +301,17 @@ class AreenaUtils(object):
 
         Assumes (but does not check!) that the file is UTF-8 encoded.
         """
-        with open(filename, 'r') as infile:
+        enc = sys.getfilesystemencoding()
+        encoded_filename = filename.encode(enc, 'replace')
+        
+        with open(encoded_filename, 'r') as infile:
             content = infile.read()
             if content.startswith(codecs.BOM_UTF8):
                 return
 
-            with open(filename, 'w') as outfile:
-                outfile.write(codecs.BOM_UTF8)
-                outfile.write(content)
+        with open(encoded_filename, 'w') as outfile:
+            outfile.write(codecs.BOM_UTF8)
+            outfile.write(content)
 
 
 class KalturaUtils(object):
@@ -1786,9 +1797,8 @@ class HTTPDump(BaseDownloader):
         filename = self.output_filename()
         self.log_output_file(filename)
 
-        enc = sys.getfilesystemencoding()
         try:
-            urllib.urlretrieve(self.stream.to_url(), filename.encode(enc))
+            download_to_file(self.stream.to_url(), filename)
         except IOError as exc:
             logger.error(u'Download failed: ' +
                          unicode(exc.message, 'UTF-8', 'replace'))
