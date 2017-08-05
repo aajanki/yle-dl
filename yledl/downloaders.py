@@ -289,7 +289,6 @@ class AreenaUtils(object):
                         preferred_lang == 'all'):
                     if sub.url:
                         try:
-                            enc = sys.getfilesystemencoding()
                             filename = basename + '.' + lang + '.srt'
                             download_to_file(sub.url, filename)
                             self.add_BOM(filename)
