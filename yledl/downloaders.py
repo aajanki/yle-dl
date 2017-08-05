@@ -25,8 +25,6 @@ from pkg_resources import resource_filename
 from version import version
 from utils import print_enc
 
-AREENA_NG_HTTP_HEADERS = {'User-Agent': 'yle-dl/' + version.split(' ')[0]}
-
 # exit codes
 RD_SUCCESS = 0
 RD_FAILED = 1
@@ -82,7 +80,7 @@ def download_page(url, extra_headers=None):
 
 def yledl_headers():
     headers = requests.utils.default_headers()
-    headers.update(AREENA_NG_HTTP_HEADERS)
+    headers.update({'User-Agent': 'yle-dl/' + version.split(' ')[0]})
     return headers
 
 
@@ -142,13 +140,6 @@ def normalize_language_code(lang, subtype):
     else:
         language_map = {'fi': 'fin', 'sv': 'swe'}
         return language_map.get(lang, lang)
-
-
-class YleDlURLopener(urllib.FancyURLopener):
-    version = AREENA_NG_HTTP_HEADERS['User-Agent']
-
-
-urllib._urlopener = YleDlURLopener()
 
 
 class StreamFilters(object):
@@ -1810,22 +1801,14 @@ class HTTPDump(BaseDownloader):
         url = self.stream.to_url()
         logger.debug('URL: %s' % url)
 
-        request = urllib2.Request(url, headers=AREENA_NG_HTTP_HEADERS)
         try:
-            urlreader = urllib2.urlopen(request)
-            while True:
-                buf = urlreader.read(4196)
-                if not buf:
-                    break
-                sys.stdout.write(buf)
+            r = requests.get(url, headers=yledl_headers(), stream=True)
+            for chunk in r.iter_content(chunk_size=4196):
+                sys.stdout.write(chunk)
 
             sys.stdout.flush()
-            urlreader.close()
-        except urllib2.URLError:
-            logger.exception(u"Can't read %s" % url)
-            return RD_FAILED
-        except ValueError:
-            logger.error(u'Invalid URL: ' + url)
+        except requests.exceptions.RequestException:
+            logger.exception(u"Can't read {}".format(url))
             return RD_FAILED
 
         return RD_SUCCESS
