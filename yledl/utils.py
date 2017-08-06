@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from progress import Infinite
 from progress.bar import Bar
 
+
 def print_enc(msg, out=None, linefeed_and_flush=True):
     if out is None:
         out = sys.stdout

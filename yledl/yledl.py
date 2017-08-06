@@ -38,6 +38,7 @@ from utils import print_enc
 from downloaders import downloader_factory, StreamFilters, IOContext, \
     BackendFactory, RD_SUCCESS, RD_FAILED
 
+
 def yledl_logger():
     class PlainInfoFormatter(logging.Formatter):
         def format(self, record):
@@ -94,8 +95,8 @@ def arg_parser():
         help=u'Address of an Areena, Elävä Arkisto, or Yle news web page')
     url_group.add_argument('-i', metavar='FILENAME', dest='inputfile',
                            type=unicode_arg,
-                           help='Read input URLs to process from the named file,'
-                           ' one URL per line')
+                           help='Read input URLs to process from the named '
+                           'file, one URL per line')
     io_group.add_argument('-o', metavar='FILENAME', dest='outputfile',
                           type=unicode_arg,
                           help='Save stream to the named file')

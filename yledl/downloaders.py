@@ -187,7 +187,8 @@ class StreamFilters(object):
 class IOContext(object):
     def __init__(self, outputfilename=None, destdir=None, resume=False,
                  ratelimit=None, excludechars='*/|', proxy=None,
-                 rtmpdump_binary=None, hds_binary=None, ffmpeg_binary='ffmpeg'):
+                 rtmpdump_binary=None, hds_binary=None,
+                 ffmpeg_binary='ffmpeg'):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
@@ -310,7 +311,7 @@ class AreenaUtils(object):
         """
         enc = sys.getfilesystemencoding()
         encoded_filename = filename.encode(enc, 'replace')
-        
+
         with open(encoded_filename, 'r') as infile:
             content = infile.read()
             if content.startswith(codecs.BOM_UTF8):
@@ -358,8 +359,8 @@ class KalturaUtils(object):
                        '&urid=2.56'
                        '&protocol=http'
                        '&callback=mwi_kaltura1320086810'.format(
-                           entry_id = urllib.quote_plus(entryid),
-                           program_id = urllib.quote_plus(program_id)))
+                           entry_id=urllib.quote_plus(entryid),
+                           program_id=urllib.quote_plus(program_id)))
         mw = JSONP.load_jsonp(mwembed_url, {'Referer': referer})
 
         if mw:
@@ -427,7 +428,8 @@ class KalturaUtils(object):
         entry_id = selected_flavor.get('entryId')
         flavor_id = selected_flavor.get('id', '0_00000000')
         ext = '.' + selected_flavor.get('fileExt', 'mp4')
-        return self.stream_factory(entry_id, flavor_id, stream_format, filters, ext)
+        return self.stream_factory(
+            entry_id, flavor_id, stream_format, filters, ext)
 
     def filter_flavors_by_bitrate(self, flavors, filters):
         valid_bitrates = [fl for fl in flavors
