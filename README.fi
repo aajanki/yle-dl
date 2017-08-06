@@ -37,13 +37,14 @@ käyttöjärjestelmissä:
 ## Debian 9 (Stretch)/Ubuntu 16.04
 
 sudo apt-get install rtmpdump python python-pip python-setuptools \
-    python-crypto python-requests php-cli php-curl php-mcrypt php-xml php-bcmath
+    python-crypto python-requests python-progress php-cli php-curl \
+    php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 
 ## Debian 8 (Jessie)/Ubuntu 15.10 ja vanhemmat
 
 sudo apt-get install rtmpdump python python-pip python-setuptools \
-    python-crypto python-requests php5-cli php5-curl php5-mcrypt
+    python-crypto python-requests python-progress php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 
 ## Mac OS X

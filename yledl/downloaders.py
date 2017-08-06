@@ -23,7 +23,7 @@ import requests
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
-from utils import print_enc
+from utils import print_enc, progress_bar
 
 # exit codes
 RD_SUCCESS = 0
@@ -78,19 +78,21 @@ def download_page(url, extra_headers=None):
     return r.text
 
 
-def download_to_file(url, destination_filename):
+def download_to_file(url, destination_filename, show_progress=False):
     enc = sys.getfilesystemencoding()
     encoded_filename = destination_filename.encode(enc, 'replace')
     with open(encoded_filename, 'w') as output:
-        urlretrieve(url, output)
+        urlretrieve(url, output, show_progress)
 
 
-def urlretrieve(url, destination):
+def urlretrieve(url, destination, show_progress=False):
     r = requests.get(url, headers=yledl_headers(), stream=True)
     r.raise_for_status()
 
-    for chunk in r.iter_content(chunk_size=4196):
-        destination.write(chunk)
+    with progress_bar(show_progress, r.headers) as progress:
+        for chunk in r.iter_content(chunk_size=4196):
+            destination.write(chunk)
+            progress.next(len(chunk))
 
 
 def yledl_headers():
@@ -1803,7 +1805,7 @@ class HTTPDump(BaseDownloader):
         self.log_output_file(filename)
 
         try:
-            download_to_file(self.stream.to_url(), filename)
+            download_to_file(self.stream.to_url(), filename, show_progress=True)
         except IOError as exc:
             logger.error(u'Download failed: ' +
                          unicode(exc.message, 'UTF-8', 'replace'))

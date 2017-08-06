@@ -49,7 +49,8 @@ extension=/path/to/mcrypt.so
 
 ```
 sudo apt-get install rtmpdump python python-setuptools python-pip \
-    python-crypto python-requests php-cli php-curl php-mcrypt php-xml php-bcmath
+    python-crypto python-requests python-progress php-cli php-curl \
+    php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 ```
 
@@ -57,7 +58,7 @@ sudo phpenmod mcrypt
 
 ```
 sudo apt-get install rtmpdump python python-setuptools python-pip \
-    python-crypto python-requests php5-cli php5-curl php5-mcrypt
+    python-crypto python-requests python-progress php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 ```
 
