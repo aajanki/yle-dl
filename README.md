@@ -58,7 +58,7 @@ sudo phpenmod mcrypt
 
 ```
 sudo apt-get install rtmpdump python python-setuptools python-pip \
-    python-crypto python-requests python-progress php5-cli php5-curl php5-mcrypt
+    python-crypto python-requests php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 ```
 
