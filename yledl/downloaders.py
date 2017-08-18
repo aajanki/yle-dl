@@ -1808,7 +1808,7 @@ class HTTPDump(BaseDownloader):
 
         try:
             download_to_file(self.stream.to_url(), filename, show_progress=True)
-        except IOError as exc:
+        except IOError:
             logger.exception(u'HTTP stream download failed')
             return RD_FAILED
 
