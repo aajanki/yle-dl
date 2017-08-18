@@ -22,7 +22,7 @@ def test_areena_html5_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-403848')
 
     assert len(streamurl) == 1
-    assert 'cdnapi.kaltura.com' in streamurl[0]
+    assert streamurl[0].startswith('https://cdnapisec.kaltura.com/')
 
 
 def test_areena_series_titles():
@@ -57,7 +57,7 @@ def test_areena_html5_clip_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-3523087')
 
     assert len(streamurl) == 1
-    assert 'cdnapi.kaltura.com' in streamurl[0]
+    assert streamurl[0].startswith('https://cdnapisec.kaltura.com/')
 
 
 def test_areena_episode_pages():

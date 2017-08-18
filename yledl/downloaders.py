@@ -329,8 +329,8 @@ class KalturaUtils(object):
 
     def load_mwembed(self, media_id, program_id, referer):
         entryid = self.kaltura_entry_id(media_id)
-        mwembed_url = ('http://cdnapi.kaltura.com/html5/html5lib/v2.56/'
-                       'mwEmbedFrame.php?&wid=_1955031&uiconf_id=32431531'
+        mwembed_url = ('https://cdnapisec.kaltura.com/html5/html5lib/v2.60.2/'
+                       'mwEmbedFrame.php?&wid=_1955031&uiconf_id=37558971'
                        '&cache_st=1442926927&entry_id={entry_id}'
                        '&flashvars\[streamerType\]=auto'
                        '&flashvars\[EmbedPlayer.HidePosterOnStart\]=true'
@@ -356,9 +356,9 @@ class KalturaUtils(object):
                        '%7B%22hideWhenEmpty%22%3Atrue%7D'
                        '&flashvars\[Kaltura.LeadHLSOnAndroid\]=true'
                        '&playerId=kaltura-{program_id}-1&forceMobileHTML5=true'
-                       '&urid=2.56'
-                       '&protocol=http'
-                       '&callback=mwi_kaltura1320086810'.format(
+                       '&urid=2.60'
+                       '&protocol=https'
+                       '&callback=mwi_kaltura121210530'.format(
                            entry_id=urllib.quote_plus(entryid),
                            program_id=urllib.quote_plus(program_id)))
         mw = JSONP.load_jsonp(mwembed_url, {'Referer': referer})
@@ -468,7 +468,7 @@ class KalturaUtils(object):
 
 class KalturaStreamUtils(object):
     def manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
-        return ('http://cdnapi.kaltura.com/p/1955031/sp/195503100/'
+        return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
                 'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
                 'format/{stream_format}/protocol/http/a{ext}?'
                 'referrer=aHR0cDovL2FyZW5hbi55bGUuZmk='
@@ -927,7 +927,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         return None
 
     def program_info_url(self, program_id):
-        return 'http://player.yle.fi/api/v1/programs.jsonp?' \
+        return 'https://player.yle.fi/api/v1/programs.jsonp?' \
             'id=%s&callback=yleEmbed.programJsonpCallback' % \
             (urllib.quote_plus(program_id))
 
@@ -968,7 +968,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         return self.select_media(medias, filters)
 
     def yle_media_descriptor(self, media_id, program_id, protocol):
-        media_jsonp_url = 'http://player.yle.fi/api/v1/media.jsonp?' \
+        media_jsonp_url = 'https://player.yle.fi/api/v1/media.jsonp?' \
                           'id=%s&callback=yleEmbed.startPlayerCallback&' \
                           'mediaId=%s&protocol=%s&client=areena-flash-player' \
                           '&instance=1' % \
@@ -1159,7 +1159,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 class Areena2014LiveDownloader(Areena2014Downloader):
     def program_info_url(self, program_id):
         quoted_pid = urllib.quote_plus(program_id)
-        return 'http://player.yle.fi/api/v1/services.jsonp?' \
+        return 'https://player.yle.fi/api/v1/services.jsonp?' \
             'id=%s&callback=yleEmbed.simulcastJsonpCallback&' \
             'region=fi&instance=1&dataId=%s' % \
             (quoted_pid, quoted_pid)
@@ -1300,7 +1300,7 @@ class ElavaArkistoDownloader(Areena2014Downloader):
     def program_info_url(self, program_id):
         if program_id.startswith('26-'):
             did = program_id.split('-')[-1]
-            return ('http://yle.fi/elavaarkisto/embed/%s.jsonp'
+            return ('https://yle.fi/elavaarkisto/embed/%s.jsonp'
                     '?callback=yleEmbed.eaJsonpCallback'
                     '&instance=1&id=%s&lang=fi' %
                     (urllib.quote_plus(did), urllib.quote_plus(did)))
