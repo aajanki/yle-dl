@@ -470,8 +470,8 @@ class KalturaStreamUtils(object):
     def manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
         return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
                 'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
-                'format/{stream_format}/protocol/http/a{ext}?'
-                'referrer=aHR0cDovL2FyZW5hbi55bGUuZmk='
+                'format/{stream_format}/protocol/https/a{ext}?'
+                'referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
                 '&playSessionId=11111111-1111-1111-1111-111111111111'
                 '&clientTag=html5:v2.56&preferredBitrate=600'
                 '&uiConfId=37558971'.format(
