@@ -1336,7 +1336,8 @@ class ElavaArkistoDownloader(Areena2014Downloader):
                 program_info, filters)
 
     def program_title(self, program_info):
-        return program_info.get('title') or \
+        return program_info.get('otsikko') or \
+            program_info.get('title') or \
             program_info.get('originalTitle') or \
             super(ElavaArkistoDownloader, self).program_title(program_info) or \
             'elavaarkisto'
