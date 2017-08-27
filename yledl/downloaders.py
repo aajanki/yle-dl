@@ -1040,7 +1040,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def program_protocol(self, program_info, default_video_proto):
         event = self.publish_event(program_info)
-        if event.get('media', {}).get('type') == 'AudioObject':
+        if (event.get('media', {}).get('type') == 'AudioObject' or
+            program_info.get('mediaFormat') == 'audio'):
             return 'RTMPE'
         else:
             return default_video_proto
