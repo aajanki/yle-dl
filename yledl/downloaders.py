@@ -20,6 +20,8 @@ import ctypes
 import ctypes.util
 import logging
 import requests
+import lxml.html
+import lxml.etree
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
@@ -1292,11 +1294,18 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 class ElavaArkistoDownloader(Areena2014Downloader):
     def get_playlist(self, url, filters):
         page = download_page(url)
-        ids = re.findall(r' data-id="((?:1-|26-)[0-9]+)"', page or '')
+        if not page:
+            return []
 
-        # TODO: The 26- IDs will point to non-existing pages. This
-        # only shows up on --showepisodepage, everything else works.
-        return ['https://areena.yle.fi/' + x for x in ids]
+        try:
+            tree = lxml.html.fromstring(page)
+            ids = tree.xpath("//article[@id='main-content']//div/@data-id")
+
+            # TODO: The 26- IDs will point to non-existing pages. This
+            # only shows up on --showepisodepage, everything else works.
+            return ['https://areena.yle.fi/' + x for x in ids]
+        except lxml.etree.XMLSyntaxError:
+            return []
 
     def program_info_url(self, program_id):
         if program_id.startswith('26-'):
@@ -1375,9 +1384,13 @@ class ArkivetDownloader(Areena2014Downloader):
         if not page:
             return []
 
-        dataids = re.findall(r' data-id="((?:1-|26-)?[0-9]+)"', page)
-        dataids = [d if '-' in d else '1-' + d for d in dataids]
-        return dataids
+        try:
+            tree = lxml.html.fromstring(page)
+            dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
+            dataids = [str(d) for d in dataids]
+            return [d if '-' in d else '1-' + d for d in dataids]
+        except lxml.etree.XMLSyntaxError:
+            return []
 
 
 ### Downloader wrapper class that retries using different backends ###
