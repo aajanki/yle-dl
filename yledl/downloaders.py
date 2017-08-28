@@ -80,6 +80,15 @@ def download_page(url, extra_headers=None):
     return r.text
 
 
+def download_html_tree(url, extra_headers=None):
+    page = download_page(url, extra_headers)
+    try:
+        return lxml.html.fromstring(page)
+    except lxml.etree.XMLSyntaxError:
+        logger.warn('HTML syntax error')
+        return None
+
+
 def download_to_file(url, destination_filename, show_progress=False):
     enc = sys.getfilesystemencoding()
     encoded_filename = destination_filename.encode(enc, 'replace')
@@ -813,8 +822,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def get_playlist(self, url, filters):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
-        html = download_page(url)
-        if html and self.is_playlist_page(html):
+        html = download_html_tree(url)
+        if html is not None and self.is_playlist_page(html):
             series_id = self.program_id_from_url(url)
             playlist = self.playlist_episode_urls(series_id)
 
@@ -884,10 +893,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                     limit=unicode(page_size),
                     offset_param=offset_param))
 
-    def is_playlist_page(self, html):
-        playlist_meta = '<meta property="og:type" content="video.tv_show">'
-        player_class = 'class="yle_areena_player"'
-        return playlist_meta in html or player_class not in html
+    def is_playlist_page(self, html_tree):
+        body = html_tree.xpath('/html/body[contains(@class, "series-cover-page")]')
+        return len(body) != 0
 
     def process_single_episode(self, clipfunc, url, filters):
         clip = self.clip_for_url(url, filters)
@@ -1293,19 +1301,15 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 
 class ElavaArkistoDownloader(Areena2014Downloader):
     def get_playlist(self, url, filters):
-        page = download_page(url)
-        if not page:
+        tree = download_html_tree(url)
+        if tree is None:
             return []
 
-        try:
-            tree = lxml.html.fromstring(page)
-            ids = tree.xpath("//article[@id='main-content']//div/@data-id")
+        ids = tree.xpath("//article[@id='main-content']//div/@data-id")
 
-            # TODO: The 26- IDs will point to non-existing pages. This
-            # only shows up on --showepisodepage, everything else works.
-            return ['https://areena.yle.fi/' + x for x in ids]
-        except lxml.etree.XMLSyntaxError:
-            return []
+        # TODO: The 26- IDs will point to non-existing pages. This
+        # only shows up on --showepisodepage, everything else works.
+        return ['https://areena.yle.fi/' + x for x in ids]
 
     def program_info_url(self, program_id):
         if program_id.startswith('26-'):
@@ -1381,17 +1385,13 @@ class ArkivetDownloader(Areena2014Downloader):
                 'yle-arkivet')
 
     def get_dataids(self, url):
-        page = download_page(url)
-        if not page:
+        tree = download_html_tree(url)
+        if tree is None:
             return []
 
-        try:
-            tree = lxml.html.fromstring(page)
-            dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
-            dataids = [str(d) for d in dataids]
-            return [d if '-' in d else '1-' + d for d in dataids]
-        except lxml.etree.XMLSyntaxError:
-            return []
+        dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
+        dataids = [str(d) for d in dataids]
+        return [d if '-' in d else '1-' + d for d in dataids]
 
 
 ### Downloader wrapper class that retries using different backends ###
