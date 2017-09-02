@@ -341,10 +341,11 @@ def main():
                                    args.hardsubs, maxbitrate, args.duration)
     exit_status = RD_SUCCESS
 
-    for url in urls:
+    for i, url in enumerate(urls):
         if args.inputfile:
             logger.info('')
-            logger.info(u'Now downloading from URL %s:' % url)
+            logger.info(u'Now downloading from URL {}/{}: {}'.format(
+                i + 1, len(urls), url))
 
         res = download(url, action, io, stream_filters, backends,
                        args.postprocess)
