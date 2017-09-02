@@ -56,7 +56,30 @@ def downloader_factory(url, backends):
 
 
 def download_page(url, extra_headers=None):
-    """Returns contents of a HTML page at url."""
+    """Returns contents of a URL."""
+    response = http_get(url, extra_headers)
+    return response.text if response else None
+
+
+def download_html_tree(url, extra_headers=None):
+    """Downloads a HTML document and returns it parsed as an lxml tree."""
+    response = http_get(url, extra_headers)
+    if response is None:
+        return None
+
+    metacharset = html_meta_charset(response.content)
+    if metacharset:
+        response.encoding = metacharset
+
+    try:
+        page = response.text
+        return lxml.html.fromstring(page)
+    except lxml.etree.XMLSyntaxError:
+        logger.warn('HTML syntax error')
+        return None
+
+
+def http_get(url, extra_headers=None):
     if url.find('://') == -1:
         url = 'http://' + url
     if '#' in url:
@@ -73,20 +96,7 @@ def download_page(url, extra_headers=None):
         logger.exception(u"Can't read {}".format(url))
         return None
 
-    metacharset = html_meta_charset(r.content)
-    if metacharset:
-        r.encoding = metacharset
-
-    return r.text
-
-
-def download_html_tree(url, extra_headers=None):
-    page = download_page(url, extra_headers)
-    try:
-        return lxml.html.fromstring(page)
-    except lxml.etree.XMLSyntaxError:
-        logger.warn('HTML syntax error')
-        return None
+    return r
 
 
 def download_to_file(url, destination_filename, show_progress=False):
@@ -1244,12 +1254,12 @@ class YleUutisetDownloader(Areena2014Downloader):
             return RD_FAILED
 
     def build_areena_urls(self, url):
-        html = download_page(url)
-        if not html:
+        html = download_html_tree(url)
+        if html is None:
             return None
 
-        player_re = r'<div[^>]*class="[^>]*yle_areena_player[^>]*data-id="([0-9-]+)"[^>]*>'
-        dataids = re.findall(player_re, html, re.DOTALL)
+        divs = html.xpath('//div[contains(@class, "yle_areena_player") and @data-id]')
+        dataids = [x.get('data-id') for x in divs]
         return [self.id_to_areena_url(id) for id in dataids]
 
     def id_to_areena_url(self, data_id):
@@ -1288,11 +1298,12 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
         return [url]
 
     def program_id_from_url(self, pageurl):
-        html = download_page(pageurl)
-        if not html:
+        html = download_html_tree(pageurl)
+        if html is None:
             return None
 
-        stream_id = re.search(r"channelAreenaStreamId: *'(.*?)'", html)
+        scripts = html.xpath('/html/body/div[@id="container"]/script/text()')
+        stream_id = re.search(r"channelAreenaStreamId: *'(.*?)'", '\n'.join(scripts))
         return stream_id.group(1) if stream_id else None
 
 
