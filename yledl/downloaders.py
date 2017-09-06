@@ -345,44 +345,21 @@ class AreenaUtils(object):
 
 class KalturaUtils(object):
     def select_kaltura_stream(self, media_id, program_id, referer, filters):
+        flavors, meta = self.kaltura_flavors_meta(media_id, program_id, referer)
+        self.log_bitrates(flavors, filters.maxbitrate)
+        return self.select_matching_stream(flavors, meta, filters)
+
+    def kaltura_flavors_meta(self, media_id, program_id, referer):
         mw = self.load_mwembed(media_id, program_id, referer)
-        return self.stream_from_mw(mw, filters)
+        package_data = self.package_data_from_mwembed(mw)
+        flavors = self.valid_flavors(package_data)
+        meta = package_data.get('entryResult', {}).get('meta', {})
+        return (flavors, meta)
 
     def load_mwembed(self, media_id, program_id, referer):
         entryid = self.kaltura_entry_id(media_id)
-        mwembed_url = ('https://cdnapisec.kaltura.com/html5/html5lib/v2.60.2/'
-                       'mwEmbedFrame.php?&wid=_1955031&uiconf_id=37558971'
-                       '&cache_st=1442926927&entry_id={entry_id}'
-                       '&flashvars\[streamerType\]=auto'
-                       '&flashvars\[EmbedPlayer.HidePosterOnStart\]=true'
-                       '&flashvars\[EmbedPlayer.OverlayControls\]=true'
-                       '&flashvars\[IframeCustomPluginCss1\]='
-                       '%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css'
-                       '&flashvars\[mediaProxy\]='
-                       '%7B%22mediaPlayFrom%22%3Anull%7D'
-                       '&flashvars\[autoPlay\]=true'
-                       '&flashvars\[KalturaSupport.LeadWithHTML5\]=true'
-                       '&flashvars\[loop\]=false'
-                       '&flashvars\[sourceSelector\]='
-                       '%7B%22hideSource%22%3Atrue%7D'
-                       '&flashvars\[comScoreStreamingTag\]='
-                       '%7B%22logUrl%22%3A%22%2F%2Fda.yle.fi%2Fyle%2Fareena%2Fs'
-                       '%3Fname%3Dareena.kaltura.prod%22%2C%22plugin%22%3Atrue'
-                       '%2C%22position%22%3A%22before%22%2C%22persistentLabels'
-                       '%22%3A%22ns_st_mp%3Dareena.kaltura.prod%22%2C%22debug'
-                       '%22%3Atrue%2C%22asyncInit%22%3Atrue%2C%22relativeTo%22'
-                       '%3A%22video%22%2C%22trackEventMonitor%22%3A'
-                       '%22trackEvent%22%7D'
-                       '&flashvars\[closedCaptions\]='
-                       '%7B%22hideWhenEmpty%22%3Atrue%7D'
-                       '&flashvars\[Kaltura.LeadHLSOnAndroid\]=true'
-                       '&playerId=kaltura-{program_id}-1&forceMobileHTML5=true'
-                       '&urid=2.60'
-                       '&protocol=https'
-                       '&callback=mwi_kaltura121210530'.format(
-                           entry_id=urllib.quote_plus(entryid),
-                           program_id=urllib.quote_plus(program_id)))
-        mw = JSONP.load_jsonp(mwembed_url, {'Referer': referer})
+        url = self.mwembed_url(entryid, program_id)
+        mw = JSONP.load_jsonp(url, {'Referer': referer})
 
         if mw:
             logger.debug('mwembed:')
@@ -390,28 +367,55 @@ class KalturaUtils(object):
 
         return (mw or {}).get('content', '')
 
+    def mwembed_url(self, entryid, program_id):
+        return ('https://cdnapisec.kaltura.com/html5/html5lib/v2.60.2/'
+                'mwEmbedFrame.php?&wid=_1955031&uiconf_id=37558971'
+                '&cache_st=1442926927&entry_id={entry_id}'
+                '&flashvars\[streamerType\]=auto'
+                '&flashvars\[EmbedPlayer.HidePosterOnStart\]=true'
+                '&flashvars\[EmbedPlayer.OverlayControls\]=true'
+                '&flashvars\[IframeCustomPluginCss1\]='
+                '%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css'
+                '&flashvars\[mediaProxy\]='
+                '%7B%22mediaPlayFrom%22%3Anull%7D'
+                '&flashvars\[autoPlay\]=true'
+                '&flashvars\[KalturaSupport.LeadWithHTML5\]=true'
+                '&flashvars\[loop\]=false'
+                '&flashvars\[sourceSelector\]='
+                '%7B%22hideSource%22%3Atrue%7D'
+                '&flashvars\[comScoreStreamingTag\]='
+                '%7B%22logUrl%22%3A%22%2F%2Fda.yle.fi%2Fyle%2Fareena%2Fs'
+                '%3Fname%3Dareena.kaltura.prod%22%2C%22plugin%22%3Atrue'
+                '%2C%22position%22%3A%22before%22%2C%22persistentLabels'
+                '%22%3A%22ns_st_mp%3Dareena.kaltura.prod%22%2C%22debug'
+                '%22%3Atrue%2C%22asyncInit%22%3Atrue%2C%22relativeTo%22'
+                '%3A%22video%22%2C%22trackEventMonitor%22%3A'
+                '%22trackEvent%22%7D'
+                '&flashvars\[closedCaptions\]='
+                '%7B%22hideWhenEmpty%22%3Atrue%7D'
+                '&flashvars\[Kaltura.LeadHLSOnAndroid\]=true'
+                '&playerId=kaltura-{program_id}-1&forceMobileHTML5=true'
+                '&urid=2.60'
+                '&protocol=https'
+                '&callback=mwi_kaltura121210530'.format(
+                    entry_id=urllib.quote_plus(entryid),
+                    program_id=urllib.quote_plus(program_id)))
+
     def kaltura_entry_id(self, mediaid):
         return mediaid.split('-', 1)[-1]
 
-    def stream_from_mw(self, mw, filters):
-        package_data = self.package_data_from_mwembed(mw)
+    def valid_flavors(self, package_data):
         flavors = (package_data
                    .get('entryResult', {})
                    .get('contextData', {})
                    .get('flavorAssets', []))
-        meta = package_data.get('entryResult', {}).get('meta', {})
-
         web_flavors = [fl for fl in flavors if fl.get('isWeb', True)]
         num_non_web = len(flavors) - len(web_flavors)
 
         if num_non_web > 0:
             logger.debug(u'Ignored %d non-web flavors' % num_non_web)
 
-        bitrates = [fl.get('bitrate', 0) for fl in web_flavors]
-        logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
-                     (bitrates, filters.maxbitrate))
-
-        return self.select_matching_stream(web_flavors, meta, filters)
+        return web_flavors
 
     def select_matching_stream(self, flavors, meta, filters):
         # See http://cdnapi.kaltura.com/html5/html5lib/v2.56/load.php
@@ -479,6 +483,11 @@ class KalturaUtils(object):
         except ValueError:
             logger.error('Failed to parse kalturaIframePackageData!')
             return {}
+
+    def log_bitrates(self, flavors, maxbitrate):
+        bitrates = [fl.get('bitrate', 0) for fl in flavors]
+        logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
+                     (bitrates, maxbitrate))
 
     def stream_factory(self, entry_id, flavor_id, stream_format, filters, ext):
         if stream_format == 'applehttp':
