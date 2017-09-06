@@ -1,4 +1,5 @@
 import sys
+import json
 from cStringIO import StringIO
 from yledl import download, StreamFilters, BackendFactory, IOContext, \
     StreamAction, RD_SUCCESS
@@ -28,6 +29,10 @@ def fetch_stream_url(url):
 
 def fetch_episode_pages(url):
     return fetch(url, StreamAction.PRINT_EPISODE_PAGES)
+
+
+def fetch_metadata(url):
+    return json.loads('\n'.join(fetch(url, StreamAction.PRINT_METADATA)))
 
 
 def fetch(url, action):

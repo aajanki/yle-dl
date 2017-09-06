@@ -64,6 +64,7 @@ class StreamAction(object):
     PRINT_STREAM_URL = 3
     PRINT_STREAM_TITLE = 4
     PRINT_EPISODE_PAGES = 5
+    PRINT_METADATA = 6
 
 
 def arg_parser():
@@ -113,6 +114,8 @@ def arg_parser():
                               help="Print stream title, don't download")
     action_group.add_argument('--showepisodepage', action='store_true',
                               help='Print web page for each episode')
+    action_group.add_argument('--showmetadata', action='store_true',
+                              help='Print metadata about available streams')
     io_group.add_argument('--vfat', action='store_true',
                           help='Output Windows-compatible filenames')
     io_group.add_argument('--resume', action='store_true',
@@ -220,6 +223,8 @@ def download(url, action, io, stream_filters, backends, postprocess_command):
         return dl.print_episode_pages(url, stream_filters)
     elif action == StreamAction.PRINT_STREAM_TITLE:
         return dl.print_titles(url, stream_filters)
+    elif action == StreamAction.PRINT_METADATA:
+        return dl.print_metadata(url)
     elif action == StreamAction.PIPE:
         return dl.pipe(url, io, stream_filters)
     else:
@@ -316,6 +321,8 @@ def main():
         action = StreamAction.PRINT_EPISODE_PAGES
     elif args.showtitle:
         action = StreamAction.PRINT_STREAM_TITLE
+    elif args.showmetadata:
+        action = StreamAction.PRINT_METADATA
     elif args.pipe or (args.outputfile == '-'):
         action = StreamAction.PIPE
     else:
@@ -324,7 +331,8 @@ def main():
     if (action != StreamAction.PIPE and
         (args.debug or not (action in [StreamAction.PRINT_STREAM_URL,
                                        StreamAction.PRINT_STREAM_TITLE,
-                                       StreamAction.PRINT_EPISODE_PAGES]))):
+                                       StreamAction.PRINT_EPISODE_PAGES,
+                                       StreamAction.PRINT_METADATA]))):
         print_enc(parser.description)
 
     backends = BackendFactory.parse_backends(args.backend.split(','))

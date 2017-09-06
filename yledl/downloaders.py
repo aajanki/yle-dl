@@ -829,6 +829,15 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return self.process(print_clip_title, url, filters)
 
+    def print_metadata(self, url):
+        playlist = self.get_playlist(url)
+        playlist_meta = []
+        for clipurl in playlist:
+            program_info, pid = self.program_info_for_url(clipurl)
+            playlist_meta.append(self.clip_meta(clipurl, program_info, pid))
+        print_enc(json.dumps(playlist_meta, indent=2))
+        return RD_SUCCESS
+
     def process(self, clipfunc, url, filters):
         overall_status = RD_SUCCESS
         playlist = self.get_playlist(url, filters)
@@ -838,7 +847,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 overall_status = res
         return overall_status
 
-    def get_playlist(self, url, filters):
+    def get_playlist(self, url, filters=None):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
         html = download_html_tree(url)
@@ -855,7 +864,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             logger.debug('not a playlist')
             playlist = [url]
 
-        if filters.latest_only:
+        if filters and filters.latest_only:
             playlist = playlist[:1]
 
         return playlist
@@ -926,6 +935,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return RD_FAILED
 
     def clip_for_url(self, pageurl, filters):
+        program_info, pid = self.program_info_for_url(pageurl)
+        unavailable = self.unavailable_clip(program_info, pageurl)
+        return unavailable or \
+            self.create_clip(program_info, pid, pageurl, filters)
+
+    def program_info_for_url(self, pageurl):
         pid = self.program_id_from_url(pageurl)
         if not pid:
             return FailedClip(pageurl, 'Failed to parse a program ID')
@@ -937,9 +952,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         logger.debug('program data:')
         logger.debug(json.dumps(program_info))
 
-        unavailable = self.unavailable_clip(program_info, pageurl)
-        return unavailable or \
-            self.create_clip(program_info, pid, pageurl, filters)
+        return (program_info, pid)
 
     def unavailable_clip(self, program_info, pageurl):
         event = self.publish_event(program_info)
@@ -1184,6 +1197,38 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             args = [postprocess_command, videofile]
             args.extend(subtitlefiles)
             return Subprocess().execute(args)
+
+    def clip_meta(self, pageurl, program_info, program_id):
+        media_id = self.program_media_id(program_info, filters=None)
+        if not media_id:
+            return {}
+
+        if media_id.startswith('29-'):
+            flavors, flavors_meta = \
+                self.kaltura_flavors_meta(media_id, program_id, pageurl)
+            flavors = [self.kaltura_flavor_meta(fl) for fl in flavors]
+            duration_seconds = flavors_meta.get('duration', 0)
+        else:
+            # TODO
+            flavors = []
+            duration_seconds = 0
+
+        return {
+            'webpage': pageurl,
+            'title': self.program_title(program_info),
+            'duration_seconds': duration_seconds,
+            'flavors': flavors
+        }
+
+    def kaltura_flavor_meta(self, flavor):
+        res = {}
+        if 'height' in flavor:
+            res['height'] = flavor['height']
+        if 'width' in flavor:
+            res['width'] = flavor['width']
+        if 'bitrate' in flavor:
+            res['bitrate'] = flavor['bitrate']
+        return res
 
 
 class Areena2014LiveDownloader(Areena2014Downloader):
@@ -1451,6 +1496,9 @@ class RetryingDownloader(object):
 
     def print_titles(self, *args, **kwargs):
         return self._retry_call('print_titles', *args, **kwargs)
+
+    def print_metadata(self, *args, **kwargs):
+        return self._retry_call('print_metadata', *args, **kwargs)
 
     def download_episodes(self, *args, **kwargs):
         return self._retry_call('download_episodes', *args, **kwargs)

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from utils import fetch_title, fetch_stream_url, fetch_episode_pages
+from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
+    fetch_metadata
 
 
 def test_areena_title():
@@ -23,6 +24,14 @@ def test_areena_html5_stream_url():
 
     assert len(streamurl) == 1
     assert streamurl[0].startswith('https://cdnapisec.kaltura.com/')
+
+
+def test_areena_html5_metadata():
+    metadata = fetch_metadata('https://areena.yle.fi/1-403848')
+
+    assert len(metadata) == 1
+    assert len(metadata[0]['flavors']) == 4
+    assert metadata[0]['duration_seconds'] == 3196
 
 
 def test_areena_series_titles():
