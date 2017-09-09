@@ -1218,19 +1218,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return 0
 
     def clip_meta(self, pageurl, program_info, program_id):
-        media_id = self.program_media_id(program_info, filters=None)
-        if not media_id:
-            return {}
-
         duration_seconds = self.program_info_duration_seconds(program_info)
-        if media_id.startswith('29-'):
-            kaltura_flavors = \
-                self.kaltura_flavors_meta(media_id, program_id, pageurl)[0]
-            flavors = [self.flavor_meta(fl) for fl in kaltura_flavors]
-        else:
-            medias = self.get_akamai_medias(program_info, media_id,
-                                            program_id, 'HDS')
-            flavors = [self.flavor_meta(m) for m in medias]
+        flavors = self.flavors_metadata(pageurl, program_info, program_id)
 
         return {
             'webpage': pageurl,
@@ -1239,7 +1228,23 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             'flavors': flavors
         }
 
-    def flavor_meta(self, flavor):
+    def flavors_metadata(self, pageurl, program_info, program_id):
+        media_id = self.program_media_id(program_info, filters=None)
+        if not media_id:
+            return {}
+        
+        if media_id.startswith('29-'):
+            kaltura_flavors = \
+                self.kaltura_flavors_meta(media_id, program_id, pageurl)[0]
+            flavors = [self.single_flavor_meta(fl) for fl in kaltura_flavors]
+        else:
+            medias = self.get_akamai_medias(program_info, media_id,
+                                            program_id, 'HDS')
+            flavors = [self.single_flavor_meta(m) for m in medias]
+
+        return flavors
+
+    def single_flavor_meta(self, flavor):
         media_type = 'audio' if flavor.get('type') == 'AudioObject' else 'video'
         res = {'media_type': media_type}
         if 'height' in flavor:
