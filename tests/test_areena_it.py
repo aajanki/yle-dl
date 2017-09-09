@@ -4,7 +4,7 @@ from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata
 
 
-def test_areena_title():
+def test_areena_akamai_title():
     title = fetch_title('https://areena.yle.fi/1-1765055')
 
     assert len(title) == 1
@@ -12,11 +12,17 @@ def test_areena_title():
     assert 'Identiteetti' in title[0]
 
 
-def test_areena_stream_url():
+def test_areena_akamai_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-1765055')
 
     assert len(streamurl) == 1
     assert 'manifest.f4m' in streamurl[0]
+
+def test_areena_akamai_metadata():
+    metadata = fetch_metadata('https://areena.yle.fi/1-1765055')
+
+    assert len(metadata) == 1
+    assert len(metadata[0]['flavors']) == 3
 
 
 def test_areena_html5_stream_url():

@@ -1002,12 +1002,16 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def select_yle_media(self, program_info, media_id, program_id,
                          default_video_proto, filters):
-        proto = self.program_protocol(program_info, default_video_proto)
-        medias = self.yle_media_descriptor(media_id, program_id, proto)
-        if not medias:
-            return {}
-
+        medias = self.get_akamai_medias(program_info, media_id, program_id,
+                                        default_video_proto)
         return self.select_media(medias, filters)
+
+    def get_akamai_medias(self, program_info, media_id, program_id,
+                          default_video_proto):
+        proto = self.program_protocol(program_info, default_video_proto)
+        descriptor = self.yle_media_descriptor(media_id, program_id, proto)
+        protocol = descriptor.get('meta', {}).get('protocol') or 'HDS'
+        return descriptor.get('data', {}).get('media', {}).get(protocol, [])
 
     def yle_media_descriptor(self, media_id, program_id, protocol):
         media_jsonp_url = 'https://player.yle.fi/api/v1/media.jsonp?' \
@@ -1148,11 +1152,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                     return True
             return False
 
-    def select_media(self, media,  filters):
-        protocol = media.get('meta', {}).get('protocol') or 'HDS'
-        mediaobj = media.get('data', {}).get('media', {}).get(protocol, [])
+    def select_media(self, mediaobj,  filters):
         medias = self.filter_by_subtitles(mediaobj, filters)
-
         if medias:
             return medias[0]
         else:
@@ -1206,12 +1207,13 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         if media_id.startswith('29-'):
             flavors, flavors_meta = \
                 self.kaltura_flavors_meta(media_id, program_id, pageurl)
-            flavors = [self.kaltura_flavor_meta(fl) for fl in flavors]
+            flavors = [self.flavor_meta(fl) for fl in flavors]
             duration_seconds = flavors_meta.get('duration', 0)
         else:
-            # TODO
-            flavors = []
-            duration_seconds = 0
+            medias = self.get_akamai_medias(program_info, media_id,
+                                            program_id, 'HDS')
+            flavors = [self.flavor_meta(m) for m in medias]
+            duration_seconds = 0 # TODO
 
         return {
             'webpage': pageurl,
@@ -1220,7 +1222,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             'flavors': flavors
         }
 
-    def kaltura_flavor_meta(self, flavor):
+    def flavor_meta(self, flavor):
         res = {}
         if 'height' in flavor:
             res['height'] = flavor['height']
