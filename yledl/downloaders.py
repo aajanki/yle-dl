@@ -1240,13 +1240,15 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         }
 
     def flavor_meta(self, flavor):
-        res = {}
+        media_type = 'audio' if flavor.get('type') == 'AudioObject' else 'video'
+        res = {'media_type': media_type}
         if 'height' in flavor:
             res['height'] = flavor['height']
         if 'width' in flavor:
             res['width'] = flavor['width']
-        if 'bitrate' in flavor:
-            res['bitrate'] = flavor['bitrate']
+        if 'bitrate' in flavor or 'audioBitrateKbps' in flavor:
+            res['bitrate'] = (flavor.get('bitrate', 0) +
+                              flavor.get('audioBitrateKbps', 0))
         return res
 
 

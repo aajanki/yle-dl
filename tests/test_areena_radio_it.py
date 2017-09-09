@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from utils import fetch_title, fetch_stream_url
+from utils import fetch_title, fetch_stream_url, fetch_metadata
 
 
 def test_radio_title():
@@ -17,6 +17,15 @@ def test_radio_stream_url():
 
     assert len(url) == 1
     assert 'rtmp' in url[0]
+
+def test_radio_metadata():
+    metadata = fetch_metadata('https://areena.yle.fi/1-3361013')
+
+    assert len(metadata) == 1
+    assert len(metadata[0]['flavors']) == 1
+    assert metadata[0]['flavors'][0]['media_type'] == 'audio'
+    assert metadata[0]['flavors'][0]['bitrate'] == 192
+    assert metadata[0]['duration_seconds'] == 2884
 
 
 def test_radio_live_url():
