@@ -18,11 +18,13 @@ def test_areena_akamai_stream_url():
     assert len(streamurl) == 1
     assert 'manifest.f4m' in streamurl[0]
 
+
 def test_areena_akamai_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/1-1765055')
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) == 3
+    assert metadata[0]['duration_seconds'] == 1624
 
 
 def test_areena_html5_stream_url():

@@ -1199,21 +1199,38 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             args.extend(subtitlefiles)
             return Subprocess().execute(args)
 
+    def program_info_duration_seconds(self, program_info):
+        pt_duration = (program_info
+                       .get('data', {})
+                       .get('program', {})
+                       .get('duration'))
+        return self.pt_duration_as_seconds(pt_duration) if pt_duration else 0
+
+    def pt_duration_as_seconds(self, pt_duration):
+        r = r'PT(?:(?P<hours>\d+)H)?(?:(?P<mins>\d+)M)?(?:(?P<secs>\d+)S)?$'
+        m = re.match(r, pt_duration)
+        if m:
+            hours = m.group('hours') or 0
+            mins = m.group('mins') or 0
+            secs = m.group('secs') or 0
+            return 3600*int(hours) + 60*int(mins) + int(secs)
+        else:
+            return 0
+
     def clip_meta(self, pageurl, program_info, program_id):
         media_id = self.program_media_id(program_info, filters=None)
         if not media_id:
             return {}
 
+        duration_seconds = self.program_info_duration_seconds(program_info)
         if media_id.startswith('29-'):
-            flavors, flavors_meta = \
-                self.kaltura_flavors_meta(media_id, program_id, pageurl)
-            flavors = [self.flavor_meta(fl) for fl in flavors]
-            duration_seconds = flavors_meta.get('duration', 0)
+            kaltura_flavors = \
+                self.kaltura_flavors_meta(media_id, program_id, pageurl)[0]
+            flavors = [self.flavor_meta(fl) for fl in kaltura_flavors]
         else:
             medias = self.get_akamai_medias(program_info, media_id,
                                             program_id, 'HDS')
             flavors = [self.flavor_meta(m) for m in medias]
-            duration_seconds = 0 # TODO
 
         return {
             'webpage': pageurl,
