@@ -694,7 +694,7 @@ class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
     def create_rtmpstream(self, streamurl):
         (rtmpurl, playpath, ext) = parse_rtmp_single_component_app(streamurl)
         playpath = playpath.split('?', 1)[0]
-        return PAPIStream(streamurl, playpath, 0, 0, False)
+        return PAPIStream(streamurl, playpath)
 
 
 class HTTPStreamUrl(object):
@@ -748,24 +748,9 @@ class InvalidStreamUrl(object):
 
 
 class PAPIStream(object):
-    def __init__(self, connect, stream, videoBitrate, audioBitrate,
-                 hardSubtitles):
+    def __init__(self, connect, stream):
         self.connect = connect
         self.stream = stream
-        self.videoBitrate = int_or_else(videoBitrate, 0)
-        self.audioBitrate = int_or_else(audioBitrate, 0)
-        self.hardSubtitles = hardSubtitles
-
-    def __str__(self):
-        return json.dumps({
-            'connect': self.connect,
-            'stream': self.stream,
-            'videoBitrate': self.videoBitrate,
-            'audioBitrate': self.audioBitrate,
-            'hardSubtitles': self.hardSubtitles})
-
-    def bitrate(self):
-        return self.videoBitrate + self.audioBitrate
 
 
 ### Areena (the new version with beta introduced in 2014) ###
