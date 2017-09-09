@@ -1204,7 +1204,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                        .get('data', {})
                        .get('program', {})
                        .get('duration'))
-        return self.pt_duration_as_seconds(pt_duration) if pt_duration else 0
+        return self.pt_duration_as_seconds(pt_duration) if pt_duration else None
 
     def pt_duration_as_seconds(self, pt_duration):
         r = r'PT(?:(?P<hours>\d+)H)?(?:(?P<mins>\d+)M)?(?:(?P<secs>\d+)S)?$'
@@ -1215,21 +1215,24 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             secs = m.group('secs') or 0
             return 3600*int(hours) + 60*int(mins) + int(secs)
         else:
-            return 0
+            return None
 
     def clip_meta(self, pageurl, program_info, program_id):
         duration_seconds = self.program_info_duration_seconds(program_info)
         flavors = self.flavors_metadata(pageurl, program_info, program_id)
 
-        return {
+        meta = {
             'webpage': pageurl,
             'title': self.program_title(program_info),
-            'duration_seconds': duration_seconds,
             'flavors': flavors
         }
+        if duration_seconds:
+            meta['duration_seconds'] = duration_seconds
+
+        return meta
 
     def flavors_metadata(self, pageurl, program_info, program_id):
-        media_id = self.program_media_id(program_info, filters=None)
+        media_id = self.program_media_id(program_info, StreamFilters())
         if not media_id:
             return {}
         
