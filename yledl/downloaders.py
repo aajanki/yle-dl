@@ -807,8 +807,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         return self.process(print_clip_url, url, filters)
 
     def print_episode_pages(self, url, filters):
-        playlist = self.get_playlist(url, filters)
-        for clipurl in playlist:
+        for clipurl in self.get_playlist(url, filters.latest_only):
             print_enc(clipurl)
 
         return RD_SUCCESS
@@ -829,25 +828,26 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return self.process(print_clip_title, url, filters)
 
-    def print_metadata(self, url):
-        playlist = self.get_playlist(url)
+    def print_metadata(self, url, filters):
+        playlist = self.get_playlist(url, filters.latest_only)
         playlist_meta = []
         for clipurl in playlist:
             program_info, pid = self.program_info_for_url(clipurl)
-            playlist_meta.append(self.clip_meta(clipurl, program_info, pid))
+            playlist_meta.append(self.clip_meta(clipurl, program_info,
+                                                pid, filters))
         print_enc(json.dumps(playlist_meta, indent=2))
         return RD_SUCCESS
 
     def process(self, clipfunc, url, filters):
         overall_status = RD_SUCCESS
-        playlist = self.get_playlist(url, filters)
+        playlist = self.get_playlist(url, filters.latest_only)
         for clipurl in playlist:
             res = self.process_single_episode(clipfunc, clipurl, filters)
             if res != RD_SUCCESS:
                 overall_status = res
         return overall_status
 
-    def get_playlist(self, url, filters=None):
+    def get_playlist(self, url, latest_only):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
         html = download_html_tree(url)
@@ -864,7 +864,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             logger.debug('not a playlist')
             playlist = [url]
 
-        if filters and filters.latest_only:
+        if latest_only:
             playlist = playlist[:1]
 
         return playlist
@@ -1217,9 +1217,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         else:
             return None
 
-    def clip_meta(self, pageurl, program_info, program_id):
+    def clip_meta(self, pageurl, program_info, program_id, filters):
         duration_seconds = self.program_info_duration_seconds(program_info)
-        flavors = self.flavors_metadata(pageurl, program_info, program_id)
+        flavors = self.flavors_metadata(pageurl, program_info, program_id,
+                                        filters)
 
         meta = {
             'webpage': pageurl,
@@ -1231,8 +1232,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return meta
 
-    def flavors_metadata(self, pageurl, program_info, program_id):
-        media_id = self.program_media_id(program_info, StreamFilters())
+    def flavors_metadata(self, pageurl, program_info, program_id, filters):
+        media_id = self.program_media_id(program_info, filters)
         if not media_id:
             return {}
         
@@ -1377,7 +1378,7 @@ class Subtitle(object):
 
 
 class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
-    def get_playlist(self, url, filters):
+    def get_playlist(self, url, latest_only):
         return [url]
 
     def program_id_from_url(self, pageurl):
@@ -1394,7 +1395,7 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 
 
 class ElavaArkistoDownloader(Areena2014Downloader):
-    def get_playlist(self, url, filters):
+    def get_playlist(self, url, latest_only):
         tree = download_html_tree(url)
         if tree is None:
             return []
@@ -1445,7 +1446,7 @@ class ElavaArkistoDownloader(Areena2014Downloader):
 
 
 class ArkivetDownloader(Areena2014Downloader):
-    def get_playlist(self, url, filters):
+    def get_playlist(self, url, latest_only):
         # The note about '26-' in ElavaArkistoDownloader applies here
         # as well
         ids = self.get_dataids(url)

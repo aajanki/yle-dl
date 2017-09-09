@@ -63,6 +63,13 @@ def test_areena_live_url():
     assert 'manifest.f4m' in streamurl[0]
 
 
+def test_areena_live_metadata():
+    metadata = fetch_metadata('https://areena.yle.fi/tv/suorat/yle-tv1')
+
+    assert len(metadata) == 1
+    assert len(metadata[0]['flavors']) == 1
+
+
 def test_areena_html5_clip_title():
     title = fetch_title('https://areena.yle.fi/1-3523087')
 

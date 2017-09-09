@@ -224,7 +224,7 @@ def download(url, action, io, stream_filters, backends, postprocess_command):
     elif action == StreamAction.PRINT_STREAM_TITLE:
         return dl.print_titles(url, stream_filters)
     elif action == StreamAction.PRINT_METADATA:
-        return dl.print_metadata(url)
+        return dl.print_metadata(url, stream_filters)
     elif action == StreamAction.PIPE:
         return dl.pipe(url, io, stream_filters)
     else:

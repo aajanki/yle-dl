@@ -40,3 +40,9 @@ def test_radio_live_url2():
 
     assert len(url) == 1
     assert 'manifest.f4m' in url[0]
+
+def test_radio_live_metadata():
+    metadata = fetch_metadata('https://yle.fi/radio/ylepuhe/suora/')
+
+    assert len(metadata) == 1
+    assert len(metadata[0]['flavors']) == 1
