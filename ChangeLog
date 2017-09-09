@@ -4,6 +4,7 @@ Distributed under the GPL v3
 
 xx xxx 2017, Version 2.24
 
+- Option --showmetadata for printing stream metadata (available bitrates, etc.)
 - Download only the main content in Elävä arkisto
 - Fixed some Elävä arkisto audio streams and titles
 
