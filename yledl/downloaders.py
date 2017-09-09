@@ -1302,6 +1302,10 @@ class YleUutisetDownloader(Areena2014Downloader):
         return self.delegate_to_areena_downloader(
             'print_titles', url, filters=filters)
 
+    def print_metadata(self, url, filters):
+        return self.delegate_to_areena_downloader(
+            'print_metadata', url, filters=filters)
+
     def delegate_to_areena_downloader(self, method_name, url, *args, **kwargs):
         areena_urls = self.build_areena_urls(url)
         if areena_urls:
