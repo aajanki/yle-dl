@@ -1027,34 +1027,27 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                     flavors.subtitles)
 
     def get_flavors(self, program_info, media_id, program_id, pageurl, filters):
-        if media_id.startswith('29-'):
+        is_html5 = media_id.startswith('29-')
+        proto = 'HLS' if is_html5 else 'HDS'
+        medias = self.get_akamai_medias(
+            program_info, media_id, program_id, proto)
+        filtered_media = self.select_media(medias, filters)
+
+        if is_html5:
             logger.debug('Detected an HTML5 video')
 
             flavors_data, meta = self.kaltura_flavors_meta(
                 media_id, program_id, pageurl)
             self.log_bitrates(flavors_data, filters.maxbitrate)
-
-            subtitle_media = self.select_yle_media(program_info, media_id,
-                                                   program_id, 'HLS', filters)
-            subtitles = self.media_subtitles(subtitle_media)
-
+            subtitles = self.media_subtitles(filtered_media)
             return KalturaFlavors(flavors_data, meta, subtitles)
         else:
-            medias = self.get_akamai_medias(
-                program_info, media_id, program_id, 'HDS')
-            selected_media = self.select_media(medias, filters)
-            if not selected_media:
+            if not filtered_media:
                 return None
 
-            subtitles = self.media_subtitles(selected_media)
-            return AkamaiFlavors(medias, selected_media, subtitles,
+            subtitles = self.media_subtitles(filtered_media)
+            return AkamaiFlavors(medias, filtered_media, subtitles,
                                  self.backend, self.AES_KEY)
-
-    def select_yle_media(self, program_info, media_id, program_id,
-                         default_video_proto, filters):
-        medias = self.get_akamai_medias(program_info, media_id, program_id,
-                                        default_video_proto)
-        return self.select_media(medias, filters)
 
     def get_akamai_medias(self, program_info, media_id, program_id,
                           default_video_proto):
