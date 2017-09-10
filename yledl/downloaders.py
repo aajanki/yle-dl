@@ -1204,8 +1204,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def clip_meta(self, pageurl, program_info, program_id, filters):
         duration_seconds = self.program_info_duration_seconds(program_info)
-        flavors = self.flavors_metadata(pageurl, program_info, program_id,
-                                        filters)
+        flavors, subtitles = self.flavors_metadata(pageurl, program_info,
+                                                   program_id, filters)
 
         meta = {
             'webpage': pageurl,
@@ -1214,6 +1214,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         }
         if duration_seconds:
             meta['duration_seconds'] = duration_seconds
+        if subtitles:
+            meta['subtitles'] = subtitles
 
         return meta
 
@@ -1225,13 +1227,21 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         if media_id.startswith('29-'):
             kaltura_flavors = \
                 self.kaltura_flavors_meta(media_id, program_id, pageurl)[0]
+            subtitle_media = self.select_yle_media(program_info, media_id,
+                                                   program_id, 'HLS', StreamFilters())
+            subtitles = self.media_subtitles(subtitle_media)
             flavors = [self.single_flavor_meta(fl) for fl in kaltura_flavors]
         else:
             medias = self.get_akamai_medias(program_info, media_id,
                                             program_id, 'HDS')
             flavors = [self.single_flavor_meta(m) for m in medias]
+            if medias:
+                subtitles = self.media_subtitles(medias[0])
+            else:
+                subtitles = []
 
-        return flavors
+        subtitles_metadata = [self.subtitle_meta(s) for s in subtitles]
+        return (flavors, subtitles_metadata)
 
     def single_flavor_meta(self, flavor):
         media_type = 'audio' if flavor.get('type') == 'AudioObject' else 'video'
@@ -1244,6 +1254,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             res['bitrate'] = (flavor.get('bitrate', 0) +
                               flavor.get('audioBitrateKbps', 0))
         return res
+
+    def subtitle_meta(self, subtitle):
+        return {'lang': subtitle.language, 'uri': subtitle.url}
 
 
 class Areena2014LiveDownloader(Areena2014Downloader):

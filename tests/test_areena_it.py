@@ -25,6 +25,7 @@ def test_areena_akamai_metadata():
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) == 3
     assert metadata[0]['duration_seconds'] == 1624
+    assert len(metadata[0]['subtitles']) == 3
 
 
 def test_areena_html5_stream_url():
@@ -40,6 +41,7 @@ def test_areena_html5_metadata():
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) == 4
     assert metadata[0]['duration_seconds'] == 3196
+    assert len(metadata[0]['subtitles']) == 1
 
 
 def test_areena_series_titles():
