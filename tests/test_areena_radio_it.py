@@ -45,4 +45,5 @@ def test_radio_live_metadata():
     metadata = fetch_metadata('https://yle.fi/radio/ylepuhe/suora/')
 
     assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) == 1
+    assert len(metadata[0]['flavors']) >= 1
+    assert all(f.get('media_type') == 'audio' for f in metadata[0]['flavors'])

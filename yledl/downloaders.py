@@ -170,6 +170,22 @@ def parse_rtmp_single_component_app(rtmpurl):
     return (app_only_rtmpurl, playpath, ext)
 
 
+def bitrates_from_hds_manifest(manifest_url):
+    manifest = download_page(manifest_url)
+    if not manifest:
+        return []
+
+    try:
+        manifest_xml = xml.dom.minidom.parseString(manifest)
+    except Exception as exc:
+        logger.error(unicode(exc.message, 'utf-8', 'ignore'))
+        return []
+
+    medias = manifest_xml.getElementsByTagName('media')
+    bitrates = (int_or_else(m.getAttribute('bitrate'), 0) for m in medias)
+    return [br for br in bitrates if br > 0]
+
+
 def normalize_language_code(lang, subtype):
     if lang == 'all' or lang == 'none':
         return lang
@@ -461,6 +477,13 @@ class Flavors(object):
                               flavor.get('audioBitrateKbps', 0))
         return res
 
+    @staticmethod
+    def bitrate_meta(bitrate, media_type):
+        return {
+            'bitrate': bitrate,
+            'media_type': media_type
+        }
+
 
 class KalturaFlavors(object):
     def __init__(self, kaltura_flavors, stream_meta, subtitles):
@@ -548,7 +571,18 @@ class AkamaiFlavors(AreenaUtils):
             self.selected_media, pageurl, self.backend, self.aes_key, filters)
 
     def metadata(self):
-        return [Flavors.single_flavor_meta(fl) for fl in self.medias]
+        stream = self.streamurl('', StreamFilters())
+        manifest_bitrates = stream.bitrates_from_metadata()
+        if self.selected_media.get('type') == 'AudioObject':
+            media_type = 'audio'
+        else:
+            media_type = 'video'
+
+        if manifest_bitrates:
+            return [Flavors.bitrate_meta(br, media_type)
+                    for br in manifest_bitrates]
+        else:
+            return [Flavors.single_flavor_meta(fl) for fl in self.medias]
 
     def _media_streamurl(self, media, pageurl, backend, aes_key, filters):
         url = media.get('url')
@@ -586,6 +620,9 @@ class AreenaStreamBase(AreenaUtils):
         return ''
 
     def to_rtmpdump_args(self):
+        return None
+
+    def bitrates_from_metadata(self):
         return None
 
 
@@ -735,6 +772,12 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
 
     def create_downloader(self, io, clip_title):
         return self.downloader_class(self, clip_title, io, self.filters)
+
+    def bitrates_from_metadata(self):
+        if self.hds_url:
+            return bitrates_from_hds_manifest(self.hds_url)
+        else:
+            return None
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
@@ -1850,23 +1893,8 @@ class YoutubeDLHDSDump(BaseDownloader):
             self.log_output_file(outputfile, True)
         return RD_SUCCESS
 
-    def _stream_bitrates(self):
-        manifest = download_page(self.stream.to_url())
-        if not manifest:
-            return []
-
-        try:
-            manifest_xml = xml.dom.minidom.parseString(manifest)
-        except Exception as exc:
-            logger.error(unicode(exc.message, 'utf-8', 'ignore'))
-            return []
-
-        medias = manifest_xml.getElementsByTagName('media')
-        bitrates = (int_or_else(m.getAttribute('bitrate'), 0) for m in medias)
-        return [br for br in bitrates if br > 0]
-
     def _bitrate_parameter(self):
-        bitrates = self._stream_bitrates()
+        bitrates = bitrates_from_hds_manifest(self.stream.to_url())
         logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
                      (bitrates, self.maxbitrate))
 

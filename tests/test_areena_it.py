@@ -23,7 +23,7 @@ def test_areena_akamai_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/1-1765055')
 
     assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) == 3
+    assert len(metadata[0]['flavors']) == 5
     assert metadata[0]['duration_seconds'] == 1624
     assert len(metadata[0]['subtitles']) == 3
 
@@ -69,7 +69,7 @@ def test_areena_live_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/tv/suorat/yle-tv1')
 
     assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) == 1
+    assert len(metadata[0]['flavors']) >= 1
 
 
 def test_areena_html5_clip_title():
