@@ -466,8 +466,7 @@ class KalturaStreamUtils(object):
 class Flavors(object):
     @staticmethod
     def single_flavor_meta(flavor):
-        media_type = 'audio' if flavor.get('type') == 'AudioObject' else 'video'
-        res = {'media_type': media_type}
+        res = {'media_type': Flavors.media_type(flavor)}
         if 'height' in flavor:
             res['height'] = flavor['height']
         if 'width' in flavor:
@@ -483,6 +482,10 @@ class Flavors(object):
             'bitrate': bitrate,
             'media_type': media_type
         }
+
+    @staticmethod
+    def media_type(media):
+        return 'audio' if media.get('type') == 'AudioObject' else 'video'
 
 
 class KalturaFlavors(object):
@@ -573,11 +576,7 @@ class AkamaiFlavors(AreenaUtils):
     def metadata(self):
         stream = self.streamurl('', StreamFilters())
         manifest_bitrates = stream.bitrates_from_metadata()
-        if self.selected_media.get('type') == 'AudioObject':
-            media_type = 'audio'
-        else:
-            media_type = 'video'
-
+        media_type = Flavors.media_type(self.selected_media)
         if manifest_bitrates:
             return [Flavors.bitrate_meta(br, media_type)
                     for br in manifest_bitrates]
