@@ -1031,7 +1031,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         proto = 'HLS' if is_html5 else 'HDS'
         medias = self.get_akamai_medias(
             program_info, media_id, program_id, proto)
-        filtered_media = self.select_media(medias, filters)
+        subtitle_medias = self.filter_by_subtitles(medias, filters)
+        subtitle_media = subtitle_medias[0] if subtitle_medias else {}
 
         if is_html5:
             logger.debug('Detected an HTML5 video')
@@ -1039,14 +1040,14 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             flavors_data, meta = self.kaltura_flavors_meta(
                 media_id, program_id, pageurl)
             self.log_bitrates(flavors_data, filters.maxbitrate)
-            subtitles = self.media_subtitles(filtered_media)
+            subtitles = self.media_subtitles(subtitle_media)
             return KalturaFlavors(flavors_data, meta, subtitles)
         else:
-            if not filtered_media:
+            if not subtitle_media:
                 return None
 
-            subtitles = self.media_subtitles(filtered_media)
-            return AkamaiFlavors(medias, filtered_media, subtitles,
+            subtitles = self.media_subtitles(subtitle_media)
+            return AkamaiFlavors(medias, subtitle_media, subtitles,
                                  self.backend, self.AES_KEY)
 
     def get_akamai_medias(self, program_info, media_id, program_id,
@@ -1194,13 +1195,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 if filters.sublang_matches(sublang, subtype):
                     return True
             return False
-
-    def select_media(self, mediaobj,  filters):
-        medias = self.filter_by_subtitles(mediaobj, filters)
-        if medias:
-            return medias[0]
-        else:
-            return {}
 
     def media_subtitles(self, media):
         subtitles = []
