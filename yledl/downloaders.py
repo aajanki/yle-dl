@@ -344,11 +344,6 @@ class AreenaUtils(object):
 
 
 class KalturaUtils(object):
-    def select_kaltura_stream(self, media_id, program_id, referer, filters):
-        flavors, meta = self.kaltura_flavors_meta(media_id, program_id, referer)
-        self.log_bitrates(flavors, filters.maxbitrate)
-        return self.select_matching_stream(flavors, meta, filters)
-
     def kaltura_flavors_meta(self, media_id, program_id, referer):
         mw = self.load_mwembed(media_id, program_id, referer)
         package_data = self.package_data_from_mwembed(mw)
@@ -417,59 +412,6 @@ class KalturaUtils(object):
 
         return web_flavors
 
-    def select_matching_stream(self, flavors, meta, filters):
-        # See http://cdnapi.kaltura.com/html5/html5lib/v2.56/load.php
-        # for the actual Areena stream selection logic
-        h264flavors = [f for f in flavors if self.is_h264_flavor(f)]
-        if h264flavors:
-            # Prefer non-adaptive HTTP stream
-            stream_format = 'url'
-            filtered_flavors = h264flavors
-        elif meta.get('duration', 0) < 10:
-            # short and durationless streams are not available as HLS
-            stream_format = 'url'
-            filtered_flavors = flavors
-        else:
-            # fallback to HLS if nothing else is available
-            stream_format = 'applehttp'
-            filtered_flavors = flavors
-
-        return self.select_stream(filtered_flavors, stream_format, filters)
-
-    def is_h264_flavor(self, flavor):
-        tags = flavor.get('tags', '').split(',')
-        ipad_h264 = 'ipad' in tags or 'iphone' in tags
-        web_h264 = (('web' in tags or 'mbr' in tags) and
-                    (flavor.get('fileExt') == 'mp4'))
-        return ipad_h264 or web_h264
-
-    def select_stream(self, flavors, stream_format, filters):
-        selected_flavor = self.filter_flavors_by_bitrate(flavors, filters)
-        if not selected_flavor:
-            return InvalidStreamUrl('No admissible streams')
-        if 'entryId' not in selected_flavor:
-            return InvalidStreamUrl('No entryId in the selected flavor')
-
-        entry_id = selected_flavor.get('entryId')
-        flavor_id = selected_flavor.get('id', '0_00000000')
-        ext = '.' + selected_flavor.get('fileExt', 'mp4')
-        return self.stream_factory(
-            entry_id, flavor_id, stream_format, filters, ext)
-
-    def filter_flavors_by_bitrate(self, flavors, filters):
-        valid_bitrates = [fl for fl in flavors
-                          if fl.get('bitrate', 0) <= filters.maxbitrate]
-        if not valid_bitrates and len(flavors) >= 1:
-            valid_bitrates = [min(flavors,
-                                  key=lambda fl: fl.get('bitrate', 0))]
-
-        if not valid_bitrates:
-            return {}
-
-        selected = max(valid_bitrates, key=lambda fl: fl.get('bitrate', 0))
-        logger.debug(u'Selected bitrate: %s' % selected.get('bitrate', 0))
-
-        return selected
 
     def package_data_from_mwembed(self, mw):
         m = re.search('window.kalturaIframePackageData\s*=\s*', mw, re.DOTALL)
@@ -489,12 +431,6 @@ class KalturaUtils(object):
         logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
                      (bitrates, maxbitrate))
 
-    def stream_factory(self, entry_id, flavor_id, stream_format, filters, ext):
-        if stream_format == 'applehttp':
-            return KalturaHLSStreamUrl(entry_id, flavor_id, filters, ext)
-        else:
-            return KalturaHTTPStreamUrl(entry_id, flavor_id, stream_format, ext)
-
 
 class KalturaStreamUtils(object):
     def manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
@@ -509,6 +445,124 @@ class KalturaStreamUtils(object):
                     flavor_id=flavor_id,
                     stream_format=stream_format,
                     ext=manifest_ext))
+
+
+class Flavors(object):
+    @staticmethod
+    def single_flavor_meta(flavor):
+        media_type = 'audio' if flavor.get('type') == 'AudioObject' else 'video'
+        res = {'media_type': media_type}
+        if 'height' in flavor:
+            res['height'] = flavor['height']
+        if 'width' in flavor:
+            res['width'] = flavor['width']
+        if 'bitrate' in flavor or 'audioBitrateKbps' in flavor:
+            res['bitrate'] = (flavor.get('bitrate', 0) +
+                              flavor.get('audioBitrateKbps', 0))
+        return res
+
+
+class KalturaFlavors(object):
+    def __init__(self, kaltura_flavors, stream_meta, subtitles):
+        self.kaltura_flavors = kaltura_flavors
+        self.stream_meta = stream_meta
+        self.subtitles = subtitles
+
+    def streamurl(self, pageurl, filters):
+        return self._select_matching_stream(self.kaltura_flavors, self.stream_meta, filters)
+
+    def metadata(self):
+        return [Flavors.single_flavor_meta(fl) for fl in self.kaltura_flavors]
+
+    def _select_matching_stream(self, flavors, meta, filters):
+        # See http://cdnapi.kaltura.com/html5/html5lib/v2.56/load.php
+        # for the actual Areena stream selection logic
+        h264flavors = [f for f in flavors if self._is_h264_flavor(f)]
+        if h264flavors:
+            # Prefer non-adaptive HTTP stream
+            stream_format = 'url'
+            filtered_flavors = h264flavors
+        elif meta.get('duration', 0) < 10:
+            # short and durationless streams are not available as HLS
+            stream_format = 'url'
+            filtered_flavors = flavors
+        else:
+            # fallback to HLS if nothing else is available
+            stream_format = 'applehttp'
+            filtered_flavors = flavors
+
+        return self._select_stream(filtered_flavors, stream_format, filters)
+
+    def _is_h264_flavor(self, flavor):
+        tags = flavor.get('tags', '').split(',')
+        ipad_h264 = 'ipad' in tags or 'iphone' in tags
+        web_h264 = (('web' in tags or 'mbr' in tags) and
+                    (flavor.get('fileExt') == 'mp4'))
+        return ipad_h264 or web_h264
+
+    def _select_stream(self, flavors, stream_format, filters):
+        selected_flavor = self._filter_flavors_by_bitrate(flavors, filters)
+        if not selected_flavor:
+            return InvalidStreamUrl('No admissible streams')
+        if 'entryId' not in selected_flavor:
+            return InvalidStreamUrl('No entryId in the selected flavor')
+
+        entry_id = selected_flavor.get('entryId')
+        flavor_id = selected_flavor.get('id', '0_00000000')
+        ext = '.' + selected_flavor.get('fileExt', 'mp4')
+        return self._stream_factory(
+            entry_id, flavor_id, stream_format, filters, ext)
+
+    def _filter_flavors_by_bitrate(self, flavors, filters):
+        valid_bitrates = [fl for fl in flavors
+                          if fl.get('bitrate', 0) <= filters.maxbitrate]
+        if not valid_bitrates and len(flavors) >= 1:
+            valid_bitrates = [min(flavors,
+                                  key=lambda fl: fl.get('bitrate', 0))]
+
+        if not valid_bitrates:
+            return {}
+
+        selected = max(valid_bitrates, key=lambda fl: fl.get('bitrate', 0))
+        logger.debug(u'Selected bitrate: %s' % selected.get('bitrate', 0))
+
+        return selected
+
+    def _stream_factory(self, entry_id, flavor_id, stream_format, filters, ext):
+        if stream_format == 'applehttp':
+            return KalturaHLSStreamUrl(entry_id, flavor_id, filters, ext)
+        else:
+            return KalturaHTTPStreamUrl(entry_id, flavor_id, stream_format, ext)
+
+
+class AkamaiFlavors(AreenaUtils):
+    def __init__(self, medias, selected_media, subtitles, backend, aes_key):
+        self.medias = medias
+        self.selected_media = selected_media
+        self.subtitles = subtitles
+        self.backend = backend
+        self.aes_key = aes_key
+
+    def streamurl(self, pageurl, filters):
+        return self._media_streamurl(
+            self.selected_media, pageurl, self.backend, self.aes_key, filters)
+
+    def metadata(self):
+        return [Flavors.single_flavor_meta(fl) for fl in self.medias]
+
+    def _media_streamurl(self, media, pageurl, backend, aes_key, filters):
+        url = media.get('url')
+        if not url:
+            return InvalidStreamUrl('No media URL')
+
+        decodedurl = self.areena_decrypt(url, aes_key)
+        if not decodedurl:
+            return InvalidStreamUrl('Decrypting media URL failed')
+
+        if media.get('protocol') == 'HDS':
+            return Areena2014HDSStreamUrl(decodedurl, filters, backend)
+        else:
+            return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
 
 ### Areena stream URL ###
@@ -963,27 +1017,38 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         if not media_id:
             return FailedClip(pageurl, 'Failed to parse media ID')
 
-        if media_id.startswith('29-'):
-            logger.debug('Detected an HTML5 video')
-
-            streamurl = self.select_kaltura_stream(
-                media_id, program_id, pageurl, filters)
-            subtitle_media = self.select_yle_media(program_info, media_id,
-                                                   program_id, 'HLS', filters)
-            subtitles = self.media_subtitles(subtitle_media)
-        else:
-            selected_media = self.select_yle_media(program_info, media_id,
-                                                   program_id, 'HDS', filters)
-            if not selected_media:
-                return FailedClip(pageurl, 'Media not found')
-
-            streamurl = self.media_streamurl(selected_media, pageurl, filters)
-            subtitles = self.media_subtitles(selected_media)
+        flavors = self.get_flavors(program_info, media_id, program_id, pageurl, filters)
+        if not flavors:
+            return FailedClip(pageurl, 'Media not found')
 
         return Clip(pageurl,
                     self.program_title(program_info),
-                    streamurl,
-                    subtitles)
+                    flavors.streamurl(pageurl, filters),
+                    flavors.subtitles)
+
+    def get_flavors(self, program_info, media_id, program_id, pageurl, filters):
+        if media_id.startswith('29-'):
+            logger.debug('Detected an HTML5 video')
+
+            flavors_data, meta = self.kaltura_flavors_meta(
+                media_id, program_id, pageurl)
+            self.log_bitrates(flavors_data, filters.maxbitrate)
+
+            subtitle_media = self.select_yle_media(program_info, media_id,
+                                                   program_id, 'HLS', filters)
+            subtitles = self.media_subtitles(subtitle_media)
+
+            return KalturaFlavors(flavors_data, meta, subtitles)
+        else:
+            medias = self.get_akamai_medias(
+                program_info, media_id, program_id, 'HDS')
+            selected_media = self.select_media(medias, filters)
+            if not selected_media:
+                return None
+
+            subtitles = self.media_subtitles(selected_media)
+            return AkamaiFlavors(medias, selected_media, subtitles,
+                                 self.backend, self.AES_KEY)
 
     def select_yle_media(self, program_info, media_id, program_id,
                          default_video_proto, filters):
@@ -1144,20 +1209,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         else:
             return {}
 
-    def media_streamurl(self, media, pageurl, filters):
-        url = media.get('url')
-        if not url:
-            return InvalidStreamUrl('No media URL')
-
-        decodedurl = self.areena_decrypt(url, self.AES_KEY)
-        if not decodedurl:
-            return InvalidStreamUrl('Decrypting media URL failed')
-
-        if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(decodedurl, filters, self.backend)
-        else:
-            return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
-
     def media_subtitles(self, media):
         subtitles = []
         for s in media.get('subtitles', []):
@@ -1223,37 +1274,14 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         media_id = self.program_media_id(program_info, filters)
         if not media_id:
             return {}
-        
-        if media_id.startswith('29-'):
-            kaltura_flavors = \
-                self.kaltura_flavors_meta(media_id, program_id, pageurl)[0]
-            subtitle_media = self.select_yle_media(program_info, media_id,
-                                                   program_id, 'HLS', StreamFilters())
-            subtitles = self.media_subtitles(subtitle_media)
-            flavors = [self.single_flavor_meta(fl) for fl in kaltura_flavors]
-        else:
-            medias = self.get_akamai_medias(program_info, media_id,
-                                            program_id, 'HDS')
-            flavors = [self.single_flavor_meta(m) for m in medias]
-            if medias:
-                subtitles = self.media_subtitles(medias[0])
-            else:
-                subtitles = []
 
-        subtitles_metadata = [self.subtitle_meta(s) for s in subtitles]
-        return (flavors, subtitles_metadata)
+        flavors = self.get_flavors(
+            program_info, media_id, program_id, pageurl, StreamFilters())
+        if not flavors:
+            return {}
 
-    def single_flavor_meta(self, flavor):
-        media_type = 'audio' if flavor.get('type') == 'AudioObject' else 'video'
-        res = {'media_type': media_type}
-        if 'height' in flavor:
-            res['height'] = flavor['height']
-        if 'width' in flavor:
-            res['width'] = flavor['width']
-        if 'bitrate' in flavor or 'audioBitrateKbps' in flavor:
-            res['bitrate'] = (flavor.get('bitrate', 0) +
-                              flavor.get('audioBitrateKbps', 0))
-        return res
+        subtitles_metadata = [self.subtitle_meta(s) for s in flavors.subtitles]
+        return (flavors.metadata(), subtitles_metadata)
 
     def subtitle_meta(self, subtitle):
         return {'lang': subtitle.language, 'uri': subtitle.url}
