@@ -1185,14 +1185,20 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         events = program_info.get('data', {}) \
                              .get('program', {}) \
                              .get('publicationEvent', [])
-
-        has_current = any(self.publish_event_is_current(e) for e in events)
+        areena_events = [e for e in events
+                         if e.get('service', {}).get('id') == 'yle-areena']
+        has_current = any(self.publish_event_is_current(e)
+                          for e in areena_events)
         if has_current:
-            events = [e for e in events if self.publish_event_is_current(e)]
+            areena_events = [e for e in areena_events
+                             if self.publish_event_is_current(e)]
 
-        with_media = [e for e in events if e.get('media')]
+        with_media = [e for e in areena_events if e.get('media')]
         if with_media:
-            return with_media[0]
+            sorted_events = sorted(with_media,
+                                   key=lambda e: e.get('startTime'),
+                                   reverse=True)
+            return sorted_events[0]
         else:
             return {}
 
