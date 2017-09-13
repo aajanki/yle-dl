@@ -1121,6 +1121,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         event = self.publish_event(program_info)
         return event.get('media', {}).get('id')
 
+    def available_at_region(self, program_info):
+        return self.publish_event(program_info).get('region')
+
     def event_expired_timestamp(self, event):
         if event.get('temporalStatus') == 'in-past':
             return event.get('endTime')
@@ -1291,6 +1294,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         duration_seconds = self.program_info_duration_seconds(program_info)
         flavors, subtitles = self.flavors_metadata(pageurl, program_info,
                                                    program_id, filters)
+        region = self.available_at_region(program_info)
 
         meta = {
             'webpage': pageurl,
@@ -1301,6 +1305,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             meta['duration_seconds'] = duration_seconds
         if subtitles:
             meta['subtitles'] = subtitles
+        if region:
+            meta['region'] = region
 
         return meta
 
@@ -1348,11 +1354,17 @@ class Areena2014LiveDownloader(Areena2014Downloader):
 
         return key_func
 
+    def service_info(self, program_info):
+        return program_info.get('data', {}).get('service', {})
+    
     def program_title(self, program_info):
-        service = program_info.get('data', {}).get('service', {})
+        service = self.service_info(program_info)
         title = self.fi_or_sv_text(service.get('title')) or 'areena'
         title += time.strftime('-%Y-%m-%d-%H:%M:%S')
         return title
+
+    def available_at_region(self, program_info):
+        return self.service_info(program_info).get('region')
 
 
 class YleUutisetDownloader(Areena2014Downloader):

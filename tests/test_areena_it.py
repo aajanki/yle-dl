@@ -26,6 +26,7 @@ def test_areena_akamai_metadata():
     assert len(metadata[0]['flavors']) == 5
     assert all(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
     assert metadata[0]['duration_seconds'] == 1624
+    assert metadata[0]['region'] == 'World'
     assert len(metadata[0]['subtitles']) == 3
 
 
@@ -43,6 +44,7 @@ def test_areena_html5_metadata():
     assert len(metadata[0]['flavors']) == 4
     assert all(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
     assert metadata[0]['duration_seconds'] == 3196
+    assert metadata[0]['region'] == 'World'
     assert len(metadata[0]['subtitles']) == 1
 
 
@@ -73,6 +75,7 @@ def test_areena_live_metadata():
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
     assert all(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
+    assert metadata[0]['region'] == 'Finland'
 
 
 def test_areena_html5_clip_title():
