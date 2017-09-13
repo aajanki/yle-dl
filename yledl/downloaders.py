@@ -1295,20 +1295,15 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         flavors, subtitles = self.flavors_metadata(pageurl, program_info,
                                                    program_id, filters)
         region = self.available_at_region(program_info)
-
-        meta = {
-            'webpage': pageurl,
-            'title': self.program_title(program_info),
-            'flavors': flavors
-        }
-        if duration_seconds:
-            meta['duration_seconds'] = duration_seconds
-        if subtitles:
-            meta['subtitles'] = subtitles
-        if region:
-            meta['region'] = region
-
-        return meta
+        meta = [
+            ('webpage', pageurl),
+            ('title', self.program_title(program_info)),
+            ('flavors', flavors),
+            ('duration_seconds', duration_seconds),
+            ('subtitles', subtitles),
+            ('region', region)
+        ]
+        return {key: value for (key, value) in meta if value if not None}
 
     def flavors_metadata(self, pageurl, program_info, program_id, filters):
         media_id = self.program_media_id(program_info, filters)
