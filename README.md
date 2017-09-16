@@ -137,6 +137,8 @@ yle-dl options:
 
 * `--showtitle`       Print stream title, don't download
 
+* `--showmetadata`    Print stream [metadata as JSON](docs/metadata.md)
+
 * `--vfat`            Create Windows-compatible filenames
 
 * `--audiolang lang`  Select stream's audio language if available, lang = fin (default) or swe

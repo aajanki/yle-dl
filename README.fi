@@ -114,6 +114,7 @@ Valitsimet:
 --latestepisode Lataa viimeisimmän jakson sivulta
 --showurl       Tulostaa videon URL, ei lataa tiedostoa
 --showtitle     Tulostaa ohjelman nimen, ei lataa tiedostoa
+--showmetadata  Tulostaa metatietoja ohjelmasta. Katso docs/metadata.md
 --vfat          Tuota Windows-yhteensopivia tiedoston nimiä
 --audiolang lan Lataa ääniraita tietyllä kielellä jos saatavilla
                 lan = fin (oletus) tai swe
