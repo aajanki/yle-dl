@@ -1124,6 +1124,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def available_at_region(self, program_info):
         return self.publish_event(program_info).get('region')
 
+    def publish_timestamp(self, program_info):
+        return self.publish_event(program_info).get('startTime')
+
+    def expiration_timestamp(self, program_info):
+        return self.publish_event(program_info).get('endTime')
+
     def event_expired_timestamp(self, event):
         if event.get('temporalStatus') == 'in-past':
             return event.get('endTime')
@@ -1294,14 +1300,15 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         duration_seconds = self.program_info_duration_seconds(program_info)
         flavors, subtitles = self.flavors_metadata(pageurl, program_info,
                                                    program_id, filters)
-        region = self.available_at_region(program_info)
         meta = [
             ('webpage', pageurl),
             ('title', self.program_title(program_info)),
             ('flavors', flavors),
             ('duration_seconds', duration_seconds),
             ('subtitles', subtitles),
-            ('region', region)
+            ('region', self.available_at_region(program_info)),
+            ('publish_timestamp', self.publish_timestamp(program_info)),
+            ('expiration_timestamp', self.expiration_timestamp(program_info))
         ]
         return {key: value for (key, value) in meta if value if not None}
 

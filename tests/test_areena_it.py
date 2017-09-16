@@ -27,6 +27,8 @@ def test_areena_akamai_metadata():
     assert all(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
     assert metadata[0]['duration_seconds'] == 1624
     assert metadata[0]['region'] == 'World'
+    assert metadata[0]['publish_timestamp'] == '2015-11-27T10:00:00+02:00'
+    assert 'expired_timestamp' not in metadata[0]
     assert len(metadata[0]['subtitles']) == 3
 
 
@@ -45,6 +47,8 @@ def test_areena_html5_metadata():
     assert all(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
     assert metadata[0]['duration_seconds'] == 3196
     assert metadata[0]['region'] == 'World'
+    assert metadata[0]['publish_timestamp'] == '2017-07-16T14:00:00+03:00'
+    assert 'expired_timestamp' not in metadata[0]
     assert len(metadata[0]['subtitles']) == 1
 
 
