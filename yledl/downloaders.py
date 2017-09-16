@@ -912,7 +912,16 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         playlist = self.get_playlist(url, filters.latest_only)
         playlist_meta = []
         for clipurl in playlist:
-            program_info, pid = self.program_info_for_url(clipurl)
+            pid = self.program_id_from_url(clipurl)
+            if not pid:
+                playlist_meta.append({})
+                continue
+
+            program_info = self.program_info_for_pid(pid)
+            if not program_info:
+                playlist_meta.append({})
+                continue
+
             playlist_meta.append(self.clip_meta(clipurl, program_info,
                                                 pid, filters))
         print_enc(json.dumps(playlist_meta, indent=2))
@@ -1015,24 +1024,27 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return RD_FAILED
 
     def clip_for_url(self, pageurl, filters):
-        program_info, pid = self.program_info_for_url(pageurl)
-        unavailable = self.unavailable_clip(program_info, pageurl)
-        return unavailable or \
-            self.create_clip(program_info, pid, pageurl, filters)
-
-    def program_info_for_url(self, pageurl):
         pid = self.program_id_from_url(pageurl)
         if not pid:
             return FailedClip(pageurl, 'Failed to parse a program ID')
 
-        program_info = JSONP.load_jsonp(self.program_info_url(pid))
+        program_info = self.program_info_for_pid(pid)
         if not program_info:
             return FailedClip(pageurl, 'Failed to download program data')
+
+        unavailable = self.unavailable_clip(program_info, pageurl)
+        return unavailable or \
+            self.create_clip(program_info, pid, pageurl, filters)
+
+    def program_info_for_pid(self, pid):
+        program_info = JSONP.load_jsonp(self.program_info_url(pid))
+        if not program_info:
+            return None
 
         logger.debug('program data:')
         logger.debug(json.dumps(program_info))
 
-        return (program_info, pid)
+        return program_info
 
     def unavailable_clip(self, program_info, pageurl):
         event = self.publish_event(program_info)
