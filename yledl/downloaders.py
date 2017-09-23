@@ -1782,6 +1782,16 @@ class RTMPDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.rtmpdump_binary = io.rtmpdump_binary
 
+    def save_stream(self):
+        # rtmpdump fails to resume if the file doesn't contain at
+        # least one audio frame. Remove small files to force a restart
+        # from the beginning.
+        filename = self.output_filename()
+        if self.resume and self.is_small_file(filename):
+            self.remove(filename)
+
+        return super(RTMPDump, self).save_stream()
+
     def resume_supported(self):
         return True
 
@@ -1799,6 +1809,18 @@ class RTMPDump(ExternalDownloader):
         args += ['-o', '-']
         self.external_downloader(args)
         return RD_SUCCESS
+
+    def is_small_file(self, filename):
+        try:
+            return os.path.getsize(filename) < 1024
+        except OSError:
+            return False
+
+    def remove(self, filename):
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
 
 
 ### Download a stream by delegating to AdobeHDS.php ###

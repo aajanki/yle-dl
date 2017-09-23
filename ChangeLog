@@ -7,6 +7,7 @@ xx xxx 2017, Version 2.24
 - Option --showmetadata for printing stream metadata (available bitrates, etc.)
 - Download only the main content in Elävä arkisto
 - Fixed some Elävä arkisto audio streams and titles
+- Resuming audio wasn't working when just a few bytes had been downloaded
 
 20 Aug 2017, Version 2.23
 
