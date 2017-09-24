@@ -90,7 +90,7 @@ def http_get(url, extra_headers=None):
         headers.update(extra_headers)
 
     try:
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers, timeout=20)
         r.raise_for_status()
     except requests.exceptions.RequestException:
         logger.exception(u"Can't read {}".format(url))
@@ -107,7 +107,7 @@ def download_to_file(url, destination_filename, show_progress=False):
 
 
 def urlretrieve(url, destination, show_progress=False):
-    r = requests.get(url, headers=yledl_headers(), stream=True)
+    r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
     r.raise_for_status()
 
     with progress_bar(show_progress, r.headers) as progress:
