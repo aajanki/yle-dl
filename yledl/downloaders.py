@@ -120,7 +120,7 @@ def urlretrieve(url, destination, show_progress=False):
     r.raise_for_status()
 
     with progress_bar(show_progress, r.headers) as progress:
-        for chunk in r.iter_content(chunk_size=4196):
+        for chunk in r.iter_content(chunk_size=16384):
             destination.write(chunk)
             progress.next(len(chunk))
 
