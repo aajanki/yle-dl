@@ -19,9 +19,11 @@ import base64
 import ctypes
 import ctypes.util
 import logging
-import requests
 import lxml.html
 import lxml.etree
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
@@ -85,12 +87,19 @@ def http_get(url, extra_headers=None):
     if '#' in url:
         url = url[:url.find('#')]
 
+    retry = Retry(total=3,
+                  backoff_factor=0.5,
+                  status_forcelist=[500, 502, 503, 504])
+    session = requests.Session()
+    session.mount('http://', HTTPAdapter(max_retries=retry))
+    session.mount('https://', HTTPAdapter(max_retries=retry))
+
     headers = yledl_headers()
     if extra_headers:
         headers.update(extra_headers)
 
     try:
-        r = requests.get(url, headers=headers, timeout=20)
+        r = session.get(url, headers=headers, timeout=20)
         r.raise_for_status()
     except requests.exceptions.RequestException:
         logger.exception(u"Can't read {}".format(url))
