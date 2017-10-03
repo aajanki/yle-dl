@@ -27,7 +27,7 @@ from requests.packages.urllib3.util.retry import Retry
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
-from utils import print_enc, progress_bar
+from utils import print_enc
 
 # exit codes
 RD_SUCCESS = 0
@@ -108,27 +108,24 @@ def http_get(url, extra_headers=None):
     return r
 
 
-def download_to_file(url, destination_filename, show_progress=False):
+def download_to_file(url, destination_filename):
     enc = sys.getfilesystemencoding()
     encoded_filename = destination_filename.encode(enc, 'replace')
     with open(encoded_filename, 'w') as output:
-        urlretrieve(url, output, show_progress)
-
-
-def urlretrieve(url, destination, show_progress=False):
-    r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
-    r.raise_for_status()
-
-    with progress_bar(show_progress, r.headers) as progress:
-        for chunk in r.iter_content(chunk_size=16384):
-            destination.write(chunk)
-            progress.next(len(chunk))
+        r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
+        r.raise_for_status()
+        for chunk in r.iter_content(chunk_size=4096):
+            output.write(chunk)
 
 
 def yledl_headers():
     headers = requests.utils.default_headers()
-    headers.update({'User-Agent': 'yle-dl/' + version.split(' ')[0]})
+    headers.update({'User-Agent': yledl_user_agent()})
     return headers
+
+
+def yledl_user_agent():
+    return 'yle-dl/' + version.split(' ')[0]
 
 
 def html_meta_charset(html_bytes):
@@ -234,7 +231,7 @@ class IOContext(object):
     def __init__(self, outputfilename=None, destdir=None, resume=False,
                  ratelimit=None, excludechars='*/|', proxy=None,
                  rtmpdump_binary=None, hds_binary=None,
-                 ffmpeg_binary='ffmpeg'):
+                 ffmpeg_binary='ffmpeg', wget_binary='wget'):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
@@ -244,6 +241,7 @@ class IOContext(object):
 
         self.rtmpdump_binary = rtmpdump_binary
         self.ffmpeg_binary = ffmpeg_binary
+        self.wget_binary = wget_binary
         if hds_binary:
             self.hds_binary = hds_binary
         else:
@@ -817,7 +815,7 @@ class HTTPStreamUrl(object):
         return self.url
 
     def create_downloader(self, io, clip_title):
-        return HTTPDump(self, clip_title, io)
+        return WgetDump(self, clip_title, io)
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -2018,31 +2016,44 @@ class HLSDump(ExternalDownloader):
 ### Download a plain HTTP file ###
 
 
-class HTTPDump(BaseDownloader):
-    def save_stream(self):
-        logger.debug('Downloading from HTTP server...')
-        logger.debug('URL: %s' % self.stream.to_url())
-        filename = self.output_filename()
-        self.log_output_file(filename)
+class WgetDump(ExternalDownloader):
+    def __init__(self, stream, clip_title, io):
+        ExternalDownloader.__init__(self, stream, clip_title, io)
+        self.wget_binary = io.wget_binary
+        self.ratelimit = io.ratelimit
 
-        try:
-            download_to_file(self.stream.to_url(), filename, show_progress=True)
-        except IOError:
-            logger.exception(u'HTTP stream download failed')
-            return RD_FAILED
-
-        self.log_output_file(filename, True)
-        return RD_SUCCESS
+    def build_args(self):
+        args = self.shared_wget_args(self.output_filename())
+        args.extend([
+            '--progress=bar',
+            '--tries=5',
+            '--random-wait'
+        ])
+        if self.resume:
+            args.append('-c')
+        if self.ratelimit:
+            args.append('--limit-rate={}k'.format(self.ratelimit))
+        if not logger.isEnabledFor(logging.DEBUG):
+            args.extend(['--no-verbose', '--show-progress'])
+        args.append(self.stream.to_url())
+        return args
 
     def pipe(self):
-        url = self.stream.to_url()
-        logger.debug('URL: %s' % url)
-
-        try:
-            urlretrieve(url, sys.stdout)
-            sys.stdout.flush()
-        except requests.exceptions.RequestException:
-            logger.exception(u"Can't read {}".format(url))
-            return RD_FAILED
-
+        args = self.shared_wget_args('-')
+        args.extend([
+            '--no-verbose',
+            self.stream.to_url()
+        ])
+        self.external_downloader(args)
         return RD_SUCCESS
+
+    def shared_wget_args(self, output_filename):
+        return [
+            self.wget_binary,
+            '-O', output_filename,
+            '--user-agent=' + yledl_user_agent(),
+            '--timeout=20'
+        ]
+
+    def resume_supported(self):
+        return True

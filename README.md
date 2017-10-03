@@ -23,9 +23,10 @@ Installation
 
 ### 1. Install the dependencies ###
 
-* python (2.7 or newer)
+* python 2.7
 * pip
 * pycrypto
+* wget
 * PHP interpreter
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
 * setuptools (when installing from the sources)
@@ -48,8 +49,8 @@ extension=/path/to/mcrypt.so
 #### Dependencies on Debian 9 (Stretch)/Ubuntu 16.04 ####
 
 ```
-sudo apt-get install rtmpdump python python-setuptools python-pip \
-    python-crypto python-requests python-progress python-lxml \
+sudo apt-get install rtmpdump wget python python-setuptools python-pip \
+    python-crypto python-requests python-lxml \
     php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 ```
@@ -57,7 +58,7 @@ sudo phpenmod mcrypt
 #### Dependencies on Debian 8 (Jessie)/Ubuntu 15.10 or older ####
 
 ```
-sudo apt-get install rtmpdump python python-setuptools python-pip \
+sudo apt-get install rtmpdump wget python python-setuptools python-pip \
     python-crypto python-requests python-lxml php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 ```
@@ -68,6 +69,7 @@ sudo php5enmod mcrypt
 
 ```
 brew install python
+brew install wget
 brew install --HEAD rtmpdump
 brew install homebrew/php/php70-mcrypt
 ```

@@ -12,9 +12,10 @@ yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
 Asenna riippuvuudet
 -------------------
 
-* python (2.7 tai uudempi)
+* python 2.7
 * pip
 * pycrypto
+* wget
 * PHP-tulkki
 * PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
 * setuptools (jos asennat lähdekoodeista)
@@ -36,14 +37,14 @@ käyttöjärjestelmissä:
 
 ## Debian 9 (Stretch)/Ubuntu 16.04
 
-sudo apt-get install rtmpdump python python-pip python-setuptools \
-    python-crypto python-requests python-progress python-lxml \
+sudo apt-get install rtmpdump wget python python-pip python-setuptools \
+    python-crypto python-requests python-lxml \
     php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 
 ## Debian 8 (Jessie)/Ubuntu 15.10 ja vanhemmat
 
-sudo apt-get install rtmpdump python python-pip python-setuptools \
+sudo apt-get install rtmpdump wget python python-pip python-setuptools \
     python-crypto python-requests python-lxml php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 
@@ -52,6 +53,7 @@ sudo php5enmod mcrypt
 Asenna PHP-tulkki: https://secure.php.net/manual/en/install.macosx.php
 
 brew install python
+brew install wget
 brew install --HEAD rtmpdump
 brew install homebrew/php/php70-mcrypt
 

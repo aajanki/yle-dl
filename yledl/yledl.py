@@ -175,6 +175,9 @@ def arg_parser():
     dl_group.add_argument('--adobehds', metavar='CMD',
                           type=unicode_arg, default='',
                           help='Set command for executing AdobeHDS.php')
+    dl_group.add_argument('--wget', metavar='PATH',
+                          type=unicode_arg, default='',
+                          help='Set path to wget binary')
 
     return parser
 
@@ -289,6 +292,10 @@ def find_ffmpeg(ffmpeg_arg):
     return ffmpeg_arg or 'ffmpeg'
 
 
+def find_wget(cmd):
+    return cmd or 'wget'
+
+
 ### main program ###
 
 
@@ -302,7 +309,8 @@ def main():
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     io = IOContext(args.outputfile, args.destdir, args.resume, args.ratelimit,
                    excludechars, args.proxy, find_rtmpdump(args.rtmpdump),
-                   find_adobehds(args.adobehds), find_ffmpeg(args.ffmpeg))
+                   find_adobehds(args.adobehds), find_ffmpeg(args.ffmpeg),
+                   find_wget(args.wget))
 
     urls = []
     if args.url:
