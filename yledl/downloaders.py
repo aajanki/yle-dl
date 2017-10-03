@@ -1713,6 +1713,11 @@ class BaseDownloader(object):
         return (self.preferred_name or
                 self.outputfile_from_clip_title(resume=resume_job))
 
+    def warn_if_proxy_is_defined(self, proxy):
+        if proxy:
+            logger.warn('Proxy not supported on this stream. '
+                        'Trying to continue anyway')
+
     def resume_supported(self):
         return False
 
@@ -1788,6 +1793,7 @@ class RTMPDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.rtmpdump_binary = io.rtmpdump_binary
+        self.warn_if_proxy_is_defined(io.proxy)
 
     def save_stream(self):
         # rtmpdump fails to resume if the file doesn't contain at
@@ -1985,6 +1991,7 @@ class HLSDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.duration_options = self._filter_options(filters)
         self.ffmpeg_binary = io.ffmpeg_binary
+        self.warn_if_proxy_is_defined(io.proxy)
 
     def _filter_options(self, filters):
         if filters.duration:
@@ -2021,6 +2028,7 @@ class WgetDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.wget_binary = io.wget_binary
         self.ratelimit = io.ratelimit
+        self.warn_if_proxy_is_defined(io.proxy)
 
     def build_args(self):
         args = self.shared_wget_args(self.output_filename())
