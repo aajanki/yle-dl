@@ -2007,7 +2007,6 @@ class YoutubeDLHDSDump(BaseDownloader):
 class HLSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io):
         ExternalDownloader.__init__(self, stream, clip_title, io)
-        self.duration_options = self._filter_options(io.download_limits)
         self.ffmpeg_binary = io.ffmpeg_binary
 
     def _filter_options(self, download_limits):
