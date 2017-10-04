@@ -1846,7 +1846,7 @@ class RTMPDump(ExternalDownloader):
 class HDSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io, filters):
         ExternalDownloader.__init__(self, stream, clip_title, io)
-        self.quality_options = self._filter_options(filters, io)
+        self.quality_options = self._filter_options(filters)
         self.hds_binary = io.hds_binary
 
     def resume_supported(self):
@@ -1855,7 +1855,7 @@ class HDSDump(ExternalDownloader):
     def proxy_supported(self):
         return True
 
-    def _filter_options(self, filters, io):
+    def _filter_options(self, filters):
         options = []
 
         # Approximate because there is no easy way to find out the
@@ -1865,30 +1865,39 @@ class HDSDump(ExternalDownloader):
         elif filters.maxbitrate < 2000:
             options.extend(['--quality', 'medium'])
 
-        if io.download_limits.ratelimit:
-            options.extend(['--maxspeed', str(io.download_limits.ratelimit)])
+        return options
 
-        if io.download_limits.duration:
-            options.extend(['--duration', str(io.download_limits.duration)])
+    def _limit_options(self, download_limits):
+        options = []
+
+        if download_limits.ratelimit:
+            options.extend(['--maxspeed', str(download_limits.ratelimit)])
+
+        if download_limits.duration:
+            options.extend(['--duration', str(download_limits.duration)])
 
         return options
 
     def build_args(self, download_limits):
-        return self.adobehds_command_line([
-            '--delete',
-            '--outfile', self.output_filename()])
+        return self.adobehds_command_line(
+            download_limits,
+            [
+                '--delete',
+                '--outfile', self.output_filename()
+            ])
 
     def pipe(self, download_limits):
-        args = self.adobehds_command_line(['--play'])
+        args = self.adobehds_command_line(download_limits, ['--play'])
         self.external_downloader(args)
         self.cleanup_cookies()
         return RD_SUCCESS
 
-    def adobehds_command_line(self, extra_args):
+    def adobehds_command_line(self, download_limits, extra_args):
         args = list(self.hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
+        args.extend(self._limit_options(download_limits))
         if self.proxy:
             args.append('--proxy')
             args.append(self.proxy)
