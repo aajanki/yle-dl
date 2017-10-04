@@ -1726,12 +1726,18 @@ class BaseDownloader(object):
     def proxy_supported(self):
         return False
 
+    def duration_supported(self):
+        return False
+
 
 ### Dumping a stream to a file using external programs ###
 
 
 class ExternalDownloader(BaseDownloader):
     def save_stream(self, download_limits):
+        if not self.duration_supported() and download_limits.duration:
+            logger.warning(u'--duration will be ignored on this stream')
+
         args = self.build_args(download_limits)
         outputfile = self.output_filename()
         self.log_output_file(outputfile)
@@ -1855,6 +1861,9 @@ class HDSDump(ExternalDownloader):
     def proxy_supported(self):
         return True
 
+    def duration_supported(self):
+        return True
+
     def _filter_options(self, filters):
         options = []
 
@@ -1931,8 +1940,7 @@ class YoutubeDLHDSDump(BaseDownloader):
 
     def save_stream(self, download_limits):
         if download_limits.duration:
-            logger.warning(u'--duration will be ignored when using the '
-                           u'youtube-dl backend')
+            logger.warning(u'--duration will be ignored on this stream')
 
         return self._execute_youtube_dl(self.output_filename(), download_limits)
 
@@ -2008,6 +2016,9 @@ class HLSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.ffmpeg_binary = io.ffmpeg_binary
+
+    def duration_supported(self):
+        return True
 
     def _filter_options(self, download_limits):
         if download_limits.duration:
