@@ -227,19 +227,19 @@ class StreamFilters(object):
 
 
 class DownloadLimits(object):
-    def __init__(self, duration=None):
+    def __init__(self, duration=None, ratelimit=None):
         self.duration = duration
+        self.ratelimit = ratelimit
 
 
 class IOContext(object):
     def __init__(self, outputfilename=None, destdir=None, resume=False,
-                 ratelimit=None, dl_limits=DownloadLimits(), excludechars='*/|',
+                 dl_limits=DownloadLimits(), excludechars='*/|',
                  proxy=None, rtmpdump_binary=None, hds_binary=None,
                  ffmpeg_binary='ffmpeg', wget_binary='wget'):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
-        self.ratelimit = ratelimit
         self.excludechars = excludechars
         self.proxy = proxy
         self.download_limits = dl_limits
@@ -1865,8 +1865,8 @@ class HDSDump(ExternalDownloader):
         elif filters.maxbitrate < 2000:
             options.extend(['--quality', 'medium'])
 
-        if io.ratelimit:
-            options.extend(['--maxspeed', str(io.ratelimit)])
+        if io.download_limits.ratelimit:
+            options.extend(['--maxspeed', str(io.download_limits.ratelimit)])
 
         if io.download_limits.duration:
             options.extend(['--duration', str(io.download_limits.duration)])
@@ -1913,7 +1913,6 @@ class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream, clip_title, io, filters):
         BaseDownloader.__init__(self, stream, clip_title, io)
         self.maxbitrate = filters.maxbitrate
-        self.ratelimit = io.ratelimit
 
     def resume_supported(self):
         return True
@@ -1926,12 +1925,12 @@ class YoutubeDLHDSDump(BaseDownloader):
             logger.warning(u'--duration will be ignored when using the '
                            u'youtube-dl backend')
 
-        return self._execute_youtube_dl(self.output_filename())
+        return self._execute_youtube_dl(self.output_filename(), download_limits)
 
     def pipe(self, download_limits):
-        return self._execute_youtube_dl(u'-')
+        return self._execute_youtube_dl(u'-', download_limits)
 
-    def _execute_youtube_dl(self, outputfile):
+    def _execute_youtube_dl(self, outputfile, download_limits):
         try:
             import youtube_dl
         except ImportError:
@@ -1951,7 +1950,7 @@ class YoutubeDLHDSDump(BaseDownloader):
             'nopart': True,
             'continuedl': outputfile != '-' and self.resume
         }
-        dlopts.update(self._ratelimit_parameter())
+        dlopts.update(self._ratelimit_parameter(download_limits.ratelimit))
 
         ydl = youtube_dl.YoutubeDL(ydlopts)
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
@@ -1986,9 +1985,9 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         return {'tbr': selected_bitrate}
 
-    def _ratelimit_parameter(self):
-        if self.ratelimit:
-            return {'ratelimit': self.ratelimit*1024}
+    def _ratelimit_parameter(self, ratelimit):
+        if ratelimit:
+            return {'ratelimit': ratelimit*1024}
         else:
             return {}
 
@@ -2037,7 +2036,6 @@ class WgetDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.wget_binary = io.wget_binary
-        self.ratelimit = io.ratelimit
 
     def build_args(self, download_limits):
         args = self.shared_wget_args(self.output_filename())
@@ -2048,8 +2046,8 @@ class WgetDump(ExternalDownloader):
         ])
         if self.resume:
             args.append('-c')
-        if self.ratelimit:
-            args.append('--limit-rate={}k'.format(self.ratelimit))
+        if download_limits.ratelimit:
+            args.append('--limit-rate={}k'.format(download_limits.ratelimit))
         if not logger.isEnabledFor(logging.DEBUG):
             args.extend(['--no-verbose', '--show-progress'])
         args.append(self.stream.to_url())

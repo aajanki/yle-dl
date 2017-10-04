@@ -307,8 +307,8 @@ def main():
     logger.setLevel(loglevel)
 
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
-    dl_limits = DownloadLimits(args.duration)
-    io = IOContext(args.outputfile, args.destdir, args.resume, args.ratelimit,
+    dl_limits = DownloadLimits(args.duration, args.ratelimit)
+    io = IOContext(args.outputfile, args.destdir, args.resume,
                    dl_limits, excludechars, args.proxy,
                    find_rtmpdump(args.rtmpdump),
                    find_adobehds(args.adobehds), find_ffmpeg(args.ffmpeg),
