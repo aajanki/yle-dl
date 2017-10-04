@@ -568,7 +568,7 @@ class KalturaFlavors(object):
 
     def _stream_factory(self, entry_id, flavor_id, stream_format, filters, ext):
         if stream_format == 'applehttp':
-            return KalturaHLSStreamUrl(entry_id, flavor_id, filters, ext)
+            return KalturaHLSStreamUrl(entry_id, flavor_id, ext)
         else:
             return KalturaHTTPStreamUrl(entry_id, flavor_id, stream_format, ext)
 
@@ -824,13 +824,12 @@ class HTTPStreamUrl(object):
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
-    def __init__(self, entryid, flavorid, filters, ext='.mp4'):
+    def __init__(self, entryid, flavorid, ext='.mp4'):
         self.ext = ext
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
-        self.filters = filters
 
     def create_downloader(self, io, clip_title):
-        return HLSDump(self, clip_title, io, self.filters)
+        return HLSDump(self, clip_title, io)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -1998,7 +1997,7 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, io, filters):
+    def __init__(self, stream, clip_title, io):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.duration_options = self._filter_options(io.download_limits)
         self.ffmpeg_binary = io.ffmpeg_binary
