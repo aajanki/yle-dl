@@ -36,7 +36,7 @@ import argparse
 from version import version
 from utils import print_enc
 from downloaders import downloader_factory, StreamFilters, IOContext, \
-    BackendFactory, RD_SUCCESS, RD_FAILED
+    DownloadLimits, BackendFactory, RD_SUCCESS, RD_FAILED
 
 
 def yledl_logger():
@@ -307,8 +307,10 @@ def main():
     logger.setLevel(loglevel)
 
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
+    dl_limits = DownloadLimits(args.duration)
     io = IOContext(args.outputfile, args.destdir, args.resume, args.ratelimit,
-                   excludechars, args.proxy, find_rtmpdump(args.rtmpdump),
+                   dl_limits, excludechars, args.proxy,
+                   find_rtmpdump(args.rtmpdump),
                    find_adobehds(args.adobehds), find_ffmpeg(args.ffmpeg),
                    find_wget(args.wget))
 
@@ -354,7 +356,7 @@ def main():
 
     maxbitrate = bitrate_from_arg(args.maxbitrate or sys.maxint)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
-                                   args.hardsubs, maxbitrate, args.duration)
+                                   args.hardsubs, maxbitrate)
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):

@@ -207,13 +207,12 @@ class StreamFilters(object):
     versions to download.
     """
     def __init__(self, latest_only=False, audiolang='', sublang='all',
-                 hardsubs=False, maxbitrate=sys.maxint, duration=None):
+                 hardsubs=False, maxbitrate=sys.maxint):
         self.latest_only = latest_only
         self.audiolang = audiolang
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
-        self.duration = duration
 
     def sublang_matches(self, langcode, subtype):
         return self._lang_matches(self.sublang, langcode, subtype)
@@ -227,10 +226,15 @@ class StreamFilters(object):
           normalize_language_code(langB, subtype)
 
 
+class DownloadLimits(object):
+    def __init__(self, duration=None):
+        self.duration = duration
+
+
 class IOContext(object):
     def __init__(self, outputfilename=None, destdir=None, resume=False,
-                 ratelimit=None, excludechars='*/|', proxy=None,
-                 rtmpdump_binary=None, hds_binary=None,
+                 ratelimit=None, dl_limits=DownloadLimits(), excludechars='*/|',
+                 proxy=None, rtmpdump_binary=None, hds_binary=None,
                  ffmpeg_binary='ffmpeg', wget_binary='wget'):
         self.outputfilename = outputfilename
         self.destdir = destdir
@@ -238,6 +242,7 @@ class IOContext(object):
         self.ratelimit = ratelimit
         self.excludechars = excludechars
         self.proxy = proxy
+        self.download_limits = dl_limits
 
         self.rtmpdump_binary = rtmpdump_binary
         self.ffmpeg_binary = ffmpeg_binary
@@ -877,7 +882,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             outputfile = downloader.output_filename()
             subtitlefiles = \
                 self.download_subtitles(clip.subtitles, filters, outputfile)
-            dl_result = downloader.save_stream()
+            dl_result = downloader.save_stream(io.download_limits)
             if dl_result == RD_SUCCESS:
                 self.postprocess(postprocess_command, outputfile,
                                  subtitlefiles)
@@ -1658,7 +1663,7 @@ class BaseDownloader(object):
             logger.warn('Proxy not supported on this stream. '
                         'Trying to continue anyway')
 
-    def save_stream(self):
+    def save_stream(self, download_limits):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
@@ -1727,7 +1732,7 @@ class BaseDownloader(object):
 
 
 class ExternalDownloader(BaseDownloader):
-    def save_stream(self):
+    def save_stream(self, download_limits):
         args = self.build_args()
         outputfile = self.output_filename()
         self.log_output_file(outputfile)
@@ -1795,7 +1800,7 @@ class RTMPDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.rtmpdump_binary = io.rtmpdump_binary
 
-    def save_stream(self):
+    def save_stream(self, download_limits):
         # rtmpdump fails to resume if the file doesn't contain at
         # least one audio frame. Remove small files to force a restart
         # from the beginning.
@@ -1803,7 +1808,7 @@ class RTMPDump(ExternalDownloader):
         if self.resume and self.is_small_file(filename):
             self.remove(filename)
 
-        return super(RTMPDump, self).save_stream()
+        return super(RTMPDump, self).save_stream(download_limits)
 
     def resume_supported(self):
         return True
@@ -1864,8 +1869,8 @@ class HDSDump(ExternalDownloader):
         if io.ratelimit:
             options.extend(['--maxspeed', str(io.ratelimit)])
 
-        if filters.duration:
-            options.extend(['--duration', str(filters.duration)])
+        if io.download_limits.duration:
+            options.extend(['--duration', str(io.download_limits.duration)])
 
         return options
 
@@ -1911,17 +1916,17 @@ class YoutubeDLHDSDump(BaseDownloader):
         self.maxbitrate = filters.maxbitrate
         self.ratelimit = io.ratelimit
 
-        if filters.duration:
-            logger.warning(u'--duration will be ignored when using the '
-                           u'youtube-dl backend')
-
     def resume_supported(self):
         return True
 
     def proxy_supported(self):
         return True
 
-    def save_stream(self):
+    def save_stream(self, download_limits):
+        if download_limits.duration:
+            logger.warning(u'--duration will be ignored when using the '
+                           u'youtube-dl backend')
+
         return self._execute_youtube_dl(self.output_filename())
 
     def pipe(self):
@@ -1995,12 +2000,12 @@ class YoutubeDLHDSDump(BaseDownloader):
 class HLSDump(ExternalDownloader):
     def __init__(self, stream, clip_title, io, filters):
         ExternalDownloader.__init__(self, stream, clip_title, io)
-        self.duration_options = self._filter_options(filters)
+        self.duration_options = self._filter_options(io.download_limits)
         self.ffmpeg_binary = io.ffmpeg_binary
 
-    def _filter_options(self, filters):
-        if filters.duration:
-            return ['-t', str(filters.duration)]
+    def _filter_options(self, download_limits):
+        if download_limits.duration:
+            return ['-t', str(download_limits.duration)]
         else:
             return []
 

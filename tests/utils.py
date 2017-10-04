@@ -2,7 +2,7 @@ import sys
 import json
 from cStringIO import StringIO
 from yledl import download, StreamFilters, BackendFactory, IOContext, \
-    StreamAction, RD_SUCCESS
+    DownloadLimits, StreamAction, RD_SUCCESS
 
 
 # Context manager for capturing stdout output. See
