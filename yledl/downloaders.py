@@ -909,7 +909,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             dl = clip.streamurl.create_downloader(io, clip.title)
             outputfile = dl.output_filename()
             self.download_subtitles(clip.subtitles, filters, outputfile)
-            return dl.pipe()
+            return dl.pipe(io.download_limits)
 
         return self.process(pipe_clip, url, filters)
 
@@ -1667,7 +1667,7 @@ class BaseDownloader(object):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
-    def pipe(self):
+    def pipe(self, download_limits):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
@@ -1733,7 +1733,7 @@ class BaseDownloader(object):
 
 class ExternalDownloader(BaseDownloader):
     def save_stream(self, download_limits):
-        args = self.build_args()
+        args = self.build_args(download_limits)
         outputfile = self.output_filename()
         self.log_output_file(outputfile)
         retcode = self.external_downloader(args)
@@ -1741,7 +1741,7 @@ class ExternalDownloader(BaseDownloader):
             self.log_output_file(outputfile, True)
         return retcode
 
-    def build_args(self):
+    def build_args(self, download_limits):
         return []
 
     def external_downloader(self, args):
@@ -1813,7 +1813,7 @@ class RTMPDump(ExternalDownloader):
     def resume_supported(self):
         return True
 
-    def build_args(self):
+    def build_args(self, download_limits):
         args = [self.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', self.output_filename()]
@@ -1821,7 +1821,7 @@ class RTMPDump(ExternalDownloader):
             args.append('-e')
         return args
 
-    def pipe(self):
+    def pipe(self, download_limits):
         args = [self.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', '-']
@@ -1874,12 +1874,12 @@ class HDSDump(ExternalDownloader):
 
         return options
 
-    def build_args(self):
+    def build_args(self, download_limits):
         return self.adobehds_command_line([
             '--delete',
             '--outfile', self.output_filename()])
 
-    def pipe(self):
+    def pipe(self, download_limits):
         args = self.adobehds_command_line(['--play'])
         self.external_downloader(args)
         self.cleanup_cookies()
@@ -1929,7 +1929,7 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         return self._execute_youtube_dl(self.output_filename())
 
-    def pipe(self):
+    def pipe(self, download_limits):
         return self._execute_youtube_dl(u'-')
 
     def _execute_youtube_dl(self, outputfile):
@@ -2009,23 +2009,24 @@ class HLSDump(ExternalDownloader):
         else:
             return []
 
-    def build_args(self):
+    def build_args(self, download_limits):
         return self.ffmpeg_command_line(
-            ['-bsf:a', 'aac_adtstoasc', 'file:' + self.output_filename()])
+            ['-bsf:a', 'aac_adtstoasc', 'file:' + self.output_filename()],
+            download_limits)
 
-    def pipe(self):
-        args = self.ffmpeg_command_line(['-f', 'mpegts', 'pipe:1'])
+    def pipe(self, download_limits):
+        args = self.ffmpeg_command_line(['-f', 'mpegts', 'pipe:1'], download_limits)
         self.external_downloader(args)
         return RD_SUCCESS
 
-    def ffmpeg_command_line(self, output_options):
+    def ffmpeg_command_line(self, output_options, download_limits):
         debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
         args = [self.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
                 '-i', self.stream.to_url(),
                 '-vcodec', 'copy', '-acodec', 'copy']
-        args.extend(self.duration_options)
+        args.extend(self._filter_options(download_limits))
         args.extend(output_options)
         return args
 
@@ -2039,7 +2040,7 @@ class WgetDump(ExternalDownloader):
         self.wget_binary = io.wget_binary
         self.ratelimit = io.ratelimit
 
-    def build_args(self):
+    def build_args(self, download_limits):
         args = self.shared_wget_args(self.output_filename())
         args.extend([
             '--progress=bar',
@@ -2055,7 +2056,7 @@ class WgetDump(ExternalDownloader):
         args.append(self.stream.to_url())
         return args
 
-    def pipe(self):
+    def pipe(self, download_limits):
         args = self.shared_wget_args('-')
         args.extend([
             '--no-verbose',
