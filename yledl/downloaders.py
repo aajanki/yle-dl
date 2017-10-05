@@ -661,7 +661,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         if not self.to_rtmpdump_args():
             return None
         else:
-            return RTMPDump(self, clip_title, io)
+            return RTMPDump(self, io)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -781,7 +781,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         return self.hds_url
 
     def create_downloader(self, io, clip_title):
-        return self.downloader_class(self, clip_title, io, self.filters)
+        return self.downloader_class(self, io, self.filters)
 
     def bitrates_from_metadata(self):
         if self.hds_url:
@@ -820,7 +820,7 @@ class HTTPStreamUrl(object):
         return self.url
 
     def create_downloader(self, io, clip_title):
-        return WgetDump(self, clip_title, io)
+        return WgetDump(self, io)
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -829,7 +829,7 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
 
     def create_downloader(self, io, clip_title):
-        return HLSDump(self, clip_title, io)
+        return HLSDump(self, io)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -1643,7 +1643,7 @@ class RetryingDownloader(object):
 
 
 class BaseDownloader(object):
-    def __init__(self, stream, clip_title, io):
+    def __init__(self, stream, io):
         self.stream = stream
         if io.outputfilename:
             self.preferred_name = self.append_ext_if_missing(
@@ -1799,8 +1799,8 @@ class Subprocess(object):
 
 
 class RTMPDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, io):
-        ExternalDownloader.__init__(self, stream, clip_title, io)
+    def __init__(self, stream, io):
+        ExternalDownloader.__init__(self, stream, io)
         self.rtmpdump_binary = io.rtmpdump_binary
 
     def save_stream(self, clip_title, io):
@@ -1848,8 +1848,8 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, io, filters):
-        ExternalDownloader.__init__(self, stream, clip_title, io)
+    def __init__(self, stream, io, filters):
+        ExternalDownloader.__init__(self, stream, io)
         self.quality_options = self._filter_options(filters)
         self.hds_binary = io.hds_binary
 
@@ -1926,8 +1926,8 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, stream, clip_title, io, filters):
-        BaseDownloader.__init__(self, stream, clip_title, io)
+    def __init__(self, stream, io, filters):
+        BaseDownloader.__init__(self, stream, io)
         self.maxbitrate = filters.maxbitrate
 
     def resume_supported(self):
@@ -2012,8 +2012,8 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, io):
-        ExternalDownloader.__init__(self, stream, clip_title, io)
+    def __init__(self, stream, io):
+        ExternalDownloader.__init__(self, stream, io)
         self.ffmpeg_binary = io.ffmpeg_binary
 
     def duration_supported(self):
@@ -2052,8 +2052,8 @@ class HLSDump(ExternalDownloader):
 
 
 class WgetDump(ExternalDownloader):
-    def __init__(self, stream, clip_title, io):
-        ExternalDownloader.__init__(self, stream, clip_title, io)
+    def __init__(self, stream, io):
+        ExternalDownloader.__init__(self, stream, io)
         self.wget_binary = io.wget_binary
 
     def build_args(self, clip_title, io):
