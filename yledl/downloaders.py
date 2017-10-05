@@ -909,7 +909,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             dl = clip.streamurl.create_downloader(io)
             outputfile = dl.output_filename(clip.title, io)
             self.download_subtitles(clip.subtitles, filters, outputfile)
-            return dl.pipe(io.download_limits)
+            return dl.pipe(io)
 
         return self.process(pipe_clip, url, filters)
 
@@ -1662,7 +1662,7 @@ class BaseDownloader(object):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
-    def pipe(self, download_limits):
+    def pipe(self, io):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
@@ -1822,7 +1822,7 @@ class RTMPDump(ExternalDownloader):
             args.append('-e')
         return args
 
-    def pipe(self, download_limits):
+    def pipe(self, io):
         args = [self.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', '-']
@@ -1892,8 +1892,8 @@ class HDSDump(ExternalDownloader):
                 '--outfile', self.output_filename(clip_title, io)
             ])
 
-    def pipe(self, download_limits):
-        args = self.adobehds_command_line(download_limits, ['--play'])
+    def pipe(self, io):
+        args = self.adobehds_command_line(io.download_limits, ['--play'])
         self.external_downloader(args)
         self.cleanup_cookies()
         return RD_SUCCESS
@@ -1944,8 +1944,8 @@ class YoutubeDLHDSDump(BaseDownloader):
         output_name = self.output_filename(clip_title, io)
         return self._execute_youtube_dl(output_name, io.download_limits)
 
-    def pipe(self, download_limits):
-        return self._execute_youtube_dl(u'-', download_limits)
+    def pipe(self, io):
+        return self._execute_youtube_dl(u'-', io.download_limits)
 
     def _execute_youtube_dl(self, outputfile, download_limits):
         try:
@@ -2032,8 +2032,9 @@ class HLSDump(ExternalDownloader):
             ['-bsf:a', 'aac_adtstoasc', 'file:' + output_name],
             io.download_limits)
 
-    def pipe(self, download_limits):
-        args = self.ffmpeg_command_line(['-f', 'mpegts', 'pipe:1'], download_limits)
+    def pipe(self, io):
+        pipe_args = ['-f', 'mpegts', 'pipe:1']
+        args = self.ffmpeg_command_line(pipe_args, io.download_limits)
         self.external_downloader(args)
         return RD_SUCCESS
 
@@ -2074,7 +2075,7 @@ class WgetDump(ExternalDownloader):
         args.append(self.stream.to_url())
         return args
 
-    def pipe(self, download_limits):
+    def pipe(self, io):
         args = self.shared_wget_args('-')
         args.extend([
             '--no-verbose',
