@@ -1850,7 +1850,6 @@ class HDSDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, io)
         self.quality_options = self._filter_options(filters)
         self.hds_binary = io.hds_binary
-        self.proxy = io.proxy
 
     def resume_supported(self):
         return True
@@ -1885,28 +1884,27 @@ class HDSDump(ExternalDownloader):
         return options
 
     def build_args(self, clip_title, io):
-        return self.adobehds_command_line(
-            io.download_limits,
-            [
-                '--delete',
-                '--outfile', self.output_filename(clip_title, io)
-            ])
+        args = [
+            '--delete',
+            '--outfile', self.output_filename(clip_title, io)
+        ]
+        return self.adobehds_command_line(io, args)
 
     def pipe(self, io):
-        args = self.adobehds_command_line(io.download_limits, ['--play'])
+        args = self.adobehds_command_line(io, ['--play'])
         self.external_downloader(args)
         self.cleanup_cookies()
         return RD_SUCCESS
 
-    def adobehds_command_line(self, download_limits, extra_args):
+    def adobehds_command_line(self, io, extra_args):
         args = list(self.hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
-        args.extend(self._limit_options(download_limits))
-        if self.proxy:
+        args.extend(self._limit_options(io.download_limits))
+        if io.proxy:
             args.append('--proxy')
-            args.append(self.proxy)
+            args.append(io.proxy)
             args.append('--fproxy')
         if logger.isEnabledFor(logging.DEBUG):
             args.append('--debug')
@@ -1928,8 +1926,6 @@ class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream, io, filters):
         BaseDownloader.__init__(self, stream, io)
         self.maxbitrate = filters.maxbitrate
-        self.resume = io.resume
-        self.proxy = io.proxy
 
     def resume_supported(self):
         return True
@@ -1942,12 +1938,12 @@ class YoutubeDLHDSDump(BaseDownloader):
             logger.warning(u'--duration will be ignored on this stream')
 
         output_name = self.output_filename(clip_title, io)
-        return self._execute_youtube_dl(output_name, io.download_limits)
+        return self._execute_youtube_dl(output_name, io)
 
     def pipe(self, io):
-        return self._execute_youtube_dl(u'-', io.download_limits)
+        return self._execute_youtube_dl(u'-', io)
 
-    def _execute_youtube_dl(self, outputfile, download_limits):
+    def _execute_youtube_dl(self, outputfile, io):
         try:
             import youtube_dl
         except ImportError:
@@ -1959,15 +1955,15 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         ydlopts = {
             'logtostderr': True,
-            'proxy': self.proxy,
+            'proxy': io.proxy,
             'verbose': logger.isEnabledFor(logging.DEBUG)
         }
 
         dlopts = {
             'nopart': True,
-            'continuedl': outputfile != '-' and self.resume
+            'continuedl': outputfile != '-' and io.resume
         }
-        dlopts.update(self._ratelimit_parameter(download_limits.ratelimit))
+        dlopts.update(self._ratelimit_parameter(io.download_limits.ratelimit))
 
         ydl = youtube_dl.YoutubeDL(ydlopts)
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
