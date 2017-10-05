@@ -878,10 +878,11 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 logger.error(u'Try --showurl')
                 return RD_FAILED
 
-            outputfile = downloader.output_filename()
+            clip_title = clip.title or 'ylestream'
+            outputfile = downloader.output_filename(clip_title, io)
             subtitlefiles = \
                 self.download_subtitles(clip.subtitles, filters, outputfile)
-            dl_result = downloader.save_stream(io.download_limits)
+            dl_result = downloader.save_stream(clip_title, io)
             if dl_result == RD_SUCCESS:
                 self.postprocess(postprocess_command, outputfile,
                                  subtitlefiles)
@@ -906,7 +907,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
             dl = clip.streamurl.create_downloader(io, clip.title)
-            outputfile = dl.output_filename()
+            outputfile = dl.output_filename(clip.title, io)
             self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe(io.download_limits)
 
@@ -1644,15 +1645,12 @@ class RetryingDownloader(object):
 class BaseDownloader(object):
     def __init__(self, stream, clip_title, io):
         self.stream = stream
-        self.clip_title = clip_title or 'ylestream'
-        self.destdir = io.destdir or ''
         if io.outputfilename:
             self.preferred_name = self.append_ext_if_missing(
                 io.outputfilename, self.stream.ext)
         else:
             self.preferred_name = None
         self._cached_output_file = None
-        self.excludechars = io.excludechars
         self.resume = io.resume
         self.proxy = io.proxy
 
@@ -1662,7 +1660,7 @@ class BaseDownloader(object):
             logger.warn('Proxy not supported on this stream. '
                         'Trying to continue anyway')
 
-    def save_stream(self, download_limits):
+    def save_stream(self, clip_title, io):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
@@ -1670,14 +1668,14 @@ class BaseDownloader(object):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
-    def outputfile_from_clip_title(self, resume=False):
+    def outputfile_from_clip_title(self, clip_title, io, resume):
         if self._cached_output_file:
             return self._cached_output_file
 
         ext = self.stream.ext or '.flv'
-        filename = self.sane_filename(self.clip_title, self.excludechars) + ext
-        if self.destdir:
-            filename = os.path.join(self.destdir, filename)
+        filename = self.sane_filename(clip_title, io.excludechars) + ext
+        if io.destdir:
+            filename = os.path.join(io.destdir, filename)
         if not resume:
             filename = self.next_available_filename(filename)
         self._cached_output_file = filename
@@ -1715,10 +1713,10 @@ class BaseDownloader(object):
         x = name.strip(' .').translate(tr)
         return x or u'ylevideo'
 
-    def output_filename(self):
+    def output_filename(self, clip_title, io):
         resume_job = self.resume and self.resume_supported()
         return (self.preferred_name or
-                self.outputfile_from_clip_title(resume=resume_job))
+                self.outputfile_from_clip_title(clip_title, io, resume_job))
 
     def resume_supported(self):
         return False
@@ -1734,19 +1732,19 @@ class BaseDownloader(object):
 
 
 class ExternalDownloader(BaseDownloader):
-    def save_stream(self, download_limits):
-        if not self.duration_supported() and download_limits.duration:
+    def save_stream(self, clip_title, io):
+        if not self.duration_supported() and io.download_limits.duration:
             logger.warning(u'--duration will be ignored on this stream')
 
-        args = self.build_args(download_limits)
-        outputfile = self.output_filename()
+        args = self.build_args(clip_title, io)
+        outputfile = self.output_filename(clip_title, io)
         self.log_output_file(outputfile)
         retcode = self.external_downloader(args)
         if retcode == RD_SUCCESS:
             self.log_output_file(outputfile, True)
         return retcode
 
-    def build_args(self, download_limits):
+    def build_args(self, clip_title, io):
         return []
 
     def external_downloader(self, args):
@@ -1805,23 +1803,23 @@ class RTMPDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.rtmpdump_binary = io.rtmpdump_binary
 
-    def save_stream(self, download_limits):
+    def save_stream(self, clip_title, io):
         # rtmpdump fails to resume if the file doesn't contain at
         # least one audio frame. Remove small files to force a restart
         # from the beginning.
-        filename = self.output_filename()
+        filename = self.output_filename(clip_title, io)
         if self.resume and self.is_small_file(filename):
             self.remove(filename)
 
-        return super(RTMPDump, self).save_stream(download_limits)
+        return super(RTMPDump, self).save_stream(clip_title, io)
 
     def resume_supported(self):
         return True
 
-    def build_args(self, download_limits):
+    def build_args(self, clip_title, io):
         args = [self.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
-        args += ['-o', self.output_filename()]
+        args += ['-o', self.output_filename(clip_title, io)]
         if self.resume:
             args.append('-e')
         return args
@@ -1887,12 +1885,12 @@ class HDSDump(ExternalDownloader):
 
         return options
 
-    def build_args(self, download_limits):
+    def build_args(self, clip_title, io):
         return self.adobehds_command_line(
-            download_limits,
+            io.download_limits,
             [
                 '--delete',
-                '--outfile', self.output_filename()
+                '--outfile', self.output_filename(clip_title, io)
             ])
 
     def pipe(self, download_limits):
@@ -1938,11 +1936,12 @@ class YoutubeDLHDSDump(BaseDownloader):
     def proxy_supported(self):
         return True
 
-    def save_stream(self, download_limits):
-        if download_limits.duration:
+    def save_stream(self, clip_title, io):
+        if io.download_limits.duration:
             logger.warning(u'--duration will be ignored on this stream')
 
-        return self._execute_youtube_dl(self.output_filename(), download_limits)
+        output_name = self.output_filename(clip_title, io)
+        return self._execute_youtube_dl(output_name, io.download_limits)
 
     def pipe(self, download_limits):
         return self._execute_youtube_dl(u'-', download_limits)
@@ -2026,10 +2025,11 @@ class HLSDump(ExternalDownloader):
         else:
             return []
 
-    def build_args(self, download_limits):
+    def build_args(self, clip_title, io):
+        output_name = self.output_filename(clip_title, io)
         return self.ffmpeg_command_line(
-            ['-bsf:a', 'aac_adtstoasc', 'file:' + self.output_filename()],
-            download_limits)
+            ['-bsf:a', 'aac_adtstoasc', 'file:' + output_name],
+            io.download_limits)
 
     def pipe(self, download_limits):
         args = self.ffmpeg_command_line(['-f', 'mpegts', 'pipe:1'], download_limits)
@@ -2056,8 +2056,9 @@ class WgetDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, clip_title, io)
         self.wget_binary = io.wget_binary
 
-    def build_args(self, download_limits):
-        args = self.shared_wget_args(self.output_filename())
+    def build_args(self, clip_title, io):
+        output_name = self.output_filename(clip_title, io)
+        args = self.shared_wget_args(output_name)
         args.extend([
             '--progress=bar',
             '--tries=5',
@@ -2065,8 +2066,8 @@ class WgetDump(ExternalDownloader):
         ])
         if self.resume:
             args.append('-c')
-        if download_limits.ratelimit:
-            args.append('--limit-rate={}k'.format(download_limits.ratelimit))
+        if io.download_limits.ratelimit:
+            args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
         if not logger.isEnabledFor(logging.DEBUG):
             args.extend(['--no-verbose', '--show-progress'])
         args.append(self.stream.to_url())
