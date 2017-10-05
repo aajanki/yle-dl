@@ -1651,10 +1651,9 @@ class BaseDownloader(object):
         else:
             self.preferred_name = None
         self._cached_output_file = None
-        self.resume = io.resume
         self.proxy = io.proxy
 
-        if self.resume and not self.resume_supported():
+        if io.resume and not self.resume_supported():
             logger.warn('Resume not supported on this stream')
         if self.proxy and not self.proxy_supported():
             logger.warn('Proxy not supported on this stream. '
@@ -1714,7 +1713,7 @@ class BaseDownloader(object):
         return x or u'ylevideo'
 
     def output_filename(self, clip_title, io):
-        resume_job = self.resume and self.resume_supported()
+        resume_job = io.resume and self.resume_supported()
         return (self.preferred_name or
                 self.outputfile_from_clip_title(clip_title, io, resume_job))
 
@@ -1808,7 +1807,7 @@ class RTMPDump(ExternalDownloader):
         # least one audio frame. Remove small files to force a restart
         # from the beginning.
         filename = self.output_filename(clip_title, io)
-        if self.resume and self.is_small_file(filename):
+        if io.resume and self.is_small_file(filename):
             self.remove(filename)
 
         return super(RTMPDump, self).save_stream(clip_title, io)
@@ -1820,7 +1819,7 @@ class RTMPDump(ExternalDownloader):
         args = [self.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', self.output_filename(clip_title, io)]
-        if self.resume:
+        if io.resume:
             args.append('-e')
         return args
 
@@ -1929,6 +1928,7 @@ class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream, io, filters):
         BaseDownloader.__init__(self, stream, io)
         self.maxbitrate = filters.maxbitrate
+        self.resume = io.resume
 
     def resume_supported(self):
         return True
@@ -2064,7 +2064,7 @@ class WgetDump(ExternalDownloader):
             '--tries=5',
             '--random-wait'
         ])
-        if self.resume:
+        if io.resume:
             args.append('-c')
         if io.download_limits.ratelimit:
             args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
