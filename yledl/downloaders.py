@@ -657,7 +657,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
-    def create_downloader(self, io, clip_title):
+    def create_downloader(self, io):
         if not self.to_rtmpdump_args():
             return None
         else:
@@ -780,7 +780,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_url(self):
         return self.hds_url
 
-    def create_downloader(self, io, clip_title):
+    def create_downloader(self, io):
         return self.downloader_class(self, io, self.filters)
 
     def bitrates_from_metadata(self):
@@ -819,7 +819,7 @@ class HTTPStreamUrl(object):
     def to_url(self):
         return self.url
 
-    def create_downloader(self, io, clip_title):
+    def create_downloader(self, io):
         return WgetDump(self, io)
 
 
@@ -828,7 +828,7 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.ext = ext
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
 
-    def create_downloader(self, io, clip_title):
+    def create_downloader(self, io):
         return HLSDump(self, io)
 
 
@@ -871,7 +871,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def download_episodes(self, url, io, filters, postprocess_command):
         def download_clip(clip):
-            downloader = clip.streamurl.create_downloader(io, clip.title)
+            downloader = clip.streamurl.create_downloader(io)
             if not downloader:
                 logger.error(u'Downloading the stream at %s is not yet '
                              u'supported.' % url)
@@ -906,7 +906,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
-            dl = clip.streamurl.create_downloader(io, clip.title)
+            dl = clip.streamurl.create_downloader(io)
             outputfile = dl.output_filename(clip.title, io)
             self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe(io.download_limits)
