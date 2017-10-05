@@ -1651,11 +1651,10 @@ class BaseDownloader(object):
         else:
             self.preferred_name = None
         self._cached_output_file = None
-        self.proxy = io.proxy
 
         if io.resume and not self.resume_supported():
             logger.warn('Resume not supported on this stream')
-        if self.proxy and not self.proxy_supported():
+        if io.proxy and not self.proxy_supported():
             logger.warn('Proxy not supported on this stream. '
                         'Trying to continue anyway')
 
@@ -1851,6 +1850,7 @@ class HDSDump(ExternalDownloader):
         ExternalDownloader.__init__(self, stream, io)
         self.quality_options = self._filter_options(filters)
         self.hds_binary = io.hds_binary
+        self.proxy = io.proxy
 
     def resume_supported(self):
         return True
@@ -1929,6 +1929,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         BaseDownloader.__init__(self, stream, io)
         self.maxbitrate = filters.maxbitrate
         self.resume = io.resume
+        self.proxy = io.proxy
 
     def resume_supported(self):
         return True
