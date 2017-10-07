@@ -601,7 +601,7 @@ class AkamaiFlavors(AreenaUtils):
             return InvalidStreamUrl('Decrypting media URL failed')
 
         if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(decodedurl, filters)
+            return Areena2014HDSStreamUrl(decodedurl)
         else:
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
@@ -654,7 +654,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
-    def create_downloader(self, io, backends):
+    def create_downloader(self, io, filters, backends):
         if not self.to_rtmpdump_args():
             return None
         else:
@@ -754,7 +754,6 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
 class Areena2014HDSStreamUrl(AreenaStreamBase):
     def __init__(self, hdsurl, filters):
         AreenaStreamBase.__init__(self)
-        self.filters = filters
 
         if hdsurl:
             sep = '&' if '?' in hdsurl else '?'
@@ -776,11 +775,11 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_url(self):
         return self.hds_url
 
-    def create_downloader(self, io, backends):
+    def create_downloader(self, io, filters, backends):
         downloaders = []
         for backend in backends:
             dl_constructor = backend.hds()
-            downloaders.append(dl_constructor(self, io, self.filters))
+            downloaders.append(dl_constructor(self, io, filters))
 
         return FallbackDump(downloaders)
 
@@ -820,7 +819,7 @@ class HTTPStreamUrl(object):
     def to_url(self):
         return self.url
 
-    def create_downloader(self, io, backends):
+    def create_downloader(self, io, filters, backends):
         return WgetDump(self, io)
 
 
@@ -829,7 +828,7 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.ext = ext
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
 
-    def create_downloader(self, io, backends):
+    def create_downloader(self, io, filters, backends):
         return HLSDump(self, io)
 
 
@@ -872,7 +871,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def download_episodes(self, url, io, filters, postprocess_command):
         def download_clip(clip):
-            downloader = clip.streamurl.create_downloader(io, self.backends)
+            downloader = clip.streamurl.create_downloader(
+                io, filters, self.backends)
             if not downloader:
                 logger.error(u'Downloading the stream at %s is not yet '
                              u'supported.' % url)
@@ -907,7 +907,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
-            dl = clip.streamurl.create_downloader(io, self.backends)
+            dl = clip.streamurl.create_downloader(io, filters, self.backends)
             outputfile = dl.output_filename(clip.title, io)
             self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe(io)
