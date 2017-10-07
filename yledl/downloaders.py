@@ -507,7 +507,8 @@ class KalturaFlavors(object):
         self.subtitles = subtitles
 
     def streamurl(self, pageurl, aes_key, filters):
-        return self._select_matching_stream(self.kaltura_flavors, self.stream_meta, filters)
+        return self._select_matching_stream(
+            self.kaltura_flavors, self.stream_meta, filters)
 
     def metadata(self, aes_key):
         return [Flavors.single_flavor_meta(fl) for fl in self.kaltura_flavors]
@@ -548,8 +549,7 @@ class KalturaFlavors(object):
         entry_id = selected_flavor.get('entryId')
         flavor_id = selected_flavor.get('id', '0_00000000')
         ext = '.' + selected_flavor.get('fileExt', 'mp4')
-        return self._stream_factory(
-            entry_id, flavor_id, stream_format, filters, ext)
+        return self._stream_factory(entry_id, flavor_id, stream_format, ext)
 
     def _filter_flavors_by_bitrate(self, flavors, filters):
         valid_bitrates = [fl for fl in flavors
@@ -566,7 +566,7 @@ class KalturaFlavors(object):
 
         return selected
 
-    def _stream_factory(self, entry_id, flavor_id, stream_format, filters, ext):
+    def _stream_factory(self, entry_id, flavor_id, stream_format, ext):
         if stream_format == 'applehttp':
             return KalturaHLSStreamUrl(entry_id, flavor_id, ext)
         else:
@@ -579,7 +579,7 @@ class AkamaiFlavors(AreenaUtils):
         self.subtitles = subtitles
 
     def streamurl(self, pageurl, aes_key, filters):
-        return self._media_streamurl(self.media, pageurl, aes_key, filters)
+        return self._media_streamurl(self.media, pageurl, aes_key)
 
     def metadata(self, aes_key):
         stream = self.streamurl('', aes_key, StreamFilters())
@@ -591,7 +591,7 @@ class AkamaiFlavors(AreenaUtils):
         else:
             return [Flavors.single_flavor_meta(self.media)]
 
-    def _media_streamurl(self, media, pageurl, aes_key, filters):
+    def _media_streamurl(self, media, pageurl, aes_key):
         url = media.get('url')
         if not url:
             return InvalidStreamUrl('No media URL')
@@ -603,7 +603,7 @@ class AkamaiFlavors(AreenaUtils):
         if media.get('protocol') == 'HDS':
             return Areena2014HDSStreamUrl(decodedurl)
         else:
-            return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
+            return Areena2014RTMPStreamUrl(pageurl, decodedurl)
 
 
 ### Areena stream URL ###
@@ -752,7 +752,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
 
 
 class Areena2014HDSStreamUrl(AreenaStreamBase):
-    def __init__(self, hdsurl, filters):
+    def __init__(self, hdsurl):
         AreenaStreamBase.__init__(self)
 
         if hdsurl:
@@ -791,7 +791,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
-    def __init__(self, pageurl, streamurl, filters):
+    def __init__(self, pageurl, streamurl):
         AreenaRTMPStreamUrl.__init__(self)
         rtmpstream = self.create_rtmpstream(streamurl)
         self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl,
