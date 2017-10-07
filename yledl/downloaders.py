@@ -1799,7 +1799,6 @@ class Subprocess(object):
 class RTMPDump(ExternalDownloader):
     def __init__(self, stream, io):
         ExternalDownloader.__init__(self, stream, io)
-        self.rtmpdump_binary = io.rtmpdump_binary
 
     def save_stream(self, clip_title, io):
         # rtmpdump fails to resume if the file doesn't contain at
@@ -1815,7 +1814,7 @@ class RTMPDump(ExternalDownloader):
         return True
 
     def build_args(self, clip_title, io):
-        args = [self.rtmpdump_binary]
+        args = [io.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', self.output_filename(clip_title, io)]
         if io.resume:
@@ -1823,7 +1822,7 @@ class RTMPDump(ExternalDownloader):
         return args
 
     def pipe(self, io):
-        args = [self.rtmpdump_binary]
+        args = [io.rtmpdump_binary]
         args += self.stream.to_rtmpdump_args()
         args += ['-o', '-']
         self.external_downloader(args)
@@ -1849,7 +1848,6 @@ class HDSDump(ExternalDownloader):
     def __init__(self, stream, io, filters):
         ExternalDownloader.__init__(self, stream, io)
         self.quality_options = self._filter_options(filters)
-        self.hds_binary = io.hds_binary
 
     def resume_supported(self):
         return True
@@ -1897,7 +1895,7 @@ class HDSDump(ExternalDownloader):
         return RD_SUCCESS
 
     def adobehds_command_line(self, io, extra_args):
-        args = list(self.hds_binary)
+        args = list(io.hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
         args.extend(self.quality_options)
@@ -2009,14 +2007,10 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, stream, io):
-        ExternalDownloader.__init__(self, stream, io)
-        self.ffmpeg_binary = io.ffmpeg_binary
-
     def duration_supported(self):
         return True
 
-    def _filter_options(self, download_limits):
+    def _duration_arg(self, download_limits):
         if download_limits.duration:
             return ['-t', str(download_limits.duration)]
         else:
@@ -2025,23 +2019,23 @@ class HLSDump(ExternalDownloader):
     def build_args(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
         return self.ffmpeg_command_line(
-            ['-bsf:a', 'aac_adtstoasc', 'file:' + output_name],
-            io.download_limits)
+            io,
+            ['-bsf:a', 'aac_adtstoasc', 'file:' + output_name])
 
     def pipe(self, io):
         pipe_args = ['-f', 'mpegts', 'pipe:1']
-        args = self.ffmpeg_command_line(pipe_args, io.download_limits)
+        args = self.ffmpeg_command_line(io, pipe_args)
         self.external_downloader(args)
         return RD_SUCCESS
 
-    def ffmpeg_command_line(self, output_options, download_limits):
+    def ffmpeg_command_line(self, io, output_options):
         debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
-        args = [self.ffmpeg_binary, '-y',
+        args = [io.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
                 '-i', self.stream.to_url(),
                 '-vcodec', 'copy', '-acodec', 'copy']
-        args.extend(self._filter_options(download_limits))
+        args.extend(self._duration_arg(io.download_limits))
         args.extend(output_options)
         return args
 
@@ -2050,13 +2044,9 @@ class HLSDump(ExternalDownloader):
 
 
 class WgetDump(ExternalDownloader):
-    def __init__(self, stream, io):
-        ExternalDownloader.__init__(self, stream, io)
-        self.wget_binary = io.wget_binary
-
     def build_args(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
-        args = self.shared_wget_args(output_name)
+        args = self.shared_wget_args(io.wget_binary, output_name)
         args.extend([
             '--progress=bar',
             '--tries=5',
@@ -2072,7 +2062,7 @@ class WgetDump(ExternalDownloader):
         return args
 
     def pipe(self, io):
-        args = self.shared_wget_args('-')
+        args = self.shared_wget_args(io.wget_binary, '-')
         args.extend([
             '--no-verbose',
             self.stream.to_url()
@@ -2080,9 +2070,9 @@ class WgetDump(ExternalDownloader):
         self.external_downloader(args)
         return RD_SUCCESS
 
-    def shared_wget_args(self, output_filename):
+    def shared_wget_args(self, wget_binary, output_filename):
         return [
-            self.wget_binary,
+            wget_binary,
             '-O', output_filename,
             '--user-agent=' + yledl_user_agent(),
             '--timeout=20'
