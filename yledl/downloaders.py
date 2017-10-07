@@ -41,18 +41,18 @@ logger = logging.getLogger('yledl')
 def downloader_factory(url, backends):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
             re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url):
-        return RetryingDownloader(ElavaArkistoDownloader, backends)
+        return ElavaArkistoDownloader(backends)
     elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
-        return RetryingDownloader(ArkivetDownloader, backends)
+        return ArkivetDownloader(backends)
     elif re.match(r'^https?://(www\.)?yle\.fi/radio/[a-zA-Z0-9/]+/suora', url):
-        return RetryingDownloader(AreenaLiveRadioDownloader, backends)
+        return AreenaLiveRadioDownloader(backends)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
-        return RetryingDownloader(Areena2014LiveDownloader, backends)
+        return Areena2014LiveDownloader(backends)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
-        return RetryingDownloader(YleUutisetDownloader, backends)
+        return YleUutisetDownloader(backends)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
             re.match(r'^https?://yle\.fi/', url):
-        return RetryingDownloader(Areena2014Downloader, backends)
+        return Areena2014Downloader(backends)
     else:
         return None
 
@@ -577,12 +577,12 @@ class AkamaiFlavors(AreenaUtils):
     def __init__(self, media, subtitles, backend, aes_key):
         self.media = media
         self.subtitles = subtitles
-        self.backend = backend
+        self.backends = backend
         self.aes_key = aes_key
 
     def streamurl(self, pageurl, filters):
         return self._media_streamurl(
-            self.media, pageurl, self.backend, self.aes_key, filters)
+            self.media, pageurl, self.backends, self.aes_key, filters)
 
     def metadata(self):
         stream = self.streamurl('', StreamFilters())
@@ -594,7 +594,7 @@ class AkamaiFlavors(AreenaUtils):
         else:
             return [Flavors.single_flavor_meta(self.media)]
 
-    def _media_streamurl(self, media, pageurl, backend, aes_key, filters):
+    def _media_streamurl(self, media, pageurl, backends, aes_key, filters):
         url = media.get('url')
         if not url:
             return InvalidStreamUrl('No media URL')
@@ -604,7 +604,7 @@ class AkamaiFlavors(AreenaUtils):
             return InvalidStreamUrl('Decrypting media URL failed')
 
         if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(decodedurl, filters, backend)
+            return Areena2014HDSStreamUrl(decodedurl, filters, backends)
         else:
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
@@ -755,10 +755,10 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
 
 
 class Areena2014HDSStreamUrl(AreenaStreamBase):
-    def __init__(self, hdsurl, filters, backend):
+    def __init__(self, hdsurl, filters, backends):
         AreenaStreamBase.__init__(self)
         self.filters = filters
-        self.downloader_class = backend.hds()
+        self.backends = backends
 
         if hdsurl:
             sep = '&' if '?' in hdsurl else '?'
@@ -781,7 +781,12 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         return self.hds_url
 
     def create_downloader(self, io):
-        return self.downloader_class(self, io, self.filters)
+        downloaders = []
+        for backend in self.backends:
+            dl_constructor = backend.hds()
+            downloaders.append(dl_constructor(self, io, self.filters))
+
+        return FallbackDump(downloaders)
 
     def bitrates_from_metadata(self):
         if self.hds_url:
@@ -866,8 +871,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = 'yjuap4n5ok9wzg43'
 
-    def __init__(self, backend_factory):
-        self.backend = backend_factory
+    def __init__(self, backends):
+        self.backends = backends
 
     def download_episodes(self, url, io, filters, postprocess_command):
         def download_clip(clip):
@@ -1113,7 +1118,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
             subtitles = self.media_subtitles(subtitle_media)
             return AkamaiFlavors(subtitle_media, subtitles,
-                                 self.backend, self.AES_KEY)
+                                 self.backends, self.AES_KEY)
 
     def get_akamai_medias(self, program_info, media_id, program_id,
                           default_video_proto):
@@ -1591,54 +1596,6 @@ class ArkivetDownloader(Areena2014Downloader):
         return [d if '-' in d else '1-' + d for d in dataids]
 
 
-### Downloader wrapper class that retries using different backends ###
-### until the download succeeds ###
-
-
-class RetryingDownloader(object):
-    def __init__(self, wrapped_class, backend_factories):
-        self.wrapped_class = wrapped_class
-        self.backends = list(backend_factories)
-
-    def _create_next_downloader(self):
-        if self.backends:
-            backend = self.backends.pop(0)
-            logger.debug(str(backend))
-            return self.wrapped_class(backend)
-        else:
-            return None
-
-    def _retry_call(self, method_name, *args, **kwargs):
-        downloader = self._create_next_downloader()
-        if not downloader:
-            return RD_FAILED
-
-        method = getattr(downloader, method_name)
-        res = method(*args, **kwargs)
-        if res == RD_FAILED:
-            return self._retry_call(method_name, *args, **kwargs)
-        else:
-            return res
-
-    def print_urls(self, *args, **kwargs):
-        return self._retry_call('print_urls', *args, **kwargs)
-
-    def print_episode_pages(self, *args, **kwargs):
-        return self._retry_call('print_episode_pages', *args, **kwargs)
-
-    def print_titles(self, *args, **kwargs):
-        return self._retry_call('print_titles', *args, **kwargs)
-
-    def print_metadata(self, *args, **kwargs):
-        return self._retry_call('print_metadata', *args, **kwargs)
-
-    def download_episodes(self, *args, **kwargs):
-        return self._retry_call('download_episodes', *args, **kwargs)
-
-    def pipe(self, *args, **kwargs):
-        return self._retry_call('pipe', *args, **kwargs)
-
-
 ### Download a stream to a local file ###
 
 
@@ -2078,3 +2035,30 @@ class WgetDump(ExternalDownloader):
 
     def resume_supported(self):
         return True
+
+
+### Try multiple downloaders until one succeeds ###
+
+
+class FallbackDump(object):
+    def __init__(self, downloaders):
+        self.downloaders = downloaders
+
+    def save_stream(self, clip_title, io):
+        return self._retry_call(lambda x: x.save_stream, clip_title, io)
+
+    def pipe(self, io):
+        return self._retry_call(lambda x: x.pipe, io)
+
+    def output_filename(self, clip_title, io):
+       return self._retry_call(lambda x: x.output_filename, clip_title, io)
+
+    def _retry_call(self, get_action, *args, **kwargs):
+        for downloader in self.downloaders:
+            logger.debug('Now trying downloader {}'.format(type(downloader).__name__))
+            method = get_action(downloader)
+            res = method(*args, **kwargs)
+            if res != RD_FAILED:
+                return res
+
+        return RD_FAILED

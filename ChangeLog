@@ -8,6 +8,7 @@ xx xxx 2017, Version 2.25
 - Retry failing downloads (HTML5 streams and stream metadata only)
 - Support --resume on HTML5 streams
 - Cancel stalled metadata downloads after a timeout
+- Fallback to youtube-dl only when it is useful
 
 23 Sep 2017, Version 2.24
 
