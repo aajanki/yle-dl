@@ -574,15 +574,14 @@ class KalturaFlavors(object):
 
 
 class AkamaiFlavors(AreenaUtils):
-    def __init__(self, media, subtitles, backend, aes_key):
+    def __init__(self, media, subtitles, aes_key):
         self.media = media
         self.subtitles = subtitles
-        self.backends = backend
         self.aes_key = aes_key
 
     def streamurl(self, pageurl, filters):
         return self._media_streamurl(
-            self.media, pageurl, self.backends, self.aes_key, filters)
+            self.media, pageurl, self.aes_key, filters)
 
     def metadata(self):
         stream = self.streamurl('', StreamFilters())
@@ -594,7 +593,7 @@ class AkamaiFlavors(AreenaUtils):
         else:
             return [Flavors.single_flavor_meta(self.media)]
 
-    def _media_streamurl(self, media, pageurl, backends, aes_key, filters):
+    def _media_streamurl(self, media, pageurl, aes_key, filters):
         url = media.get('url')
         if not url:
             return InvalidStreamUrl('No media URL')
@@ -604,7 +603,7 @@ class AkamaiFlavors(AreenaUtils):
             return InvalidStreamUrl('Decrypting media URL failed')
 
         if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(decodedurl, filters, backends)
+            return Areena2014HDSStreamUrl(decodedurl, filters)
         else:
             return Areena2014RTMPStreamUrl(pageurl, decodedurl, filters)
 
@@ -657,7 +656,7 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
-    def create_downloader(self, io):
+    def create_downloader(self, io, backends):
         if not self.to_rtmpdump_args():
             return None
         else:
@@ -755,10 +754,9 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
 
 
 class Areena2014HDSStreamUrl(AreenaStreamBase):
-    def __init__(self, hdsurl, filters, backends):
+    def __init__(self, hdsurl, filters):
         AreenaStreamBase.__init__(self)
         self.filters = filters
-        self.backends = backends
 
         if hdsurl:
             sep = '&' if '?' in hdsurl else '?'
@@ -780,9 +778,9 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_url(self):
         return self.hds_url
 
-    def create_downloader(self, io):
+    def create_downloader(self, io, backends):
         downloaders = []
-        for backend in self.backends:
+        for backend in backends:
             dl_constructor = backend.hds()
             downloaders.append(dl_constructor(self, io, self.filters))
 
@@ -824,7 +822,7 @@ class HTTPStreamUrl(object):
     def to_url(self):
         return self.url
 
-    def create_downloader(self, io):
+    def create_downloader(self, io, backends):
         return WgetDump(self, io)
 
 
@@ -833,7 +831,7 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.ext = ext
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
 
-    def create_downloader(self, io):
+    def create_downloader(self, io, backends):
         return HLSDump(self, io)
 
 
@@ -876,7 +874,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def download_episodes(self, url, io, filters, postprocess_command):
         def download_clip(clip):
-            downloader = clip.streamurl.create_downloader(io)
+            downloader = clip.streamurl.create_downloader(io, self.backends)
             if not downloader:
                 logger.error(u'Downloading the stream at %s is not yet '
                              u'supported.' % url)
@@ -911,7 +909,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
-            dl = clip.streamurl.create_downloader(io)
+            dl = clip.streamurl.create_downloader(io, self.backends)
             outputfile = dl.output_filename(clip.title, io)
             self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe(io)
@@ -1117,8 +1115,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return None
 
             subtitles = self.media_subtitles(subtitle_media)
-            return AkamaiFlavors(subtitle_media, subtitles,
-                                 self.backends, self.AES_KEY)
+            return AkamaiFlavors(subtitle_media, subtitles, self.AES_KEY)
 
     def get_akamai_medias(self, program_info, media_id, program_id,
                           default_video_proto):
