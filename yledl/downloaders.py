@@ -506,10 +506,10 @@ class KalturaFlavors(object):
         self.stream_meta = stream_meta
         self.subtitles = subtitles
 
-    def streamurl(self, pageurl, filters):
+    def streamurl(self, pageurl, aes_key, filters):
         return self._select_matching_stream(self.kaltura_flavors, self.stream_meta, filters)
 
-    def metadata(self):
+    def metadata(self, aes_key):
         return [Flavors.single_flavor_meta(fl) for fl in self.kaltura_flavors]
 
     def _select_matching_stream(self, flavors, meta, filters):
@@ -574,17 +574,15 @@ class KalturaFlavors(object):
 
 
 class AkamaiFlavors(AreenaUtils):
-    def __init__(self, media, subtitles, aes_key):
+    def __init__(self, media, subtitles):
         self.media = media
         self.subtitles = subtitles
-        self.aes_key = aes_key
 
-    def streamurl(self, pageurl, filters):
-        return self._media_streamurl(
-            self.media, pageurl, self.aes_key, filters)
+    def streamurl(self, pageurl, aes_key, filters):
+        return self._media_streamurl(self.media, pageurl, aes_key, filters)
 
-    def metadata(self):
-        stream = self.streamurl('', StreamFilters())
+    def metadata(self, aes_key):
+        stream = self.streamurl('', aes_key, StreamFilters())
         manifest_bitrates = stream.bitrates_from_metadata()
         if manifest_bitrates:
             media_type = Flavors.media_type(self.media)
@@ -1091,7 +1089,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return Clip(pageurl,
                     self.program_title(program_info),
-                    flavors.streamurl(pageurl, filters),
+                    flavors.streamurl(pageurl, self.AES_KEY, filters),
                     flavors.subtitles)
 
     def get_flavors(self, program_info, media_id, program_id, pageurl, filters):
@@ -1115,7 +1113,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return None
 
             subtitles = self.media_subtitles(subtitle_media)
-            return AkamaiFlavors(subtitle_media, subtitles, self.AES_KEY)
+            return AkamaiFlavors(subtitle_media, subtitles)
 
     def get_akamai_medias(self, program_info, media_id, program_id,
                           default_video_proto):
@@ -1349,7 +1347,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return {}
 
         subtitles_metadata = [self.subtitle_meta(s) for s in flavors.subtitles]
-        return (flavors.metadata(), subtitles_metadata)
+        return (flavors.metadata(self.AES_KEY), subtitles_metadata)
 
     def subtitle_meta(self, subtitle):
         return {'lang': subtitle.language, 'uri': subtitle.url}
