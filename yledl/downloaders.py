@@ -1645,11 +1645,6 @@ class RetryingDownloader(object):
 class BaseDownloader(object):
     def __init__(self, stream, io):
         self.stream = stream
-        if io.outputfilename:
-            self.preferred_name = self.append_ext_if_missing(
-                io.outputfilename, self.stream.ext)
-        else:
-            self.preferred_name = None
         self._cached_output_file = None
 
         if io.resume and not self.resume_supported():
@@ -1712,9 +1707,12 @@ class BaseDownloader(object):
         return x or u'ylevideo'
 
     def output_filename(self, clip_title, io):
-        resume_job = io.resume and self.resume_supported()
-        return (self.preferred_name or
-                self.outputfile_from_clip_title(clip_title, io, resume_job))
+        if io.outputfilename:
+            return self.append_ext_if_missing(
+                io.outputfilename, self.stream.ext)
+        else:
+            resume_job = io.resume and self.resume_supported()
+            return self.outputfile_from_clip_title(clip_title, io, resume_job)
 
     def resume_supported(self):
         return False
