@@ -202,6 +202,14 @@ def normalize_language_code(lang, subtype):
         return language_map.get(lang, lang)
 
 
+def sane_filename(name, excludechars):
+    if isinstance(name, str):
+        name = unicode(name, 'utf-8', 'ignore')
+    tr = dict((ord(c), ord(u'_')) for c in excludechars)
+    x = name.strip(' .').translate(tr)
+    return x or u'ylevideo'
+
+
 class StreamFilters(object):
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
@@ -914,9 +922,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return self.process(pipe_clip, url, filters)
 
-    def print_titles(self, url, filters):
+    def print_titles(self, url, io, filters):
         def print_clip_title(clip):
-            print_enc(clip.title)
+            print_enc(sane_filename(clip.title, io.excludechars))
             return RD_SUCCESS
 
         return self.process(print_clip_title, url, filters)
@@ -1411,9 +1419,9 @@ class YleUutisetDownloader(Areena2014Downloader):
         return self.delegate_to_areena_downloader(
             'pipe', url, io, filters=filters)
 
-    def print_titles(self, url, filters):
+    def print_titles(self, url, io, filters):
         return self.delegate_to_areena_downloader(
-            'print_titles', url, filters=filters)
+            'print_titles', url, io, filters)
 
     def print_metadata(self, url, filters):
         return self.delegate_to_areena_downloader(
@@ -1618,7 +1626,7 @@ class BaseDownloader(object):
             return self._cached_output_file
 
         ext = self.stream.ext or '.flv'
-        filename = self.sane_filename(clip_title, io.excludechars) + ext
+        filename = sane_filename(clip_title, io.excludechars) + ext
         if io.destdir:
             filename = os.path.join(io.destdir, filename)
         if not resume:
@@ -1650,13 +1658,6 @@ class BaseDownloader(object):
                 logger.info(u'Stream saved to ' + outputfile)
             else:
                 logger.info(u'Output file: ' + outputfile)
-
-    def sane_filename(self, name, excludechars):
-        if isinstance(name, str):
-            name = unicode(name, 'utf-8', 'ignore')
-        tr = dict((ord(c), ord(u'_')) for c in excludechars)
-        x = name.strip(' .').translate(tr)
-        return x or u'ylevideo'
 
     def output_filename(self, clip_title, io):
         if io.outputfilename:
