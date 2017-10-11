@@ -37,7 +37,7 @@ setup(
     packages=['yledl'],
     include_package_data=True,
     install_requires=[
-        'pycrypto', 'requests', 'progress', 'lxml'
+        'pycrypto', 'requests', 'lxml'
     ] + ssl_sni_requires,
     extras_require = {
         'youtubedl-backend': ['youtube_dl']
