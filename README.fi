@@ -65,10 +65,13 @@ Asenna yle-dl
 
 Yksinkertainen tapa (ei vaadi lähdekoodien lataamista):
 
+sudo apt-get install python-pip
 sudo pip install yle-dl
 
 Vaihtoehtoinen tapa: lataa lähdekoodit ja aja lähdekoodihakemistossa:
 
+sudo apt-get install python-dev build-essential libssl-dev libffi-dev \
+    libxml2-dev libxslt1-dev
 sudo python setup.py install
 
 

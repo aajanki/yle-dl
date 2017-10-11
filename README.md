@@ -80,12 +80,15 @@ Edit the php.ini as instructed above.
 
 Easier way (installation without downloading the source codes):
 ```
+sudo apt-get install python-pip
 sudo pip install yle-dl
 ```
 
 Installation from sources. Download the sources and run the following
 on the source directory:
 ```
+sudo apt-get install python-dev build-essential libssl-dev libffi-dev \
+    libxml2-dev libxslt1-dev
 sudo python setup.py install
 ```
 
