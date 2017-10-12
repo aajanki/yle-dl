@@ -23,7 +23,6 @@ import lxml.html
 import lxml.etree
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
@@ -87,16 +86,11 @@ def http_get(url, extra_headers=None):
     if '#' in url:
         url = url[:url.find('#')]
 
-    retry = Retry(total=3,
-                  backoff_factor=0.5,
-                  status_forcelist=[500, 502, 503, 504])
-    session = requests.Session()
-    session.mount('http://', HTTPAdapter(max_retries=retry))
-    session.mount('https://', HTTPAdapter(max_retries=retry))
-
     headers = yledl_headers()
     if extra_headers:
         headers.update(extra_headers)
+
+    session = create_session()
 
     try:
         r = session.get(url, headers=headers, timeout=20)
@@ -106,6 +100,23 @@ def http_get(url, extra_headers=None):
         return None
 
     return r
+
+
+def create_session():
+    session = requests.Session()
+
+    try:
+        from requests.packages.urllib3.util.retry import Retry
+
+        retry = Retry(total=3,
+                      backoff_factor=0.5,
+                      status_forcelist=[500, 502, 503, 504])
+        session.mount('http://', HTTPAdapter(max_retries=retry))
+        session.mount('https://', HTTPAdapter(max_retries=retry))
+    except ImportError:
+        logger.warn('Requests library is too old. Retrying not supported.')
+
+    return session
 
 
 def download_to_file(url, destination_filename):
