@@ -27,7 +27,7 @@ if sys.version_info[0] != 2:
 # On older Pythons we need some additional libraries for SSL SNI support
 ssl_sni_requires = []
 if sys.version_info < (2, 7, 9):
-    ssl_sni_requires = ['pyOpenSSL', 'ndg-httpsclient', 'pyasn1', 'cryptography']
+    ssl_sni_requires = ['pyOpenSSL', 'ndg-httpsclient', 'pyasn1']
 
 setup(
     name='yle-dl',
