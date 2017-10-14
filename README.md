@@ -35,7 +35,7 @@ instructions for Debian, Ubuntu and Mac OS X.
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
 * setuptools (when installing from the sources)
 
-Optionally for certain type of streams:
+Optionally for certain types of streams:
 
 * rtmpdump (for downloading Areena audio streams. Version 2.4 or newer, preferably the latest development version from the project homepage at https://rtmpdump.mplayerhq.hu/)
 * ffmpeg (might be needed very rarely for some Areena video streams)
