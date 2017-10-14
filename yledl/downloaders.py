@@ -35,6 +35,7 @@ RD_INCOMPLETE = 2
 
 
 logger = logging.getLogger('yledl')
+cached_requests_session = None
 
 
 def downloader_factory(url, backends):
@@ -90,10 +91,12 @@ def http_get(url, extra_headers=None):
     if extra_headers:
         headers.update(extra_headers)
 
-    session = create_session()
+    global cached_requests_session
+    if cached_requests_session is None:
+        cached_requests_session = create_session()
 
     try:
-        r = session.get(url, headers=headers, timeout=20)
+        r = cached_requests_session.get(url, headers=headers, timeout=20)
         r.raise_for_status()
     except requests.exceptions.RequestException:
         logger.exception(u"Can't read {}".format(url))
