@@ -21,6 +21,10 @@ Areena], [Elävä Arkisto] and [Yle news].
 Installation
 ------------
 
+Below are general installation instructions. See a [separate
+page](OS-install-instructions.md) for specialized installation
+instructions for Debian, Ubuntu and Mac OS X.
+
 ### 1. Install the dependencies ###
 
 * python 2.7
@@ -46,49 +50,16 @@ extension=/path/to/curl.so
 extension=/path/to/mcrypt.so
 ```
 
-#### Dependencies on Debian 9 (Stretch)/Ubuntu 16.04 ####
-
-```
-sudo apt-get install rtmpdump wget python python-setuptools python-pip \
-    python-crypto python-requests python-lxml \
-    php-cli php-curl php-mcrypt php-xml php-bcmath
-sudo phpenmod mcrypt
-```
-
-#### Dependencies on Debian 8 (Jessie)/Ubuntu 15.10 or older ####
-
-```
-sudo apt-get install rtmpdump wget python python-setuptools python-pip \
-    python-crypto python-requests python-lxml php5-cli php5-curl php5-mcrypt
-sudo php5enmod mcrypt
-```
-
-#### Dependencies on Mac OS X ####
-
-[Install the PHP interpreter](https://secure.php.net/manual/en/install.macosx.php) and the other libraries:
-
-```
-brew install python
-brew install wget
-brew install --HEAD rtmpdump
-brew install homebrew/php/php70-mcrypt
-```
-
-Edit the php.ini as instructed above.
-
 ### 2. Install yle-dl ###
 
 Easier way (installation without downloading the source codes):
 ```
-sudo apt-get install python-pip
 sudo pip install yle-dl
 ```
 
 Installation from sources. Download the sources and run the following
 on the source directory:
 ```
-sudo apt-get install python-dev build-essential libssl-dev libffi-dev \
-    libxml2-dev libxslt1-dev
 sudo python setup.py install
 ```
 

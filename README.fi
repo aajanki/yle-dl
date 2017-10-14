@@ -9,8 +9,14 @@ yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
 (http://yle.fi/aihe/elava-arkisto) ja Ylen uutissivustolta
 (http://yle.fi/uutiset/).
 
-Asenna riippuvuudet
--------------------
+Asennusohjeet
+-------------
+
+Alla on yleiset asennusohjeet. Yksityiskohtaisemmat asennusohjeet
+Debianille, Ubuntulle ja Mac OS X:lle löytyvät tiedostosta
+OS-install-instructions.md.
+
+Asenna riippuvuudet:
 
 * python 2.7
 * pip
@@ -32,46 +38,14 @@ polkuineen php.ini-tiedostoon
 extension=/polku/curl.so
 extension=/polku/mcrypt.so
 
-Yksityiskohtaisemmat ohjeet riippuvuuksien asentamiseen eri
-käyttöjärjestelmissä:
+Asenna seuraavaksi yle-dl joko asentamalla esikäännetty paketti (ei
+vaadi lähdekoodien lataamista):
 
-## Debian 9 (Stretch)/Ubuntu 16.04
-
-sudo apt-get install rtmpdump wget python python-pip python-setuptools \
-    python-crypto python-requests python-lxml \
-    php-cli php-curl php-mcrypt php-xml php-bcmath
-sudo phpenmod mcrypt
-
-## Debian 8 (Jessie)/Ubuntu 15.10 ja vanhemmat
-
-sudo apt-get install rtmpdump wget python python-pip python-setuptools \
-    python-crypto python-requests python-lxml php5-cli php5-curl php5-mcrypt
-sudo php5enmod mcrypt
-
-## Mac OS X
-
-Asenna PHP-tulkki: https://secure.php.net/manual/en/install.macosx.php
-
-brew install python
-brew install wget
-brew install --HEAD rtmpdump
-brew install homebrew/php/php70-mcrypt
-
-Muokkaa php.ini-tiedostoa kuten yllä on neuvottu.
-
-
-Asenna yle-dl
--------------
-
-Yksinkertainen tapa (ei vaadi lähdekoodien lataamista):
-
-sudo apt-get install python-pip
 sudo pip install yle-dl
 
-Vaihtoehtoinen tapa: lataa lähdekoodit ja aja lähdekoodihakemistossa:
+tai lataamalla lähdekoodit ja ajamalla seuraava komento
+lähdekoodihakemistossa:
 
-sudo apt-get install python-dev build-essential libssl-dev libffi-dev \
-    libxml2-dev libxslt1-dev
 sudo python setup.py install
 
 
