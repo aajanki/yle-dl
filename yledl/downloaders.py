@@ -2018,17 +2018,12 @@ class WgetDump(ExternalDownloader):
             args.append('-c')
         if io.download_limits.ratelimit:
             args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
-        if not logger.isEnabledFor(logging.DEBUG):
-            args.extend(['--no-verbose', '--show-progress'])
         args.append(self.stream.to_url())
         return args
 
     def pipe(self, io):
         args = self.shared_wget_args(io.wget_binary, '-')
-        args.extend([
-            '--no-verbose',
-            self.stream.to_url()
-        ])
+        args.append(self.stream.to_url())
         self.external_downloader(args)
         return RD_SUCCESS
 
