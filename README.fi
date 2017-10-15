@@ -72,6 +72,12 @@ Katso lista saatavilla olevista asennuspaketeista osoitteesta
 https://aajanki.github.io/yle-dl/
 
 
+Integraatiotestien ajaminen
+---------------------------
+
+python setup.py pytest
+
+
 Käyttö
 ------
 

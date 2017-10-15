@@ -78,6 +78,13 @@ PHP libraries) and additionally install youtube-dl:
 * Mac OS X: `brew install youtube-dl`
 * Debian/Ubuntu/other operating systems: `pip install --upgrade youtube_dl`
 
+Integration tests
+-----------------
+
+```
+python setup.py pytest
+```
+
 Packages for various distros
 ----------------------------
 
