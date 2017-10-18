@@ -509,11 +509,11 @@ class KalturaFlavors(object):
         self.stream_meta = stream_meta
         self.subtitles = subtitles
 
-    def streamurl(self, pageurl, aes_key, filters):
+    def streamurl(self, filters):
         return self._select_matching_stream(
             self.kaltura_flavors, self.stream_meta, filters)
 
-    def metadata(self, aes_key):
+    def metadata(self):
         return [Flavors.single_flavor_meta(fl) for fl in self.kaltura_flavors]
 
     def _select_matching_stream(self, flavors, meta, filters):
@@ -582,10 +582,10 @@ class AkamaiFlavors(AreenaUtils):
         self.subtitles = subtitles
         self.stream = self._media_streamurl(media, pageurl, aes_key)
 
-    def streamurl(self, pageurl, aes_key, filters):
+    def streamurl(self, filters):
         return self.stream
 
-    def metadata(self, aes_key):
+    def metadata(self):
         if self.media.get('protocol') == 'HDS':
             media_type = Flavors.media_type(self.media)
             manifest = download_page(self.stream.to_url())
@@ -631,9 +631,6 @@ class AreenaStreamBase(AreenaUtils):
         return ''
 
     def to_rtmpdump_args(self):
-        return None
-
-    def bitrates_from_metadata(self):
         return None
 
 
@@ -786,12 +783,6 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
             downloaders.append(dl_constructor(self, io, filters))
 
         return FallbackDump(downloaders)
-
-    def bitrates_from_metadata(self):
-        if self.hds_url:
-            return hds.bitrates_from_manifest(download_page(self.hds_url))
-        else:
-            return None
 
 
 class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
@@ -1093,7 +1084,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return Clip(pageurl,
                     self.program_title(program_info),
-                    flavors.streamurl(pageurl, self.AES_KEY, filters),
+                    flavors.streamurl(filters),
                     flavors.subtitles)
 
     def get_flavors(self, program_info, media_id, program_id, pageurl, filters):
@@ -1351,7 +1342,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return {}
 
         subtitles_metadata = [self.subtitle_meta(s) for s in flavors.subtitles]
-        return (flavors.metadata(self.AES_KEY), subtitles_metadata)
+        return (flavors.metadata(), subtitles_metadata)
 
     def subtitle_meta(self, subtitle):
         return {'lang': subtitle.language, 'uri': subtitle.url}
