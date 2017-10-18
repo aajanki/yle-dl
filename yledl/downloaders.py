@@ -22,6 +22,7 @@ import logging
 import lxml.html
 import lxml.etree
 import requests
+import hds
 from requests.adapters import HTTPAdapter
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
@@ -150,13 +151,6 @@ def html_meta_charset(html_bytes):
         return None
 
 
-def int_or_else(x, default):
-    try:
-        return int(x)
-    except ValueError:
-        return default
-
-
 def parse_rtmp_single_component_app(rtmpurl):
     """Extract single path-component app and playpath from rtmpurl."""
     # YLE server requires that app is the first path component
@@ -188,22 +182,6 @@ def parse_rtmp_single_component_app(rtmpurl):
         playpath = 'mp3:' + playpath[:-4]
 
     return (app_only_rtmpurl, playpath, ext)
-
-
-def bitrates_from_hds_manifest(manifest_url):
-    manifest = download_page(manifest_url)
-    if not manifest:
-        return []
-
-    try:
-        manifest_xml = xml.dom.minidom.parseString(manifest)
-    except Exception as exc:
-        logger.error(unicode(exc.message, 'utf-8', 'ignore'))
-        return []
-
-    medias = manifest_xml.getElementsByTagName('media')
-    bitrates = (int_or_else(m.getAttribute('bitrate'), 0) for m in medias)
-    return [br for br in bitrates if br > 0]
 
 
 def normalize_language_code(lang, subtype):
@@ -807,7 +785,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
 
     def bitrates_from_metadata(self):
         if self.hds_url:
-            return bitrates_from_hds_manifest(self.hds_url)
+            return hds.bitrates_from_manifest(download_page(self.hds_url))
         else:
             return None
 
@@ -1944,7 +1922,8 @@ class YoutubeDLHDSDump(BaseDownloader):
         return RD_SUCCESS
 
     def _bitrate_parameter(self):
-        bitrates = bitrates_from_hds_manifest(self.stream.to_url())
+        manifest = download_page(self.stream.to_url())
+        bitrates = hds.bitrates_from_manifest(manifest)
         logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
                      (bitrates, self.maxbitrate))
 
