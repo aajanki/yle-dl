@@ -477,8 +477,11 @@ class KalturaStreamUtils(object):
 
 class Flavors(object):
     @staticmethod
-    def single_flavor_meta(flavor):
-        res = {'media_type': Flavors.media_type(flavor)}
+    def single_flavor_meta(flavor, media_type=None):
+        if media_type is None:
+            media_type = Flavors.media_type(flavor)
+
+        res = {'media_type': media_type}
         if 'height' in flavor:
             res['height'] = flavor['height']
         if 'width' in flavor:
@@ -574,20 +577,21 @@ class KalturaFlavors(object):
 
 
 class AkamaiFlavors(AreenaUtils):
-    def __init__(self, media, subtitles):
+    def __init__(self, media, subtitles, pageurl, aes_key):
         self.media = media
         self.subtitles = subtitles
+        self.stream = self._media_streamurl(media, pageurl, aes_key)
 
     def streamurl(self, pageurl, aes_key, filters):
-        return self._media_streamurl(self.media, pageurl, aes_key)
+        return self.stream
 
     def metadata(self, aes_key):
-        stream = self.streamurl('', aes_key, StreamFilters())
-        manifest_bitrates = stream.bitrates_from_metadata()
-        if manifest_bitrates:
+        if self.media.get('protocol') == 'HDS':
             media_type = Flavors.media_type(self.media)
-            return [Flavors.bitrate_meta(br, media_type)
-                    for br in manifest_bitrates]
+            manifest = download_page(self.stream.to_url())
+            hds_metadata = hds.parse_manifest(manifest)
+            return [Flavors.single_flavor_meta(m, media_type)
+                    for m in hds_metadata]
         else:
             return [Flavors.single_flavor_meta(self.media)]
 
@@ -1113,7 +1117,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return None
 
             subtitles = self.media_subtitles(subtitle_media)
-            return AkamaiFlavors(subtitle_media, subtitles)
+            return AkamaiFlavors(subtitle_media, subtitles, pageurl, self.AES_KEY)
 
     def get_akamai_medias(self, program_info, media_id, program_id,
                           default_video_proto):

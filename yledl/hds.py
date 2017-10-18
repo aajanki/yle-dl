@@ -58,10 +58,21 @@ def _parse_metadata_element(media_xml_element):
 def _create_metadata_object(bitrate, other_metadata):
     res = {}
     if bitrate:
-        res['bitrate'] = bitrate
+        try:
+            res['bitrate'] = int(bitrate)
+        except ValueError:
+            pass
+
     if 'width' in other_metadata:
-        res['width'] = other_metadata['width']
+        try:
+            res['width'] = int(other_metadata['width'])
+        except ValueError:
+            pass
+
     if 'height' in other_metadata:
-        res['height'] = other_metadata['height']
+        try:
+            res['height'] = int(other_metadata['height'])
+        except ValueError:
+            pass
 
     return res
