@@ -504,14 +504,11 @@ class Flavors(object):
 
 
 class KalturaFlavors(object):
-    def __init__(self, kaltura_flavors, stream_meta, subtitles):
+    def __init__(self, kaltura_flavors, stream_meta, subtitles, filters):
         self.kaltura_flavors = kaltura_flavors
-        self.stream_meta = stream_meta
         self.subtitles = subtitles
-
-    def streamurl(self, filters):
-        return self._select_matching_stream(
-            self.kaltura_flavors, self.stream_meta, filters)
+        self.stream = self._select_matching_stream(
+            kaltura_flavors, stream_meta, filters)
 
     def metadata(self):
         return [Flavors.single_flavor_meta(fl) for fl in self.kaltura_flavors]
@@ -581,9 +578,6 @@ class AkamaiFlavors(AreenaUtils):
         self.media = media
         self.subtitles = subtitles
         self.stream = self._media_streamurl(media, pageurl, aes_key)
-
-    def streamurl(self, filters):
-        return self.stream
 
     def metadata(self):
         if self.media.get('protocol') == 'HDS':
@@ -1084,7 +1078,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
         return Clip(pageurl,
                     self.program_title(program_info),
-                    flavors.streamurl(filters),
+                    flavors.stream,
                     flavors.subtitles)
 
     def get_flavors(self, program_info, media_id, program_id, pageurl, filters):
@@ -1102,7 +1096,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 media_id, program_id, pageurl)
             self.log_bitrates(flavors_data, filters.maxbitrate)
             subtitles = self.media_subtitles(subtitle_media)
-            return KalturaFlavors(flavors_data, meta, subtitles)
+            return KalturaFlavors(flavors_data, meta, subtitles, filters)
         else:
             if not subtitle_media:
                 return None
