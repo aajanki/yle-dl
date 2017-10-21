@@ -20,8 +20,8 @@ version = re.\
   search(r"^version *= *'(.+)'$", open('yledl/version.py').read(), re.MULTILINE).\
   group(1)
 
-if sys.version_info[0] != 2:
-    sys.stderr.write("This package only supports Python 2.\n")
+if sys.version_info[:2] != (2,7):
+    sys.stderr.write("This package only supports Python 2.7\n")
     sys.exit(1)
 
 # On older Pythons we need some additional libraries for SSL SNI support
@@ -62,7 +62,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 2 :: Only',
         'Topic :: Internet',
         'Topic :: Multimedia :: Video'
