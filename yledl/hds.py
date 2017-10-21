@@ -42,7 +42,7 @@ def parse_on_metadata_tag(tag_bytes):
             return {}
 
         return decoder.readElement()
-    except pyamf.BaseError, ex:
+    except pyamf.BaseError:
         logger.exception('Failed to parse FLV metadata')
         return {}
 
