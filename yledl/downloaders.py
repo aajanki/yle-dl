@@ -1633,6 +1633,15 @@ class BaseDownloader(object):
         else:
             return filename + (default_ext or '.flv')
 
+    def replace_extension(self, filename, ext):
+        basename, old_ext = os.path.splitext(filename)
+        if not old_ext or old_ext != ext:
+            if old_ext:
+                logger.warn('Unsupported extension {}. Replacing it with {}'.format(old_ext, ext))
+            return basename + ext
+        else:
+            return filename
+
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':
             if done:
@@ -1641,9 +1650,15 @@ class BaseDownloader(object):
                 logger.info(u'Output file: ' + outputfile)
 
     def output_filename(self, clip_title, io):
+        return self._construct_output_filename(clip_title, io, True)
+
+    def _construct_output_filename(self, clip_title, io, force_extension):
         if io.outputfilename:
-            return self.append_ext_if_missing(
-                io.outputfilename, self.stream.ext)
+            if force_extension:
+                return self.replace_extension(io.outputfilename, self.stream.ext)
+            else:
+                return self.append_ext_if_missing(
+                    io.outputfilename, self.stream.ext)
         else:
             resume_job = io.resume and self.resume_supported()
             return self.outputfile_from_clip_title(clip_title, io, resume_job)
@@ -1942,6 +1957,9 @@ class YoutubeDLHDSDump(BaseDownloader):
 class HLSDump(ExternalDownloader):
     def duration_supported(self):
         return True
+
+    def output_filename(self, clip_title, io):
+        return self._construct_output_filename(clip_title, io, False)
 
     def _duration_arg(self, download_limits):
         if download_limits.duration:
