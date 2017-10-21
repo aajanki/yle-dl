@@ -41,7 +41,7 @@ extension=/polku/mcrypt.so
 Asenna seuraavaksi yle-dl joko asentamalla esikäännetty paketti (ei
 vaadi lähdekoodien lataamista):
 
-sudo pip install yle-dl
+sudo pip install --upgrade yle-dl
 
 tai lataamalla lähdekoodit ja ajamalla seuraava komento
 lähdekoodihakemistossa:

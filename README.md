@@ -54,7 +54,7 @@ extension=/path/to/mcrypt.so
 
 Easier way (installation without downloading the source codes):
 ```
-sudo pip install yle-dl
+sudo pip install --upgrade yle-dl
 ```
 
 Installation from sources. Download the sources and run the following

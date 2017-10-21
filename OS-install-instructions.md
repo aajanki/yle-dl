@@ -6,7 +6,7 @@
 sudo apt-get install rtmpdump wget python-setuptools python-pip python-crypto \
     python-requests python-lxml php-cli php-curl php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
-sudo -H pip install yle-dl
+sudo -H pip install --upgrade yle-dl
 ```
 
 (You may get prompted to upgrade pip. However, it is not necessary to
@@ -31,7 +31,7 @@ sudo -H python setup.py install
 sudo apt-get install rtmpdump wget python-setuptools python-pip python-crypto \
     python-requests python-lxml php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
-sudo pip install yle-dl
+sudo pip install --upgrade yle-dl
 ```
 
 (You may get prompted to upgrade pip. However, it is not necessary to
@@ -74,5 +74,5 @@ extension=/path/to/mcrypt.so
 Install yle-dl:
 
 ```
-sudo pip install yle-dl
+sudo pip install --upgrade yle-dl
 ```
