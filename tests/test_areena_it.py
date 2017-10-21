@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import os
+import pytest
 from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata
 
@@ -83,6 +85,8 @@ def test_areena_live_url():
     assert 'manifest.f4m' in streamurl[0]
 
 
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
+                    reason="Test works only in Finland")
 def test_areena_live_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/tv/suorat/yle-tv1')
 
