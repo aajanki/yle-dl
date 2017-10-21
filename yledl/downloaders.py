@@ -1587,12 +1587,16 @@ class BaseDownloader(object):
     def __init__(self, stream, io):
         self.stream = stream
         self._cached_output_file = None
+        self.warn_on_unsupported_feature(io)
 
+    def warn_on_unsupported_feature(self, io):
         if io.resume and not self.resume_supported():
             logger.warn('Resume not supported on this stream')
         if io.proxy and not self.proxy_supported():
             logger.warn('Proxy not supported on this stream. '
                         'Trying to continue anyway')
+        if io.download_limits.ratelimit and not self.ratelimit_supported():
+            logger.warn('Rate limiting not supported on this stream')
 
     def save_stream(self, clip_title, io):
         """Deriving classes override this to perform the download"""
@@ -1670,6 +1674,9 @@ class BaseDownloader(object):
         return False
 
     def duration_supported(self):
+        return False
+
+    def ratelimit_supported(self):
         return False
 
 
@@ -1805,6 +1812,9 @@ class HDSDump(ExternalDownloader):
     def duration_supported(self):
         return True
 
+    def ratelimit_supported(self):
+        return True
+
     def _filter_options(self, filters):
         options = []
 
@@ -1876,6 +1886,9 @@ class YoutubeDLHDSDump(BaseDownloader):
         return True
 
     def proxy_supported(self):
+        return True
+
+    def ratelimit_supported(self):
         return True
 
     def save_stream(self, clip_title, io):
@@ -2025,6 +2038,9 @@ class WgetDump(ExternalDownloader):
         ]
 
     def resume_supported(self):
+        return True
+
+    def ratelimit_supported(self):
         return True
 
 
