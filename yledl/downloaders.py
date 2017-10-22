@@ -1068,20 +1068,27 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             (urllib.quote_plus(program_id))
 
     def create_clip(self, program_info, program_id, pageurl, filters):
-        media_id = self.program_media_id(program_info, filters)
-        if not media_id:
-            return FailedClip(pageurl, 'Failed to parse media ID')
-
-        flavors = self.get_flavors(program_info, media_id, program_id, pageurl, filters)
-        if not flavors:
+        flavors = self.flavors_by_program_info(
+            program_info, program_id, pageurl, filters)
+        if flavors:
+            return Clip(pageurl,
+                        self.program_title(program_info),
+                        flavors.stream,
+                        flavors.subtitles)
+        else:
             return FailedClip(pageurl, 'Media not found')
 
-        return Clip(pageurl,
-                    self.program_title(program_info),
-                    flavors.stream,
-                    flavors.subtitles)
+    def flavors_by_program_info(self, program_info, program_id,
+                                  pageurl, filters):
+        media_id = self.program_media_id(program_info, filters)
+        if media_id:
+            return self.flavors_by_media_id(
+                program_info, media_id, program_id, pageurl, filters)
+        else:
+            return None
 
-    def get_flavors(self, program_info, media_id, program_id, pageurl, filters):
+    def flavors_by_media_id(self, program_info, media_id, program_id,
+                            pageurl, filters):
         is_html5 = media_id.startswith('29-')
         proto = 'HLS' if is_html5 else 'HDS'
         medias = self.get_akamai_medias(
@@ -1311,12 +1318,19 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def clip_meta(self, pageurl, program_info, program_id, filters):
         duration_seconds = self.program_info_duration_seconds(program_info)
-        flavors, subtitles = self.flavors_metadata(pageurl, program_info,
-                                                   program_id, filters)
+        flavors = self.flavors_by_program_info(
+            program_info, program_id, pageurl, filters)
+        if flavors:
+            flavors_meta = flavors.metadata()
+            subtitles = [self.subtitle_meta(s) for s in flavors.subtitles]
+        else:
+            flavors_meta = None
+            subtitles = []
+
         meta = [
             ('webpage', pageurl),
             ('title', self.program_title(program_info)),
-            ('flavors', flavors),
+            ('flavors', flavors_meta),
             ('duration_seconds', duration_seconds),
             ('subtitles', subtitles),
             ('region', self.available_at_region(program_info)),
@@ -1324,19 +1338,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             ('expiration_timestamp', self.expiration_timestamp(program_info))
         ]
         return {key: value for (key, value) in meta if value if not None}
-
-    def flavors_metadata(self, pageurl, program_info, program_id, filters):
-        media_id = self.program_media_id(program_info, filters)
-        if not media_id:
-            return {}
-
-        flavors = self.get_flavors(
-            program_info, media_id, program_id, pageurl, StreamFilters())
-        if not flavors:
-            return {}
-
-        subtitles_metadata = [self.subtitle_meta(s) for s in flavors.subtitles]
-        return (flavors.metadata(), subtitles_metadata)
 
     def subtitle_meta(self, subtitle):
         return {'lang': subtitle.language, 'uri': subtitle.url}
