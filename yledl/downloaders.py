@@ -911,6 +911,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             outputfile = downloader.output_filename(clip_title, io)
             subtitlefiles = \
                 self.download_subtitles(clip.subtitles, filters, outputfile)
+            downloader.warn_on_unsupported_feature(io)
             dl_result = downloader.save_stream(clip_title, io)
             if dl_result == RD_SUCCESS:
                 self.postprocess(postprocess_command, outputfile,
@@ -936,8 +937,13 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
             dl = clip.streamurl.create_downloader(io, filters, self.backends)
+            if not dl:
+                logger.error(u'Downloading the stream at %s is not yet '
+                             u'supported.' % url)
+                return RD_FAILED
             outputfile = dl.output_filename(clip.title, io)
             self.download_subtitles(clip.subtitles, filters, outputfile)
+            dl.warn_on_unsupported_feature(io)
             return dl.pipe(io)
 
         return self.process(pipe_clip, url, filters)
@@ -1625,7 +1631,6 @@ class BaseDownloader(object):
     def __init__(self, stream, io):
         self.stream = stream
         self._cached_output_file = None
-        self.warn_on_unsupported_feature(io)
 
     def warn_on_unsupported_feature(self, io):
         if io.resume and not self.resume_supported():
