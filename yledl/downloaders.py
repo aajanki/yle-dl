@@ -777,16 +777,6 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
                 'g=ABCDEFGHIJKL&hdcore=3.8.0&plugin=flowplayer-3.8.0.0'
         else:
             self.hds_url = None
-        self.error = None
-
-    def is_valid(self):
-        return not self.error
-
-    def get_error_message(self):
-        if self.is_valid():
-            return None
-        else:
-            return self.error or 'Stream not valid'
 
     def to_url(self):
         return self.hds_url
