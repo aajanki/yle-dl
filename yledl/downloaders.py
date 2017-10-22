@@ -194,6 +194,22 @@ def normalize_language_code(lang, subtype):
         return language_map.get(lang, lang)
 
 
+def select_bitrate(available_bitrates, maxbitrate):
+    logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
+                 (available_bitrates, maxbitrate))
+
+    acceptable_bitrates = [br for br in available_bitrates if br <= maxbitrate]
+    if not available_bitrates:
+        selected_bitrate = None
+    elif not acceptable_bitrates:
+        selected_bitrate = min(available_bitrates)
+    else:
+        selected_bitrate = max(acceptable_bitrates)
+
+    logger.debug(u'Selected bitrate: %s' % selected_bitrate)
+
+    return selected_bitrate
+
 def sane_filename(name, excludechars):
     if isinstance(name, str):
         name = unicode(name, 'utf-8', 'ignore')
@@ -592,16 +608,20 @@ class KalturaFlavors(FlavorsMetadata):
 
 
 class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
-    def __init__(self, media, subtitles, pageurl, aes_key):
+    def __init__(self, media, subtitles, pageurl, filters, aes_key):
         self.media = media
+        self.is_hds = media.get('protocol') == 'HDS'
         self.subtitles = subtitles
-        self.stream = self._media_streamurl(media, pageurl, aes_key)
+        crypted_url = media.get('url')
+        manifest_url = self._decrypt_manifest_url(crypted_url, aes_key)
+        self.manifest = download_page(manifest_url) if manifest_url else None
+        self.stream = self._media_streamurl(
+            manifest_url, crypted_url, self.manifest, self.is_hds, pageurl, filters)
 
     def metadata(self):
-        if self.media.get('protocol') == 'HDS':
+        if self.is_hds:
             media_type = Flavors.media_type(self.media)
-            manifest = download_page(self.stream.to_url())
-            hds_metadata = hds.parse_manifest(manifest)
+            hds_metadata = hds.parse_manifest(self.manifest)
             return [Flavors.single_flavor_meta(m, media_type)
                     for m in hds_metadata]
         else:
@@ -610,19 +630,30 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
     def subtitles_metadata(self):
         return [self.subtitle_meta_representation(s) for s in self.subtitles]
 
-    def _media_streamurl(self, media, pageurl, aes_key):
-        url = media.get('url')
-        if not url:
-            return InvalidStreamUrl('No media URL')
-
-        decodedurl = self.areena_decrypt(url, aes_key)
-        if not decodedurl:
-            return InvalidStreamUrl('Decrypting media URL failed')
-
-        if media.get('protocol') == 'HDS':
-            return Areena2014HDSStreamUrl(decodedurl)
+    def _decrypt_manifest_url(self, crypted_url, aes_key):
+        if crypted_url:
+            baseurl = self.areena_decrypt(crypted_url, aes_key)
+            sep = '&' if '?' in baseurl else '?'
+            return baseurl + sep + \
+                'g=ABCDEFGHIJKL&hdcore=3.8.0&plugin=flowplayer-3.8.0.0'
         else:
-            return Areena2014RTMPStreamUrl(pageurl, decodedurl)
+            return None
+
+    def _media_streamurl(self, manifest_url, crypted_url, manifest, is_hds,
+                         pageurl, filters):
+        if not crypted_url:
+            return InvalidStreamUrl('No manifest URL')
+
+        if not manifest_url:
+            return InvalidStreamUrl('Decrypting manifest URL failed')
+
+        if is_hds:
+            bitrates = hds.bitrates_from_manifest(manifest)
+            selected_bitrate = select_bitrate(bitrates, filters.maxbitrate)
+            return Areena2014HDSStreamUrl(manifest_url, selected_bitrate)
+        else:
+            return Areena2014RTMPStreamUrl(pageurl, manifest_url)
+
 
 
 ### Areena stream URL ###
@@ -632,6 +663,7 @@ class AreenaStreamBase(AreenaUtils):
     def __init__(self):
         self.error = None
         self.ext = '.flv'
+        self.bitrate = None
 
     def is_valid(self):
         return not self.error
@@ -768,15 +800,11 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
 
 
 class Areena2014HDSStreamUrl(AreenaStreamBase):
-    def __init__(self, hdsurl):
+    def __init__(self, hds_url, bitrate):
         AreenaStreamBase.__init__(self)
 
-        if hdsurl:
-            sep = '&' if '?' in hdsurl else '?'
-            self.hds_url = hdsurl + sep + \
-                'g=ABCDEFGHIJKL&hdcore=3.8.0&plugin=flowplayer-3.8.0.0'
-        else:
-            self.hds_url = None
+        self.hds_url = hds_url
+        self.bitrate = bitrate
 
     def to_url(self):
         return self.hds_url
@@ -809,6 +837,7 @@ class HTTPStreamUrl(object):
         self.url = url
         path = urlparse.urlparse(url)[2]
         self.ext = os.path.splitext(path)[1] or None
+        self.bitrate = None
 
     def is_valid(self):
         return True
@@ -1120,7 +1149,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return None
 
             subtitles = self.media_subtitles(subtitle_media)
-            return AkamaiFlavors(subtitle_media, subtitles, pageurl, self.AES_KEY)
+            return AkamaiFlavors(subtitle_media, subtitles, pageurl, filters,
+                                 self.AES_KEY)
 
     def get_akamai_medias(self, program_info, media_id, program_id,
                           default_video_proto):
@@ -1810,7 +1840,6 @@ class RTMPDump(ExternalDownloader):
 class HDSDump(ExternalDownloader):
     def __init__(self, stream, io, filters):
         ExternalDownloader.__init__(self, stream, io)
-        self.quality_options = self._filter_options(filters)
 
     def resume_supported(self):
         return True
@@ -1824,17 +1853,8 @@ class HDSDump(ExternalDownloader):
     def ratelimit_supported(self):
         return True
 
-    def _filter_options(self, filters):
-        options = []
-
-        # Approximate because there is no easy way to find out the
-        # available bitrates in the HDS stream
-        if filters.maxbitrate < 1000:
-            options.extend(['--quality', 'low'])
-        elif filters.maxbitrate < 2000:
-            options.extend(['--quality', 'medium'])
-
-        return options
+    def _bitrate_option(self, bitrate):
+        return ['--quality', str(bitrate)] if bitrate else []
 
     def _limit_options(self, download_limits):
         options = []
@@ -1864,7 +1884,7 @@ class HDSDump(ExternalDownloader):
         args = list(io.hds_binary)
         args.append('--manifest')
         args.append(self.stream.to_url())
-        args.extend(self.quality_options)
+        args.extend(self._bitrate_option(self.stream.bitrate))
         args.extend(self._limit_options(io.download_limits))
         if io.proxy:
             args.append('--proxy')

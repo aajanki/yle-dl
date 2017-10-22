@@ -151,8 +151,7 @@ def arg_parser():
     qual_group.add_argument('--maxbitrate', metavar='RATE',
                             type=unicode_arg,
                             help='Maximum bitrate stream to download, '
-                            'integer in kB/s or "best" or "worst". '
-                            'Not exact on HDS streams.')
+                            'integer in kB/s or "best" or "worst".')
     qual_group.add_argument('--duration', metavar='S', type=int,
                             help='Record only the first S seconds of '
                             'the stream')
