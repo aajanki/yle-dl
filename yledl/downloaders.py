@@ -607,12 +607,21 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
     def __init__(self, media, subtitles, pageurl, filters, aes_key):
         is_hds = media.get('protocol') == 'HDS'
         crypted_url = media.get('url')
-        manifest_url = self._decrypt_manifest_url(crypted_url, aes_key)
-        manifest = download_page(manifest_url) if manifest_url else None
-        self.stream = self._media_streamurl(
-            manifest_url, crypted_url, manifest, is_hds, pageurl, filters)
+        media_url = self._decrypt_url(crypted_url, is_hds, aes_key)
+        if is_hds:
+            if media_url:
+                manifest = download_page(media_url)
+            else:
+                manifest = None
+            self._metadata = self._construct_hds_metadata(media, manifest)
+            self.stream = self._fail_if_url_missing(crypted_url, media_url) or \
+                          self._hds_streamurl(media_url, manifest, filters)
+        else:
+            manifest = None
+            self._metadata = self._construct_rtmp_metadata(media)
+            self.stream = self._fail_if_url_missing(crypted_url, media_url) or \
+                          self._rtmp_streamurl(media_url, pageurl)
         self.subtitles = subtitles
-        self._metadata = self._construct_metadata(media, manifest, is_hds)
 
     def metadata(self):
         return self._metadata
@@ -620,39 +629,42 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
     def subtitles_metadata(self):
         return [self.subtitle_meta_representation(s) for s in self.subtitles]
 
-    def _construct_metadata(self, media, manifest, is_hds):
-        if is_hds:
-            media_type = Flavors.media_type(media)
-            hds_metadata = hds.parse_manifest(manifest)
-            return [Flavors.single_flavor_meta(m, media_type)
-                    for m in hds_metadata]
-        else:
-            return [Flavors.single_flavor_meta(media)]
+    def _construct_hds_metadata(self, media, manifest):
+        media_type = Flavors.media_type(media)
+        hds_metadata = hds.parse_manifest(manifest)
+        return [Flavors.single_flavor_meta(m, media_type)
+                for m in hds_metadata]
 
-    def _decrypt_manifest_url(self, crypted_url, aes_key):
+    def _construct_rtmp_metadata(self, media):
+        return [Flavors.single_flavor_meta(media)]
+        
+    def _decrypt_url(self, crypted_url, is_hds, aes_key):
         if crypted_url:
             baseurl = self.areena_decrypt(crypted_url, aes_key)
-            sep = '&' if '?' in baseurl else '?'
-            return baseurl + sep + \
-                'g=ABCDEFGHIJKL&hdcore=3.8.0&plugin=flowplayer-3.8.0.0'
+            if is_hds:
+                sep = '&' if '?' in baseurl else '?'
+                return baseurl + sep + \
+                    'g=ABCDEFGHIJKL&hdcore=3.8.0&plugin=flowplayer-3.8.0.0'
+            else:
+                return baseurl
         else:
             return None
 
-    def _media_streamurl(self, manifest_url, crypted_url, manifest, is_hds,
-                         pageurl, filters):
+    def _hds_streamurl(self, media_url, manifest, filters):
+        bitrates = hds.bitrates_from_manifest(manifest)
+        selected_bitrate = select_bitrate(bitrates, filters.maxbitrate)
+        return Areena2014HDSStreamUrl(media_url, selected_bitrate)
+
+    def _rtmp_streamurl(self, media_url, pageurl):
+        return Areena2014RTMPStreamUrl(pageurl, media_url)
+    
+    def _fail_if_url_missing(self, crypted_url, media_url):
         if not crypted_url:
-            return InvalidStreamUrl('No manifest URL')
-
-        if not manifest_url:
-            return InvalidStreamUrl('Decrypting manifest URL failed')
-
-        if is_hds:
-            bitrates = hds.bitrates_from_manifest(manifest)
-            selected_bitrate = select_bitrate(bitrates, filters.maxbitrate)
-            return Areena2014HDSStreamUrl(manifest_url, selected_bitrate)
+            return InvalidStreamUrl('Media URL missing')
+        elif not media_url:
+            return InvalidStreamUrl('Decrypting media URL failed')
         else:
-            return Areena2014RTMPStreamUrl(pageurl, manifest_url)
-
+            return None
 
 
 ### Areena stream URL ###
