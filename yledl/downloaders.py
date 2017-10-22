@@ -202,6 +202,10 @@ def sane_filename(name, excludechars):
     return x or u'ylevideo'
 
 
+def ignore_none_values(di):
+    return {key: value for (key, value) in di if value is not None}
+
+
 class StreamFilters(object):
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
@@ -1354,7 +1358,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             ('publish_timestamp', self.publish_timestamp(program_info)),
             ('expiration_timestamp', self.expiration_timestamp(program_info))
         ]
-        return {key: value for (key, value) in meta if value if not None}
+        return ignore_none_values(meta)
 
 
 class Areena2014LiveDownloader(Areena2014Downloader):
