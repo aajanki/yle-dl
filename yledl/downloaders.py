@@ -812,7 +812,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         downloaders = []
         for backend in backends:
             dl_constructor = backend.hds()
-            downloaders.append(dl_constructor(self, io, filters))
+            downloaders.append(dl_constructor(self, io))
 
         return FallbackDump(downloaders)
 
@@ -1837,9 +1837,6 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, stream, io, filters):
-        ExternalDownloader.__init__(self, stream, io)
-
     def resume_supported(self):
         return True
 
@@ -1906,10 +1903,6 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, stream, io, filters):
-        BaseDownloader.__init__(self, stream, io)
-        self.maxbitrate = filters.maxbitrate
-
     def resume_supported(self):
         return True
 
@@ -1954,7 +1947,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         ydl = youtube_dl.YoutubeDL(ydlopts)
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
         info = {'url': self.stream.to_url()}
-        info.update(self._bitrate_parameter())
+        info.update(self._bitrate_parameter(self.stream.bitrate))
         try:
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
@@ -1966,20 +1959,11 @@ class YoutubeDLHDSDump(BaseDownloader):
             self.log_output_file(outputfile, True)
         return RD_SUCCESS
 
-    def _bitrate_parameter(self):
-        manifest = download_page(self.stream.to_url())
-        bitrates = hds.bitrates_from_manifest(manifest)
-        selected_bitrate = select_bitrate(bitrates, self.maxbitrate)
-        if selected_bitrate:
-            return {'tbr': selected_bitrate}
-        else:
-            return {}
+    def _bitrate_parameter(self, bitrate):
+        return {'tbr': bitrate} if bitrate else {}
 
     def _ratelimit_parameter(self, ratelimit):
-        if ratelimit:
-            return {'ratelimit': ratelimit*1024}
-        else:
-            return {}
+        return {'ratelimit': ratelimit*1024} if ratelimit else {}
 
 
 ### Download a HLS stream by delegating to ffmpeg ###
