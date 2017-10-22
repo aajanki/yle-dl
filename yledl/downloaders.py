@@ -1627,20 +1627,30 @@ class ArkivetDownloader(Areena2014Downloader):
 ### Download a stream to a local file ###
 
 
+class IOCapability(object):
+    RESUME = 'resume'
+    PROXY = 'proxy'
+    RATELIMIT = 'ratelimit'
+    DURATION = 'duration'
+
+
 class BaseDownloader(object):
     def __init__(self, stream, io):
         self.stream = stream
         self._cached_output_file = None
+        self.io_capabilities = frozenset()
 
     def warn_on_unsupported_feature(self, io):
-        if io.resume and not self.resume_supported():
+        if io.resume and IOCapability.RESUME not in self.io_capabilities:
             logger.warn('Resume not supported on this stream')
-        if io.proxy and not self.proxy_supported():
+        if io.proxy and IOCapability.PROXY not in self.io_capabilities:
             logger.warn('Proxy not supported on this stream. '
                         'Trying to continue anyway')
-        if io.download_limits.ratelimit and not self.ratelimit_supported():
+        if io.download_limits.ratelimit and \
+           IOCapability.RATELIMIT not in self.io_capabilities:
             logger.warn('Rate limiting not supported on this stream')
-        if io.download_limits.duration and not self.duration_supported():
+        if io.download_limits.duration and \
+           IOCapability.DURATION not in self.io_capabilities:
             logger.warning(u'--duration will be ignored on this stream')
 
     def save_stream(self, clip_title, io):
@@ -1709,20 +1719,8 @@ class BaseDownloader(object):
                 return self.append_ext_if_missing(
                     io.outputfilename, self.stream.ext)
         else:
-            resume_job = io.resume and self.resume_supported()
+            resume_job = io.resume and IOCapability.RESUME in self.io_capabilities
             return self.outputfile_from_clip_title(clip_title, io, resume_job)
-
-    def resume_supported(self):
-        return False
-
-    def proxy_supported(self):
-        return False
-
-    def duration_supported(self):
-        return False
-
-    def ratelimit_supported(self):
-        return False
 
 
 ### Dumping a stream to a file using external programs ###
@@ -1795,6 +1793,7 @@ class Subprocess(object):
 class RTMPDump(ExternalDownloader):
     def __init__(self, stream, io):
         ExternalDownloader.__init__(self, stream, io)
+        self.io_capabilities = frozenset([IOCapability.RESUME])
 
     def save_stream(self, clip_title, io):
         # rtmpdump fails to resume if the file doesn't contain at
@@ -1805,9 +1804,6 @@ class RTMPDump(ExternalDownloader):
             self.remove(filename)
 
         return super(RTMPDump, self).save_stream(clip_title, io)
-
-    def resume_supported(self):
-        return True
 
     def build_args(self, clip_title, io):
         args = [io.rtmpdump_binary]
@@ -1841,17 +1837,14 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def resume_supported(self):
-        return True
-
-    def proxy_supported(self):
-        return True
-
-    def duration_supported(self):
-        return True
-
-    def ratelimit_supported(self):
-        return True
+    def __init__(self, stream, io):
+        ExternalDownloader.__init__(self, stream, io)
+        self.io_capabilities = frozenset([
+            IOCapability.RESUME,
+            IOCapability.PROXY,
+            IOCapability.DURATION,
+            IOCapability.RATELIMIT
+        ])
 
     def _bitrate_option(self, bitrate):
         return ['--quality', str(bitrate)] if bitrate else []
@@ -1907,14 +1900,13 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def resume_supported(self):
-        return True
-
-    def proxy_supported(self):
-        return True
-
-    def ratelimit_supported(self):
-        return True
+    def __init__(self, stream, io):
+        BaseDownloader.__init__(self, stream, io)
+        self.io_capabilities = frozenset([
+            IOCapability.RESUME,
+            IOCapability.PROXY,
+            IOCapability.RATELIMIT
+        ])
 
     def save_stream(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
@@ -1971,8 +1963,9 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def duration_supported(self):
-        return True
+    def __init__(self, stream, io):
+        ExternalDownloader.__init__(self, stream, io)
+        self.io_capabilities = frozenset([IOCapability.DURATION])
 
     def output_filename(self, clip_title, io):
         return self._construct_output_filename(clip_title, io, False)
@@ -2011,6 +2004,13 @@ class HLSDump(ExternalDownloader):
 
 
 class WgetDump(ExternalDownloader):
+    def __init__(self, stream, io):
+        ExternalDownloader.__init__(self, stream, io)
+        self.io_capabilities = frozenset([
+            IOCapability.RESUME,
+            IOCapability.RATELIMIT
+        ])
+
     def build_args(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
         args = self.shared_wget_args(io.wget_binary, output_name)
@@ -2039,12 +2039,6 @@ class WgetDump(ExternalDownloader):
             '--user-agent=' + yledl_user_agent(),
             '--timeout=20'
         ]
-
-    def resume_supported(self):
-        return True
-
-    def ratelimit_supported(self):
-        return True
 
 
 ### Try multiple downloaders until one succeeds ###
