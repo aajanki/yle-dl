@@ -586,19 +586,15 @@ class KalturaFlavors(FlavorsMetadata):
         return self._stream_factory(entry_id, flavor_id, stream_format, ext)
 
     def _filter_flavors_by_bitrate(self, flavors, filters):
-        valid_bitrates = [fl for fl in flavors
-                          if fl.get('bitrate', 0) <= filters.maxbitrate]
-        if not valid_bitrates and len(flavors) >= 1:
-            valid_bitrates = [min(flavors,
-                                  key=lambda fl: fl.get('bitrate', 0))]
-
-        if not valid_bitrates:
+        available_bitrates = [fl.get('bitrate') for fl in flavors
+                              if fl.get('bitrate')]
+        bitrate = select_bitrate(available_bitrates, filters.maxbitrate)
+        if bitrate is not None:
+            return [fl for fl in flavors if fl.get('bitrate') == bitrate][0]
+        elif flavors:
+            return flavors[0]
+        else:
             return {}
-
-        selected = max(valid_bitrates, key=lambda fl: fl.get('bitrate', 0))
-        logger.debug(u'Selected bitrate: %s' % selected.get('bitrate', 0))
-
-        return selected
 
     def _stream_factory(self, entry_id, flavor_id, stream_format, ext):
         if stream_format == 'applehttp':
@@ -1970,21 +1966,11 @@ class YoutubeDLHDSDump(BaseDownloader):
     def _bitrate_parameter(self):
         manifest = download_page(self.stream.to_url())
         bitrates = hds.bitrates_from_manifest(manifest)
-        logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
-                     (bitrates, self.maxbitrate))
-
-        if not bitrates:
-            return {}
-
-        acceptable_bitrates = [br for br in bitrates if br <= self.maxbitrate]
-        if not acceptable_bitrates:
-            selected_bitrate = min(bitrates)
+        selected_bitrate = select_bitrate(bitrates, self.maxbitrate)
+        if selected_bitrate:
+            return {'tbr': selected_bitrate}
         else:
-            selected_bitrate = max(acceptable_bitrates)
-
-        logger.debug(u'Selected bitrate: %s' % selected_bitrate)
-
-        return {'tbr': selected_bitrate}
+            return {}
 
     def _ratelimit_parameter(self, ratelimit):
         if ratelimit:
