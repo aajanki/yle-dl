@@ -503,7 +503,18 @@ class Flavors(object):
         return 'audio' if media.get('type') == 'AudioObject' else 'video'
 
 
-class KalturaFlavors(object):
+class FlavorsMetadata(object):
+    def metadata(self):
+        return []
+
+    def subtitles_metadata(self):
+        return []
+
+    def subtitle_meta_representation(self, subtitle):
+        return {'lang': subtitle.language, 'uri': subtitle.url}
+
+
+class KalturaFlavors(FlavorsMetadata):
     def __init__(self, kaltura_flavors, stream_meta, subtitles, filters):
         self.kaltura_flavors = kaltura_flavors
         self.subtitles = subtitles
@@ -512,6 +523,9 @@ class KalturaFlavors(object):
 
     def metadata(self):
         return [Flavors.single_flavor_meta(fl) for fl in self.kaltura_flavors]
+
+    def subtitles_metadata(self):
+        return [self.subtitle_meta_representation(s) for s in self.subtitles]
 
     def _select_matching_stream(self, flavors, meta, filters):
         # See http://cdnapi.kaltura.com/html5/html5lib/v2.56/load.php
@@ -573,7 +587,7 @@ class KalturaFlavors(object):
             return KalturaHTTPStreamUrl(entry_id, flavor_id, stream_format, ext)
 
 
-class AkamaiFlavors(AreenaUtils):
+class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
     def __init__(self, media, subtitles, pageurl, aes_key):
         self.media = media
         self.subtitles = subtitles
@@ -588,6 +602,9 @@ class AkamaiFlavors(AreenaUtils):
                     for m in hds_metadata]
         else:
             return [Flavors.single_flavor_meta(self.media)]
+
+    def subtitles_metadata(self):
+        return [self.subtitle_meta_representation(s) for s in self.subtitles]
 
     def _media_streamurl(self, media, pageurl, aes_key):
         url = media.get('url')
@@ -1322,7 +1339,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             program_info, program_id, pageurl, filters)
         if flavors:
             flavors_meta = flavors.metadata()
-            subtitles = [self.subtitle_meta(s) for s in flavors.subtitles]
+            subtitles = flavors.subtitles_metadata()
         else:
             flavors_meta = None
             subtitles = []
@@ -1338,9 +1355,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             ('expiration_timestamp', self.expiration_timestamp(program_info))
         ]
         return {key: value for (key, value) in meta if value if not None}
-
-    def subtitle_meta(self, subtitle):
-        return {'lang': subtitle.language, 'uri': subtitle.url}
 
 
 class Areena2014LiveDownloader(Areena2014Downloader):
