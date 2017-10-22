@@ -605,26 +605,29 @@ class KalturaFlavors(FlavorsMetadata):
 
 class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
     def __init__(self, media, subtitles, pageurl, filters, aes_key):
-        self.media = media
-        self.is_hds = media.get('protocol') == 'HDS'
-        self.subtitles = subtitles
+        is_hds = media.get('protocol') == 'HDS'
         crypted_url = media.get('url')
         manifest_url = self._decrypt_manifest_url(crypted_url, aes_key)
-        self.manifest = download_page(manifest_url) if manifest_url else None
+        manifest = download_page(manifest_url) if manifest_url else None
         self.stream = self._media_streamurl(
-            manifest_url, crypted_url, self.manifest, self.is_hds, pageurl, filters)
+            manifest_url, crypted_url, manifest, is_hds, pageurl, filters)
+        self.subtitles = subtitles
+        self._metadata = self._construct_metadata(media, manifest, is_hds)
 
     def metadata(self):
-        if self.is_hds:
-            media_type = Flavors.media_type(self.media)
-            hds_metadata = hds.parse_manifest(self.manifest)
-            return [Flavors.single_flavor_meta(m, media_type)
-                    for m in hds_metadata]
-        else:
-            return [Flavors.single_flavor_meta(self.media)]
+        return self._metadata
 
     def subtitles_metadata(self):
         return [self.subtitle_meta_representation(s) for s in self.subtitles]
+
+    def _construct_metadata(self, media, manifest, is_hds):
+        if is_hds:
+            media_type = Flavors.media_type(media)
+            hds_metadata = hds.parse_manifest(manifest)
+            return [Flavors.single_flavor_meta(m, media_type)
+                    for m in hds_metadata]
+        else:
+            return [Flavors.single_flavor_meta(media)]
 
     def _decrypt_manifest_url(self, crypted_url, aes_key):
         if crypted_url:
