@@ -701,11 +701,11 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
-    def create_downloader(self, io, filters, backends):
+    def create_downloader(self, backends):
         if not self.to_rtmpdump_args():
             return None
         else:
-            return RTMPDump(self, io)
+            return RTMPDump(self)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -808,11 +808,11 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_url(self):
         return self.hds_url
 
-    def create_downloader(self, io, filters, backends):
+    def create_downloader(self, backends):
         downloaders = []
         for backend in backends:
             dl_constructor = backend.hds()
-            downloaders.append(dl_constructor(self, io))
+            downloaders.append(dl_constructor(self))
 
         return FallbackDump(downloaders)
 
@@ -847,8 +847,8 @@ class HTTPStreamUrl(object):
     def to_url(self):
         return self.url
 
-    def create_downloader(self, io, filters, backends):
-        return WgetDump(self, io)
+    def create_downloader(self, backends):
+        return WgetDump(self)
 
 
 class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -856,8 +856,8 @@ class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
         self.ext = ext
         self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
 
-    def create_downloader(self, io, filters, backends):
-        return HLSDump(self, io)
+    def create_downloader(self, backends):
+        return HLSDump(self)
 
 
 class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
@@ -899,8 +899,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def download_episodes(self, url, io, filters, postprocess_command):
         def download_clip(clip):
-            downloader = clip.streamurl.create_downloader(
-                io, filters, self.backends)
+            downloader = clip.streamurl.create_downloader(self.backends)
             if not downloader:
                 logger.error(u'Downloading the stream at %s is not yet '
                              u'supported.' % url)
@@ -936,7 +935,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def pipe(self, url, io, filters):
         def pipe_clip(clip):
-            dl = clip.streamurl.create_downloader(io, filters, self.backends)
+            dl = clip.streamurl.create_downloader(self.backends)
             if not dl:
                 logger.error(u'Downloading the stream at %s is not yet '
                              u'supported.' % url)
@@ -1635,7 +1634,7 @@ class IOCapability(object):
 
 
 class BaseDownloader(object):
-    def __init__(self, stream, io):
+    def __init__(self, stream):
         self.stream = stream
         self._cached_output_file = None
         self.io_capabilities = frozenset()
@@ -1791,8 +1790,8 @@ class Subprocess(object):
 
 
 class RTMPDump(ExternalDownloader):
-    def __init__(self, stream, io):
-        ExternalDownloader.__init__(self, stream, io)
+    def __init__(self, stream):
+        ExternalDownloader.__init__(self, stream)
         self.io_capabilities = frozenset([IOCapability.RESUME])
 
     def save_stream(self, clip_title, io):
@@ -1837,8 +1836,8 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, stream, io):
-        ExternalDownloader.__init__(self, stream, io)
+    def __init__(self, stream):
+        ExternalDownloader.__init__(self, stream)
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.PROXY,
@@ -1900,8 +1899,8 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, stream, io):
-        BaseDownloader.__init__(self, stream, io)
+    def __init__(self, stream):
+        BaseDownloader.__init__(self, stream)
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.PROXY,
@@ -1963,8 +1962,8 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, stream, io):
-        ExternalDownloader.__init__(self, stream, io)
+    def __init__(self, stream):
+        ExternalDownloader.__init__(self, stream)
         self.io_capabilities = frozenset([IOCapability.DURATION])
 
     def output_filename(self, clip_title, io):
@@ -2004,8 +2003,8 @@ class HLSDump(ExternalDownloader):
 
 
 class WgetDump(ExternalDownloader):
-    def __init__(self, stream, io):
-        ExternalDownloader.__init__(self, stream, io)
+    def __init__(self, stream):
+        ExternalDownloader.__init__(self, stream)
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.RATELIMIT
