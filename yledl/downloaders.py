@@ -2056,6 +2056,10 @@ class FallbackDump(object):
     def output_filename(self, clip_title, io):
        return self._retry_call(lambda x: x.output_filename, clip_title, io)
 
+    def warn_on_unsupported_feature(self, io):
+        if self.downloaders:
+            self.downloaders[0].warn_on_unsupported_feature(io)
+
     def _retry_call(self, get_action, *args, **kwargs):
         for downloader in self.downloaders:
             logger.debug('Now trying downloader {}'.format(type(downloader).__name__))
