@@ -1635,6 +1635,8 @@ class BaseDownloader(object):
                         'Trying to continue anyway')
         if io.download_limits.ratelimit and not self.ratelimit_supported():
             logger.warn('Rate limiting not supported on this stream')
+        if io.download_limits.duration and not self.duration_supported():
+            logger.warning(u'--duration will be ignored on this stream')
 
     def save_stream(self, clip_title, io):
         """Deriving classes override this to perform the download"""
@@ -1723,9 +1725,6 @@ class BaseDownloader(object):
 
 class ExternalDownloader(BaseDownloader):
     def save_stream(self, clip_title, io):
-        if not self.duration_supported() and io.download_limits.duration:
-            logger.warning(u'--duration will be ignored on this stream')
-
         args = self.build_args(clip_title, io)
         outputfile = self.output_filename(clip_title, io)
         self.log_output_file(outputfile)
@@ -1913,9 +1912,6 @@ class YoutubeDLHDSDump(BaseDownloader):
         return True
 
     def save_stream(self, clip_title, io):
-        if io.download_limits.duration:
-            logger.warning(u'--duration will be ignored on this stream')
-
         output_name = self.output_filename(clip_title, io)
         return self._execute_youtube_dl(output_name, io)
 
