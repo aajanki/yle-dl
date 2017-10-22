@@ -1804,7 +1804,10 @@ class Subprocess(object):
 class RTMPDump(ExternalDownloader):
     def __init__(self, stream):
         ExternalDownloader.__init__(self, stream)
-        self.io_capabilities = frozenset([IOCapability.RESUME])
+        self.io_capabilities = frozenset([
+            IOCapability.RESUME,
+            IOCapability.DURATION
+        ])
 
     def save_stream(self, clip_title, io):
         # rtmpdump fails to resume if the file doesn't contain at
@@ -1822,6 +1825,8 @@ class RTMPDump(ExternalDownloader):
         args += ['-o', self.output_filename(clip_title, io)]
         if io.resume:
             args.append('-e')
+        if io.download_limits.duration:
+            args.extend(['--stop', str(io.download_limits.duration)])
         return args
 
     def pipe(self, io):
