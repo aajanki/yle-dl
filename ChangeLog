@@ -8,6 +8,7 @@ xx xxx 2017, Version 2.27
 - Fixed --maxbitrate on HDS streams
 - --duration now works on RTMP streams
 - Warn if output file extension is unsupported
+- Fixed the timestamp of wget downloads
 
 14 Oct 2017, Version 2.26
 

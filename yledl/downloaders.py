@@ -2052,6 +2052,7 @@ class WgetDump(ExternalDownloader):
         return [
             wget_binary,
             '-O', output_filename,
+            '--no-use-server-timestamps',
             '--user-agent=' + yledl_user_agent(),
             '--timeout=20'
         ]
