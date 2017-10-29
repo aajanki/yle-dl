@@ -85,6 +85,15 @@ Integration tests
 python setup.py pytest
 ```
 
+Some tests succeed only when run on a Finnish IP address because some
+Areena streams are available only in Finland. To skip those test, set
+the environment variable `ENABLE_FINLAND_TESTS` to 0:
+
+```
+export ENABLE_FINLAND_TESTS=0
+python setup.py pytest
+```
+
 Packages for various distros
 ----------------------------
 

@@ -77,6 +77,13 @@ Integraatiotestien ajaminen
 
 python setup.py pytest
 
+Jotkin testit onnistuvat vain suomalaisesta IP-osoitteesta, koska osa
+Areenan videoista on saatavilla vain Suomessa. Hypätäksesi tällaisten
+testien yli määrittele ympäristömuuttujan ENABLE_FINLAND_TESTS arvoksi 0:
+
+export ENABLE_FINLAND_TESTS=0
+python setup.py pytest
+
 
 Käyttö
 ------
