@@ -28,6 +28,7 @@ from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
 from utils import print_enc
+from videoutils import is_complete
 
 # exit codes
 RD_SUCCESS = 0
@@ -1882,6 +1883,14 @@ class HDSDump(ExternalDownloader):
             '--outfile', self.output_filename(clip_title, io)
         ]
         return self.adobehds_command_line(io, args)
+
+    def save_stream(self, clip_title, io):
+        output_name = self.output_filename(clip_title, io)
+        if io.resume and output_name != '-' and is_complete(output_name):
+            logger.info('{} has already been downloaded.'.format(output_name))
+            return RD_SUCCESS
+        else:
+            return super(HDSDump, self).save_stream(clip_title, io)
 
     def pipe(self, io):
         args = self.adobehds_command_line(io, ['--play'])

@@ -24,12 +24,12 @@ Asenna riippuvuudet:
 * wget
 * PHP-tulkki
 * PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
+* ffmpeg
 * setuptools (jos asennat lähdekoodeista)
 
 Joidenkin ohjelmien lataamiseen tarvitaan lisäksi:
 
 * rtmpdump (Areenan radio-ohjelmien lataamiseen. Version 2.4 tai uudempi)
-* ffmpeg (saatetaan tarvita joidenkin harvojen Areenan TV-ohjelmien lataamiseen)
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
 polkuineen php.ini-tiedostoon

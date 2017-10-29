@@ -33,12 +33,12 @@ instructions for Debian, Ubuntu and Mac OS X.
 * wget
 * PHP interpreter
 * PHP extensions: bcmath, curl, mcrypt and SimpleXML
+* ffmpeg
 * setuptools (when installing from the sources)
 
 Optionally for certain types of streams:
 
 * rtmpdump (for downloading Areena audio streams. Version 2.4 or newer, preferably the latest development version from the project homepage at https://rtmpdump.mplayerhq.hu/)
-* ffmpeg (might be needed very rarely for some Areena video streams)
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:
