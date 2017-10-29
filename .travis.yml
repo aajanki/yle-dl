@@ -20,9 +20,8 @@ env:
     - ENABLE_FINLAND_TESTS=0
 
 install:
- # Speed up CI install
- # http://lxml.de/installation.html#installation
- - CFLAGS="-O0" pip install lxml
+ # Install from wheel instead of from source in setup.py to speed up CI
+ - pip install lxml
 
  - pip install pyflakes pep8
  - python setup.py install
