@@ -6,7 +6,8 @@ xx xxx 2017, Version 2.27
 
 - --showmeta now prints the resolution for HDS streams
 - Fixed --maxbitrate on HDS streams
-- Don't redownload already downloaded files when using --resume (HDS streams)
+- Don't redownload already downloaded files when using --resume (HDS streams).
+  Required ffmpeg and ffprobe.
 - --duration now works on RTMP streams
 - Warn if an output file extension is unsupported
 - Fixed the timestamp of wget downloads
