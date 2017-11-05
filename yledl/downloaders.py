@@ -598,10 +598,7 @@ class KalturaFlavors(FlavorsMetadata):
             return {}
 
     def _stream_factory(self, entry_id, flavor_id, stream_format, ext):
-        if stream_format == 'applehttp':
-            return KalturaHLSStreamUrl(entry_id, flavor_id, ext)
-        else:
-            return KalturaHTTPStreamUrl(entry_id, flavor_id, stream_format, ext)
+        return KalturaStreamUrl(entry_id, flavor_id, stream_format, ext)
 
 
 class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
@@ -864,19 +861,19 @@ class HTTPStreamUrl(object):
         return WgetDump(self)
 
 
-class KalturaHLSStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
-    def __init__(self, entryid, flavorid, ext='.mp4'):
-        self.ext = ext
-        self.url = self.manifest_url(entryid, flavorid, 'applehttp', '.m3u8')
-
-    def create_downloader(self, backends):
-        return HLSDump(self)
-
-
-class KalturaHTTPStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
+class KalturaStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
     def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
         self.ext = ext
-        self.url = self.manifest_url(entryid, flavorid, stream_format, ext)
+        self.stream_format = stream_format
+        manifest_ext = '.m3u8' if stream_format == 'applehttp' else ext
+        self.url = self.manifest_url(
+            entryid, flavorid, stream_format, manifest_ext)
+
+    def create_downloader(self, backends):
+        if self.stream_format == 'url':
+            return FallbackDump([WgetDump(self), HLSDump(self)])
+        else:
+            return HLSDump(self)
 
 
 class InvalidStreamUrl(object):
@@ -1752,7 +1749,11 @@ class ExternalDownloader(BaseDownloader):
         return []
 
     def external_downloader(self, args):
-        return Subprocess().execute(args)
+        exit_code = Subprocess().execute(args)
+        if exit_code == 0:
+            return RD_SUCCESS
+        else:
+            return RD_FAILED
 
 
 class Subprocess(object):
@@ -2092,7 +2093,7 @@ class FallbackDump(object):
             logger.debug('Now trying downloader {}'.format(type(downloader).__name__))
             method = get_action(downloader)
             res = method(*args, **kwargs)
-            if res != RD_FAILED:
+            if res == RD_SUCCESS:
                 return res
 
         return RD_FAILED
