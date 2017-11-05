@@ -671,9 +671,6 @@ class AreenaStreamBase(AreenaUtils):
     def to_url(self):
         return ''
 
-    def to_rtmpdump_args(self):
-        return None
-
 
 class AreenaRTMPStreamUrl(AreenaStreamBase):
     # Extracted from
@@ -697,10 +694,11 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
             return []
 
     def create_downloader(self, backends):
-        if not self.to_rtmpdump_args():
+        args = self.to_rtmpdump_args()
+        if not args:
             return None
         else:
-            return RTMPDump(self)
+            return RTMPDump(args)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -1806,9 +1804,9 @@ class Subprocess(object):
 
 
 class RTMPDump(ExternalDownloader):
-    def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream.ext)
-        self.stream = stream
+    def __init__(self, rtmpdump_args):
+        ExternalDownloader.__init__(self, '.flv')
+        self.args = rtmpdump_args
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.DURATION
@@ -1826,7 +1824,7 @@ class RTMPDump(ExternalDownloader):
 
     def build_args(self, clip_title, io):
         args = [io.rtmpdump_binary]
-        args += self.stream.to_rtmpdump_args()
+        args += self.args
         args += ['-o', self.output_filename(clip_title, io)]
         if io.resume:
             args.append('-e')
@@ -1836,7 +1834,7 @@ class RTMPDump(ExternalDownloader):
 
     def pipe(self, io):
         args = [io.rtmpdump_binary]
-        args += self.stream.to_rtmpdump_args()
+        args += self.args
         args += ['-o', '-']
         self.external_downloader(args)
         return RD_SUCCESS
