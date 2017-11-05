@@ -1642,8 +1642,8 @@ class IOCapability(object):
 
 
 class BaseDownloader(object):
-    def __init__(self, stream):
-        self.stream = stream
+    def __init__(self, output_extension):
+        self.ext = output_extension
         self._cached_output_file = None
         self.io_capabilities = frozenset()
 
@@ -1672,7 +1672,7 @@ class BaseDownloader(object):
         if self._cached_output_file:
             return self._cached_output_file
 
-        ext = self.stream.ext or '.flv'
+        ext = self.ext or '.flv'
         filename = sane_filename(clip_title, io.excludechars) + ext
         if io.destdir:
             filename = os.path.join(io.destdir, filename)
@@ -1721,10 +1721,10 @@ class BaseDownloader(object):
     def _construct_output_filename(self, clip_title, io, force_extension):
         if io.outputfilename:
             if force_extension:
-                return self.replace_extension(io.outputfilename, self.stream.ext)
+                return self.replace_extension(io.outputfilename, self.ext)
             else:
                 return self.append_ext_if_missing(
-                    io.outputfilename, self.stream.ext)
+                    io.outputfilename, self.ext)
         else:
             resume_job = io.resume and IOCapability.RESUME in self.io_capabilities
             return self.outputfile_from_clip_title(clip_title, io, resume_job)
@@ -1803,7 +1803,8 @@ class Subprocess(object):
 
 class RTMPDump(ExternalDownloader):
     def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream)
+        ExternalDownloader.__init__(self, stream.ext)
+        self.stream = stream
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.DURATION
@@ -1854,7 +1855,8 @@ class RTMPDump(ExternalDownloader):
 
 class HDSDump(ExternalDownloader):
     def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream)
+        ExternalDownloader.__init__(self, stream.ext)
+        self.stream = stream
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.PROXY,
@@ -1925,7 +1927,8 @@ class HDSDump(ExternalDownloader):
 
 class YoutubeDLHDSDump(BaseDownloader):
     def __init__(self, stream):
-        BaseDownloader.__init__(self, stream)
+        BaseDownloader.__init__(self, stream.ext)
+        self.stream = stream
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.PROXY,
@@ -1988,7 +1991,8 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 class HLSDump(ExternalDownloader):
     def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream)
+        ExternalDownloader.__init__(self, stream.ext)
+        self.stream = stream
         self.io_capabilities = frozenset([IOCapability.DURATION])
 
     def output_filename(self, clip_title, io):
@@ -2029,7 +2033,8 @@ class HLSDump(ExternalDownloader):
 
 class WgetDump(ExternalDownloader):
     def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream)
+        ExternalDownloader.__init__(self, stream.ext)
+        self.stream = stream
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.RATELIMIT
