@@ -843,22 +843,26 @@ class HTTPStreamUrl(object):
         return self.url
 
     def create_downloader(self, backends):
-        return WgetDump(self)
+        return WgetDump(self.url, self.ext)
 
 
 class KalturaStreamUrl(HTTPStreamUrl):
     def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
         self.ext = ext
         self.stream_format = stream_format
-        manifest_ext = '.m3u8' if stream_format == 'applehttp' else ext
-        self.url = self._manifest_url(
-            entryid, flavorid, stream_format, manifest_ext)
+        self.http_manifest_url = self._manifest_url(
+            entryid, flavorid, 'url', ext)
+        self.hls_manifest_url = self._manifest_url(
+            entryid, flavorid, 'applehttp', '.m3u8')
 
     def create_downloader(self, backends):
         if self.stream_format == 'url':
-            return FallbackDump([WgetDump(self), HLSDump(self)])
+            return FallbackDump([
+                WgetDump(self.http_manifest_url, self.ext),
+                HLSDump(self.hls_manifest_url, self.ext)
+            ])
         else:
-            return HLSDump(self)
+            return HLSDump(self.hls_manifest_url, self.ext)
 
     def _manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
         return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
@@ -1990,9 +1994,9 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream.ext)
-        self.stream = stream
+    def __init__(self, url, output_extension):
+        ExternalDownloader.__init__(self, output_extension)
+        self.url = url
         self.io_capabilities = frozenset([IOCapability.DURATION])
 
     def output_filename(self, clip_title, io):
@@ -2021,7 +2025,7 @@ class HLSDump(ExternalDownloader):
         loglevel = 'info' if debug else 'error'
         args = [io.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
-                '-i', self.stream.to_url(),
+                '-i', self.url,
                 '-vcodec', 'copy', '-acodec', 'copy']
         args.extend(self._duration_arg(io.download_limits))
         args.extend(output_options)
@@ -2032,9 +2036,9 @@ class HLSDump(ExternalDownloader):
 
 
 class WgetDump(ExternalDownloader):
-    def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream.ext)
-        self.stream = stream
+    def __init__(self, url, output_extension):
+        ExternalDownloader.__init__(self, output_extension)
+        self.url = url
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.RATELIMIT
@@ -2052,12 +2056,12 @@ class WgetDump(ExternalDownloader):
             args.append('-c')
         if io.download_limits.ratelimit:
             args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
-        args.append(self.stream.to_url())
+        args.append(self.url)
         return args
 
     def pipe(self, io):
         args = self.shared_wget_args(io.wget_binary, '-')
-        args.append(self.stream.to_url())
+        args.append(self.url)
         self.external_downloader(args)
         return RD_SUCCESS
 
