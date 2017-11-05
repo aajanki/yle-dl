@@ -807,7 +807,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         downloaders = []
         for backend in backends:
             dl_constructor = backend.hds()
-            downloaders.append(dl_constructor(self))
+            downloaders.append(dl_constructor(self.hds_url, self.bitrate, self.ext))
 
         return FallbackDump(downloaders)
 
@@ -1858,9 +1858,10 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, stream):
-        ExternalDownloader.__init__(self, stream.ext)
-        self.stream = stream
+    def __init__(self, url, bitrate, output_extension):
+        ExternalDownloader.__init__(self, output_extension)
+        self.url = url
+        self.bitrate = bitrate
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.PROXY,
@@ -1906,8 +1907,8 @@ class HDSDump(ExternalDownloader):
     def adobehds_command_line(self, io, extra_args):
         args = list(io.hds_binary)
         args.append('--manifest')
-        args.append(self.stream.to_url())
-        args.extend(self._bitrate_option(self.stream.bitrate))
+        args.append(self.url)
+        args.extend(self._bitrate_option(self.bitrate))
         args.extend(self._limit_options(io.download_limits))
         if io.proxy:
             args.append('--proxy')
@@ -1930,9 +1931,10 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, stream):
-        BaseDownloader.__init__(self, stream.ext)
-        self.stream = stream
+    def __init__(self, url, bitrate, output_extension):
+        BaseDownloader.__init__(self, output_extension)
+        self.url = url
+        self.bitrate = bitrate
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.PROXY,
@@ -1970,8 +1972,8 @@ class YoutubeDLHDSDump(BaseDownloader):
 
         ydl = youtube_dl.YoutubeDL(ydlopts)
         f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
-        info = {'url': self.stream.to_url()}
-        info.update(self._bitrate_parameter(self.stream.bitrate))
+        info = {'url': self.url}
+        info.update(self._bitrate_parameter(self.bitrate))
         try:
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
