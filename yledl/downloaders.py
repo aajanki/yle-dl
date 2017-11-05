@@ -481,21 +481,6 @@ class KalturaUtils(object):
                      (bitrates, maxbitrate))
 
 
-class KalturaStreamUtils(object):
-    def manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
-        return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
-                'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
-                'format/{stream_format}/protocol/https/a{ext}?'
-                'referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
-                '&playSessionId=11111111-1111-1111-1111-111111111111'
-                '&clientTag=html5:v2.56&preferredBitrate=600'
-                '&uiConfId=37558971'.format(
-                    entry_id=entry_id,
-                    flavor_id=flavor_id,
-                    stream_format=stream_format,
-                    ext=manifest_ext))
-
-
 class Flavors(object):
     @staticmethod
     def single_flavor_meta(flavor, media_type=None):
@@ -861,12 +846,12 @@ class HTTPStreamUrl(object):
         return WgetDump(self)
 
 
-class KalturaStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
+class KalturaStreamUrl(HTTPStreamUrl):
     def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
         self.ext = ext
         self.stream_format = stream_format
         manifest_ext = '.m3u8' if stream_format == 'applehttp' else ext
-        self.url = self.manifest_url(
+        self.url = self._manifest_url(
             entryid, flavorid, stream_format, manifest_ext)
 
     def create_downloader(self, backends):
@@ -874,6 +859,19 @@ class KalturaStreamUrl(HTTPStreamUrl, KalturaStreamUtils):
             return FallbackDump([WgetDump(self), HLSDump(self)])
         else:
             return HLSDump(self)
+
+    def _manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
+        return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
+                'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
+                'format/{stream_format}/protocol/https/a{ext}?'
+                'referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
+                '&playSessionId=11111111-1111-1111-1111-111111111111'
+                '&clientTag=html5:v2.56&preferredBitrate=600'
+                '&uiConfId=37558971'.format(
+                    entry_id=entry_id,
+                    flavor_id=flavor_id,
+                    stream_format=stream_format,
+                    ext=manifest_ext))
 
 
 class InvalidStreamUrl(object):
