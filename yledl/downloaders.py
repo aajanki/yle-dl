@@ -672,14 +672,41 @@ class AreenaStreamBase(AreenaUtils):
         return ''
 
 
-class AreenaRTMPStreamUrl(AreenaStreamBase):
+class Areena2014HDSStreamUrl(AreenaStreamBase):
+    def __init__(self, hds_url, bitrate):
+        AreenaStreamBase.__init__(self)
+
+        self.hds_url = hds_url
+        self.bitrate = bitrate
+
+    def to_url(self):
+        return self.hds_url
+
+    def create_downloader(self, backends):
+        downloaders = []
+        for backend in backends:
+            dl_constructor = backend.hds()
+            downloaders.append(dl_constructor(self.hds_url, self.bitrate, self.ext))
+
+        return FallbackDump(downloaders)
+
+
+class Areena2014RTMPStreamUrl(AreenaStreamBase):
     # Extracted from
     # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
     AES_KEY = 'hjsadf89hk123ghk'
 
-    def __init__(self):
+    def __init__(self, pageurl, streamurl):
         AreenaStreamBase.__init__(self)
-        self.rtmp_params = None
+        rtmpstream = self.create_rtmpstream(streamurl)
+        self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl,
+                                                          False)
+        self.rtmp_params['app'] = self.rtmp_params['app'].split('/', 1)[0]
+
+    def create_rtmpstream(self, streamurl):
+        (rtmpurl, playpath, ext) = parse_rtmp_single_component_app(streamurl)
+        playpath = playpath.split('?', 1)[0]
+        return PAPIStream(streamurl, playpath)
 
     def is_valid(self):
         return bool(self.rtmp_params)
@@ -789,39 +816,6 @@ class AreenaRTMPStreamUrl(AreenaStreamBase):
             else:
                 args.append('--%s=%s' % (key, value))
         return args
-
-
-class Areena2014HDSStreamUrl(AreenaStreamBase):
-    def __init__(self, hds_url, bitrate):
-        AreenaStreamBase.__init__(self)
-
-        self.hds_url = hds_url
-        self.bitrate = bitrate
-
-    def to_url(self):
-        return self.hds_url
-
-    def create_downloader(self, backends):
-        downloaders = []
-        for backend in backends:
-            dl_constructor = backend.hds()
-            downloaders.append(dl_constructor(self.hds_url, self.bitrate, self.ext))
-
-        return FallbackDump(downloaders)
-
-
-class Areena2014RTMPStreamUrl(AreenaRTMPStreamUrl):
-    def __init__(self, pageurl, streamurl):
-        AreenaRTMPStreamUrl.__init__(self)
-        rtmpstream = self.create_rtmpstream(streamurl)
-        self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl,
-                                                          False)
-        self.rtmp_params['app'] = self.rtmp_params['app'].split('/', 1)[0]
-
-    def create_rtmpstream(self, streamurl):
-        (rtmpurl, playpath, ext) = parse_rtmp_single_component_app(streamurl)
-        playpath = playpath.split('?', 1)[0]
-        return PAPIStream(streamurl, playpath)
 
 
 class HTTPStreamUrl(object):
