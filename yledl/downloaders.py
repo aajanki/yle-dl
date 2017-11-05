@@ -847,6 +847,9 @@ class KalturaStreamUrl(HTTPStreamUrl):
         self.hls_manifest_url = self._manifest_url(
             entryid, flavorid, 'applehttp', '.m3u8')
 
+    def to_url(self):
+        return self.http_manifest_url
+
     def create_downloader(self, backends):
         if self.stream_format == 'url':
             return FallbackDump([
