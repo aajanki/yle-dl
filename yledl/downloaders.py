@@ -2080,7 +2080,21 @@ class FallbackDump(object):
         self.downloaders = downloaders
 
     def save_stream(self, clip_title, io):
-        return self._retry_call(lambda x: x.save_stream, clip_title, io)
+        def save_stream_cleanup(downloader):
+            def wrapped(clip_title, io):
+                outputfile = downloader.output_filename(clip_title, io)
+                res = downloader.save_stream(clip_title, io)
+                if res != RD_SUCCESS and os.path.isfile(outputfile):
+                    logger.debug('Removing the partially downloaded file')
+                    try:
+                        os.remove(outputfile)
+                    except OSError:
+                        logger.warn('Failed to remove a partial output file')
+                return res
+
+            return wrapped
+        
+        return self._retry_call(save_stream_cleanup, clip_title, io)
 
     def pipe(self, io):
         return self._retry_call(lambda x: x.pipe, io)
@@ -2099,6 +2113,6 @@ class FallbackDump(object):
             method = get_action(downloader)
             res = method(*args, **kwargs)
             if res == RD_SUCCESS:
-                return res
+                return RD_SUCCESS
 
         return RD_FAILED
