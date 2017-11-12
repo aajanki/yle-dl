@@ -17,7 +17,7 @@ def is_complete(filename):
 
 def actual_duration(filename):
     """Returns the video playback duration in seconds."""
-    p = Popen(['ffmpeg', '-i', filename, '-f', 'null', '-'], stderr=PIPE)
+    p = Popen(['ffmpeg', '-i', 'file:' + filename, '-f', 'null', '-'], stderr=PIPE)
     output = p.communicate()[1]
     if not output:
         return None
@@ -35,7 +35,7 @@ def actual_duration(filename):
 def metadata_duration(filename):
     """Returns the nominal video (container) duration in seconds."""
     p = Popen(['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-               '-of', 'default=noprint_wrappers=1:nokey=1', filename],
+               '-of', 'default=noprint_wrappers=1:nokey=1', 'file:' + filename],
               stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0]
     try:
