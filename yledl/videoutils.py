@@ -4,20 +4,20 @@ from subprocess import Popen, PIPE
 
 logger = logging.getLogger('yledl')
 
-def is_complete(filename):
+def is_complete(filename, ffmpeg):
     """Returns True if a video in filename has been fully downloaded."""
     try:
         metadata = metadata_duration(filename)
-        actual = actual_duration(filename)
+        actual = actual_duration(filename, ffmpeg)
         return metadata and actual and actual > 0.98*metadata
     except OSError as ex:
         logger.warn('Failed to read the duration of %s: %s', filename, ex)
         return False
 
 
-def actual_duration(filename):
+def actual_duration(filename, ffmpeg='ffmpeg'):
     """Returns the video playback duration in seconds."""
-    p = Popen(['ffmpeg', '-i', 'file:' + filename, '-f', 'null', '-'], stderr=PIPE)
+    p = Popen([ffmpeg, '-i', 'file:' + filename, '-f', 'null', '-'], stderr=PIPE)
     output = p.communicate()[1]
     if not output:
         return None
