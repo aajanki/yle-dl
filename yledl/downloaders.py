@@ -1891,7 +1891,7 @@ class HDSDump(ExternalDownloader):
     def save_stream(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
         if io.resume and output_name != '-' and is_complete(output_name):
-            logger.info('{} has already been downloaded.'.format(output_name))
+            logger.info(u'{} has already been downloaded.'.format(output_name))
             return RD_SUCCESS
         else:
             return super(HDSDump, self).save_stream(clip_title, io)
