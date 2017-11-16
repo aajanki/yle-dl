@@ -78,6 +78,13 @@ PHP libraries) and additionally install youtube-dl:
 * Mac OS X: `brew install youtube-dl`
 * Debian/Ubuntu/other operating systems: `pip install --upgrade youtube_dl`
 
+Using with libav instead of ffmpeg
+----------------------------------
+
+```
+yle-dl --ffmpeg avconv --ffprobe avprobe ...
+```
+
 Integration tests
 -----------------
 

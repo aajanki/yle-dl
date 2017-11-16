@@ -167,10 +167,13 @@ def arg_parser():
                           '"youtubedl" = youtube-dl')
     dl_group.add_argument('--rtmpdump', metavar='PATH',
                           type=unicode_arg,
-                          help='Set path to rtmpdump binary')
+                          help='Set path to the rtmpdump binary')
     dl_group.add_argument('--ffmpeg', metavar='PATH',
                           type=unicode_arg,
-                          help='Set path to ffmpeg binary')
+                          help='Set path to the ffmpeg binary')
+    dl_group.add_argument('--ffprobe', metavar='PATH',
+                          type=unicode_arg,
+                          help='Set path to the ffprobe binary')
     dl_group.add_argument('--adobehds', metavar='CMD',
                           type=unicode_arg, default='',
                           help='Set command for executing AdobeHDS.php')
@@ -291,6 +294,10 @@ def find_ffmpeg(ffmpeg_arg):
     return ffmpeg_arg or 'ffmpeg'
 
 
+def find_ffprobe(ffprobe_arg):
+    return ffprobe_arg or 'ffprobe'
+
+
 def find_wget(cmd):
     return cmd or 'wget'
 
@@ -311,7 +318,7 @@ def main():
                    dl_limits, excludechars, args.proxy,
                    find_rtmpdump(args.rtmpdump),
                    find_adobehds(args.adobehds), find_ffmpeg(args.ffmpeg),
-                   find_wget(args.wget))
+                   find_ffprobe(args.ffprobe), find_wget(args.wget))
 
     urls = []
     if args.url:

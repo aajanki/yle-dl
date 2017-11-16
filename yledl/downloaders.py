@@ -257,7 +257,8 @@ class IOContext(object):
     def __init__(self, outputfilename=None, destdir=None, resume=False,
                  dl_limits=DownloadLimits(), excludechars='*/|',
                  proxy=None, rtmpdump_binary=None, hds_binary=None,
-                 ffmpeg_binary='ffmpeg', wget_binary='wget'):
+                 ffmpeg_binary='ffmpeg', ffprobe_binary='ffprobe',
+                 wget_binary='wget'):
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
@@ -267,6 +268,7 @@ class IOContext(object):
 
         self.rtmpdump_binary = rtmpdump_binary
         self.ffmpeg_binary = ffmpeg_binary
+        self.ffprobe_binary = ffprobe_binary
         self.wget_binary = wget_binary
         if hds_binary:
             self.hds_binary = hds_binary
@@ -1890,7 +1892,8 @@ class HDSDump(ExternalDownloader):
 
     def save_stream(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
-        if io.resume and output_name != '-' and is_complete(output_name, ffmpeg=io.ffmpeg_binary):
+        if (io.resume and output_name != '-' and
+            is_complete(output_name, io.ffmpeg_binary, io.ffprobe_binary)):
             logger.info(u'{} has already been downloaded.'.format(output_name))
             return RD_SUCCESS
         else:

@@ -65,6 +65,12 @@ pois. Asenna lisäksi Python 2 -versio youtube-dl-moduulista:
 * Debian/Ubuntu/muut käyttöjärjestelmät: `pip install --upgrade youtube_dl`
 
 
+libav:n käyttö ffmpegin sijaan
+------------------------------
+
+yle-dl --ffmpeg avconv --ffprobe avprobe ...
+
+
 Valmiit asennuspaketit
 ----------------------
 
