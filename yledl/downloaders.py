@@ -968,20 +968,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def print_metadata(self, url, filters):
         playlist = self.get_playlist(url, filters.latest_only)
-        playlist_meta = []
-        for clipurl in playlist:
-            pid = self.program_id_from_url(clipurl)
-            if not pid:
-                playlist_meta.append({})
-                continue
-
-            program_info = self.program_info_for_pid(pid)
-            if not program_info:
-                playlist_meta.append({})
-                continue
-
-            playlist_meta.append(self.clip_meta(clipurl, program_info,
-                                                pid, filters))
+        playlist_meta = [self.meta_for_clip_url(url, filters)
+                         for url in playlist]
         print_enc(json.dumps(playlist_meta, indent=2))
         return RD_SUCCESS
 
@@ -1073,28 +1061,40 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         return len(body) != 0
 
     def process_single_episode(self, clipfunc, url, filters):
-        clip = self.clip_for_url(url, filters)
+        pid = self.program_id_from_url(url)
+        program_info = self.program_info_for_pid(pid)
+        clip = self.create_clip_or_failure(pid, program_info, url, filters)
         if clip.streamurl.is_valid():
-            return clipfunc(clip)
+            res = clipfunc(clip)
+            if res not in [RD_SUCCESS, RD_INCOMPLETE]:
+                self.print_geo_warning(program_info)
+            return res
         else:
             logger.error(u'Unsupported stream: %s' %
                          clip.streamurl.get_error_message())
             return RD_FAILED
 
-    def clip_for_url(self, pageurl, filters):
-        pid = self.program_id_from_url(pageurl)
+    def print_geo_warning(self, program_info):
+        region = self.available_at_region(program_info)
+        if region == 'Finland':
+            logger.warning(u'Failed! Possible reason: geo restriction.')
+            logger.warning(u'This video is available only in Finland.')
+
+    def create_clip_or_failure(self, pid, program_info, url, filters):
         if not pid:
-            return FailedClip(pageurl, 'Failed to parse a program ID')
+            return FailedClip(url, 'Failed to parse a program ID')
 
-        program_info = self.program_info_for_pid(pid)
         if not program_info:
-            return FailedClip(pageurl, 'Failed to download program data')
+            return FailedClip(url, 'Failed to download program data')
 
-        unavailable = self.unavailable_clip(program_info, pageurl)
+        unavailable = self.unavailable_clip(program_info, url)
         return unavailable or \
-            self.create_clip(program_info, pid, pageurl, filters)
+            self.create_clip(program_info, pid, url, filters)
 
     def program_info_for_pid(self, pid):
+        if not pid:
+            return None
+
         program_info = JSONP.load_jsonp(self.program_info_url(pid))
         if not program_info:
             return None
@@ -1268,9 +1268,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         return event.get('startTime')
 
     def publish_event(self, program_info):
-        events = program_info.get('data', {}) \
-                             .get('program', {}) \
-                             .get('publicationEvent', [])
+        events = (program_info or {}).get('data', {}) \
+                                     .get('program', {}) \
+                                     .get('publicationEvent', [])
         areena_events = [e for e in events
                          if e.get('service', {}).get('id') == 'yle-areena']
         has_current = any(self.publish_event_is_current(e)
@@ -1356,7 +1356,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return Subprocess().execute(args)
 
     def program_info_duration_seconds(self, program_info):
-        pt_duration = (program_info
+        pt_duration = ((program_info or {})
                        .get('data', {})
                        .get('program', {})
                        .get('duration'))
@@ -1372,6 +1372,14 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             return 3600*int(hours) + 60*int(mins) + int(secs)
         else:
             return None
+
+    def meta_for_clip_url(self, clipurl, filters):
+        pid = self.program_id_from_url(clipurl)
+        program_info = self.program_info_for_pid(pid)
+        if not program_info:
+            return {}
+
+        return self.clip_meta(clipurl, program_info, pid, filters)
 
     def clip_meta(self, pageurl, program_info, program_id, filters):
         duration_seconds = self.program_info_duration_seconds(program_info)
