@@ -968,8 +968,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def print_metadata(self, url, filters):
         playlist = self.get_playlist(url, filters.latest_only)
-        playlist_meta = [self.meta_for_clip_url(url, filters)
-                         for url in playlist]
+        playlist_meta = [self.meta_for_clip_url(clip, filters)
+                         for clip in playlist]
         print_enc(json.dumps(playlist_meta, indent=2))
         return RD_SUCCESS
 
