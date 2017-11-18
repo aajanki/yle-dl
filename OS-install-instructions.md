@@ -3,9 +3,9 @@
 ## Debian 9 (Stretch)/Ubuntu 16.04
 
 ```
-sudo apt-get install rtmpdump wget ffmpeg python-setuptools python-pip \
-    python-crypto python-requests python-lxml php-cli php-curl php-mcrypt \
-    php-xml php-bcmath
+sudo apt-get install rtmpdump wget ffmpeg python-dev python-setuptools \
+    python-pip python-crypto python-requests python-lxml php-cli php-curl \
+    php-mcrypt php-xml php-bcmath
 sudo phpenmod mcrypt
 sudo -H pip install --upgrade yle-dl
 ```
@@ -29,10 +29,12 @@ sudo -H python setup.py install
 ## Debian 8 (Jessie)/Ubuntu 15.10 or older
 
 ```
-sudo apt-get install rtmpdump wget ffmpeg python-setuptools python-pip \
-    python-crypto python-requests python-lxml php5-cli php5-curl php5-mcrypt
+sudo apt-get install rtmpdump wget libav-tools python-dev python-setuptools \
+     python-pip python-crypto python-requests python-lxml php5-cli \
+     php5-curl php5-mcrypt
 sudo php5enmod mcrypt
-sudo pip install --upgrade yle-dl
+sudo pip install pyOpenSSL ndg-httpsclient pyasn1
+sudo pip install yle-dl
 ```
 
 (You may get prompted to upgrade pip. However, it is not necessary to
@@ -41,7 +43,7 @@ upgrade pip for installing yle-dl.)
 ### Installing from source code on Debian 8/Ubuntu 15.10 or older
 
 ```
-sudo apt-get install git rtmpdump wget ffmpeg python-dev python-setuptools \
+sudo apt-get install git rtmpdump wget libav-tools python-dev python-setuptools \
     python-crypto python-requests python-lxml php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 git clone https://github.com/aajanki/yle-dl.git
