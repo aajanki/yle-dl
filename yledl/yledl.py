@@ -259,12 +259,15 @@ def bitrate_from_arg(arg):
 def resolution_from_arg(arg):
     if arg is None:
         return None
-    else:
-        try:
-            return int(arg)
-        except ValueError:
-            logger.warning(u'Invalid resolution: {}'.format(arg))
-            return None
+
+    if re.match(r'\d+p$', arg):
+        arg = arg[:-1]
+
+    try:
+        return int(arg)
+    except ValueError:
+        logger.warning(u'Invalid resolution: {}'.format(arg))
+        return None
 
 
 def which(program):
