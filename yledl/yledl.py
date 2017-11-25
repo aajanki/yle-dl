@@ -242,7 +242,9 @@ def download(url, action, io, stream_filters, backends, postprocess_command):
 
 
 def bitrate_from_arg(arg):
-    if arg == 'best':
+    if arg is None:
+        return None
+    elif arg == 'best':
         return sys.maxint
     elif arg == 'worst':
         return 0
@@ -255,11 +257,14 @@ def bitrate_from_arg(arg):
 
 
 def resolution_from_arg(arg):
-    try:
-        return int(arg)
-    except ValueError:
-        logger.warning(u'Invalid resolution: {}'.format(arg))
+    if arg is None:
         return None
+    else:
+        try:
+            return int(arg)
+        except ValueError:
+            logger.warning(u'Invalid resolution: {}'.format(arg))
+            return None
 
 
 def which(program):
@@ -372,7 +377,7 @@ def main():
     else:
         sublang = 'none' if action == StreamAction.PIPE else 'all'
 
-    maxbitrate = bitrate_from_arg(args.maxbitrate or sys.maxint)
+    maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
                                    args.hardsubs, maxbitrate, maxheight)
