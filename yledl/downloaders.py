@@ -605,14 +605,13 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
         media_url = self._decrypt_url(crypted_url, is_hds, aes_key)
         if is_hds:
             if media_url:
-                manifest = download_page(media_url)
+                manifest = hds.parse_manifest(download_page(media_url))
             else:
                 manifest = None
             self._metadata = self._construct_hds_metadata(media, manifest)
             self.stream = self._fail_if_url_missing(crypted_url, media_url) or \
                           self._hds_streamurl(media_url, manifest, filters)
         else:
-            manifest = None
             self._metadata = self._construct_rtmp_metadata(media)
             self.stream = self._fail_if_url_missing(crypted_url, media_url) or \
                           self._rtmp_streamurl(media_url, pageurl)
@@ -626,9 +625,7 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
 
     def _construct_hds_metadata(self, media, manifest):
         media_type = Flavors.media_type(media)
-        hds_metadata = hds.parse_manifest(manifest)
-        return [Flavors.single_flavor_meta(m, media_type)
-                for m in hds_metadata]
+        return [Flavors.single_flavor_meta(m, media_type) for m in manifest]
 
     def _construct_rtmp_metadata(self, media):
         return [Flavors.single_flavor_meta(media)]
@@ -645,8 +642,7 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
         else:
             return None
 
-    def _hds_streamurl(self, media_url, manifest, filters):
-        flavors = hds.parse_manifest(manifest)
+    def _hds_streamurl(self, media_url, flavors, filters):
         selected_flavor = filter_flavors(
             flavors, filters.maxheight, filters.maxbitrate)
         selected_bitrate = selected_flavor.get('bitrate')

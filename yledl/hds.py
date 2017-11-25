@@ -28,11 +28,6 @@ def parse_manifest(manifest):
     return res
 
 
-def bitrates_from_manifest(manifest):
-    metadata = parse_manifest(manifest)
-    return [m.get('bitrate') for m in metadata if m.get('bitrate', 0) > 0]
-
-
 def parse_on_metadata_tag(tag_bytes):
     try:
         stream = pyamf.util.BufferedByteStream(tag_bytes)
