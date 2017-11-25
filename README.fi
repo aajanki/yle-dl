@@ -118,6 +118,7 @@ Valitsimet:
                 lan = fin (oletus) tai swe
 --sublang lan   Lataa tekstitykset annetulla kielellä (Yle Areena)
                 lan = fin, swe, smi, none or all (oletus)
+--resolution r  Rajoita ladattavan striimin pystyresoluutiota
 --maxbitrate br Rajoita ladattavan striimin bittinopeutta (kB/s)
 --rtmpdump path Polku rtmpdump-ohjelmaan
 --adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
