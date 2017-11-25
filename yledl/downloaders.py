@@ -1231,6 +1231,11 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         titleObject = program.get('title')
         title = self.fi_or_sv_text(titleObject) or 'areena'
 
+        if ':' in title:
+            prefix, rest = title.split(':', 1)
+            if prefix in rest:
+                title = rest.strip()
+
         partOfSeasonObject = program.get('partOfSeason')
 
         if partOfSeasonObject:
