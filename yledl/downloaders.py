@@ -1251,9 +1251,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         promoTitleObject = program.get('promotionTitle')
         promotionTitle = self.fi_or_sv_text(promoTitleObject)
 
-        if itemTitle and not title.endswith(itemTitle):
+        if itemTitle and itemTitle not in title:
             title += ': ' + itemTitle
-        elif promotionTitle and not promotionTitle.startswith(title):
+        elif promotionTitle and promotionTitle not in title:
             title += ': ' + promotionTitle
 
         date = self.publish_date(program_info)
