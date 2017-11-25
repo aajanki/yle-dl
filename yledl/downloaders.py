@@ -505,11 +505,6 @@ class KalturaUtils(object):
             logger.error('Failed to parse kalturaIframePackageData!')
             return {}
 
-    def log_bitrates(self, flavors, maxbitrate):
-        bitrates = [fl.get('bitrate', 0) for fl in flavors]
-        logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
-                     (bitrates, maxbitrate))
-
 
 class Flavors(object):
     @staticmethod
@@ -1174,7 +1169,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
             flavors_data, meta = self.kaltura_flavors_meta(
                 media_id, program_id, pageurl)
-            self.log_bitrates(flavors_data, filters.maxbitrate)
             subtitles = self.media_subtitles(subtitle_media)
             return KalturaFlavors(flavors_data, meta, subtitles, filters)
         else:
