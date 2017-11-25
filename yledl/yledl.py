@@ -152,6 +152,10 @@ def arg_parser():
                             type=unicode_arg,
                             help='Maximum bitrate stream to download, '
                             'integer in kB/s or "best" or "worst".')
+    qual_group.add_argument('--resolution', metavar='RES',
+                            type=unicode_arg,
+                            help='Maximum vertical resolution in pixels, '
+                            'default: highest available resolution')
     qual_group.add_argument('--duration', metavar='S', type=int,
                             help='Record only the first S seconds of '
                             'the stream')
@@ -248,6 +252,14 @@ def bitrate_from_arg(arg):
         except ValueError:
             logger.warning(u'Invalid bitrate %s, defaulting to best' % arg)
             arg = sys.maxint
+
+
+def resolution_from_arg(arg):
+    try:
+        return int(arg)
+    except ValueError:
+        logger.warning(u'Invalid resolution: {}'.format(arg))
+        return None
 
 
 def which(program):
@@ -361,8 +373,9 @@ def main():
         sublang = 'none' if action == StreamAction.PIPE else 'all'
 
     maxbitrate = bitrate_from_arg(args.maxbitrate or sys.maxint)
+    maxheight = resolution_from_arg(args.resolution)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
-                                   args.hardsubs, maxbitrate)
+                                   args.hardsubs, maxbitrate, maxheight)
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):

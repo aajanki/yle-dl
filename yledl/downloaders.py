@@ -255,12 +255,13 @@ class StreamFilters(object):
     versions to download.
     """
     def __init__(self, latest_only=False, audiolang='', sublang='all',
-                 hardsubs=False, maxbitrate=sys.maxint):
+                 hardsubs=False, maxbitrate=None, maxheight=None):
         self.latest_only = latest_only
         self.audiolang = audiolang
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
+        self.maxheight = maxheight
 
     def sublang_matches(self, langcode, subtype):
         return self._lang_matches(self.sublang, langcode, subtype)
@@ -589,7 +590,8 @@ class KalturaFlavors(FlavorsMetadata):
         return ipad_h264 or web_h264
 
     def _select_stream(self, flavors, stream_format, filters):
-        selected_flavor = self._filter_flavors_by_bitrate(flavors, filters)
+        selected_flavor = filter_flavors(
+            flavors, filters.maxheight, filters.maxbitrate)
         if not selected_flavor:
             return InvalidStreamUrl('No admissible streams')
         if 'entryId' not in selected_flavor:
@@ -598,14 +600,6 @@ class KalturaFlavors(FlavorsMetadata):
         entry_id = selected_flavor.get('entryId')
         flavor_id = selected_flavor.get('id', '0_00000000')
         ext = '.' + selected_flavor.get('fileExt', 'mp4')
-        return self._stream_factory(entry_id, flavor_id, stream_format, ext)
-
-    def _filter_flavors_by_bitrate(self, flavors, filters):
-        available_bitrates = [fl.get('bitrate') for fl in flavors
-                              if fl.get('bitrate')]
-        return filter_flavors(flavors, None, filters.maxbitrate)
-
-    def _stream_factory(self, entry_id, flavor_id, stream_format, ext):
         return KalturaStreamUrl(entry_id, flavor_id, stream_format, ext)
 
 
@@ -658,7 +652,8 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
 
     def _hds_streamurl(self, media_url, manifest, filters):
         flavors = hds.parse_manifest(manifest)
-        selected_flavor = filter_flavors(flavors, None, filters.maxbitrate)
+        selected_flavor = filter_flavors(
+            flavors, filters.maxheight, filters.maxbitrate)
         selected_bitrate = selected_flavor.get('bitrate')
         return Areena2014HDSStreamUrl(media_url, selected_bitrate)
 
