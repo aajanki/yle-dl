@@ -195,21 +195,48 @@ def normalize_language_code(lang, subtype):
         return language_map.get(lang, lang)
 
 
-def select_bitrate(available_bitrates, maxbitrate):
-    logger.debug(u'Available bitrates: %s, maxbitrate = %s' %
-                 (available_bitrates, maxbitrate))
+def filter_flavors(flavors, max_height, max_bitrate):
+    if not flavors:
+        return {}
 
-    acceptable_bitrates = [br for br in available_bitrates if br <= maxbitrate]
-    if not available_bitrates:
-        selected_bitrate = None
-    elif not acceptable_bitrates:
-        selected_bitrate = min(available_bitrates)
+    def sort_max_bitrate(x):
+        return x.get('bitrate', 0)
+
+    def sort_max_resolution_min_bitrate(x):
+        return (x.get('height', 0), -x.get('bitrate', 0))
+
+    def sort_max_resolution_max_bitrate(x):
+        return (x.get('height', 0), x.get('bitrate', 0))
+
+    logger.debug(u'Available flavors: {}'.format([{
+        'bitrate': fl.get('bitrate'),
+        'height': fl.get('height'),
+        'width': fl.get('width')
+    } for fl in flavors]))
+    logger.debug(u'max_height: {}, max_bitrate: {}'.format(
+        max_height, max_bitrate))
+
+    filtered = [fl for fl in flavors
+                if (fl.get('bitrate', 0) <= (max_bitrate or sys.maxint)) and
+                (fl.get('height', 0) <= (max_height or sys.maxint))]
+    if filtered:
+        acceptable_flavors = filtered
+        reverse = False
+        if max_height is not None and max_bitrate is not None:
+            keyfunc = sort_max_resolution_max_bitrate
+        elif max_height is not None:
+            keyfunc = sort_max_resolution_min_bitrate
+        else:
+            keyfunc = sort_max_bitrate
     else:
-        selected_bitrate = max(acceptable_bitrates)
+        acceptable_flavors = flavors
+        reverse = max_height is not None or max_bitrate is not None
+        keyfunc = sort_max_bitrate
 
-    logger.debug(u'Selected bitrate: %s' % selected_bitrate)
+    selected = sorted(acceptable_flavors, key=keyfunc, reverse=reverse)[-1]
+    logger.debug(u'Selected flavor: {}'.format(selected))
+    return selected
 
-    return selected_bitrate
 
 def sane_filename(name, excludechars):
     if isinstance(name, str):
@@ -576,13 +603,7 @@ class KalturaFlavors(FlavorsMetadata):
     def _filter_flavors_by_bitrate(self, flavors, filters):
         available_bitrates = [fl.get('bitrate') for fl in flavors
                               if fl.get('bitrate')]
-        bitrate = select_bitrate(available_bitrates, filters.maxbitrate)
-        if bitrate is not None:
-            return [fl for fl in flavors if fl.get('bitrate') == bitrate][0]
-        elif flavors:
-            return flavors[0]
-        else:
-            return {}
+        return filter_flavors(flavors, None, filters.maxbitrate)
 
     def _stream_factory(self, entry_id, flavor_id, stream_format, ext):
         return KalturaStreamUrl(entry_id, flavor_id, stream_format, ext)
@@ -636,8 +657,9 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
             return None
 
     def _hds_streamurl(self, media_url, manifest, filters):
-        bitrates = hds.bitrates_from_manifest(manifest)
-        selected_bitrate = select_bitrate(bitrates, filters.maxbitrate)
+        flavors = hds.parse_manifest(manifest)
+        selected_flavor = filter_flavors(flavors, None, filters.maxbitrate)
+        selected_bitrate = selected_flavor.get('bitrate')
         return Areena2014HDSStreamUrl(media_url, selected_bitrate)
 
     def _rtmp_streamurl(self, media_url, pageurl):
