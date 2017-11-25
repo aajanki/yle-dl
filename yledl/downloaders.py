@@ -1256,9 +1256,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         elif promotionTitle and promotionTitle not in title:
             title += ': ' + promotionTitle
 
-        date = self.publish_date(program_info)
-        if date:
-            title += '-' + date.replace('/', '-').replace(' ', '-')
+        timestamp = self.publish_date(program_info)
+        if timestamp:
+            title += '-' + timestamp.replace('/', '-').replace(' ', '-')
 
         return title
 
@@ -1272,7 +1272,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def publish_date(self, program_info):
         event = self.publish_event(program_info)
-        return event.get('startTime')
+        start_time = event.get('startTime')
+        short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', start_time or '')
+        if short:
+            return short.group(0)
+        else:
+            return start_time
 
     def publish_event(self, program_info):
         events = (program_info or {}).get('data', {}) \
