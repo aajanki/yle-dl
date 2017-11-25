@@ -6,6 +6,7 @@ xx xxx 2017, Version 2.29
 
 - New argument --resolution for selecting stream by vertical resolution
 - Reduce repetition in output filenames
+- Remove genre prefixes ("Elokuva:", "Kino:", etc.) from output filenames
 
 19 Nov 2017, Version 2.28
 

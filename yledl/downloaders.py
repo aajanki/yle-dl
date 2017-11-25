@@ -1261,10 +1261,21 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         elif promotionTitle and promotionTitle not in title:
             title += ': ' + promotionTitle
 
+        title = self.remove_genre_prefix(title)
+
         timestamp = self.publish_date(program_info)
         if timestamp:
             title += '-' + timestamp.replace('/', '-').replace(' ', '-')
 
+        return title
+
+    def remove_genre_prefix(self, title):
+        genre_prefixes = ['Elokuva:', 'Kino:', 'Kino Klassikko:',
+                          'Kino Suomi:', 'Kotikatsomo:', 'Uusi Kino:', 'Dok:',
+                          'Dokumenttiprojekti:', 'Historia:']
+        for prefix in genre_prefixes:
+            if title.startswith(prefix):
+                return title[len(prefix):].strip()
         return title
 
     def program_protocol(self, program_info, default_video_proto):
