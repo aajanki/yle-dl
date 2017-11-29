@@ -1784,7 +1784,16 @@ class ExternalDownloader(BaseDownloader):
             self.log_output_file(outputfile, True)
         return retcode
 
+    def pipe(self, io):
+        args = self.build_pipe_args(io)
+        env = self.extra_environment(io)
+        self.external_downloader(args, env)
+        return RD_SUCCESS
+
     def build_args(self, clip_title, io):
+        return []
+
+    def build_pipe_args(self, io):
         return []
 
     def extra_environment(self, io):
@@ -1879,12 +1888,11 @@ class RTMPDump(ExternalDownloader):
             args.extend(['--stop', str(io.download_limits.duration)])
         return args
 
-    def pipe(self, io):
+    def build_pipe_args(self, io):
         args = [io.rtmpdump_binary]
         args += self.args
         args += ['-o', '-']
-        self.external_downloader(args)
-        return RD_SUCCESS
+        return args
 
     def is_small_file(self, filename):
         try:
@@ -1945,10 +1953,12 @@ class HDSDump(ExternalDownloader):
             return super(HDSDump, self).save_stream(clip_title, io)
 
     def pipe(self, io):
-        args = self.adobehds_command_line(io, ['--play'])
-        self.external_downloader(args)
+        res = super(HDSDump, self).pipe(io)
         self.cleanup_cookies()
-        return RD_SUCCESS
+        return res
+
+    def build_pipe_args(self, io):
+        return self.adobehds_command_line(io, ['--play'])
 
     def adobehds_command_line(self, io, extra_args):
         args = list(io.hds_binary)
@@ -2062,11 +2072,9 @@ class HLSDump(ExternalDownloader):
             io,
             ['-bsf:a', 'aac_adtstoasc', 'file:' + output_name])
 
-    def pipe(self, io):
-        pipe_args = ['-f', 'mpegts', 'pipe:1']
-        args = self.ffmpeg_command_line(io, pipe_args)
-        self.external_downloader(args)
-        return RD_SUCCESS
+    def build_pipe_args(self, io):
+        extra = ['-f', 'mpegts', 'pipe:1']
+        return self.ffmpeg_command_line(io, extra)
 
     def ffmpeg_command_line(self, io, output_options):
         debug = logger.isEnabledFor(logging.DEBUG)
@@ -2108,12 +2116,8 @@ class WgetDump(ExternalDownloader):
         args.append(self.url)
         return args
 
-    def pipe(self, io):
-        args = self.shared_wget_args(io.wget_binary, '-')
-        env = self.extra_environment(io)
-        args.append(self.url)
-        self.external_downloader(args, env)
-        return RD_SUCCESS
+    def build_pipe_args(self, io):
+        return self.shared_wget_args(io.wget_binary, '-') + [self.url]
 
     def shared_wget_args(self, wget_binary, output_filename):
         return [
