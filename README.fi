@@ -181,3 +181,8 @@ Esimerkkejä
   scripts/muxmp4-tiedostossa):
 
   yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
+
+* Usein käytettyjen komentoriviargumenttien määrittely aliaksena:
+
+  alias yle-dl-defaults="yle-dl --resolution 720p --destdir ~/videos"
+  yle-dl-defaults https://areena.yle.fi/1-1864726

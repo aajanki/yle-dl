@@ -197,3 +197,10 @@ Executing a script to postprocess a downloaded video (see the example postproces
 ```
 yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
 ```
+
+Set default values for arguments using `alias`:
+
+```
+alias yle-dl-defaults="yle-dl --resolution 720p --destdir ~/videos"
+yle-dl-defaults https://areena.yle.fi/1-1864726
+```
