@@ -125,7 +125,7 @@ def arg_parser():
                           'interger in kB/s')
     io_group.add_argument('--proxy', metavar='URI',
                           type=unicode_arg,
-                          help='Proxy for downloading streams. '
+                          help='SOCKS or HTTP proxy for downloading streams. '
                           'Example: --proxy socks5://localhost:7777')
     io_group.add_argument('--postprocess', metavar='CMD',
                           type=unicode_arg,

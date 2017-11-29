@@ -1381,7 +1381,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         if postprocess_command:
             args = [postprocess_command, videofile]
             args.extend(subtitlefiles)
-            return Subprocess().execute(args)
+            return Subprocess().execute(args, None)
 
     def program_info_duration_seconds(self, program_info):
         pt_duration = ((program_info or {})
@@ -1776,9 +1776,10 @@ class BaseDownloader(object):
 class ExternalDownloader(BaseDownloader):
     def save_stream(self, clip_title, io):
         args = self.build_args(clip_title, io)
+        env = self.extra_environment(io)
         outputfile = self.output_filename(clip_title, io)
         self.log_output_file(outputfile)
-        retcode = self.external_downloader(args)
+        retcode = self.external_downloader(args, env)
         if retcode == RD_SUCCESS:
             self.log_output_file(outputfile, True)
         return retcode
@@ -1786,8 +1787,11 @@ class ExternalDownloader(BaseDownloader):
     def build_args(self, clip_title, io):
         return []
 
-    def external_downloader(self, args):
-        exit_code = Subprocess().execute(args)
+    def extra_environment(self, io):
+        return None
+
+    def external_downloader(self, args, env=None):
+        exit_code = Subprocess().execute(args, env)
         if exit_code == 0:
             return RD_SUCCESS
         else:
@@ -1795,7 +1799,7 @@ class ExternalDownloader(BaseDownloader):
 
 
 class Subprocess(object):
-    def execute(self, args):
+    def execute(self, args, extra_environment):
         """Start an external process such as rtmpdump with argument list args
         and wait until completion.
         """
@@ -1805,12 +1809,17 @@ class Subprocess(object):
         enc = sys.getfilesystemencoding()
         encoded_args = [x.encode(enc, 'replace') for x in args]
 
+        env = None
+        if extra_environment:
+            env = dict(os.environ)
+            env.update(extra_environment)
+
         try:
             if platform.system() == 'Windows':
-                process = subprocess.Popen(encoded_args)
+                process = subprocess.Popen(encoded_args, env=env)
             else:
                 process = subprocess.Popen(
-                    encoded_args, preexec_fn=self._sigterm_when_parent_dies)
+                    encoded_args, env=env, preexec_fn=self._sigterm_when_parent_dies)
             return process.wait()
         except KeyboardInterrupt:
             try:
@@ -2080,7 +2089,8 @@ class WgetDump(ExternalDownloader):
         self.url = url
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
-            IOCapability.RATELIMIT
+            IOCapability.RATELIMIT,
+            IOCapability.PROXY
         ])
 
     def build_args(self, clip_title, io):
@@ -2100,8 +2110,9 @@ class WgetDump(ExternalDownloader):
 
     def pipe(self, io):
         args = self.shared_wget_args(io.wget_binary, '-')
+        env = self.extra_environment(io)
         args.append(self.url)
-        self.external_downloader(args)
+        self.external_downloader(args, env)
         return RD_SUCCESS
 
     def shared_wget_args(self, wget_binary, output_filename):
@@ -2112,6 +2123,15 @@ class WgetDump(ExternalDownloader):
             '--user-agent=' + yledl_user_agent(),
             '--timeout=20'
         ]
+
+    def extra_environment(self, io):
+        env = None
+        if io.proxy:
+            if 'https_proxy' in os.environ:
+                logger.warn('--proxy ignored because https_proxy environment variable exists')
+            else:
+                env = {'https_proxy': io.proxy}
+        return env
 
 
 ### Try multiple downloaders until one succeeds ###
