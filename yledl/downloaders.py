@@ -388,11 +388,15 @@ class AreenaUtils(object):
             basename = os.path.splitext(videofilename)[0]
             for sub in subtitles:
                 lang = sub.language
-                if (filters.sublang_matches(lang, '') or
-                        preferred_lang == 'all'):
-                    if sub.url:
+                matching_lang = (filters.sublang_matches(lang, '') or
+                                 preferred_lang == 'all')
+                if sub.url and matching_lang:
+                    filename = basename + '.' + lang + '.srt'
+                    if os.path.isfile(filename):
+                        logger.debug('Subtitle file {} already exists, skipping'
+                                     .format(filename))
+                    else:
                         try:
-                            filename = basename + '.' + lang + '.srt'
                             download_to_file(sub.url, filename)
                             self.add_BOM(filename)
                             logger.info(u'Subtitles saved to ' + filename)
