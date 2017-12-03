@@ -383,29 +383,31 @@ class AreenaUtils(object):
 
     def download_subtitles(self, subtitles, filters, videofilename):
         subtitlefiles = []
-        if not filters.hardsubs:
-            preferred_lang = filters.sublang
-            basename = os.path.splitext(videofilename)[0]
-            for sub in subtitles:
-                lang = sub.language
-                matching_lang = (filters.sublang_matches(lang, '') or
-                                 preferred_lang == 'all')
-                if sub.url and matching_lang:
-                    filename = basename + '.' + lang + '.srt'
-                    if os.path.isfile(filename):
-                        logger.debug('Subtitle file {} already exists, skipping'
-                                     .format(filename))
-                    else:
-                        try:
-                            download_to_file(sub.url, filename)
-                            self.add_BOM(filename)
-                            logger.info(u'Subtitles saved to ' + filename)
-                            subtitlefiles.append(filename)
-                            if preferred_lang != 'all':
-                                return subtitlefiles
-                        except IOError:
-                            logger.exception(u'Failed to download subtitles '
-                                             u'at %s' % sub.url)
+        if filters.hardsubs:
+            return subtitlefiles
+
+        preferred_lang = filters.sublang
+        basename = os.path.splitext(videofilename)[0]
+        for sub in subtitles:
+            lang = sub.language
+            matching_lang = (filters.sublang_matches(lang, '') or
+                             preferred_lang == 'all')
+            if sub.url and matching_lang:
+                filename = basename + '.' + lang + '.srt'
+                if os.path.isfile(filename):
+                    logger.debug(u'Subtitle file {} already exists, skipping'
+                                 .format(filename))
+                else:
+                    try:
+                        download_to_file(sub.url, filename)
+                        self.add_BOM(filename)
+                        logger.info(u'Subtitles saved to ' + filename)
+                        subtitlefiles.append(filename)
+                        if preferred_lang != 'all':
+                            return subtitlefiles
+                    except IOError:
+                        logger.exception(u'Failed to download subtitles '
+                                         u'at %s' % sub.url)
         return subtitlefiles
 
     def add_BOM(self, filename):
