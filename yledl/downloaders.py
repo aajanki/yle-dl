@@ -934,9 +934,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
             clip_title = clip.title or 'ylestream'
             outputfile = downloader.output_filename(clip_title, io)
+            downloader.warn_on_unsupported_feature(io)
             subtitlefiles = \
                 self.download_subtitles(clip.subtitles, filters, outputfile)
-            downloader.warn_on_unsupported_feature(io)
             dl_result = downloader.save_stream(clip_title, io)
             if dl_result == RD_SUCCESS:
                 self.postprocess(postprocess_command, outputfile,
@@ -967,8 +967,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                              u'supported.' % url)
                 return RD_FAILED
             outputfile = dl.output_filename(clip.title, io)
-            self.download_subtitles(clip.subtitles, filters, outputfile)
             dl.warn_on_unsupported_feature(io)
+            self.download_subtitles(clip.subtitles, filters, outputfile)
             return dl.pipe(io)
 
         return self.process(pipe_clip, url, filters)
