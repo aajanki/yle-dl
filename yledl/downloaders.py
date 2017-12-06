@@ -28,7 +28,6 @@ from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from version import version
 from utils import print_enc
-from videoutils import is_complete
 
 # exit codes
 RD_SUCCESS = 0
@@ -652,7 +651,8 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
         selected_flavor = filter_flavors(
             flavors, filters.maxheight, filters.maxbitrate)
         selected_bitrate = selected_flavor.get('bitrate')
-        return Areena2014HDSStreamUrl(media_url, selected_bitrate)
+        flavor_id = selected_flavor.get('mediaurl')
+        return Areena2014HDSStreamUrl(media_url, selected_bitrate, flavor_id)
 
     def _rtmp_streamurl(self, media_url, pageurl):
         return Areena2014RTMPStreamUrl(pageurl, media_url)
@@ -689,11 +689,12 @@ class AreenaStreamBase(AreenaUtils):
 
 
 class Areena2014HDSStreamUrl(AreenaStreamBase):
-    def __init__(self, hds_url, bitrate):
+    def __init__(self, hds_url, bitrate, flavor_id):
         AreenaStreamBase.__init__(self)
 
         self.hds_url = hds_url
         self.bitrate = bitrate
+        self.flavor_id = flavor_id
 
     def to_url(self):
         return self.hds_url
@@ -702,7 +703,8 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
         downloaders = []
         for backend in backends:
             dl_constructor = backend.hds()
-            downloaders.append(dl_constructor(self.hds_url, self.bitrate, self.ext))
+            downloaders.append(dl_constructor(self.hds_url, self.bitrate,
+                                              self.flavor_id, self.ext))
 
         return FallbackDump(downloaders)
 
@@ -1917,10 +1919,11 @@ class RTMPDump(ExternalDownloader):
 
 
 class HDSDump(ExternalDownloader):
-    def __init__(self, url, bitrate, output_extension):
+    def __init__(self, url, bitrate, flavor_id, output_extension):
         ExternalDownloader.__init__(self, output_extension)
         self.url = url
         self.bitrate = bitrate
+        self.flavor_id = flavor_id
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.PROXY,
@@ -1952,11 +1955,17 @@ class HDSDump(ExternalDownloader):
     def save_stream(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
         if (io.resume and output_name != '-' and
-            is_complete(output_name, io.ffmpeg_binary, io.ffprobe_binary)):
+            os.path.isfile(output_name) and
+            not self.fragments_exist(self.flavor_id)):
             logger.info(u'{} has already been downloaded.'.format(output_name))
             return RD_SUCCESS
         else:
             return super(HDSDump, self).save_stream(clip_title, io)
+
+    def fragments_exist(self, flavor_id):
+        pattern = r'.*_{}_Seg[0-9]+-Frag[0-9]+$'.format(re.escape(flavor_id))
+        files = os.listdir('.')
+        return any(re.match(pattern, x) is not None for x in files)
 
     def pipe(self, io):
         res = super(HDSDump, self).pipe(io)
@@ -1993,7 +2002,7 @@ class HDSDump(ExternalDownloader):
 
 
 class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, url, bitrate, output_extension):
+    def __init__(self, url, bitrate, flavor_id, output_extension):
         BaseDownloader.__init__(self, output_extension)
         self.url = url
         self.bitrate = bitrate

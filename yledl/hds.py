@@ -16,15 +16,9 @@ def parse_manifest(manifest):
         logger.exception('Failed to parse HDS manifest')
         return []
 
-    res = []
     medias = manifest_xml.getElementsByTagName('media')
-    for media in medias:
-        bitrate = media.getAttribute('bitrate')
-        metadata_dict = _parse_metadata_element(media)
-        meta = _create_metadata_object(bitrate, metadata_dict)
-        if meta:
-            res.append(meta)
-
+    res = [_create_metadata_object(m) for m in medias]
+    res = [x for x in res if x]
     return res
 
 
@@ -50,24 +44,34 @@ def _parse_metadata_element(media_xml_element):
     return {}
 
 
-def _create_metadata_object(bitrate, other_metadata):
+def _create_metadata_object(media):
     res = {}
-    if bitrate:
-        try:
-            res['bitrate'] = int(bitrate)
-        except ValueError:
-            pass
-
-    if 'width' in other_metadata:
-        try:
-            res['width'] = int(other_metadata['width'])
-        except ValueError:
-            pass
-
-    if 'height' in other_metadata:
-        try:
-            res['height'] = int(other_metadata['height'])
-        except ValueError:
-            pass
-
+    other_metadata = _parse_metadata_element(media)
+    _copy_optional_int_xml_attribute(media, res, 'bitrate')
+    _copy_optional_string_xml_attribute(media, res, 'url', 'mediaurl')
+    _copy_optional_int(other_metadata, res, 'width')
+    _copy_optional_int(other_metadata, res, 'height')
     return res
+
+
+def _copy_optional_string_xml_attribute(src_xml, dest, name, destname=None):
+    value = src_xml.getAttribute(name)
+    if value:
+        dest[destname or name] = value
+
+
+def _copy_optional_int_xml_attribute(src_xml, dest, name, destname=None):
+    value = src_xml.getAttribute(name)
+    if value:
+        try:
+            dest[destname or name] = int(value)
+        except ValueError:
+            pass
+
+
+def _copy_optional_int(src, dest, name, destname=None):
+    if name in src:
+        try:
+            dest[destname or name] = int(src.get(name))
+        except ValueError:
+            pass
