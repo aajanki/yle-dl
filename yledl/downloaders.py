@@ -822,14 +822,14 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
 
     def rtmp_parameters_to_url(self, params):
         components = [params['rtmp']]
-        for key, value in params.iteritems():
+        for key, value in params.items():
             if key != 'rtmp':
                 components.append('%s=%s' % (key, value))
         return ' '.join(components)
 
     def rtmp_parameters_to_rtmpdump_args(self, params):
         args = []
-        for key, value in params.iteritems():
+        for key, value in params.items():
             if key == 'live':
                 args.append('--live')
             else:
