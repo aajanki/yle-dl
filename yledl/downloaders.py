@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import urllib
 import urllib2
@@ -22,12 +23,12 @@ import logging
 import lxml.html
 import lxml.etree
 import requests
-import hds
+from . import hds
 from requests.adapters import HTTPAdapter
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
-from version import version
-from utils import print_enc
+from .version import version
+from .utils import print_enc
 
 # exit codes
 RD_SUCCESS = 0

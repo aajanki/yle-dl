@@ -25,6 +25,7 @@ This script downloads video and audio streams from Yle Areena
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from __future__ import print_function
+from __future__ import absolute_import
 import sys
 import urllib
 import re
@@ -33,9 +34,9 @@ import urlparse
 import codecs
 import logging
 import argparse
-from version import version
-from utils import print_enc
-from downloaders import downloader_factory, StreamFilters, IOContext, \
+from .version import version
+from .utils import print_enc
+from .downloaders import downloader_factory, StreamFilters, IOContext, \
     DownloadLimits, BackendFactory, RD_SUCCESS, RD_FAILED
 
 
