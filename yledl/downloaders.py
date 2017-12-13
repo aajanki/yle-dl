@@ -2,15 +2,12 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import sys
-import urllib
-import urllib2
 import re
 import subprocess
 import os
 import os.path
 import platform
 import signal
-import urlparse
 import json
 import xml.dom.minidom
 import time
@@ -22,11 +19,13 @@ import logging
 import lxml.html
 import lxml.etree
 import requests
-from . import hds
+from future.moves.urllib.parse import urlparse, quote_plus
+from future.moves.urllib.error import HTTPError
 from requests.adapters import HTTPAdapter
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from builtins import str
+from . import hds
 from .version import version
 from .utils import print_enc
 from future.utils import python_2_unicode_compatible
@@ -478,8 +477,8 @@ class KalturaUtils(object):
                 '&urid=2.60'
                 '&protocol=https'
                 '&callback=mwi_kaltura121210530'.format(
-                    entry_id=urllib.quote_plus(entryid),
-                    program_id=urllib.quote_plus(program_id)))
+                    entry_id=quote_plus(entryid),
+                    program_id=quote_plus(program_id)))
 
     def kaltura_entry_id(self, mediaid):
         return mediaid.split('-', 1)[-1]
@@ -840,7 +839,7 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
 class HTTPStreamUrl(object):
     def __init__(self, url):
         self.url = url
-        path = urlparse.urlparse(url)[2]
+        path = urlparse(url)[2]
         self.ext = os.path.splitext(path)[1] or None
         self.bitrate = None
 
@@ -1069,7 +1068,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 'publication.starttime%3Adesc%2Ctitle.fi%3Aasc&'
                 'app_id=89868a18&app_key=54bb4ea4d92854a2a45e98f961f0d7da&'
                 'limit={limit}{offset_param}'.format(
-                    series_id=urllib.quote_plus(series_id),
+                    series_id=quote_plus(series_id),
                     limit=str(page_size),
                     offset_param=offset_param))
 
@@ -1138,7 +1137,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def program_info_url(self, program_id):
         return 'https://player.yle.fi/api/v1/programs.jsonp?' \
             'id=%s&callback=yleEmbed.programJsonpCallback' % \
-            (urllib.quote_plus(program_id))
+            (quote_plus(program_id))
 
     def create_clip(self, program_info, program_id, pageurl, filters):
         flavors = self.flavors_by_program_info(
@@ -1196,8 +1195,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                           'id=%s&callback=yleEmbed.startPlayerCallback&' \
                           'mediaId=%s&protocol=%s&client=areena-flash-player' \
                           '&instance=1' % \
-            (urllib.quote_plus(media_id), urllib.quote_plus(program_id),
-             urllib.quote_plus(protocol))
+            (quote_plus(media_id), quote_plus(program_id),
+             quote_plus(protocol))
         media = JSONP.load_jsonp(media_jsonp_url)
 
         if media:
@@ -1207,7 +1206,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         return media
 
     def program_id_from_url(self, url):
-        parsed = urlparse.urlparse(url)
+        parsed = urlparse(url)
         return parsed.path.split('/')[-1]
 
     def program_media_id(self, program_info, filters):
@@ -1444,7 +1443,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
 class Areena2014LiveDownloader(Areena2014Downloader):
     def program_info_url(self, program_id):
-        quoted_pid = urllib.quote_plus(program_id)
+        quoted_pid = quote_plus(program_id)
         return 'https://player.yle.fi/api/v1/services.jsonp?' \
             'id=%s&callback=yleEmbed.simulcastJsonpCallback&' \
             'region=fi&instance=1&dataId=%s' % \
@@ -1603,7 +1602,7 @@ class ElavaArkistoDownloader(Areena2014Downloader):
             return ('https://yle.fi/elavaarkisto/embed/%s.jsonp'
                     '?callback=yleEmbed.eaJsonpCallback'
                     '&instance=1&id=%s&lang=fi' %
-                    (urllib.quote_plus(did), urllib.quote_plus(did)))
+                    (quote_plus(did), quote_plus(did)))
         else:
             return super(ElavaArkistoDownloader, self).program_info_url(
                 program_id)
@@ -1648,7 +1647,7 @@ class ArkivetDownloader(Areena2014Downloader):
             plain_id = program_id.split('-')[-1]
             return 'https://player.yle.fi/api/v1/arkivet.jsonp?' \
                 'id=%s&callback=yleEmbed.eaJsonpCallback&instance=1&lang=sv' % \
-                (urllib.quote_plus(plain_id))
+                (quote_plus(plain_id))
         else:
             return super(ArkivetDownloader, self).program_info_url(program_id)
 
@@ -2049,7 +2048,7 @@ class YoutubeDLHDSDump(BaseDownloader):
         try:
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
-        except urllib2.HTTPError:
+        except HTTPError:
             logger.exception('HTTP request failed')
             return RD_FAILED
 

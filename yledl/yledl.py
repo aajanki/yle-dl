@@ -26,13 +26,12 @@ This script downloads video and audio streams from Yle Areena
 
 from __future__ import print_function, absolute_import, unicode_literals
 import sys
-import urllib
 import re
 import os.path
-import urlparse
 import codecs
 import logging
 import argparse
+from future.moves.urllib.parse import urlparse, urlunparse, quote
 from .version import version
 from .utils import print_enc
 from .downloaders import downloader_factory, StreamFilters, IOContext, \
@@ -192,16 +191,14 @@ def read_urls_from_file(f):
 
 def encode_url_utf8(url):
     """Encode the path component of url to percent-encoded UTF8."""
-    (scheme, netloc, path, params, query, fragment) = urlparse.urlparse(url)
-
-    path = path.encode('UTF8')
+    (scheme, netloc, path, params, query, fragment) = urlparse(url)
 
     # Assume that the path is already encoded if there seems to be
     # percent encoded entities.
     if re.search(r'%[0-9A-Fa-f]{2}', path) is None:
-        path = urllib.quote(path, '/+')
+        path = quote(path.encode('UTF8'), '/+')
 
-    return urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
+    return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
 def download(url, action, io, stream_filters, backends, postprocess_command):
