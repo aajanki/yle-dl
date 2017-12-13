@@ -1,7 +1,7 @@
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import json
-from cStringIO import StringIO
+from io import BytesIO
 from yledl import download, StreamFilters, BackendFactory, IOContext, \
     DownloadLimits, StreamAction, RD_SUCCESS
 
@@ -11,12 +11,12 @@ from yledl import download, StreamFilters, BackendFactory, IOContext, \
 class Capturing(list):
     def __enter__(self):
         self._stdout = sys.stdout
-        sys.stdout = self._stringio = StringIO()
+        sys.stdout = self._bytesio = BytesIO()
         return self
 
     def __exit__(self, *args):
-        self.extend(self._stringio.getvalue().splitlines())
-        del self._stringio    # free up some memory
+        self.extend(self._bytesio.getvalue().decode('UTF-8').splitlines())
+        del self._bytesio    # free up some memory
         sys.stdout = self._stdout
 
 

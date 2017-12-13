@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+from __future__ import print_function, absolute_import, unicode_literals
 import sys
 
 
@@ -14,5 +13,5 @@ def print_enc(msg, out=None, linefeed_and_flush=True):
 
     out.write(msg.encode(enc, 'backslashreplace'))
     if linefeed_and_flush:
-        out.write('\n')
+        out.write(b'\n')
         out.flush()

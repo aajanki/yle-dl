@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import urllib
 import urllib2
@@ -27,8 +26,10 @@ from . import hds
 from requests.adapters import HTTPAdapter
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
+from builtins import str
 from .version import version
 from .utils import print_enc
+from future.utils import python_2_unicode_compatible
 
 # exit codes
 RD_SUCCESS = 0
@@ -101,7 +102,7 @@ def http_get(url, extra_headers=None):
         r = cached_requests_session.get(url, headers=headers, timeout=20)
         r.raise_for_status()
     except requests.exceptions.RequestException:
-        logger.exception(u"Can't read {}".format(url))
+        logger.exception("Can't read {}".format(url))
         return None
 
     return r
@@ -208,12 +209,12 @@ def filter_flavors(flavors, max_height, max_bitrate):
     def sort_max_resolution_max_bitrate(x):
         return (x.get('height', 0), x.get('bitrate', 0))
 
-    logger.debug(u'Available flavors: {}'.format([{
+    logger.debug('Available flavors: {}'.format([{
         'bitrate': fl.get('bitrate'),
         'height': fl.get('height'),
         'width': fl.get('width')
     } for fl in flavors]))
-    logger.debug(u'max_height: {}, max_bitrate: {}'.format(
+    logger.debug('max_height: {}, max_bitrate: {}'.format(
         max_height, max_bitrate))
 
     filtered = [fl for fl in flavors
@@ -234,16 +235,14 @@ def filter_flavors(flavors, max_height, max_bitrate):
         keyfunc = sort_max_bitrate
 
     selected = sorted(acceptable_flavors, key=keyfunc, reverse=reverse)[-1]
-    logger.debug(u'Selected flavor: {}'.format(selected))
+    logger.debug('Selected flavor: {}'.format(selected))
     return selected
 
 
 def sane_filename(name, excludechars):
-    if isinstance(name, str):
-        name = unicode(name, 'utf-8', 'ignore')
-    tr = dict((ord(c), ord(u'_')) for c in excludechars)
+    tr = dict((ord(c), ord('_')) for c in excludechars)
     x = name.strip(' .').translate(tr)
-    return x or u'ylevideo'
+    return x or 'ylevideo'
 
 
 def ignore_none_values(di):
@@ -331,6 +330,7 @@ class JSONP(object):
         return without_padding
 
 
+@python_2_unicode_compatible
 class BackendFactory(object):
     ADOBEHDSPHP = 'adobehdsphp'
     YOUTUBEDL = 'youtubedl'
@@ -345,7 +345,7 @@ class BackendFactory(object):
         backends = []
         for bn in backend_names:
             if not BackendFactory.is_valid_hds_backend(bn):
-                logger.warning(u'Invalid backend: ' + bn)
+                logger.warning('Invalid backend: ' + bn)
                 continue
 
             backends.append(BackendFactory(bn))
@@ -376,7 +376,7 @@ class AreenaUtils(object):
         iv = bytestring[:16]
         ciphertext = bytestring[16:]
         padlen = 16 - (len(ciphertext) % 16)
-        ciphertext = ciphertext + '\0'*padlen
+        ciphertext = ciphertext + b'\0'*padlen
 
         decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
         return decrypter.decrypt(ciphertext)[:-padlen]
@@ -395,19 +395,19 @@ class AreenaUtils(object):
             if sub.url and matching_lang:
                 filename = basename + '.' + lang + '.srt'
                 if os.path.isfile(filename):
-                    logger.debug(u'Subtitle file {} already exists, skipping'
+                    logger.debug('Subtitle file {} already exists, skipping'
                                  .format(filename))
                 else:
                     try:
                         download_to_file(sub.url, filename)
                         self.add_BOM(filename)
-                        logger.info(u'Subtitles saved to ' + filename)
+                        logger.info('Subtitles saved to ' + filename)
                         subtitlefiles.append(filename)
                         if preferred_lang != 'all':
                             return subtitlefiles
                     except IOError:
-                        logger.exception(u'Failed to download subtitles '
-                                         u'at %s' % sub.url)
+                        logger.exception('Failed to download subtitles '
+                                         'at %s' % sub.url)
         return subtitlefiles
 
     def add_BOM(self, filename):
@@ -493,7 +493,7 @@ class KalturaUtils(object):
         num_non_web = len(flavors) - len(web_flavors)
 
         if num_non_web > 0:
-            logger.debug(u'Ignored %d non-web flavors' % num_non_web)
+            logger.debug('Ignored %d non-web flavors' % num_non_web)
 
         return web_flavors
 
@@ -713,7 +713,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
 class Areena2014RTMPStreamUrl(AreenaStreamBase):
     # Extracted from
     # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
-    AES_KEY = 'hjsadf89hk123ghk'
+    AES_KEY = b'hjsadf89hk123ghk'
 
     def __init__(self, pageurl, streamurl):
         AreenaStreamBase.__init__(self)
@@ -759,7 +759,7 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
         try:
             scheme, edgefcs, rtmppath = self.rtmpurlparse(rtmp_connect)
         except ValueError as exc:
-            logger.error(unicode(exc.message, 'utf-8', 'ignore'))
+            logger.error(exc.message)
             return None
 
         ident = download_page('http://%s/fcs/ident' % edgefcs)
@@ -772,7 +772,7 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
         try:
             identxml = xml.dom.minidom.parseString(ident)
         except Exception as exc:
-            logger.error(unicode(exc.message, 'utf-8', 'ignore'))
+            logger.error(exc.message)
             return None
 
         nodelist = identxml.getElementsByTagName('ip')
@@ -921,7 +921,7 @@ class PAPIStream(object):
 class Areena2014Downloader(AreenaUtils, KalturaUtils):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
-    AES_KEY = 'yjuap4n5ok9wzg43'
+    AES_KEY = b'yjuap4n5ok9wzg43'
 
     def __init__(self, backends):
         self.backends = backends
@@ -930,9 +930,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         def download_clip(clip):
             downloader = clip.streamurl.create_downloader(self.backends)
             if not downloader:
-                logger.error(u'Downloading the stream at %s is not yet '
-                             u'supported.' % url)
-                logger.error(u'Try --showurl')
+                logger.error('Downloading the stream at %s is not yet '
+                             'supported.' % url)
+                logger.error('Try --showurl')
                 return RD_FAILED
 
             clip_title = clip.title or 'ylestream'
@@ -966,8 +966,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         def pipe_clip(clip):
             dl = clip.streamurl.create_downloader(self.backends)
             if not dl:
-                logger.error(u'Downloading the stream at %s is not yet '
-                             u'supported.' % url)
+                logger.error('Downloading the stream at %s is not yet '
+                             'supported.' % url)
                 return RD_FAILED
             outputfile = dl.output_filename(clip.title, io)
             dl.warn_on_unsupported_feature(io)
@@ -1059,7 +1059,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def playlist_url(self, series_id, page_size=100, offset=0):
         if offset:
-            offset_param = '&offset={offset}'.format(offset=unicode(offset))
+            offset_param = '&offset={offset}'.format(offset=str(offset))
         else:
             offset_param = ''
 
@@ -1070,7 +1070,7 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 'app_id=89868a18&app_key=54bb4ea4d92854a2a45e98f961f0d7da&'
                 'limit={limit}{offset_param}'.format(
                     series_id=urllib.quote_plus(series_id),
-                    limit=unicode(page_size),
+                    limit=str(page_size),
                     offset_param=offset_param))
 
     def is_playlist_page(self, html_tree):
@@ -1087,15 +1087,15 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 self.print_geo_warning(program_info)
             return res
         else:
-            logger.error(u'Unsupported stream: %s' %
+            logger.error('Unsupported stream: %s' %
                          clip.streamurl.get_error_message())
             return RD_FAILED
 
     def print_geo_warning(self, program_info):
         region = self.available_at_region(program_info)
         if region == 'Finland':
-            logger.warning(u'Failed! Possible reason: geo restriction.')
-            logger.warning(u'This video is available only in Finland.')
+            logger.warning('Failed! Possible reason: geo restriction.')
+            logger.warning('This video is available only in Finland.')
 
     def create_clip_or_failure(self, pid, program_info, url, filters):
         if not pid:
@@ -1511,7 +1511,7 @@ class YleUutisetDownloader(Areena2014Downloader):
     def delegate_to_areena_downloader(self, method_name, url, *args, **kwargs):
         areena_urls = self.build_areena_urls(url)
         if areena_urls:
-            logger.debug(u'Found areena URLs: ' + ', '.join(areena_urls))
+            logger.debug('Found areena URLs: ' + ', '.join(areena_urls))
 
             overall_status = RD_SUCCESS
             for url in areena_urls:
@@ -1525,7 +1525,7 @@ class YleUutisetDownloader(Areena2014Downloader):
 
             return overall_status
         else:
-            logger.error(u'No video stream found at ' + url)
+            logger.error('No video stream found at ' + url)
             return RD_FAILED
 
     def build_areena_urls(self, url):
@@ -1707,7 +1707,7 @@ class BaseDownloader(object):
             logger.warn('Rate limiting not supported on this stream')
         if io.download_limits.duration and \
            IOCapability.DURATION not in self.io_capabilities:
-            logger.warning(u'--duration will be ignored on this stream')
+            logger.warning('--duration will be ignored on this stream')
 
     def save_stream(self, clip_title, io):
         """Deriving classes override this to perform the download"""
@@ -1736,7 +1736,7 @@ class BaseDownloader(object):
         filename = proposed
         basename, ext = os.path.splitext(filename)
         while os.path.exists(filename.encode(enc, 'replace')):
-            logger.info(u'%s exists, trying an alternative name' % filename)
+            logger.info('%s exists, trying an alternative name' % filename)
             filename = basename + '-' + str(i) + ext
             i += 1
 
@@ -1760,9 +1760,9 @@ class BaseDownloader(object):
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':
             if done:
-                logger.info(u'Stream saved to ' + outputfile)
+                logger.info('Stream saved to ' + outputfile)
             else:
-                logger.info(u'Output file: ' + outputfile)
+                logger.info('Output file: ' + outputfile)
 
     def output_filename(self, clip_title, io):
         return self._construct_output_filename(clip_title, io, True)
@@ -1848,8 +1848,8 @@ class Subprocess(object):
                 pass
             return RD_INCOMPLETE
         except OSError as exc:
-            logger.error(u'Failed to execute ' + ' '.join(args))
-            logger.error(unicode(exc.strerror, 'UTF-8', 'replace'))
+            logger.error('Failed to execute ' + ' '.join(args))
+            logger.error(exc.strerror)
             return RD_FAILED
 
     def _sigterm_when_parent_dies(self):
@@ -1958,7 +1958,7 @@ class HDSDump(ExternalDownloader):
         if (io.resume and output_name != '-' and
             os.path.isfile(output_name) and
             not self.fragments_exist(self.flavor_id)):
-            logger.info(u'{} has already been downloaded.'.format(output_name))
+            logger.info('{} has already been downloaded.'.format(output_name))
             return RD_SUCCESS
         else:
             return super(HDSDump, self).save_stream(clip_title, io)
@@ -2018,13 +2018,13 @@ class YoutubeDLHDSDump(BaseDownloader):
         return self._execute_youtube_dl(output_name, io)
 
     def pipe(self, io):
-        return self._execute_youtube_dl(u'-', io)
+        return self._execute_youtube_dl('-', io)
 
     def _execute_youtube_dl(self, outputfile, io):
         try:
             import youtube_dl
         except ImportError:
-            logger.error(u'Failed to import youtube_dl')
+            logger.error('Failed to import youtube_dl')
             return RD_FAILED
 
         if outputfile != '-':
@@ -2050,7 +2050,7 @@ class YoutubeDLHDSDump(BaseDownloader):
             if not f4mdl.download(outputfile, info):
                 return RD_FAILED
         except urllib2.HTTPError:
-            logger.exception(u'HTTP request failed')
+            logger.exception('HTTP request failed')
             return RD_FAILED
 
         if outputfile != '-':

@@ -24,8 +24,7 @@ This script downloads video and audio streams from Yle Areena
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
-from __future__ import absolute_import
+from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import urllib
 import re
@@ -76,13 +75,10 @@ def arg_parser():
                     file = sys.stderr
                 print_enc(message, file, False)
 
-    def unicode_arg(bytes):
-        return unicode(bytes, sys.getfilesystemencoding())
-
     description = \
-        (u'yle-dl %s: Download media files from Yle Areena and Elävä Arkisto\n'
-         u'Copyright (C) 2009-2017 Antti Ajanki <antti.ajanki@iki.fi>, '
-         u'license: GPLv3' % version)
+        ('yle-dl %s: Download media files from Yle Areena and Elävä Arkisto\n'
+         'Copyright (C) 2009-2017 Antti Ajanki <antti.ajanki@iki.fi>, '
+         'license: GPLv3' % version)
 
     parser = ArgumentParserEncoded(
         description=description,
@@ -93,20 +89,20 @@ def arg_parser():
 
     io_group = parser.add_argument_group('Input and output')
     url_group = io_group.add_mutually_exclusive_group()
-    url_group.add_argument('url', nargs='?', type=unicode_arg,
-        help=u'Address of an Areena, Elävä Arkisto, or Yle news web page')
+    url_group.add_argument('url', nargs='?', type=str,
+        help='Address of an Areena, Elävä Arkisto, or Yle news web page')
     url_group.add_argument('-i', metavar='FILENAME', dest='inputfile',
-                           type=unicode_arg,
+                           type=str,
                            help='Read input URLs to process from the named '
                            'file, one URL per line')
     io_group.add_argument('-o', metavar='FILENAME', dest='outputfile',
-                          type=unicode_arg,
+                          type=str,
                           help='Save stream to the named file')
     io_group.add_argument('--pipe', action='store_true',
                           help='Dump stream to stdout for piping to media '
                           'player. E.g. "yle-dl --pipe URL | vlc -"')
     io_group.add_argument('--destdir', metavar='DIR',
-                          type=unicode_arg,
+                          type=str,
                           help='Save files to DIR')
     action_group = io_group.add_mutually_exclusive_group()
     action_group.add_argument('--showurl', action='store_true',
@@ -125,23 +121,23 @@ def arg_parser():
                           help='Maximum bandwidth consumption, '
                           'interger in kB/s')
     io_group.add_argument('--proxy', metavar='URI',
-                          type=unicode_arg,
+                          type=str,
                           help='SOCKS or HTTP proxy for downloading streams. '
                           'Example: --proxy socks5://localhost:7777')
     io_group.add_argument('--postprocess', metavar='CMD',
-                          type=unicode_arg,
+                          type=str,
                           help='Execute the command CMD after a successful '
                           'download. CMD is called with two arguments: '
                           'video, subtitle')
 
     qual_group = parser.add_argument_group('Stream type and quality')
     qual_group.add_argument('--audiolang', metavar='LANG',
-                            type=unicode_arg,
+                            type=str,
                             choices=['fin', 'swe'], default='',
                             help='Select stream\'s audio language, "fin" or '
                             '"swe"')
     qual_group.add_argument('--sublang', metavar='LANG',
-                            type=unicode_arg,
+                            type=str,
                             choices=['fin', 'swe', 'smi', 'none', 'all'],
                             help='Download subtitles. LANG is one of "fin", '
                             '"swe", "smi", "none", or "all"')
@@ -150,11 +146,11 @@ def arg_parser():
     qual_group.add_argument('--latestepisode', action='store_true',
                             help='Download the latest episode of a series')
     qual_group.add_argument('--maxbitrate', metavar='RATE',
-                            type=unicode_arg,
+                            type=str,
                             help='Maximum bitrate stream to download, '
                             'integer in kB/s or "best" or "worst".')
     qual_group.add_argument('--resolution', metavar='RES',
-                            type=unicode_arg,
+                            type=str,
                             help='Maximum vertical resolution in pixels, '
                             'default: highest available resolution')
     qual_group.add_argument('--duration', metavar='S', type=int,
@@ -163,7 +159,7 @@ def arg_parser():
 
     dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument('--backend', metavar='BE',
-                          type=unicode_arg,
+                          type=str,
                           default="adobehdsphp,youtubedl",
                           help='Downloaders that are tried until one of them '
                           ' succeeds (a comma-separated list).\n'
@@ -171,19 +167,19 @@ def arg_parser():
                           '"adobehdsphp" = AdobeHDS.php, '
                           '"youtubedl" = youtube-dl')
     dl_group.add_argument('--rtmpdump', metavar='PATH',
-                          type=unicode_arg,
+                          type=str,
                           help='Set path to the rtmpdump binary')
     dl_group.add_argument('--ffmpeg', metavar='PATH',
-                          type=unicode_arg,
+                          type=str,
                           help='Set path to the ffmpeg binary')
     dl_group.add_argument('--ffprobe', metavar='PATH',
-                          type=unicode_arg,
+                          type=str,
                           help='Set path to the ffprobe binary')
     dl_group.add_argument('--adobehds', metavar='CMD',
-                          type=unicode_arg, default='',
+                          type=str, default='',
                           help='Set command for executing AdobeHDS.php')
     dl_group.add_argument('--wget', metavar='PATH',
-                          type=unicode_arg, default='',
+                          type=str, default='',
                           help='Set path to wget binary')
 
     return parser
@@ -223,8 +219,8 @@ def download(url, action, io, stream_filters, backends, postprocess_command):
     """
     dl = downloader_factory(url, backends)
     if not dl:
-        logger.error(u'Unsupported URL %s.' % url)
-        logger.error(u'Is this really a Yle video page?')
+        logger.error('Unsupported URL %s.' % url)
+        logger.error('Is this really a Yle video page?')
         return RD_FAILED
 
     if action == StreamAction.PRINT_STREAM_URL:
@@ -253,7 +249,7 @@ def bitrate_from_arg(arg):
         try:
             return int(arg)
         except ValueError:
-            logger.warning(u'Invalid bitrate %s, defaulting to best' % arg)
+            logger.warning('Invalid bitrate %s, defaulting to best' % arg)
             arg = sys.maxint
 
 
@@ -267,7 +263,7 @@ def resolution_from_arg(arg):
     try:
         return int(arg)
     except ValueError:
-        logger.warning(u'Invalid resolution: {}'.format(arg))
+        logger.warning('Invalid resolution: {}'.format(arg))
         return None
 
 
@@ -390,7 +386,7 @@ def main():
     for i, url in enumerate(urls):
         if args.inputfile:
             logger.info('')
-            logger.info(u'Now downloading from URL {}/{}: {}'.format(
+            logger.info('Now downloading from URL {}/{}: {}'.format(
                 i + 1, len(urls), url))
 
         res = download(url, action, io, stream_filters, backends,
