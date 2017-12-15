@@ -380,7 +380,7 @@ class AreenaUtils(object):
         ciphertext = ciphertext + b'\0'*padlen
 
         decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
-        return decrypter.decrypt(ciphertext)[:-padlen]
+        return str(decrypter.decrypt(ciphertext)[:-padlen])
 
     def download_subtitles(self, subtitles, filters, videofilename):
         subtitlefiles = []
