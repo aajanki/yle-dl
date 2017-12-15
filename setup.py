@@ -20,14 +20,15 @@ version = re.\
   search(r"^version *= *'(.+)'$", open('yledl/version.py').read(), re.MULTILINE).\
   group(1)
 
-if sys.version_info[:2] != (2,7):
-    sys.stderr.write("This package only supports Python 2.7\n")
-    sys.exit(1)
-
 # On older Pythons we need some additional libraries for SSL SNI support
 ssl_sni_requires = []
 if sys.version_info < (2, 7, 9):
     ssl_sni_requires = ['pyOpenSSL', 'ndg-httpsclient', 'pyasn1']
+
+if sys.version_info >= (3, 0, 0):
+    pyamf_requires = ['Py3AMF']
+else:
+    pyamf_requires = ['PyAMF']
 
 setup(
     name='yle-dl',
@@ -41,8 +42,8 @@ setup(
     packages=['yledl'],
     include_package_data=True,
     install_requires=[
-        'pycrypto', 'requests', 'lxml', 'PyAMF', 'future'
-    ] + ssl_sni_requires,
+        'pycrypto', 'requests', 'lxml', 'future'
+    ] + pyamf_requires + ssl_sni_requires,
     extras_require = {
         'youtubedl-backend': ['youtube_dl']
     },
