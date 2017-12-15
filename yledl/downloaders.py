@@ -759,21 +759,21 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
 
         try:
             scheme, edgefcs, rtmppath = self.rtmpurlparse(rtmp_connect)
-        except ValueError as exc:
-            logger.error(exc.message)
+        except ValueError:
+            logger.exception('Failed to parse RTMP URL')
             return None
 
         ident = download_page('http://%s/fcs/ident' % edgefcs)
         if ident is None:
-            logger.error('Failed to read ident')
+            logger.exception('Failed to read ident')
             return None
 
         logger.debug(ident)
 
         try:
             identxml = xml.dom.minidom.parseString(ident)
-        except Exception as exc:
-            logger.error(exc.message)
+        except Exception:
+            logger.exception('Invalid ident response')
             return None
 
         nodelist = identxml.getElementsByTagName('ip')
