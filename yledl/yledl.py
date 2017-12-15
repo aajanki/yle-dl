@@ -239,7 +239,7 @@ def bitrate_from_arg(arg):
     if arg is None:
         return None
     elif arg == 'best':
-        return sys.maxint
+        return None
     elif arg == 'worst':
         return 0
     else:
@@ -247,7 +247,7 @@ def bitrate_from_arg(arg):
             return int(arg)
         except ValueError:
             logger.warning('Invalid bitrate %s, defaulting to best' % arg)
-            arg = sys.maxint
+            return None
 
 
 def resolution_from_arg(arg):

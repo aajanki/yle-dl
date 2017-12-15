@@ -216,9 +216,11 @@ def filter_flavors(flavors, max_height, max_bitrate):
     logger.debug('max_height: {}, max_bitrate: {}'.format(
         max_height, max_bitrate))
 
-    filtered = [fl for fl in flavors
-                if (fl.get('bitrate', 0) <= (max_bitrate or sys.maxint)) and
-                (fl.get('height', 0) <= (max_height or sys.maxint))]
+    filtered = [
+        fl for fl in flavors
+        if (max_bitrate is None or fl.get('bitrate', 0) <= max_bitrate) and
+        (max_height is None or fl.get('height', 0) <= max_height)
+    ]
     if filtered:
         acceptable_flavors = filtered
         reverse = False
