@@ -721,7 +721,8 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
         rtmpstream = self.create_rtmpstream(streamurl)
         self.rtmp_params = self.stream_to_rtmp_parameters(rtmpstream, pageurl,
                                                           False)
-        self.rtmp_params['app'] = self.rtmp_params['app'].split('/', 1)[0]
+        if self.rtmp_params is not None:
+            self.rtmp_params['app'] = self.rtmp_params['app'].split('/', 1)[0]
 
     def create_rtmpstream(self, streamurl):
         (rtmpurl, playpath, ext) = parse_rtmp_single_component_app(streamurl)
