@@ -814,10 +814,10 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
         scheme, rest = url.split('://', 1)
         rtmp_scemes = ['rtmp', 'rtmpe', 'rtmps', 'rtmpt', 'rtmpte', 'rtmpts']
         if scheme not in rtmp_scemes:
-            raise ValueError("Invalid RTMP URL")
+            raise ValueError("Invalid scheme in RTMP URL")
 
         if '/' not in rest:
-            raise ValueError("Invalid RTMP URL")
+            raise ValueError("No separator in RTMP URL")
 
         server, app_and_playpath = rest.split('/', 1)
         return (scheme, server, app_and_playpath)
