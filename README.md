@@ -27,7 +27,7 @@ instructions for Debian, Ubuntu and Mac OS X.
 
 ### 1. Install the dependencies ###
 
-* python 2.7
+* python 2.7 or 3.5+
 * pip
 * pycrypto
 * wget
@@ -68,9 +68,9 @@ Installation with youtube-dl as an alternative downloader backend
 
 By default, yle-dl downloads streams from Yle Areena using the
 included copy of AdobeHDS.php. If the default downloader does not work
-for some reason, it is possible to use youtube-dl (for Python 2)
-instead. yle-dl will automatically fall back to youtube-dl if it is
-installed and downloading with AdobeHDS.php fails.
+for some reason, it is possible to use youtube-dl instead. yle-dl will
+automatically fall back to youtube-dl if it is installed and
+downloading with AdobeHDS.php fails.
 
 Follow the above installation instructions (except for the PHP and the
 PHP libraries) and additionally install youtube-dl:

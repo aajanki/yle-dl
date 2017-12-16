@@ -18,7 +18,7 @@ OS-install-instructions.md.
 
 Asenna riippuvuudet:
 
-* python 2.7
+* Python 2.7 tai 3.5+
 * pip
 * pycrypto
 * wget
@@ -59,7 +59,7 @@ automaattisesti käyttämään youtube-dl:ää, jos se on asennettu eikä
 AdobeHDS.php toimi.
 
 Suorita asennus kuten yllä, mutta jätä PHP-tulkki ja PHP-kirjastot
-pois. Asenna lisäksi Python 2 -versio youtube-dl-moduulista:
+pois. Asenna lisäksi youtube-dl:
 
 * Mac OS X: `brew install youtube-dl`
 * Debian/Ubuntu/muut käyttöjärjestelmät: `pip install --upgrade youtube_dl`
