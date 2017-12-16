@@ -127,7 +127,7 @@ def create_session():
 def download_to_file(url, destination_filename):
     enc = sys.getfilesystemencoding()
     encoded_filename = destination_filename.encode(enc, 'replace')
-    with open(encoded_filename, 'w') as output:
+    with open(encoded_filename, 'wb') as output:
         r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
         r.raise_for_status()
         for chunk in r.iter_content(chunk_size=4096):
@@ -419,12 +419,12 @@ class AreenaUtils(object):
         enc = sys.getfilesystemencoding()
         encoded_filename = filename.encode(enc, 'replace')
 
-        with open(encoded_filename, 'r') as infile:
+        with open(encoded_filename, 'rb') as infile:
             content = infile.read()
             if content.startswith(codecs.BOM_UTF8):
                 return
 
-        with open(encoded_filename, 'w') as outfile:
+        with open(encoded_filename, 'wb') as outfile:
             outfile.write(codecs.BOM_UTF8)
             outfile.write(content)
 
