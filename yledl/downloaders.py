@@ -19,16 +19,16 @@ import logging
 import lxml.html
 import lxml.etree
 import requests
+from builtins import str
 from future.moves.urllib.parse import urlparse, quote_plus
 from future.moves.urllib.error import HTTPError
+from future.utils import python_2_unicode_compatible
 from requests.adapters import HTTPAdapter
 from Crypto.Cipher import AES
 from pkg_resources import resource_filename
-from builtins import str
 from . import hds
 from .version import version
 from .utils import print_enc
-from future.utils import python_2_unicode_compatible
 
 # exit codes
 RD_SUCCESS = 0
