@@ -6,12 +6,17 @@ def print_enc(msg, out=None, linefeed_and_flush=True):
     if out is None:
         out = sys.stdout
 
+    if hasattr(out, 'buffer'):
+        bytes_out = out.buffer
+    else:
+        bytes_out = out
+
     if hasattr(out, 'encoding'):
         enc = out.encoding or 'UTF-8'
     else:
         enc = 'UTF-8'
 
-    out.write(msg.encode(enc, 'backslashreplace'))
+    bytes_out.write(bytes(msg.encode(enc, 'ignore')))
     if linefeed_and_flush:
-        out.write(b'\n')
-        out.flush()
+        bytes_out.write(b'\n')
+        bytes_out.flush()
