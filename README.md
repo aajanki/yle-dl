@@ -27,7 +27,7 @@ instructions for Debian, Ubuntu and Mac OS X.
 
 ### 1. Install the dependencies ###
 
-* python 2.7 or 3.5+
+* Python 2.7 or 3.5+
 * pip
 * pycrypto
 * wget
