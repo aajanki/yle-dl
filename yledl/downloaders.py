@@ -1798,8 +1798,7 @@ class ExternalDownloader(BaseDownloader):
     def pipe(self, io):
         args = self.build_pipe_args(io)
         env = self.extra_environment(io)
-        self.external_downloader(args, env)
-        return RD_SUCCESS
+        return self.external_downloader(args, env)
 
     def build_args(self, clip_title, io):
         return []
