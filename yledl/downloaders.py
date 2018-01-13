@@ -1811,11 +1811,7 @@ class ExternalDownloader(BaseDownloader):
         return None
 
     def external_downloader(self, args, env=None):
-        exit_code = Subprocess().execute(args, env)
-        if exit_code == 0:
-            return RD_SUCCESS
-        else:
-            return RD_FAILED
+        return Subprocess().execute(args, env)
 
 
 class Subprocess(object):
@@ -1839,8 +1835,9 @@ class Subprocess(object):
                 process = subprocess.Popen(encoded_args, env=env)
             else:
                 process = subprocess.Popen(
-                    encoded_args, env=env, preexec_fn=self._sigterm_when_parent_dies)
-            return process.wait()
+                    encoded_args, env=env,
+                    preexec_fn=self._sigterm_when_parent_dies)
+            return self.exit_code_to_rd(process.wait())
         except KeyboardInterrupt:
             try:
                 os.kill(process.pid, signal.SIGINT)
@@ -1853,6 +1850,9 @@ class Subprocess(object):
             logger.error('Failed to execute ' + ' '.join(args))
             logger.error(exc.strerror)
             return RD_FAILED
+
+    def exit_code_to_rd(self, exit_code):
+        return RD_SUCCESS if exit_code == 0 else RD_FAILED
 
     def _sigterm_when_parent_dies(self):
         PR_SET_PDEATHSIG = 1
@@ -2168,7 +2168,7 @@ class FallbackDump(object):
             def wrapped(clip_title, io):
                 outputfile = downloader.output_filename(clip_title, io)
                 res = downloader.save_stream(clip_title, io)
-                if res != RD_SUCCESS and os.path.isfile(outputfile):
+                if self._needs_retry(res) and os.path.isfile(outputfile):
                     logger.debug('Removing the partially downloaded file')
                     try:
                         os.remove(outputfile)
@@ -2196,7 +2196,10 @@ class FallbackDump(object):
             logger.debug('Now trying downloader {}'.format(type(downloader).__name__))
             method = get_action(downloader)
             res = method(*args, **kwargs)
-            if res == RD_SUCCESS:
-                return RD_SUCCESS
+            if not self._needs_retry(res):
+                return res
 
         return RD_FAILED
+
+    def _needs_retry(self, res):
+        return res not in [RD_SUCCESS, RD_INCOMPLETE]
