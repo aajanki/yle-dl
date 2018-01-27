@@ -382,34 +382,40 @@ class AreenaUtils(object):
         decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
         return decrypter.decrypt(ciphertext)[:-padlen].decode('latin-1')
 
-    def download_subtitles(self, subtitles, filters, videofilename):
-        subtitlefiles = []
-        if filters.hardsubs:
-            return subtitlefiles
-
-        preferred_lang = filters.sublang
+    def download_subtitles(self, subtitles, videofilename):
         basename = os.path.splitext(videofilename)[0]
+        subtitlefiles = []
         for sub in subtitles:
-            lang = sub.language
-            matching_lang = (filters.sublang_matches(lang, '') or
-                             preferred_lang == 'all')
-            if sub.url and matching_lang:
-                filename = basename + '.' + lang + '.srt'
-                if os.path.isfile(filename):
-                    logger.debug('Subtitle file {} already exists, skipping'
-                                 .format(filename))
-                else:
-                    try:
-                        download_to_file(sub.url, filename)
-                        self.add_BOM(filename)
-                        logger.info('Subtitles saved to ' + filename)
-                        subtitlefiles.append(filename)
-                        if preferred_lang != 'all':
-                            return subtitlefiles
-                    except IOError:
-                        logger.exception('Failed to download subtitles '
-                                         'at %s' % sub.url)
+            filename = basename + '.' + sub.language + '.srt'
+            if os.path.isfile(filename):
+                logger.debug('Subtitle file {} already exists, skipping'
+                             .format(filename))
+            else:
+                try:
+                    download_to_file(sub.url, filename)
+                    self.add_BOM(filename)
+                    logger.info('Subtitles saved to ' + filename)
+                    subtitlefiles.append(filename)
+                except IOError:
+                    logger.exception('Failed to download subtitles '
+                                     'at %s' % sub.url)
         return subtitlefiles
+
+    def select_subtitles(self, subtitles, filters):
+        if filters.hardsubs:
+            return []
+
+        selected = []
+        for sub in subtitles:
+            matching_lang = (filters.sublang_matches(sub.language, '') or
+                             filters.sublang == 'all')
+            if sub.url and matching_lang:
+                selected.append(sub)
+
+        if selected and filters.sublang != 'all':
+            selected = selected[:1]
+
+        return selected
 
     def add_BOM(self, filename):
         """Add byte-order mark into a file.
@@ -940,8 +946,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             clip_title = clip.title or 'ylestream'
             outputfile = downloader.output_filename(clip_title, io)
             downloader.warn_on_unsupported_feature(io)
+            selected_subtitles = self.select_subtitles(clip.subtitles, filters)
             subtitlefiles = \
-                self.download_subtitles(clip.subtitles, filters, outputfile)
+                self.download_subtitles(selected_subtitles, outputfile)
             dl_result = downloader.save_stream(clip_title, io)
             if dl_result == RD_SUCCESS:
                 self.postprocess(postprocess_command, outputfile,
@@ -973,7 +980,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return RD_FAILED
             outputfile = dl.output_filename(clip.title, io)
             dl.warn_on_unsupported_feature(io)
-            self.download_subtitles(clip.subtitles, filters, outputfile)
+            selected_subtitles = self.select_subtitles(clip.subtitles, filters)
+            self.download_subtitles(selected_subtitles, outputfile)
             return dl.pipe(io)
 
         return self.process(pipe_clip, url, filters)
