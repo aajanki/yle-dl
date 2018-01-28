@@ -1806,8 +1806,9 @@ class ExternalDownloader(BaseDownloader):
     def pipe(self, io, subtitle_url):
         commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
-        if subtitle_url:
-            commands.append(self._mux_subtitles_command(subtitle_url))
+        if subtitle_url and io.ffmpeg_binary:
+            commands.append(
+                self._mux_subtitles_command(io.ffmpeg_binary, subtitle_url))
         return self.external_downloader(commands, env)
 
     def build_args(self, clip_title, io):
@@ -1822,8 +1823,8 @@ class ExternalDownloader(BaseDownloader):
     def external_downloader(self, commands, env=None):
         return Subprocess().execute(commands, env)
 
-    def _mux_subtitles_command(self, subtitle_url):
-        return ['ffmpeg', '-y', '-i', 'pipe:0', '-i', subtitle_url,
+    def _mux_subtitles_command(self, ffmpeg_binary, subtitle_url):
+        return [ffmpeg_binary, '-y', '-i', 'pipe:0', '-i', subtitle_url,
                 '-c', 'copy', '-c:s', 'srt', '-f', 'matroska', 'pipe:1']
 
 
