@@ -1798,7 +1798,7 @@ class ExternalDownloader(BaseDownloader):
         env = self.extra_environment(io)
         outputfile = self.output_filename(clip_title, io)
         self.log_output_file(outputfile)
-        retcode = self.external_downloader(args, env)
+        retcode = self.external_downloader([args], env)
         if retcode == RD_SUCCESS:
             self.log_output_file(outputfile, True)
         return retcode
@@ -1806,7 +1806,7 @@ class ExternalDownloader(BaseDownloader):
     def pipe(self, io):
         args = self.build_pipe_args(io)
         env = self.extra_environment(io)
-        return self.external_downloader(args, env)
+        return self.external_downloader([args], env)
 
     def build_args(self, clip_title, io):
         return []
@@ -1817,33 +1817,30 @@ class ExternalDownloader(BaseDownloader):
     def extra_environment(self, io):
         return None
 
-    def external_downloader(self, args, env=None):
-        return Subprocess().execute(args, env)
+    def external_downloader(self, commands, env=None):
+        return Subprocess().execute(commands, env)
 
 
 class Subprocess(object):
-    def execute(self, args, extra_environment):
-        """Start an external process such as rtmpdump with argument list args
-        and wait until completion.
+    def execute(self, commands, extra_environment):
+        """Start external processes connected with pipes and wait completion.
+
+        commands is a list commands to execute. commands[i] is a list of shell
+        command and arguments.
+
+        extra_environment is a dict of environment variables that are combined
+        with os.environ.
         """
+        if not commands:
+            return RD_SUCCESS
+
         logger.debug('Executing:')
-        logger.debug(' '.join(args))
+        shell_command_string = '|'.join(' '.join(args) for args in commands)
+        logger.debug(shell_command_string)
 
-        enc = sys.getfilesystemencoding()
-        encoded_args = [x.encode(enc, 'replace') for x in args]
-
-        env = None
-        if extra_environment:
-            env = dict(os.environ)
-            env.update(extra_environment)
-
+        env = self.combine_envs(extra_environment)
         try:
-            if platform.system() == 'Windows':
-                process = subprocess.Popen(encoded_args, env=env)
-            else:
-                process = subprocess.Popen(
-                    encoded_args, env=env,
-                    preexec_fn=self._sigterm_when_parent_dies)
+            process = self.start_process(commands, env)
             return self.exit_code_to_rd(process.wait())
         except KeyboardInterrupt:
             try:
@@ -1854,9 +1851,42 @@ class Subprocess(object):
                 pass
             return RD_INCOMPLETE
         except OSError as exc:
-            logger.error('Failed to execute ' + ' '.join(args))
+            logger.error('Failed to execute ' + shell_command_string)
             logger.error(exc.strerror)
             return RD_FAILED
+
+    def combine_envs(self, extra_environment):
+        env = None
+        if extra_environment:
+            env = dict(os.environ)
+            env.update(extra_environment)
+        return env
+
+    def start_process(self, commands, env):
+        """Start all commands and setup pipes."""
+        assert commands
+
+        enc = sys.getfilesystemencoding()
+        processes = []
+        for i, args in enumerate(commands):
+            if i == 0 and platform.system() != 'Windows':
+                preexec_fn = self._sigterm_when_parent_dies
+            else:
+                preexec_fn = None
+
+            encoded_args = [x.encode(enc, 'replace') for x in args]
+            stdin = processes[-1].stdout if processes else None
+            stdout = None if i == len(commands) - 1 else subprocess.PIPE
+            processes.append(subprocess.Popen(
+                encoded_args, stdin=stdin, stdout=stdout,
+                env=env, preexec_fn=preexec_fn))
+
+        # Causes the first process to receive SIGPIPE if the seconds
+        # process exists
+        for p in processes[:-1]:
+            p.stdout.close()
+
+        return processes[0]
 
     def exit_code_to_rd(self, exit_code):
         return RD_SUCCESS if exit_code == 0 else RD_FAILED
