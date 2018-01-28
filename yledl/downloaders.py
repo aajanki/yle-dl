@@ -980,9 +980,9 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 return RD_FAILED
             outputfile = dl.output_filename(clip.title, io)
             dl.warn_on_unsupported_feature(io)
-            selected_subtitles = self.select_subtitles(clip.subtitles, filters)
-            self.download_subtitles(selected_subtitles, outputfile)
-            return dl.pipe(io)
+            subtitles = self.select_subtitles(clip.subtitles, filters)
+            subtitle_url = subtitles[0].url if subtitles else None
+            return dl.pipe(io, subtitle_url)
 
         return self.process(pipe_clip, url, filters)
 
@@ -1723,7 +1723,7 @@ class BaseDownloader(object):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
-    def pipe(self, io):
+    def pipe(self, io, subtitle_url):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
@@ -1803,10 +1803,12 @@ class ExternalDownloader(BaseDownloader):
             self.log_output_file(outputfile, True)
         return retcode
 
-    def pipe(self, io):
-        args = self.build_pipe_args(io)
+    def pipe(self, io, subtitle_url):
+        commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
-        return self.external_downloader([args], env)
+        if subtitle_url:
+            commands.append(self._mux_subtitles_command(subtitle_url))
+        return self.external_downloader(commands, env)
 
     def build_args(self, clip_title, io):
         return []
@@ -1819,6 +1821,10 @@ class ExternalDownloader(BaseDownloader):
 
     def external_downloader(self, commands, env=None):
         return Subprocess().execute(commands, env)
+
+    def _mux_subtitles_command(self, subtitle_url):
+        return ['ffmpeg', '-y', '-i', 'pipe:0', '-i', subtitle_url,
+                '-c', 'copy', '-c:s', 'srt', '-f', 'matroska', 'pipe:1']
 
 
 class Subprocess(object):
@@ -1835,7 +1841,7 @@ class Subprocess(object):
             return RD_SUCCESS
 
         logger.debug('Executing:')
-        shell_command_string = '|'.join(' '.join(args) for args in commands)
+        shell_command_string = ' | '.join(' '.join(args) for args in commands)
         logger.debug(shell_command_string)
 
         env = self.combine_envs(extra_environment)
@@ -2007,8 +2013,8 @@ class HDSDump(ExternalDownloader):
         files = os.listdir('.')
         return any(re.match(pattern, x) is not None for x in files)
 
-    def pipe(self, io):
-        res = super(HDSDump, self).pipe(io)
+    def pipe(self, io, subtitle_url):
+        res = super(HDSDump, self).pipe(io, subtitle_url)
         self.cleanup_cookies()
         return res
 
@@ -2056,7 +2062,8 @@ class YoutubeDLHDSDump(BaseDownloader):
         output_name = self.output_filename(clip_title, io)
         return self._execute_youtube_dl(output_name, io)
 
-    def pipe(self, io):
+    def pipe(self, io, subtitle_url):
+        # TODO: subtitles
         return self._execute_youtube_dl('-', io)
 
     def _execute_youtube_dl(self, outputfile, io):
@@ -2217,8 +2224,8 @@ class FallbackDump(object):
         
         return self._retry_call(save_stream_cleanup, clip_title, io)
 
-    def pipe(self, io):
-        return self._retry_call(lambda x: x.pipe, io)
+    def pipe(self, io, subtitle_url):
+        return self._retry_call(lambda x: x.pipe, io, subtitle_url)
 
     def output_filename(self, clip_title, io):
         if self.downloaders:

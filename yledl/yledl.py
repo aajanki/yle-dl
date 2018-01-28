@@ -369,11 +369,7 @@ def main():
     if len(backends) == 0:
         sys.exit(RD_FAILED)
 
-    if args.sublang:
-        sublang = args.sublang
-    else:
-        sublang = 'none' if action == StreamAction.PIPE else 'all'
-
+    sublang = args.sublang or 'all'
     maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
