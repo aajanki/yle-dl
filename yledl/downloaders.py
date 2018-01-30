@@ -28,7 +28,7 @@ from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from . import hds
 from .version import version
-from .utils import print_enc
+from .utils import print_enc, which
 
 # exit codes
 RD_SUCCESS = 0
@@ -1806,9 +1806,10 @@ class ExternalDownloader(BaseDownloader):
     def pipe(self, io, subtitle_url):
         commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
-        if subtitle_url and io.ffmpeg_binary:
-            commands.append(
-                self._mux_subtitles_command(io.ffmpeg_binary, subtitle_url))
+        subtitle_command = self._mux_subtitles_command(io.ffmpeg_binary,
+                                                       subtitle_url)
+        if subtitle_command:
+            commands.append(subtitle_command)
         return self.external_downloader(commands, env)
 
     def build_args(self, clip_title, io):
@@ -1824,8 +1825,17 @@ class ExternalDownloader(BaseDownloader):
         return Subprocess().execute(commands, env)
 
     def _mux_subtitles_command(self, ffmpeg_binary, subtitle_url):
-        return [ffmpeg_binary, '-y', '-i', 'pipe:0', '-i', subtitle_url,
-                '-c', 'copy', '-c:s', 'srt', '-f', 'matroska', 'pipe:1']
+        if not ffmpeg_binary or not subtitle_url:
+            return None
+
+        if which(ffmpeg_binary):
+            return [ffmpeg_binary, '-y', '-i', 'pipe:0', '-i', subtitle_url,
+                    '-c', 'copy', '-c:s', 'srt', '-f', 'matroska', 'pipe:1']
+        else:
+            logger.warning('{} not found. Subtitles disabled.'
+                           .format(ffmpeg_binary))
+            logger.warning('Set the path to ffmpeg using --ffmpeg')
+            return None
 
 
 class Subprocess(object):

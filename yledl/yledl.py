@@ -27,13 +27,12 @@ This script downloads video and audio streams from Yle Areena
 from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import re
-import os.path
 import codecs
 import logging
 import argparse
 from future.moves.urllib.parse import urlparse, urlunparse, quote
 from .version import version
-from .utils import print_enc
+from .utils import print_enc, which
 from .downloaders import downloader_factory, StreamFilters, IOContext, \
     DownloadLimits, BackendFactory, RD_SUCCESS, RD_FAILED
 
@@ -262,25 +261,6 @@ def resolution_from_arg(arg):
     except ValueError:
         logger.warning('Invalid resolution: {}'.format(arg))
         return None
-
-
-def which(program):
-    """Search for program on $PATH and return the full path if found."""
-    # Adapted from http://stackoverflow.com/questions/377017
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
 
 
 def find_rtmpdump(rtmpdump_arg):
