@@ -20,7 +20,7 @@ import lxml.html
 import lxml.etree
 import requests
 from builtins import str
-from future.moves.urllib.parse import urlparse, quote_plus
+from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from future.moves.urllib.error import HTTPError
 from future.utils import python_2_unicode_compatible
 from requests.adapters import HTTPAdapter
@@ -46,7 +46,7 @@ def downloader_factory(url, backends):
         return ElavaArkistoDownloader(backends)
     elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
         return ArkivetDownloader(backends)
-    elif re.match(r'^https?://(www\.)?yle\.fi/radio/[a-zA-Z0-9/]+/suora', url):
+    elif re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url):
         return AreenaLiveRadioDownloader(backends)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return Areena2014LiveDownloader(backends)
@@ -1583,13 +1583,14 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
         return [url]
 
     def program_id_from_url(self, pageurl):
-        html = download_html_tree(pageurl)
-        if html is None:
-            return None
-
-        scripts = html.xpath('/html/body/div[@id="container"]/script/text()')
-        stream_id = re.search(r"channelAreenaStreamId: *'(.*?)'", '\n'.join(scripts))
-        return stream_id.group(1) if stream_id else None
+        parsed = urlparse(pageurl)
+        channel = parsed.path.split('/')[-1]
+        if channel == 'yle-radio-suomi':
+            query_dict = parse_qs(parsed.query)
+            channel_variant = query_dict.get('_c')
+            if channel_variant:
+                channel = channel_variant[0]
+        return channel
 
 
 ### Elava Arkisto ###
