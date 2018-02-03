@@ -2,6 +2,13 @@ download videos from Yle servers
 Copyright 2009-2017 Antti Ajanki
 Distributed under the GPL v3
 
+xx xxx 2018, Version 2.31
+
+- Support the new live radio URLs. Drop the support for the old URLs.
+- Download the HLS version of a live radio stream (like the Areena web app)
+- Include subtitles when piping a video
+- Don't restart and remove a partially downloaded file
+
 19 Dec 2017, Version 2.30
 
 - yle-dl now runs on Python 3.5 and 3.6 (as well as on Python 2.7 like before)
