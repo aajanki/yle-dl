@@ -997,7 +997,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 logger.error('Downloading the stream at %s is not yet '
                              'supported.' % url)
                 return RD_FAILED
-            outputfile = dl.output_filename(clip.title, io)
             dl.warn_on_unsupported_feature(io)
             subtitles = self.select_subtitles(clip.subtitles, filters)
             subtitle_url = subtitles[0].url if subtitles else None
