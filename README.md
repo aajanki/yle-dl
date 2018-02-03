@@ -189,7 +189,7 @@ yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuut
 Playing in mplayer (or vlc and others) without downloading first:
 
 ```
-yle-dl --pipe https://areena.yle.fi/1-2409251 | vlc --file-caching=10000 -
+yle-dl --pipe https://areena.yle.fi/1-2409251 | vlc --file-caching=10000 --sub-track=0 -
 ```
 
 Executing a script to postprocess a downloaded video (see the example postprocessing script at scripts/muxmp4):
