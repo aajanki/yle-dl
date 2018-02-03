@@ -46,7 +46,8 @@ def downloader_factory(url, backends):
         return ElavaArkistoDownloader(backends)
     elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
         return ArkivetDownloader(backends)
-    elif re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url):
+    elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
+          re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioDownloader(backends)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return Areena2014LiveDownloader(backends)
@@ -611,6 +612,15 @@ class KalturaFlavors(FlavorsMetadata):
         return KalturaStreamUrl(entry_id, flavor_id, stream_format, ext)
 
 
+class KalturaLiveAudioFlavors(FlavorsMetadata):
+    def __init__(self, hlsurl):
+        self.stream = KalturaLiveAudioStreamUrl(hlsurl)
+        self.subtitles = []
+
+    def metadata(self):
+        return [Flavors.single_flavor_meta({}, 'audio')]
+
+
 class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
     def __init__(self, media, subtitles, pageurl, filters, aes_key):
         is_hds = media.get('protocol') == 'HDS'
@@ -901,6 +911,15 @@ class KalturaStreamUrl(HTTPStreamUrl):
                     flavor_id=flavor_id,
                     stream_format=stream_format,
                     ext=manifest_ext))
+
+
+class KalturaLiveAudioStreamUrl(HTTPStreamUrl):
+    def __init__(self, hlsurl):
+        super(KalturaLiveAudioStreamUrl, self).__init__(hlsurl)
+        self.ext = '.mp3'
+
+    def create_downloader(self, backends):
+        return HLSDumpAudio(self.url, self.ext)
 
 
 class InvalidStreamUrl(object):
@@ -1584,13 +1603,41 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
 
     def program_id_from_url(self, pageurl):
         parsed = urlparse(pageurl)
-        channel = parsed.path.split('/')[-1]
-        if channel == 'yle-radio-suomi':
-            query_dict = parse_qs(parsed.query)
-            channel_variant = query_dict.get('_c')
-            if channel_variant:
-                channel = channel_variant[0]
-        return channel
+        query_dict = parse_qs(parsed.query)
+        if query_dict.get('_c'):
+            return query_dict.get('_c')[0]
+        else:
+            return parsed.path.split('/')[-1]
+
+    def program_info_url(self, pid):
+        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
+            'ssl=true&countryCode=FI&app_id=player_static_prod' \
+            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
+
+    def program_media_id(self, program_info, filters):
+        return program_info.get('data', {}) \
+                           .get('live_audio', {}) \
+                           .get('media_id')
+
+    def flavors_by_media_id(self, program_info, media_id, program_id,
+                            pageurl, filters):
+        mw = self.load_mwembed(media_id, program_id, pageurl)
+        package_data = self.package_data_from_mwembed(mw)
+        streams = package_data.get('entryResult', {}) \
+                              .get('meta', {}) \
+                              .get('liveStreamConfigurations', [])
+        if streams and 'url' in streams[0]:
+            return KalturaLiveAudioFlavors(streams[0].get('url'))
+        else:
+            return None
+
+    def program_title(self, program_info):
+        titles = program_info.get('data', {}) \
+                             .get('live_audio', {}) \
+                             .get('title', {})
+        title = titles.get('fin') or titles.get('swe') or 'areena'
+        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
+        return title
 
 
 ### Elava Arkisto ###
@@ -2144,22 +2191,35 @@ class HLSDump(ExternalDownloader):
         output_name = self.output_filename(clip_title, io)
         return self.ffmpeg_command_line(
             io,
-            ['-bsf:a', 'aac_adtstoasc', 'file:' + output_name])
+            ['-bsf:a', 'aac_adtstoasc', '-vcodec', 'copy',
+             '-acodec', 'copy', 'file:' + output_name])
 
     def build_pipe_args(self, io):
-        extra = ['-f', 'mpegts', 'pipe:1']
-        return self.ffmpeg_command_line(io, extra)
+        return self.ffmpeg_command_line(
+            io,
+            ['-vcodec', 'copy', '-acodec', 'copy',
+             '-f', 'mpegts', 'pipe:1'])
 
     def ffmpeg_command_line(self, io, output_options):
         debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
         args = [io.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
-                '-i', self.url,
-                '-vcodec', 'copy', '-acodec', 'copy']
+                '-i', self.url]
         args.extend(self._duration_arg(io.download_limits))
         args.extend(output_options)
         return args
+
+
+class HLSDumpAudio(HLSDump):
+    def build_args(self, clip_title, io):
+        output_name = self.output_filename(clip_title, io)
+        return self.ffmpeg_command_line(
+            io, ['-map', '0:4?', '-f', 'mp3', 'file:' + output_name])
+
+    def build_pipe_args(self, io):
+        return self.ffmpeg_command_line(
+            io, ['-map', '0:4?', '-f', 'mp3', 'pipe:1'])
 
 
 ### Download a plain HTTP file ###

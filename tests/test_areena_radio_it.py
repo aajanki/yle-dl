@@ -30,20 +30,21 @@ def test_radio_metadata():
 
 
 def test_radio_live_url():
-    url = fetch_stream_url('https://yle.fi/radio/ylepuhe/suora/')
+    url = fetch_stream_url('https://areena.yle.fi/radio/ohjelmat/yle-puhe')
 
     assert len(url) == 1
-    assert 'manifest.f4m' in url[0]
+    assert '.m3u8' in url[0]
 
 
 def test_radio_live_url2():
-    url = fetch_stream_url('https://yle.fi/radio/radiosuomi/turku/suora/')
+    url = fetch_stream_url('https://areena.yle.fi/radio/ohjelmat/'
+                           'yle-radio-suomi?_c=yle-radio-suomi-oulu')
 
     assert len(url) == 1
-    assert 'manifest.f4m' in url[0]
+    assert '.m3u8' in url[0]
 
 def test_radio_live_metadata():
-    metadata = fetch_metadata('https://yle.fi/radio/ylepuhe/suora/')
+    metadata = fetch_metadata('https://areena.yle.fi/radio/ohjelmat/yle-puhe')
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
