@@ -186,7 +186,7 @@ yle-dl --backend youtubedl https://areena.yle.fi/1-1544491 -o video.flv
 yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
-Playing in mplayer (or vlc and others) without downloading first:
+Playing in vlc (or any other video player) without downloading first:
 
 ```
 yle-dl --pipe https://areena.yle.fi/1-2409251 | vlc --file-caching=10000 --sub-track=0 -
