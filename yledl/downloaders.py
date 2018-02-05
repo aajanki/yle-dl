@@ -2202,7 +2202,7 @@ class HLSDump(ExternalDownloader):
     def build_pipe_with_subtitles_args(self, io, subtitle_url):
         return self.ffmpeg_command_line(
             io,
-            ['-i', subtitle_url,
+            ['-thread_queue_size', '512', '-i', subtitle_url,
              '-vcodec', 'copy', '-acodec', 'aac', '-scodec', 'copy',
              '-f', 'matroska', 'pipe:1'])
 
@@ -2219,7 +2219,7 @@ class HLSDump(ExternalDownloader):
         loglevel = 'info' if debug else 'error'
         args = [io.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
-                '-i', self.url]
+                '-thread_queue_size', '512', '-i', self.url]
         args.extend(self._duration_arg(io.download_limits))
         args.extend(output_options)
         return args
