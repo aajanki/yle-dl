@@ -2203,7 +2203,7 @@ class HLSDump(ExternalDownloader):
         return self.ffmpeg_command_line(
             io,
             ['-i', subtitle_url,
-             '-vcodec', 'copy', '-acodec', 'copy', '-scodec', 'copy',
+             '-vcodec', 'copy', '-acodec', 'aac', '-scodec', 'copy',
              '-f', 'matroska', 'pipe:1'])
 
     def pipe(self, io, subtitle_url):
