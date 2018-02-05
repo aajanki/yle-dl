@@ -2199,6 +2199,21 @@ class HLSDump(ExternalDownloader):
             ['-vcodec', 'copy', '-acodec', 'copy',
              '-f', 'mpegts', 'pipe:1'])
 
+    def build_pipe_with_subtitles_args(self, io, subtitle_url):
+        return self.ffmpeg_command_line(
+            io,
+            ['-i', subtitle_url,
+             '-vcodec', 'copy', '-acodec', 'copy', '-scodec', 'copy',
+             '-f', 'matroska', 'pipe:1'])
+
+    def pipe(self, io, subtitle_url):
+        if subtitle_url:
+            commands = [self.build_pipe_with_subtitles_args(io, subtitle_url)]
+        else:
+            commands = [self.build_pipe_args(io)]
+        env = self.extra_environment(io)
+        return self.external_downloader(commands, env)
+
     def ffmpeg_command_line(self, io, output_options):
         debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
