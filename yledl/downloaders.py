@@ -35,6 +35,12 @@ RD_SUCCESS = 0
 RD_FAILED = 1
 RD_INCOMPLETE = 2
 
+# Internal exit codes
+#
+# RD_SUBPROCESS_EXECUTE_FAILED: A subprocess threw an OSError, for example,
+# because the executable was not found.
+RD_SUBPROCESS_EXECUTE_FAILED = 0x1000 | RD_FAILED
+
 
 logger = logging.getLogger('yledl')
 cached_requests_session = None
@@ -249,6 +255,14 @@ def sane_filename(name, excludechars):
 
 def ignore_none_values(di):
     return {key: value for (key, value) in di if value is not None}
+
+
+def to_external_rd_code(rdcode):
+    """Map internal RD codes to the corresponding external ones."""
+    if rdcode == RD_SUBPROCESS_EXECUTE_FAILED:
+        return RD_FAILED
+    else:
+        return rdcode
 
 
 class StreamFilters(object):
@@ -1027,6 +1041,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
                 overall_status = res
         return overall_status
 
+    def to_external_rd_code(self, rdcode):
+        if rdcode == RD_SUBPROCESS_EXECUTE_FAILED:
+            return RD_FAILED
+        else:
+            return rdcode
+
     def get_playlist(self, url, latest_only):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
@@ -1111,9 +1131,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         clip = self.create_clip_or_failure(pid, program_info, url, filters)
         if clip.streamurl.is_valid():
             res = clipfunc(clip)
-            if res not in [RD_SUCCESS, RD_INCOMPLETE]:
+            if res not in [RD_SUCCESS, RD_INCOMPLETE,
+                           RD_SUBPROCESS_EXECUTE_FAILED]:
                 self.print_geo_warning(program_info)
-            return res
+            return to_external_rd_code(res)
         else:
             logger.error('Unsupported stream: %s' %
                          clip.streamurl.get_error_message())
@@ -1122,8 +1143,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
     def print_geo_warning(self, program_info):
         region = self.available_at_region(program_info)
         if region == 'Finland':
-            logger.warning('Failed! Possible reason: geo restriction.')
-            logger.warning('This video is available only in Finland.')
+            logger.warning('Failed! If there are no other error messages '
+                           'above the reason might')
+            logger.warning('be a geo restriction. This video is available '
+                           'only in Finland.')
 
     def create_clip_or_failure(self, pid, program_info, url, filters):
         if not pid:
@@ -1917,7 +1940,7 @@ class Subprocess(object):
         except OSError as exc:
             logger.error('Failed to execute ' + shell_command_string)
             logger.error(exc.strerror)
-            return RD_FAILED
+            return RD_SUBPROCESS_EXECUTE_FAILED
 
     def combine_envs(self, extra_environment):
         env = None
@@ -2322,14 +2345,15 @@ class FallbackDump(object):
             self.downloaders[0].warn_on_unsupported_feature(io)
 
     def _retry_call(self, get_action, *args, **kwargs):
+        latest_result = RD_SUCCESS
         for downloader in self.downloaders:
             logger.debug('Now trying downloader {}'.format(type(downloader).__name__))
             method = get_action(downloader)
-            res = method(*args, **kwargs)
-            if not self._needs_retry(res):
-                return res
+            latest_result = method(*args, **kwargs)
+            if not self._needs_retry(latest_result):
+                return latest_result
 
-        return RD_FAILED
+        return latest_result
 
     def _needs_retry(self, res):
         return res not in [RD_SUCCESS, RD_INCOMPLETE]
