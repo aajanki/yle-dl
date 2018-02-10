@@ -622,8 +622,8 @@ class KalturaFlavors(FlavorsMetadata):
             return InvalidStreamUrl('No entryId in the selected flavor')
 
         entry_id = selected_flavor.get('entryId')
-        flavor_id = selected_flavor.get('id', '0_00000000')
-        ext = '.' + selected_flavor.get('fileExt', 'mp4')
+        flavor_id = selected_flavor.get('id') or '0_00000000'
+        ext = '.' + (selected_flavor.get('fileExt') or 'mp4')
         return KalturaStreamUrl(entry_id, flavor_id, stream_format, ext)
 
 
