@@ -1,8 +1,8 @@
 download videos from Yle servers
-Copyright 2009-2017 Antti Ajanki
+Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
-xx xxx 2018, Version 2.31
+10 Feb 2018, Version 2.31
 
 - Support the /tv/ohjelmat URLs
 - Support the new live radio URLs. Drop the support for the old URLs.
