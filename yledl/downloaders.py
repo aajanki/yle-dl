@@ -1049,11 +1049,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def get_playlist(self, url, latest_only):
         """If url is a series page, return a list of included episode pages."""
-        playlist = []
-        html = download_html_tree(url)
-        if html is not None and self.is_playlist_page(html):
-            series_id = self.program_id_from_url(url)
-            playlist = self.playlist_episode_urls(series_id)
+        if self.is_tv_ohjelmat_url(url):
+            playlist = self.get_playlist_tv_ohjelmat(url)
+        else:
+            playlist = self.get_playlist_old_style_url(url)
 
         if playlist is None:
             logger.error('Failed to parse a playlist')
@@ -1068,6 +1067,26 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             playlist = playlist[:1]
 
         return playlist
+
+    def is_tv_ohjelmat_url(self, url):
+        return urlparse(url).path.startswith('/tv/ohjelmat/')
+
+    def get_playlist_old_style_url(self, url):
+        playlist = []
+        html = download_html_tree(url)
+        if html is not None and self.is_playlist_page(html):
+            series_id = self.program_id_from_url(url)
+            playlist = self.playlist_episode_urls(series_id)
+        return playlist
+
+    def get_playlist_tv_ohjelmat(self, url):
+        parsed = urlparse(url)
+        query_dict = parse_qs(parsed.query)
+        play = query_dict.get('play')
+        if play and play[0]:
+            return ['https://areena.yle.fi/' + play[0]]
+        else:
+            return None
 
     def playlist_episode_urls(self, series_id):
         # Areena server fails (502 Bad gateway) if page_size is larger
