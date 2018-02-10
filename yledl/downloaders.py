@@ -55,7 +55,8 @@ def downloader_factory(url, backends):
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioDownloader(backends)
-    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
+    elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url) or
+          re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/[-0-9]+\?play=yle-[-a-z0-9]+', url)):
         return Areena2014LiveDownloader(backends)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
         return YleUutisetDownloader(backends)
@@ -1049,9 +1050,8 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def get_playlist(self, url, latest_only):
         """If url is a series page, return a list of included episode pages."""
-        if self.is_tv_ohjelmat_url(url):
-            playlist = self.get_playlist_tv_ohjelmat(url)
-        else:
+        playlist = []
+        if not self.is_tv_ohjelmat_url(url):
             playlist = self.get_playlist_old_style_url(url)
 
         if playlist is None:
@@ -1078,15 +1078,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             series_id = self.program_id_from_url(url)
             playlist = self.playlist_episode_urls(series_id)
         return playlist
-
-    def get_playlist_tv_ohjelmat(self, url):
-        parsed = urlparse(url)
-        query_dict = parse_qs(parsed.query)
-        play = query_dict.get('play')
-        if play and play[0]:
-            return ['https://areena.yle.fi/' + play[0]]
-        else:
-            return None
 
     def playlist_episode_urls(self, series_id):
         # Areena server fails (502 Bad gateway) if page_size is larger
@@ -1278,7 +1269,12 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
 
     def program_id_from_url(self, url):
         parsed = urlparse(url)
-        return parsed.path.split('/')[-1]
+        query_dict = parse_qs(parsed.query)
+        play = query_dict.get('play')
+        if parsed.path.startswith('/tv/ohjelmat/') and play:
+            return play[0]
+        else:
+            return parsed.path.split('/')[-1]
 
     def program_media_id(self, program_info, filters):
         event = self.publish_event(program_info)
