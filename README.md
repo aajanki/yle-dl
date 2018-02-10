@@ -1,6 +1,7 @@
 Download videos from Yle servers
 
 [![Build Status](https://travis-ci.org/aajanki/yle-dl.svg?branch=master)](https://travis-ci.org/aajanki/yle-dl)
+[![PyPI version](https://badge.fury.io/py/yle-dl.svg)](https://badge.fury.io/py/yle-dl)
 
 Copyright (C) 2010-2018 Antti Ajanki, antti.ajanki@iki.fi
 
