@@ -2336,7 +2336,7 @@ class FallbackDump(object):
             def wrapped(clip_title, io):
                 outputfile = downloader.output_filename(clip_title, io)
                 res = downloader.save_stream(clip_title, io)
-                if self._needs_retry(res) and os.path.isfile(outputfile):
+                if needs_retry(res) and os.path.isfile(outputfile):
                     logger.debug('Removing the partially downloaded file')
                     try:
                         os.remove(outputfile)
@@ -2345,11 +2345,22 @@ class FallbackDump(object):
                 return res
 
             return wrapped
+
+        def needs_retry(res):
+            return res not in [RD_SUCCESS, RD_INCOMPLETE]
         
-        return self._retry_call(save_stream_cleanup, clip_title, io)
+        return self._retry_call(save_stream_cleanup, needs_retry,
+                                clip_title, io)
 
     def pipe(self, io, subtitle_url):
-        return self._retry_call(lambda x: x.pipe, io, subtitle_url)
+        def pipe_action(downloader):
+            return downloader.pipe
+
+        def needs_retry(res):
+            return res == RD_SUBPROCESS_EXECUTE_FAILED
+
+        self._retry_call(pipe_action, needs_retry, io, subtitle_url)
+        return RD_SUCCESS
 
     def output_filename(self, clip_title, io):
         if self.downloaders:
@@ -2359,16 +2370,14 @@ class FallbackDump(object):
         if self.downloaders:
             self.downloaders[0].warn_on_unsupported_feature(io)
 
-    def _retry_call(self, get_action, *args, **kwargs):
+    def _retry_call(self, get_action, needs_retry, *args, **kwargs):
         latest_result = RD_SUCCESS
         for downloader in self.downloaders:
-            logger.debug('Now trying downloader {}'.format(type(downloader).__name__))
+            logger.debug('Now trying downloader {}'.format(
+                type(downloader).__name__))
             method = get_action(downloader)
             latest_result = method(*args, **kwargs)
-            if not self._needs_retry(latest_result):
+            if not needs_retry(latest_result):
                 return latest_result
 
         return latest_result
-
-    def _needs_retry(self, res):
-        return res not in [RD_SUCCESS, RD_INCOMPLETE]

@@ -9,6 +9,7 @@ xx xxx 2018, Version 2.31
 - Download the HLS version of a live radio stream (like the Areena web app)
 - Include subtitles when piping a video
 - Don't restart and remove a partially downloaded file
+- Don't restart a piped download when the media player is closed
 - Geo restrictions warning was some times shown unnecessary
 
 19 Dec 2017, Version 2.30
