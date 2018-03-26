@@ -303,6 +303,11 @@ class IOContext(object):
                  proxy=None, rtmpdump_binary=None, hds_binary=None,
                  ffmpeg_binary='ffmpeg', ffprobe_binary='ffprobe',
                  wget_binary='wget'):
+        enc = sys.getfilesystemencoding()
+        try:
+            outputfilename = outputfilename.decode(enc, 'replace')
+        except AttributeError:
+            pass
         self.outputfilename = outputfilename
         self.destdir = destdir
         self.resume = resume
