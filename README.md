@@ -33,7 +33,7 @@ instructions for Debian, Ubuntu and Mac OS X.
 * pycrypto
 * wget
 * PHP interpreter
-* PHP extensions: bcmath, curl, mcrypt and SimpleXML
+* PHP extensions: bcmath, curl and SimpleXML
 * ffmpeg
 * setuptools (when installing from the sources)
 
@@ -48,7 +48,6 @@ correct paths in the [php.ini]:
 
 ```
 extension=/path/to/curl.so
-extension=/path/to/mcrypt.so
 ```
 
 ### 2. Install yle-dl ###

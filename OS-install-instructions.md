@@ -5,8 +5,7 @@
 ```
 sudo apt-get install rtmpdump wget ffmpeg python-dev python-setuptools \
     python-pip python-crypto python-requests python-lxml python-socks \
-    php-cli php-curl php-mcrypt php-xml php-bcmath
-sudo phpenmod mcrypt
+    php-cli php-curl php-xml php-bcmath
 sudo -H pip install --upgrade yle-dl
 ```
 
@@ -18,8 +17,7 @@ upgrade pip for installing yle-dl.)
 ```
 sudo apt-get install git rtmpdump wget ffmpeg python-dev python-setuptools \
     python-crypto python-requests python-lxml python-socks \
-    php-cli php-curl php-mcrypt php-xml php-bcmath
-sudo phpenmod mcrypt
+    php-cli php-curl php-xml php-bcmath
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
 sudo -H python setup.py install
@@ -63,7 +61,6 @@ brew install python
 brew install wget
 brew install --HEAD rtmpdump
 brew install ffmpeg
-brew install homebrew/php/php70-mcrypt
 ```
 
 Enable the PHP extensions by appending the following lines with the
@@ -73,7 +70,6 @@ correct paths in the [php.ini]:
 
 ```
 extension=/path/to/curl.so
-extension=/path/to/mcrypt.so
 ```
 
 Install yle-dl:

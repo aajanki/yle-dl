@@ -23,7 +23,7 @@ Asenna riippuvuudet:
 * pycrypto
 * wget
 * PHP-tulkki
-* PHP-laajennukset: bcmath, curl, mcrypt ja SimpleXML
+* PHP-laajennukset: bcmath, curl ja SimpleXML
 * ffmpeg
 * setuptools (jos asennat lähdekoodeista)
 
@@ -36,7 +36,6 @@ polkuineen php.ini-tiedostoon
 (https://secure.php.net/manual/en/configuration.file.php):
 
 extension=/polku/curl.so
-extension=/polku/mcrypt.so
 
 Asenna seuraavaksi yle-dl joko asentamalla esikäännetty paketti (ei
 vaadi lähdekoodien lataamista):
