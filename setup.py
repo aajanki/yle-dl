@@ -14,7 +14,7 @@ services of the Finnish national broadcasting company Yle: Yle
 Areena, Elävä Arkisto and Yle news.
 
 Requires ffmpeg, rtmpdump, a PHP interpreter and the following PHP
-extensions: bcmath, curl, mcrypt and SimpleXML."""
+extensions: bcmath, curl and SimpleXML."""
 
 version = re.\
   search(r"^version *= *'(.+)'$", open('yledl/version.py').read(), re.MULTILINE).\
@@ -42,7 +42,7 @@ setup(
     packages=['yledl'],
     include_package_data=True,
     install_requires=[
-        'pycrypto', 'requests', 'lxml', 'future', 'PySocks'
+        'pycryptodomex', 'requests', 'lxml', 'future', 'PySocks'
     ] + pyamf_requires + ssl_sni_requires,
     extras_require = {
         'youtubedl-backend': ['youtube_dl']

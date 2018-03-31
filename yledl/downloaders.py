@@ -24,11 +24,18 @@ from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from future.moves.urllib.error import HTTPError
 from future.utils import python_2_unicode_compatible
 from requests.adapters import HTTPAdapter
-from Crypto.Cipher import AES
 from pkg_resources import resource_filename
 from . import hds
 from .version import version
 from .utils import print_enc, which
+
+try:
+    # pycryptodome
+    from Cryptodome.Cipher import AES
+except ImportError:
+    # fallback on the obsolete pycrypto
+    from Crypto.Cipher import AES
+
 
 # exit codes
 RD_SUCCESS = 0

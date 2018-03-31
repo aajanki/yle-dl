@@ -20,7 +20,7 @@ Asenna riippuvuudet:
 
 * Python 2.7 tai 3.5+
 * pip
-* pycrypto
+* pycryptodome
 * wget
 * PHP-tulkki
 * PHP-laajennukset: bcmath, curl ja SimpleXML

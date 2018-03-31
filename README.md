@@ -30,7 +30,7 @@ instructions for Debian, Ubuntu and Mac OS X.
 
 * Python 2.7 or 3.5+
 * pip
-* pycrypto
+* pycryptodome
 * wget
 * PHP interpreter
 * PHP extensions: bcmath, curl and SimpleXML
