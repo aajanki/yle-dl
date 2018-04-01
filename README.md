@@ -54,13 +54,13 @@ extension=/path/to/curl.so
 
 Easier way (installation without downloading the source codes):
 ```
-sudo pip install --upgrade yle-dl
+pip3 install --user --upgrade yle-dl
 ```
 
 Installation from sources. Download the sources and run the following
 on the source directory:
 ```
-sudo python3 setup.py install
+python3 setup.py install --user
 ```
 
 Installation with youtube-dl as an alternative downloader backend
@@ -76,7 +76,7 @@ Follow the above installation instructions (except for the PHP and the
 PHP libraries) and additionally install youtube-dl:
 
 * Mac OS X: `brew install youtube-dl`
-* Debian/Ubuntu/other operating systems: `pip install --upgrade youtube_dl`
+* Debian/Ubuntu/other operating systems: `pip3 install --user --upgrade youtube_dl`
 
 Using with libav instead of ffmpeg
 ----------------------------------
