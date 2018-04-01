@@ -3,32 +3,32 @@
 ## Debian 10 (Buster)/Ubuntu 17.10
 
 ```
-sudo apt-get install rtmpdump wget ffmpeg python-dev python-setuptools \
-    python-pip python-pycryptodome python-requests python-lxml python-socks \
+sudo apt-get install rtmpdump wget ffmpeg python3-dev python3-setuptools \
+    python3-pip python3-pycryptodome python3-requests python3-lxml python3-socks \
     php-cli php-curl php-xml php-bcmath
-sudo -H pip install --upgrade yle-dl
+sudo -H pip3 install --upgrade yle-dl
 ```
 
 
 ### Installing from source code on Debian 10/Ubuntu 17.10
 
 ```
-sudo apt-get install git rtmpdump wget ffmpeg python-dev python-setuptools \
-    python-pycryptodome python-requests python-lxml python-socks \
+sudo apt-get install git rtmpdump wget ffmpeg python3-dev python3-setuptools \
+    python3-pycryptodome python3-requests python3-lxml python3-socks \
     php-cli php-curl php-xml php-bcmath
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
-sudo -H python setup.py install
+sudo -H python3 setup.py install
 ```
 
 
 ## Debian 9 (Stretch)/Ubuntu 16.04
 
 ```
-sudo apt-get install rtmpdump wget ffmpeg python-dev python-setuptools \
-    python-pip python-crypto python-requests python-lxml python-socks \
+sudo apt-get install rtmpdump wget ffmpeg python3-dev python3-setuptools \
+    python3-pip python3-crypto python3-requests python3-lxml python3-socks \
     php-cli php-curl php-xml php-bcmath
-sudo -H pip install --upgrade yle-dl
+sudo -H pip3 install --upgrade yle-dl
 ```
 
 (You may get prompted to upgrade pip. However, it is not necessary to
@@ -37,12 +37,12 @@ upgrade pip for installing yle-dl.)
 ### Installing from source code on Debian 9/Ubuntu 16.04
 
 ```
-sudo apt-get install git rtmpdump wget ffmpeg python-dev python-setuptools \
-    python-crypto python-requests python-lxml python-socks \
+sudo apt-get install git rtmpdump wget ffmpeg python3-dev python3-setuptools \
+    python3-crypto python3-requests python3-lxml python3-socks \
     php-cli php-curl php-xml php-bcmath
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
-sudo -H python setup.py install
+sudo -H python3 setup.py install
 ```
 
 

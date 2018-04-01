@@ -60,7 +60,7 @@ sudo pip install --upgrade yle-dl
 Installation from sources. Download the sources and run the following
 on the source directory:
 ```
-sudo python setup.py install
+sudo python3 setup.py install
 ```
 
 Installation with youtube-dl as an alternative downloader backend
@@ -89,7 +89,7 @@ Integration tests
 -----------------
 
 ```
-python setup.py pytest
+python3 setup.py pytest
 ```
 
 Some tests succeed only when run on a Finnish IP address because some
@@ -98,7 +98,7 @@ the environment variable `ENABLE_FINLAND_TESTS` to 0:
 
 ```
 export ENABLE_FINLAND_TESTS=0
-python setup.py pytest
+python3 setup.py pytest
 ```
 
 Packages for various distros
