@@ -464,7 +464,7 @@ class KalturaUtils(object):
         package_data = self.package_data_from_mwembed(mw)
         flavors = self.valid_flavors(package_data)
         meta = package_data.get('entryResult', {}).get('meta', {})
-        return (flavors, meta)
+        return (flavors, meta, package_data.get('error'))
 
     def load_mwembed(self, media_id, program_id, referer):
         entryid = self.kaltura_entry_id(media_id)
@@ -528,7 +528,6 @@ class KalturaUtils(object):
             logger.debug('Ignored %d non-web flavors' % num_non_web)
 
         return web_flavors
-
 
     def package_data_from_mwembed(self, mw):
         m = re.search('window.kalturaIframePackageData\s*=\s*', mw, re.DOTALL)
@@ -643,6 +642,12 @@ class KalturaLiveAudioFlavors(FlavorsMetadata):
 
     def metadata(self):
         return [Flavors.single_flavor_meta({}, 'audio')]
+
+
+class InvalidFlavors(FlavorsMetadata):
+    def __init__(self, error_message):
+        self.stream = InvalidStreamUrl('Error from server: {}'.format(error_message))
+        self.subtitles = []
 
 
 class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
@@ -1243,10 +1248,14 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         if is_html5:
             logger.debug('Detected an HTML5 video')
 
-            flavors_data, meta = self.kaltura_flavors_meta(
+            flavors_data, meta, error = self.kaltura_flavors_meta(
                 media_id, program_id, pageurl)
             subtitles = self.media_subtitles(subtitle_media)
-            return KalturaFlavors(flavors_data, meta, subtitles, filters)
+
+            if error:
+                return InvalidFlavors(error)
+            else:
+                return KalturaFlavors(flavors_data, meta, subtitles, filters)
         else:
             if not subtitle_media:
                 return None
