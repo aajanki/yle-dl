@@ -1163,14 +1163,15 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         else:
             logger.error('Unsupported stream: %s' %
                          clip.streamurl.get_error_message())
+            self.print_geo_warning(program_info)
             return RD_FAILED
 
     def print_geo_warning(self, program_info):
         region = self.available_at_region(program_info)
         if region == 'Finland':
-            logger.warning('Failed! If there are no other error messages '
+            logger.warning('Failed! If there is no clear reason '
                            'above the reason might')
-            logger.warning('be a geo restriction. This video is available '
+            logger.warning('be a geo restriction. This stream is available '
                            'only in Finland.')
 
     def create_clip_or_failure(self, pid, program_info, url, filters):

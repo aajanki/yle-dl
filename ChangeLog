@@ -8,6 +8,8 @@ xx xxx 2018, Version 2.32
 - The mcrypt PHP extension is not required anymore
 - Prefer PyCryptodome instead of pycrypto. Pycrypto works still for
   now but I may drop the support in some future version.
+- Improved error message if a download fails because of the geo
+  restriction
 
 10 Feb 2018, Version 2.31
 
