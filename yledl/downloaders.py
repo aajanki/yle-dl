@@ -469,6 +469,8 @@ class KalturaUtils(object):
     def load_mwembed(self, media_id, program_id, referer):
         entryid = self.kaltura_entry_id(media_id)
         url = self.mwembed_url(entryid, program_id)
+        logger.debug('mwembed URL: {}'.format(url))
+
         mw = JSONP.load_jsonp(url, {'Referer': referer})
 
         if mw:
@@ -648,6 +650,7 @@ class AkamaiFlavors(FlavorsMetadata, AreenaUtils):
         is_hds = media.get('protocol') == 'HDS'
         crypted_url = media.get('url')
         media_url = self._decrypt_url(crypted_url, is_hds, aes_key)
+        logger.debug('Media URL: {}'.format(media_url))
         if is_hds:
             if media_url:
                 manifest = hds.parse_manifest(download_page(media_url))
