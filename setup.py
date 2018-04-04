@@ -25,11 +25,6 @@ ssl_sni_requires = []
 if sys.version_info < (2, 7, 9):
     ssl_sni_requires = ['pyOpenSSL', 'ndg-httpsclient', 'pyasn1']
 
-if sys.version_info >= (3, 0, 0):
-    pyamf_requires = ['Py3AMF']
-else:
-    pyamf_requires = ['PyAMF']
-
 setup(
     name='yle-dl',
     version=version,
@@ -42,8 +37,8 @@ setup(
     packages=['yledl'],
     include_package_data=True,
     install_requires=[
-        'pycryptodomex', 'requests', 'lxml', 'future', 'PySocks'
-    ] + pyamf_requires + ssl_sni_requires,
+        'pycryptodomex', 'requests', 'lxml', 'future', 'PySocks', 'mini-amf'
+    ] + ssl_sni_requires,
     extras_require = {
         'youtubedl-backend': ['youtube_dl']
     },

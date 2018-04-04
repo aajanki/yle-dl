@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import logging
 import xml.dom
 import base64
-import pyamf
+import miniamf
 
 logger = logging.getLogger('yledl')
 
@@ -25,14 +25,14 @@ def parse_manifest(manifest):
 
 def parse_on_metadata_tag(tag_bytes):
     try:
-        stream = pyamf.util.BufferedByteStream(tag_bytes)
-        decoder = pyamf.get_decoder(pyamf.AMF0, stream)
+        stream = miniamf.util.BufferedByteStream(tag_bytes)
+        decoder = miniamf.get_decoder(miniamf.AMF0, stream)
         tag_name = decoder.readElement()
         if tag_name != 'onMetaData':
             return {}
 
         return decoder.readElement()
-    except pyamf.BaseError:
+    except miniamf.BaseError:
         logger.exception('Failed to parse FLV metadata')
         return {}
 
