@@ -312,9 +312,9 @@ def find_wget(cmd):
 ### main program ###
 
 
-def main():
+def main(argv=sys.argv):
     parser = arg_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv[1:])
 
     loglevel = logging.DEBUG if args.debug else logging.INFO
     logger.setLevel(loglevel)
