@@ -1996,11 +1996,10 @@ class Subprocess(object):
             else:
                 preexec_fn = None
 
-            encoded_args = [x.encode(enc, 'replace') for x in args]
             stdin = processes[-1].stdout if processes else None
             stdout = None if i == len(commands) - 1 else subprocess.PIPE
             processes.append(subprocess.Popen(
-                encoded_args, stdin=stdin, stdout=stdout,
+                args, stdin=stdin, stdout=stdout,
                 env=env, preexec_fn=preexec_fn))
 
         # Causes the first process to receive SIGPIPE if the seconds
