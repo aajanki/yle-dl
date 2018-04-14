@@ -1988,7 +1988,6 @@ class Subprocess(object):
         """Start all commands and setup pipes."""
         assert commands
 
-        enc = sys.getfilesystemencoding()
         processes = []
         for i, args in enumerate(commands):
             if i == 0 and platform.system() != 'Windows':
