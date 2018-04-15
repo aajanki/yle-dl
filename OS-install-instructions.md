@@ -161,7 +161,7 @@ Append `C:\ffmpeg\bin` to the PATH environment variable.
 rtmpdump is needed only for radio streams.
 
 Download the latest Windows build from
-http://rtmpdump.mplayerhq.hu/download/ and extract it to
+https://rtmpdump.mplayerhq.hu/download/ and extract it to
 `C:\rtmpdump`.
 
 Append `C:\rtmpdump` to the PATH environment variable.
@@ -188,8 +188,8 @@ Append `C:\php` to the PATH environment variable.
 
 ### wget
 
-Download wget.exe from https://eternallybored.org/misc/wget and copy
-it to C:\wget.
+Download the latest wget.exe from https://eternallybored.org/misc/wget
+and copy it to C:\wget.
 
 Append `C:\wget` to the PATH environment variable.
 
