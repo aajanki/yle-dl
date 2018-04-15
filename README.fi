@@ -27,7 +27,7 @@ Asenna riippuvuudet:
 
 Joidenkin ohjelmien lataamiseen tarvitaan lisäksi:
 
-* PHP-tulkki ja bcmath-, curl- ja SimpleXML-laajennukset: suorat
+* PHP-tulkki ja bcmath-, curl-, openssl- ja SimpleXML-laajennukset: suorat
   TV-lähetykset ja jotkin uutis- ja ajankohtaisohjelmat
 * rtmpdump (versio 2.4 tai uudempi): Areenan radio-ohjelmat
 

@@ -129,3 +129,78 @@ Install yle-dl:
 ```
 sudo pip install --upgrade yle-dl
 ```
+
+
+## Windows 10
+
+### Python
+
+Download the latest Python 3 release from
+https://www.python.org/downloads/windows/ and install it in C:\Python.
+
+Append the following paths to the PATH environment variable in Control
+Panel > System and security > System > Advanced system settings >
+Environment Variables...:
+```
+C:\Python\Python36
+C:\Python\Python36\Scripts
+%USERPROFILE%\AppData\Roaming\Python\Python36\Scripts
+```
+
+### ffmpeg
+
+Download the binary from
+https://ffmpeg.org/download.html#build-windows. Select the latest
+release build (not a nightly git build), Windows 64-bit, Static.
+Extract the zip in `C:\ffmpeg`.
+
+Append `C:\ffmpeg\bin` to the PATH environment variable.
+
+### rtmpdump
+
+rtmpdump is needed only for radio streams.
+
+Download the latest Windows build from
+http://rtmpdump.mplayerhq.hu/download/ and extract it to
+`C:\rtmpdump`.
+
+Append `C:\rtmpdump` to the PATH environment variable.
+
+### PHP
+
+PHP is needed only for live TV and a small subset of streams.
+
+Download the latest PHP 7.x.y binary (VC15 x64 Non Thread Safe) from
+https://windows.php.net/download/ and install it in `C:\php`.
+
+Create a file `C:\php\php.ini` with the following content:
+```
+extension_dir=C:\php\ext
+extension=php_curl.dll
+extension=php_openssl.dll
+```
+
+Create a new environment variable called PHPRC with the value
+`C:\php\php.ini` in Control Panel > System and security > System >
+Advanced system settings > Environment Variables...
+
+Append `C:\php` to the PATH environment variable.
+
+### wget
+
+Download wget.exe from https://eternallybored.org/misc/wget and copy
+it to C:\wget.
+
+Append `C:\wget` to the PATH environment variable.
+
+### yle-dl
+
+```
+pip install --user --upgrade yle-dl
+```
+
+Usage:
+
+```
+yle-dl --vfat https://areena.yle.fi/...
+```
