@@ -2,7 +2,7 @@ download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
-xx xxx 2018, Version 2.32
+15 Apr 2018, Version 2.32
 
 - Fix parsing of non-ASCII command line arguments on Python 2
 - The mcrypt PHP extension is not required anymore
