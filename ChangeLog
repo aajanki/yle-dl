@@ -2,6 +2,10 @@ download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
+xx xxx 2018, Version 2.33
+
+- Support for football word cup streams
+
 15 Apr 2018, Version 2.32
 
 - Fix parsing of non-ASCII command line arguments on Python 2

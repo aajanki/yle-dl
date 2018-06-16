@@ -62,6 +62,9 @@ def downloader_factory(url, backends):
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioDownloader(backends)
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/30-901\?', url):
+        # Football World Cup 2018
+        return AreenaSportsDownloader(backends)
     elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url) or
           re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/[-0-9]+\?play=yle-[-a-z0-9]+', url)):
         return Areena2014LiveDownloader(backends)
@@ -582,6 +585,16 @@ class FlavorsMetadata(object):
         return {'lang': subtitle.language, 'uri': subtitle.url}
 
 
+class SportsFlavors(FlavorsMetadata):
+    def __init__(self, manifesturl, ondemand_data):
+        self.stream = SportsStreamUrl(manifesturl)
+        self.subtitles = []
+        self._ondemand_data = ondemand_data
+
+    def metadata(self):
+        return [Flavors.single_flavor_meta(self._ondemand_data)]
+
+
 class KalturaFlavors(FlavorsMetadata):
     def __init__(self, kaltura_flavors, stream_meta, subtitles, filters):
         self.kaltura_flavors = kaltura_flavors
@@ -950,6 +963,15 @@ class KalturaLiveAudioStreamUrl(HTTPStreamUrl):
 
     def create_downloader(self, backends):
         return HLSDumpAudio(self.url, self.ext)
+
+
+class SportsStreamUrl(HTTPStreamUrl):
+    def __init__(self, manifesturl):
+        super(SportsStreamUrl, self).__init__(manifesturl)
+        self.ext = '.mp4'
+
+    def create_downloader(self, backends):
+        return HLSDump(self.url, self.ext)
 
 
 class InvalidStreamUrl(object):
@@ -1424,6 +1446,10 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
         return self.localized_text(alternatives, 'fi') or \
             self.localized_text(alternatives, 'sv')
 
+    def fin_or_swe_text(self, alternatives):
+        return self.localized_text(alternatives, 'fin') or \
+            self.localized_text(alternatives, 'swe')
+
     def filter_by_subtitles(self, streams, filters):
         if filters.hardsubs:
             substreams = [s for s in streams if 'hardsubtitle' in s]
@@ -1526,6 +1552,33 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             ('expiration_timestamp', self.expiration_timestamp(program_info))
         ]
         return ignore_none_values(meta)
+
+
+### Areena, full HD, 50 Hz ###
+
+
+class AreenaSportsDownloader(Areena2014Downloader):
+    def program_info_url(self, pid):
+        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
+            'language=fin&ssl=true&countryCode=FI&app_id=player_static_prod' \
+            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
+
+    def program_media_id(self, program_info, filters):
+        return program_info.get('meta', {}).get('id')
+
+    def flavors_by_media_id(self, program_info, media_id, program_id,
+                            pageurl, filters):
+        ondemand = self._ondemand_data(program_info)
+        manifesturl = ondemand.get('manifest_url')
+        return SportsFlavors(manifesturl, ondemand)
+
+    def _ondemand_data(self, program_info):
+        return program_info.get('data', {}).get('ongoing_ondemand', {})
+
+    def program_title(self, program_info):
+        ondemand = self._ondemand_data(program_info)
+        titleObject = ondemand.get('title')
+        return (self.fin_or_swe_text(titleObject) or 'areena').strip()
 
 
 class Areena2014LiveDownloader(Areena2014Downloader):
