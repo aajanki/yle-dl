@@ -1568,15 +1568,16 @@ class AreenaSportsDownloader(Areena2014Downloader):
 
     def flavors_by_media_id(self, program_info, media_id, program_id,
                             pageurl, filters):
-        ondemand = self._ondemand_data(program_info)
+        ondemand = self._event_data(program_info)
         manifesturl = ondemand.get('manifest_url')
         return SportsFlavors(manifesturl, ondemand)
 
-    def _ondemand_data(self, program_info):
-        return program_info.get('data', {}).get('ongoing_ondemand', {})
+    def _event_data(self, program_info):
+        data = program_info.get('data', {})
+        return data.get('ongoing_ondemand') or data.get('ongoing_event', {})
 
     def program_title(self, program_info):
-        ondemand = self._ondemand_data(program_info)
+        ondemand = self._event_data(program_info)
         titleObject = ondemand.get('title')
         return (self.fin_or_swe_text(titleObject) or 'areena').strip()
 
