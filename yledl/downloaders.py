@@ -971,7 +971,7 @@ class SportsStreamUrl(HTTPStreamUrl):
         self.ext = '.mp4'
 
     def create_downloader(self, backends):
-        return HLSDump(self.url, self.ext)
+        return HLSDump(self.url, self.ext, long_probe=True)
 
 
 class InvalidStreamUrl(object):
@@ -2281,10 +2281,11 @@ class YoutubeDLHDSDump(BaseDownloader):
 
 
 class HLSDump(ExternalDownloader):
-    def __init__(self, url, output_extension):
+    def __init__(self, url, output_extension, long_probe=False):
         ExternalDownloader.__init__(self, output_extension)
         self.url = url
         self.io_capabilities = frozenset([IOCapability.DURATION])
+        self.long_probe = long_probe
 
     def output_filename(self, clip_title, io):
         return self._construct_output_filename(clip_title, io, False)
@@ -2292,6 +2293,12 @@ class HLSDump(ExternalDownloader):
     def _duration_arg(self, download_limits):
         if download_limits.duration:
             return ['-t', str(download_limits.duration)]
+        else:
+            return []
+
+    def _probe_args(self):
+        if self.long_probe:
+            return ['-probesize', '80000000']
         else:
             return []
 
@@ -2328,7 +2335,9 @@ class HLSDump(ExternalDownloader):
         loglevel = 'info' if debug else 'error'
         args = [io.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
-                '-thread_queue_size', '512', '-i', self.url]
+                '-thread_queue_size', '512']
+        args.extend(self._probe_args())
+        args.extend(['-i', self.url])
         args.extend(self._duration_arg(io.download_limits))
         args.extend(output_options)
         return args
