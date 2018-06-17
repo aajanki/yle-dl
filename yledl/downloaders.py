@@ -1587,6 +1587,10 @@ class AreenaSportsDownloader(Areena2014Downloader):
         data = program_info.get('data', {})
         return data.get('ongoing_ondemand') or data.get('ongoing_event', {})
 
+    def program_info_duration_seconds(self, program_info):
+        event = self._event_data(program_info)
+        return event.get('duration', {}).get('duration_in_seconds')
+
     def program_title(self, program_info):
         ondemand = self._event_data(program_info)
         titleObject = ondemand.get('title')
