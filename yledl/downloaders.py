@@ -1570,7 +1570,10 @@ class AreenaSportsDownloader(Areena2014Downloader):
                             pageurl, filters):
         ondemand = self._event_data(program_info)
         manifesturl = ondemand.get('manifest_url')
-        return SportsFlavors(manifesturl, ondemand)
+        if manifesturl:
+            return SportsFlavors(manifesturl, ondemand)
+        else:
+            return InvalidFlavors('Manifest URL is missing')
 
     def _event_data(self, program_info):
         data = program_info.get('data', {})
