@@ -1564,10 +1564,18 @@ class AreenaSportsDownloader(Areena2014Downloader):
             '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
 
     def program_media_id(self, program_info, filters):
-        return program_info.get('meta', {}).get('id')
+        return self._event_data(program_info).get('media_id')
 
     def flavors_by_media_id(self, program_info, media_id, program_id,
                             pageurl, filters):
+        if media_id.startswith('55-'):
+            return self.full_hd_flavors(program_info)
+        else:
+            return super(AreenaSportsDownloader, self) \
+                .flavors_by_media_id(program_info, media_id,
+                                     program_id, pageurl, filters)
+
+    def full_hd_flavors(self, program_info):
         ondemand = self._event_data(program_info)
         manifesturl = ondemand.get('manifest_url')
         if manifesturl:
