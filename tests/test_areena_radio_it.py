@@ -49,3 +49,4 @@ def test_radio_live_metadata():
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
     assert all(f.get('media_type') == 'audio' for f in metadata[0]['flavors'])
+    assert metadata[0]['title'].startswith('Yle Puhe')

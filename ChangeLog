@@ -5,6 +5,7 @@ Distributed under the GPL v3
 xx xxx 2018, Version 2.33
 
 - Support for football word cup streams
+- Fixed live radio streams. They were broken because of changes in Areena.
 
 15 Apr 2018, Version 2.32
 

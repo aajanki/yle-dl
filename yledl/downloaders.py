@@ -1740,10 +1740,11 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
             'ssl=true&countryCode=FI&app_id=player_static_prod' \
             '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
 
+    def channel_data(self, program_info):
+        return program_info.get('data', {}).get('ongoing_channel', {})
+
     def program_media_id(self, program_info, filters):
-        return program_info.get('data', {}) \
-                           .get('live_audio', {}) \
-                           .get('media_id')
+        return self.channel_data(program_info).get('media_id')
 
     def flavors_by_media_id(self, program_info, media_id, program_id,
                             pageurl, filters):
@@ -1758,10 +1759,8 @@ class AreenaLiveRadioDownloader(Areena2014LiveDownloader):
             return None
 
     def program_title(self, program_info):
-        titles = program_info.get('data', {}) \
-                             .get('live_audio', {}) \
-                             .get('title', {})
-        title = titles.get('fin') or titles.get('swe') or 'areena'
+        titles = self.channel_data(program_info).get('title', {})
+        title = self.fin_or_swe_text(titles) or 'areena'
         title += time.strftime('-%Y-%m-%d-%H:%M:%S')
         return title
 
