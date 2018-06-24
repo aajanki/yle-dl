@@ -16,8 +16,7 @@ from future.utils import python_2_unicode_compatible
 from pkg_resources import resource_filename
 from . import hds
 from .utils import print_enc, sane_filename
-from .http import yledl_headers, download_page, download_html_tree, \
-    download_to_file
+from .http import download_page, download_html_tree, download_to_file
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED, to_external_rd_code
 from .backends import RTMPBackend, HDSBackend, YoutubeDLHDSBackend, \
