@@ -41,3 +41,9 @@ def which(program):
                 return exe_file
 
     return None
+
+
+def sane_filename(name, excludechars):
+    tr = dict((ord(c), ord('_')) for c in excludechars)
+    x = name.strip(' .').translate(tr)
+    return x or 'ylevideo'

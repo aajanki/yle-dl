@@ -34,7 +34,8 @@ from future.moves.urllib.parse import urlparse, urlunparse, quote
 from .version import version
 from .utils import print_enc, which
 from .downloaders import downloader_factory, StreamFilters, IOContext, \
-    DownloadLimits, BackendFactory, RD_SUCCESS, RD_FAILED
+    DownloadLimits, BackendFactory
+from .exitcodes import RD_SUCCESS, RD_FAILED
 
 
 def yledl_logger():

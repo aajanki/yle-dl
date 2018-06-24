@@ -3,31 +3,25 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import re
-import subprocess
-import os
 import os.path
-import platform
-import signal
 import json
 import xml.dom.minidom
 import time
 import codecs
 import base64
-import ctypes
-import ctypes.util
 import logging
-import lxml.html
-import lxml.etree
-import requests
 from builtins import str
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
-from future.moves.urllib.error import HTTPError
 from future.utils import python_2_unicode_compatible
-from requests.adapters import HTTPAdapter
 from pkg_resources import resource_filename
 from . import hds
-from .version import version
-from .utils import print_enc, which
+from .utils import print_enc, sane_filename
+from .http import yledl_headers, download_page, download_html_tree, \
+    download_to_file
+from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
+    RD_SUBPROCESS_EXECUTE_FAILED, to_external_rd_code
+from .backends import RTMPBackend, HDSBackend, YoutubeDLHDSBackend, \
+    HLSBackend, HLSAudioBackend, WgetBackend, FallbackBackend, Subprocess
 
 try:
     # pycryptodome
@@ -37,20 +31,7 @@ except ImportError:
     from Crypto.Cipher import AES
 
 
-# exit codes
-RD_SUCCESS = 0
-RD_FAILED = 1
-RD_INCOMPLETE = 2
-
-# Internal exit codes
-#
-# RD_SUBPROCESS_EXECUTE_FAILED: A subprocess threw an OSError, for example,
-# because the executable was not found.
-RD_SUBPROCESS_EXECUTE_FAILED = 0x1000 | RD_FAILED
-
-
 logger = logging.getLogger('yledl')
-cached_requests_session = None
 
 
 def downloader_factory(url, backends):
@@ -73,99 +54,6 @@ def downloader_factory(url, backends):
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
             re.match(r'^https?://yle\.fi/', url):
         return Areena2014Downloader(backends)
-    else:
-        return None
-
-
-def download_page(url, extra_headers=None):
-    """Returns contents of a URL."""
-    response = http_get(url, extra_headers)
-    return response.text if response else None
-
-
-def download_html_tree(url, extra_headers=None):
-    """Downloads a HTML document and returns it parsed as an lxml tree."""
-    response = http_get(url, extra_headers)
-    if response is None:
-        return None
-
-    metacharset = html_meta_charset(response.content)
-    if metacharset:
-        response.encoding = metacharset
-
-    try:
-        page = response.text
-        return lxml.html.fromstring(page)
-    except lxml.etree.XMLSyntaxError:
-        logger.warn('HTML syntax error')
-        return None
-
-
-def http_get(url, extra_headers=None):
-    if url.find('://') == -1:
-        url = 'http://' + url
-    if '#' in url:
-        url = url[:url.find('#')]
-
-    headers = yledl_headers()
-    if extra_headers:
-        headers.update(extra_headers)
-
-    global cached_requests_session
-    if cached_requests_session is None:
-        cached_requests_session = create_session()
-
-    try:
-        r = cached_requests_session.get(url, headers=headers, timeout=20)
-        r.raise_for_status()
-    except requests.exceptions.RequestException:
-        logger.exception("Can't read {}".format(url))
-        return None
-
-    return r
-
-
-def create_session():
-    session = requests.Session()
-
-    try:
-        from requests.packages.urllib3.util.retry import Retry
-
-        retry = Retry(total=3,
-                      backoff_factor=0.5,
-                      status_forcelist=[500, 502, 503, 504])
-        session.mount('http://', HTTPAdapter(max_retries=retry))
-        session.mount('https://', HTTPAdapter(max_retries=retry))
-    except ImportError:
-        logger.warn('Requests library is too old. Retrying not supported.')
-
-    return session
-
-
-def download_to_file(url, destination_filename):
-    enc = sys.getfilesystemencoding()
-    encoded_filename = destination_filename.encode(enc, 'replace')
-    with open(encoded_filename, 'wb') as output:
-        r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
-        r.raise_for_status()
-        for chunk in r.iter_content(chunk_size=4096):
-            output.write(chunk)
-
-
-def yledl_headers():
-    headers = requests.utils.default_headers()
-    headers.update({'User-Agent': yledl_user_agent()})
-    return headers
-
-
-def yledl_user_agent():
-    return 'yle-dl/' + version.split(' ')[0]
-
-
-def html_meta_charset(html_bytes):
-    metacharset = re.search(br'<meta [^>]*?charset="(.*?)"', html_bytes)
-    if metacharset:
-        return str(metacharset.group(1))
     else:
         return None
 
@@ -258,22 +146,8 @@ def filter_flavors(flavors, max_height, max_bitrate):
     return selected
 
 
-def sane_filename(name, excludechars):
-    tr = dict((ord(c), ord('_')) for c in excludechars)
-    x = name.strip(' .').translate(tr)
-    return x or 'ylevideo'
-
-
 def ignore_none_values(di):
     return {key: value for (key, value) in di if value is not None}
-
-
-def to_external_rd_code(rdcode):
-    """Map internal RD codes to the corresponding external ones."""
-    if rdcode == RD_SUBPROCESS_EXECUTE_FAILED:
-        return RD_FAILED
-    else:
-        return rdcode
 
 
 class StreamFilters(object):
@@ -386,9 +260,9 @@ class BackendFactory(object):
 
     def hds(self):
         if self.hds_backend == self.YOUTUBEDL:
-            return YoutubeDLHDSDump
+            return YoutubeDLHDSBackend
         else:
-            return HDSDump
+            return HDSBackend
 
 
 # Areena
@@ -767,7 +641,7 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
             downloaders.append(dl_constructor(self.hds_url, self.bitrate,
                                               self.flavor_id, self.ext))
 
-        return FallbackDump(downloaders)
+        return FallbackBackend(downloaders)
 
 
 class Areena2014RTMPStreamUrl(AreenaStreamBase):
@@ -805,7 +679,7 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
         if not args:
             return None
         else:
-            return RTMPDump(args)
+            return RTMPBackend(args)
 
     def stream_to_rtmp_parameters(self, stream, pageurl, islive):
         if not stream:
@@ -915,7 +789,7 @@ class HTTPStreamUrl(object):
         return self.url
 
     def create_downloader(self, backends):
-        return WgetDump(self.url, self.ext)
+        return WgetBackend(self.url, self.ext)
 
 
 class KalturaStreamUrl(HTTPStreamUrl):
@@ -935,12 +809,12 @@ class KalturaStreamUrl(HTTPStreamUrl):
 
     def create_downloader(self, backends):
         if self.stream_format == 'url':
-            return FallbackDump([
-                WgetDump(self.http_manifest_url, self.ext),
-                HLSDump(self.hls_manifest_url, self.ext)
+            return FallbackBackend([
+                WgetBackend(self.http_manifest_url, self.ext),
+                HLSBackend(self.hls_manifest_url, self.ext)
             ])
         else:
-            return HLSDump(self.hls_manifest_url, self.ext)
+            return HLSBackend(self.hls_manifest_url, self.ext)
 
     def _manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
         return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
@@ -962,7 +836,7 @@ class KalturaLiveAudioStreamUrl(HTTPStreamUrl):
         self.ext = '.mp3'
 
     def create_downloader(self, backends):
-        return HLSDumpAudio(self.url, self.ext)
+        return HLSAudioBackend(self.url, self.ext)
 
 
 class SportsStreamUrl(HTTPStreamUrl):
@@ -971,7 +845,7 @@ class SportsStreamUrl(HTTPStreamUrl):
         self.ext = '.mp4'
 
     def create_downloader(self, backends):
-        return HLSDump(self.url, self.ext, long_probe=True)
+        return HLSBackend(self.url, self.ext, long_probe=True)
 
 
 class InvalidStreamUrl(object):
@@ -1078,12 +952,6 @@ class Areena2014Downloader(AreenaUtils, KalturaUtils):
             if res != RD_SUCCESS:
                 overall_status = res
         return overall_status
-
-    def to_external_rd_code(self, rdcode):
-        if rdcode == RD_SUBPROCESS_EXECUTE_FAILED:
-            return RD_FAILED
-        else:
-            return rdcode
 
     def get_playlist(self, url, latest_only):
         """If url is a series page, return a list of included episode pages."""
@@ -1861,618 +1729,3 @@ class ArkivetDownloader(Areena2014Downloader):
         dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
         dataids = [str(d) for d in dataids]
         return [d if '-' in d else '1-' + d for d in dataids]
-
-
-### Download a stream to a local file ###
-
-
-class IOCapability(object):
-    RESUME = 'resume'
-    PROXY = 'proxy'
-    RATELIMIT = 'ratelimit'
-    DURATION = 'duration'
-
-
-class BaseDownloader(object):
-    def __init__(self, output_extension):
-        self.ext = output_extension
-        self._cached_output_file = None
-        self.io_capabilities = frozenset()
-
-    def warn_on_unsupported_feature(self, io):
-        if io.resume and IOCapability.RESUME not in self.io_capabilities:
-            logger.warn('Resume not supported on this stream')
-        if io.proxy and IOCapability.PROXY not in self.io_capabilities:
-            logger.warn('Proxy not supported on this stream. '
-                        'Trying to continue anyway')
-        if io.download_limits.ratelimit and \
-           IOCapability.RATELIMIT not in self.io_capabilities:
-            logger.warn('Rate limiting not supported on this stream')
-        if io.download_limits.duration and \
-           IOCapability.DURATION not in self.io_capabilities:
-            logger.warning('--duration will be ignored on this stream')
-
-    def save_stream(self, clip_title, io):
-        """Deriving classes override this to perform the download"""
-        raise NotImplementedError('save_stream must be overridden')
-
-    def pipe(self, io, subtitle_url):
-        """Derived classes can override this to pipe to stdout"""
-        return RD_FAILED
-
-    def outputfile_from_clip_title(self, clip_title, io, resume):
-        if self._cached_output_file:
-            return self._cached_output_file
-
-        ext = self.ext or '.flv'
-        filename = sane_filename(clip_title, io.excludechars) + ext
-        if io.destdir:
-            filename = os.path.join(io.destdir, filename)
-        if not resume:
-            filename = self.next_available_filename(filename)
-        self._cached_output_file = filename
-        return filename
-
-    def next_available_filename(self, proposed):
-        i = 1
-        enc = sys.getfilesystemencoding()
-        filename = proposed
-        basename, ext = os.path.splitext(filename)
-        while os.path.exists(filename.encode(enc, 'replace')):
-            logger.info('%s exists, trying an alternative name' % filename)
-            filename = basename + '-' + str(i) + ext
-            i += 1
-
-        return filename
-
-    def append_ext_if_missing(self, filename, default_ext):
-        if '.' in filename:
-            return filename
-        else:
-            return filename + (default_ext or '.flv')
-
-    def replace_extension(self, filename, ext):
-        basename, old_ext = os.path.splitext(filename)
-        if not old_ext or old_ext != ext:
-            if old_ext:
-                logger.warn('Unsupported extension {}. Replacing it with {}'.format(old_ext, ext))
-            return basename + ext
-        else:
-            return filename
-
-    def log_output_file(self, outputfile, done=False):
-        if outputfile and outputfile != '-':
-            if done:
-                logger.info('Stream saved to ' + outputfile)
-            else:
-                logger.info('Output file: ' + outputfile)
-
-    def output_filename(self, clip_title, io):
-        return self._construct_output_filename(clip_title, io, True)
-
-    def _construct_output_filename(self, clip_title, io, force_extension):
-        if io.outputfilename:
-            if force_extension:
-                return self.replace_extension(io.outputfilename, self.ext)
-            else:
-                return self.append_ext_if_missing(
-                    io.outputfilename, self.ext)
-        else:
-            resume_job = io.resume and IOCapability.RESUME in self.io_capabilities
-            return self.outputfile_from_clip_title(clip_title, io, resume_job)
-
-
-### Dumping a stream to a file using external programs ###
-
-
-class ExternalDownloader(BaseDownloader):
-    def save_stream(self, clip_title, io):
-        args = self.build_args(clip_title, io)
-        env = self.extra_environment(io)
-        outputfile = self.output_filename(clip_title, io)
-        self.log_output_file(outputfile)
-        retcode = self.external_downloader([args], env)
-        if retcode == RD_SUCCESS:
-            self.log_output_file(outputfile, True)
-        return retcode
-
-    def pipe(self, io, subtitle_url):
-        commands = [self.build_pipe_args(io)]
-        env = self.extra_environment(io)
-        subtitle_command = self._mux_subtitles_command(io.ffmpeg_binary,
-                                                       subtitle_url)
-        if subtitle_command:
-            commands.append(subtitle_command)
-        return self.external_downloader(commands, env)
-
-    def build_args(self, clip_title, io):
-        return []
-
-    def build_pipe_args(self, io):
-        return []
-
-    def extra_environment(self, io):
-        return None
-
-    def external_downloader(self, commands, env=None):
-        return Subprocess().execute(commands, env)
-
-    def _mux_subtitles_command(self, ffmpeg_binary, subtitle_url):
-        if not ffmpeg_binary or not subtitle_url:
-            return None
-
-        if which(ffmpeg_binary):
-            return [ffmpeg_binary, '-y', '-i', 'pipe:0', '-i', subtitle_url,
-                    '-c', 'copy', '-c:s', 'srt', '-f', 'matroska', 'pipe:1']
-        else:
-            logger.warning('{} not found. Subtitles disabled.'
-                           .format(ffmpeg_binary))
-            logger.warning('Set the path to ffmpeg using --ffmpeg')
-            return None
-
-
-class Subprocess(object):
-    def execute(self, commands, extra_environment):
-        """Start external processes connected with pipes and wait completion.
-
-        commands is a list commands to execute. commands[i] is a list of shell
-        command and arguments.
-
-        extra_environment is a dict of environment variables that are combined
-        with os.environ.
-        """
-        if not commands:
-            return RD_SUCCESS
-
-        logger.debug('Executing:')
-        shell_command_string = ' | '.join(' '.join(args) for args in commands)
-        logger.debug(shell_command_string)
-
-        env = self.combine_envs(extra_environment)
-        try:
-            process = self.start_process(commands, env)
-            return self.exit_code_to_rd(process.wait())
-        except KeyboardInterrupt:
-            try:
-                os.kill(process.pid, signal.SIGINT)
-                process.wait()
-            except OSError:
-                # The process died before we killed it.
-                pass
-            return RD_INCOMPLETE
-        except OSError as exc:
-            logger.error('Failed to execute ' + shell_command_string)
-            logger.error(exc.strerror)
-            return RD_SUBPROCESS_EXECUTE_FAILED
-
-    def combine_envs(self, extra_environment):
-        env = None
-        if extra_environment:
-            env = dict(os.environ)
-            env.update(extra_environment)
-        return env
-
-    def start_process(self, commands, env):
-        """Start all commands and setup pipes."""
-        assert commands
-
-        processes = []
-        for i, args in enumerate(commands):
-            if i == 0 and platform.system() != 'Windows':
-                preexec_fn = self._sigterm_when_parent_dies
-            else:
-                preexec_fn = None
-
-            stdin = processes[-1].stdout if processes else None
-            stdout = None if i == len(commands) - 1 else subprocess.PIPE
-            processes.append(subprocess.Popen(
-                args, stdin=stdin, stdout=stdout,
-                env=env, preexec_fn=preexec_fn))
-
-        # Causes the first process to receive SIGPIPE if the seconds
-        # process exists
-        for p in processes[:-1]:
-            p.stdout.close()
-
-        return processes[0]
-
-    def exit_code_to_rd(self, exit_code):
-        return RD_SUCCESS if exit_code == 0 else RD_FAILED
-
-    def _sigterm_when_parent_dies(self):
-        PR_SET_PDEATHSIG = 1
-
-        libcname = ctypes.util.find_library('c')
-        libc = libcname and ctypes.CDLL(libcname)
-
-        try:
-            libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
-        except AttributeError:
-            # libc is None or libc does not contain prctl
-            pass
-
-
-### Download stream by delegating to rtmpdump ###
-
-
-class RTMPDump(ExternalDownloader):
-    def __init__(self, rtmpdump_args):
-        ExternalDownloader.__init__(self, '.flv')
-        self.args = rtmpdump_args
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.DURATION
-        ])
-
-    def save_stream(self, clip_title, io):
-        # rtmpdump fails to resume if the file doesn't contain at
-        # least one audio frame. Remove small files to force a restart
-        # from the beginning.
-        filename = self.output_filename(clip_title, io)
-        if io.resume and self.is_small_file(filename):
-            self.remove(filename)
-
-        return super(RTMPDump, self).save_stream(clip_title, io)
-
-    def build_args(self, clip_title, io):
-        args = [io.rtmpdump_binary]
-        args += self.args
-        args += ['-o', self.output_filename(clip_title, io)]
-        if io.resume:
-            args.append('-e')
-        if io.download_limits.duration:
-            args.extend(['--stop', str(io.download_limits.duration)])
-        return args
-
-    def build_pipe_args(self, io):
-        args = [io.rtmpdump_binary]
-        args += self.args
-        args += ['-o', '-']
-        return args
-
-    def is_small_file(self, filename):
-        try:
-            return os.path.getsize(filename) < 1024
-        except OSError:
-            return False
-
-    def remove(self, filename):
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
-
-
-### Download a stream by delegating to AdobeHDS.php ###
-
-
-class HDSDump(ExternalDownloader):
-    def __init__(self, url, bitrate, flavor_id, output_extension):
-        ExternalDownloader.__init__(self, output_extension)
-        self.url = url
-        self.bitrate = bitrate
-        self.flavor_id = flavor_id
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.PROXY,
-            IOCapability.DURATION,
-            IOCapability.RATELIMIT
-        ])
-
-    def _bitrate_option(self, bitrate):
-        return ['--quality', str(bitrate)] if bitrate else []
-
-    def _limit_options(self, download_limits):
-        options = []
-
-        if download_limits.ratelimit:
-            options.extend(['--maxspeed', str(download_limits.ratelimit)])
-
-        if download_limits.duration:
-            options.extend(['--duration', str(download_limits.duration)])
-
-        return options
-
-    def build_args(self, clip_title, io):
-        args = [
-            '--delete',
-            '--outfile', self.output_filename(clip_title, io)
-        ]
-        return self.adobehds_command_line(io, args)
-
-    def save_stream(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
-        if (io.resume and output_name != '-' and
-            os.path.isfile(output_name) and
-            not self.fragments_exist(self.flavor_id)):
-            logger.info('{} has already been downloaded.'.format(output_name))
-            return RD_SUCCESS
-        else:
-            return super(HDSDump, self).save_stream(clip_title, io)
-
-    def fragments_exist(self, flavor_id):
-        pattern = r'.*_{}_Seg[0-9]+-Frag[0-9]+$'.format(re.escape(flavor_id))
-        files = os.listdir('.')
-        return any(re.match(pattern, x) is not None for x in files)
-
-    def pipe(self, io, subtitle_url):
-        res = super(HDSDump, self).pipe(io, subtitle_url)
-        self.cleanup_cookies()
-        return res
-
-    def build_pipe_args(self, io):
-        return self.adobehds_command_line(io, ['--play'])
-
-    def adobehds_command_line(self, io, extra_args):
-        args = list(io.hds_binary)
-        args.append('--manifest')
-        args.append(self.url)
-        args.extend(self._bitrate_option(self.bitrate))
-        args.extend(self._limit_options(io.download_limits))
-        if io.proxy:
-            args.append('--proxy')
-            args.append(io.proxy)
-            args.append('--fproxy')
-        if logger.isEnabledFor(logging.DEBUG):
-            args.append('--debug')
-        if extra_args:
-            args.extend(extra_args)
-        return args
-
-    def cleanup_cookies(self):
-        try:
-            os.remove('Cookies.txt')
-        except OSError:
-            pass
-
-
-### Download a stream delegating to the youtube_dl HDS downloader ###
-
-
-class YoutubeDLHDSDump(BaseDownloader):
-    def __init__(self, url, bitrate, flavor_id, output_extension):
-        BaseDownloader.__init__(self, output_extension)
-        self.url = url
-        self.bitrate = bitrate
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.PROXY,
-            IOCapability.RATELIMIT
-        ])
-
-    def save_stream(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
-        return self._execute_youtube_dl(output_name, io)
-
-    def pipe(self, io, subtitle_url):
-        # TODO: subtitles
-        return self._execute_youtube_dl('-', io)
-
-    def _execute_youtube_dl(self, outputfile, io):
-        try:
-            import youtube_dl
-        except ImportError:
-            logger.error('Failed to import youtube_dl')
-            return RD_FAILED
-
-        if outputfile != '-':
-            self.log_output_file(outputfile)
-
-        ydlopts = {
-            'logtostderr': True,
-            'proxy': io.proxy,
-            'verbose': logger.isEnabledFor(logging.DEBUG)
-        }
-
-        dlopts = {
-            'nopart': True,
-            'continuedl': outputfile != '-' and io.resume
-        }
-        dlopts.update(self._ratelimit_parameter(io.download_limits.ratelimit))
-
-        ydl = youtube_dl.YoutubeDL(ydlopts)
-        f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
-        info = {'url': self.url}
-        info.update(self._bitrate_parameter(self.bitrate))
-        try:
-            if not f4mdl.download(outputfile, info):
-                return RD_FAILED
-        except HTTPError:
-            logger.exception('HTTP request failed')
-            return RD_FAILED
-
-        if outputfile != '-':
-            self.log_output_file(outputfile, True)
-        return RD_SUCCESS
-
-    def _bitrate_parameter(self, bitrate):
-        return {'tbr': bitrate} if bitrate else {}
-
-    def _ratelimit_parameter(self, ratelimit):
-        return {'ratelimit': ratelimit*1024} if ratelimit else {}
-
-
-### Download a HLS stream by delegating to ffmpeg ###
-
-
-class HLSDump(ExternalDownloader):
-    def __init__(self, url, output_extension, long_probe=False):
-        ExternalDownloader.__init__(self, output_extension)
-        self.url = url
-        self.io_capabilities = frozenset([IOCapability.DURATION])
-        self.long_probe = long_probe
-
-    def output_filename(self, clip_title, io):
-        return self._construct_output_filename(clip_title, io, False)
-
-    def _duration_arg(self, download_limits):
-        if download_limits.duration:
-            return ['-t', str(download_limits.duration)]
-        else:
-            return []
-
-    def _probe_args(self):
-        if self.long_probe:
-            return ['-probesize', '80000000']
-        else:
-            return []
-
-    def build_args(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
-        return self.ffmpeg_command_line(
-            io,
-            ['-bsf:a', 'aac_adtstoasc', '-vcodec', 'copy',
-             '-acodec', 'copy', 'file:' + output_name])
-
-    def build_pipe_args(self, io):
-        return self.ffmpeg_command_line(
-            io,
-            ['-vcodec', 'copy', '-acodec', 'copy',
-             '-f', 'mpegts', 'pipe:1'])
-
-    def build_pipe_with_subtitles_args(self, io, subtitle_url):
-        return self.ffmpeg_command_line(
-            io,
-            ['-thread_queue_size', '512', '-i', subtitle_url,
-             '-vcodec', 'copy', '-acodec', 'aac', '-scodec', 'copy',
-             '-f', 'matroska', 'pipe:1'])
-
-    def pipe(self, io, subtitle_url):
-        if subtitle_url:
-            commands = [self.build_pipe_with_subtitles_args(io, subtitle_url)]
-        else:
-            commands = [self.build_pipe_args(io)]
-        env = self.extra_environment(io)
-        return self.external_downloader(commands, env)
-
-    def ffmpeg_command_line(self, io, output_options):
-        debug = logger.isEnabledFor(logging.DEBUG)
-        loglevel = 'info' if debug else 'error'
-        args = [io.ffmpeg_binary, '-y',
-                '-loglevel', loglevel, '-stats',
-                '-thread_queue_size', '512']
-        args.extend(self._probe_args())
-        args.extend(['-i', self.url])
-        args.extend(self._duration_arg(io.download_limits))
-        args.extend(output_options)
-        return args
-
-
-class HLSDumpAudio(HLSDump):
-    def build_args(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
-        return self.ffmpeg_command_line(
-            io, ['-map', '0:4?', '-f', 'mp3', 'file:' + output_name])
-
-    def build_pipe_args(self, io):
-        return self.ffmpeg_command_line(
-            io, ['-map', '0:4?', '-f', 'mp3', 'pipe:1'])
-
-
-### Download a plain HTTP file ###
-
-
-class WgetDump(ExternalDownloader):
-    def __init__(self, url, output_extension):
-        ExternalDownloader.__init__(self, output_extension)
-        self.url = url
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.RATELIMIT,
-            IOCapability.PROXY
-        ])
-
-    def build_args(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
-        args = self.shared_wget_args(io.wget_binary, output_name)
-        args.extend([
-            '--progress=bar',
-            '--tries=5',
-            '--random-wait'
-        ])
-        if io.resume:
-            args.append('-c')
-        if io.download_limits.ratelimit:
-            args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
-        args.append(self.url)
-        return args
-
-    def build_pipe_args(self, io):
-        return self.shared_wget_args(io.wget_binary, '-') + [self.url]
-
-    def shared_wget_args(self, wget_binary, output_filename):
-        return [
-            wget_binary,
-            '-O', output_filename,
-            '--no-use-server-timestamps',
-            '--user-agent=' + yledl_user_agent(),
-            '--timeout=20'
-        ]
-
-    def extra_environment(self, io):
-        env = None
-        if io.proxy:
-            if 'https_proxy' in os.environ:
-                logger.warn('--proxy ignored because https_proxy environment variable exists')
-            else:
-                env = {'https_proxy': io.proxy}
-        return env
-
-
-### Try multiple downloaders until one succeeds ###
-
-
-class FallbackDump(object):
-    def __init__(self, downloaders):
-        self.downloaders = downloaders
-
-    def save_stream(self, clip_title, io):
-        def save_stream_cleanup(downloader):
-            def wrapped(clip_title, io):
-                outputfile = downloader.output_filename(clip_title, io)
-                res = downloader.save_stream(clip_title, io)
-                if needs_retry(res) and os.path.isfile(outputfile):
-                    logger.debug('Removing the partially downloaded file')
-                    try:
-                        os.remove(outputfile)
-                    except OSError:
-                        logger.warn('Failed to remove a partial output file')
-                return res
-
-            return wrapped
-
-        def needs_retry(res):
-            return res not in [RD_SUCCESS, RD_INCOMPLETE]
-        
-        return self._retry_call(save_stream_cleanup, needs_retry,
-                                clip_title, io)
-
-    def pipe(self, io, subtitle_url):
-        def pipe_action(downloader):
-            return downloader.pipe
-
-        def needs_retry(res):
-            return res == RD_SUBPROCESS_EXECUTE_FAILED
-
-        self._retry_call(pipe_action, needs_retry, io, subtitle_url)
-        return RD_SUCCESS
-
-    def output_filename(self, clip_title, io):
-        if self.downloaders:
-            return self.downloaders[0].output_filename(clip_title, io)
-
-    def warn_on_unsupported_feature(self, io):
-        if self.downloaders:
-            self.downloaders[0].warn_on_unsupported_feature(io)
-
-    def _retry_call(self, get_action, needs_retry, *args, **kwargs):
-        latest_result = RD_SUCCESS
-        for downloader in self.downloaders:
-            logger.debug('Now trying downloader {}'.format(
-                type(downloader).__name__))
-            method = get_action(downloader)
-            latest_result = method(*args, **kwargs)
-            if not needs_retry(latest_result):
-                return latest_result
-
-        return latest_result
