@@ -5,3 +5,4 @@ __pycache__
 /yle_dl.egg-info
 /.cache
 /.eggs
+/.pytest_cache

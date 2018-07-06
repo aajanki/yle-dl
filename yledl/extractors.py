@@ -328,10 +328,28 @@ class StreamFlavor(object):
     streams = attr.ib(default=attr.Factory(list))
 
 
+class FailedFlavor(StreamFlavor):
+    def __init__(self, error_message):
+        StreamFlavor.__init__(self,
+                              media_type='unknown',
+                              height=None,
+                              width=None,
+                              bitrate=None,
+                              streams=[InvalidStreamUrl(error_message)])
+
+
 class FailedClip(Clip):
-    def __init__(self, webpage, errormessage):
-        Clip.__init__(self, webpage=webpage,
-                      flavors=[InvalidStreamUrl(errormessage)]) # FIXME
+    def __init__(self, webpage, error_message):
+        Clip.__init__(self,
+                      webpage=webpage,
+                      flavors=[FailedFlavor(error_message)],
+                      title=None,
+                      duration_seconds=None,
+                      region=None,
+                      publish_timestamp=None,
+                      expiration_timestamp=None,
+                      subtitles=[])
+
 
 @attr.s
 class Subtitle(object):

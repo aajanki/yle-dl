@@ -39,7 +39,6 @@ class YleDlDownloader(object):
                 self.postprocess(postprocess_command, outputfile,
                                  subtitlefiles)
 
-
             return RD_SUCCESS
 
         return self.process(clips, download, filters)
@@ -73,7 +72,7 @@ class YleDlDownloader(object):
 
     def print_titles(self, clips, io, filters):
         def print_title(clip, stream):
-            print_enc(sane_filename(stream.title, io.excludechars))
+            print_enc(sane_filename(clip.title, io.excludechars))
             return RD_SUCCESS
 
         return self.process(clips, print_title, filters)
@@ -93,7 +92,7 @@ class YleDlDownloader(object):
             stream = self.select_stream(clip.flavors, filters)
 
             if stream:
-                if stream.is_valid():
+                if not stream.is_valid():
                     logger.error('Unsupported stream: %s' %
                                  stream.get_error_message())
                     overall_status = RD_FAILED
