@@ -6,9 +6,11 @@ import copy
 import json
 import os
 import pytest
-from yledl import YleDlDownloader, Clip, FailedClip, BaseDownloader, \
-    StreamFlavor, StreamFilters, Subtitle, IOContext, BackendFactory, \
+from yledl import StreamFilters, IOContext, BackendFactory, \
     RD_SUCCESS, RD_FAILED
+from yledl.backends import BaseDownloader
+from yledl.downloader import YleDlDownloader
+from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
 from utils import Capturing
 
 
