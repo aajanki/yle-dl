@@ -297,10 +297,14 @@ class Clip(object):
     subtitles = attr.ib(default=attr.Factory(list))
 
     def metadata(self):
+        flavors_meta = sorted(
+            [self.flavor_meta(f) for f in self.flavors],
+            key=lambda x: x['bitrate'])
+
         meta = [
             ('webpage', self.webpage),
             ('title', self.title),
-            ('flavors', [self.flavor_meta(f) for f in self.flavors]),
+            ('flavors', flavors_meta),
             ('duration_seconds', self.duration_seconds),
             ('subtitles', [vars(st) for st in self.subtitles]),
             ('region', self.region),
@@ -327,7 +331,7 @@ class StreamFlavor(object):
     media_type = attr.ib()
     height = attr.ib(converter=attr.converters.optional(int))
     width = attr.ib(converter=attr.converters.optional(int))
-    bitrate = attr.ib(converter=attr.converters.optional(str))
+    bitrate = attr.ib(converter=attr.converters.optional(int))
     streams = attr.ib(default=attr.Factory(list))
 
 

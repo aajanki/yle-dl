@@ -102,16 +102,54 @@ class YleDlDownloader(object):
         return overall_status
 
     def select_flavor(self, flavors, filters):
-        # FIXME: apply filters
-        if flavors:
-            return flavors[0]
-        else:
+        if not flavors:
             return None
+
+        def sort_max_bitrate(x):
+            return x.bitrate or 0
+
+        def sort_max_resolution_min_bitrate(x):
+            return (x.height or 0, -(x.bitrate or 0))
+
+        def sort_max_resolution_max_bitrate(x):
+            return (x.height or 0, x.bitrate or 0)
+
+        logger.debug('Available flavors: {}'.format([{
+            'bitrate': fl.bitrate,
+            'height': fl.height,
+            'width': fl.width
+        } for fl in flavors]))
+        logger.debug('max_height: {}, max_bitrate: {}'.format(
+            filters.maxheight, filters.maxbitrate))
+
+        filtered = [
+            fl for fl in flavors
+            if (filters.maxbitrate is None or fl.bitrate <= filters.maxbitrate) and
+            (filters.maxheight is None or fl.height <= filters.maxheight)
+        ]
+
+        if filtered:
+            acceptable_flavors = filtered
+            reverse = False
+            if filters.maxheight is not None and filters.maxbitrate is not None:
+                keyfunc = sort_max_resolution_max_bitrate
+            elif filters.maxheight is not None:
+                keyfunc = sort_max_resolution_min_bitrate
+            else:
+                keyfunc = sort_max_bitrate
+        else:
+            acceptable_flavors = flavors
+            reverse = filters.maxheight is not None or filters.maxbitrate is not None
+            keyfunc = sort_max_bitrate
+
+        selected = sorted(acceptable_flavors, key=keyfunc, reverse=reverse)[-1]
+        logger.debug('Selected flavor: {}'.format(selected))
+        return selected
 
     def select_stream(self, flavors, filters):
         flavor = self.select_flavor(flavors, filters)
         if flavor and flavor.streams:
-            stream = flavor.streams[0] # FIXME: select by backend
+            stream = flavor.streams[-1] # FIXME: select by backend
         else:
             stream = None
         return stream

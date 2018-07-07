@@ -59,26 +59,34 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
     return Clip(
         webpage='https://areena.yle.fi/1-1234567',
         flavors=[
+            # The flavors are intentionally unsorted
+            StreamFlavor(
+                media_type='video',
+                height=1080,
+                width=1920,
+                bitrate=2808,
+                streams=[MockStream(state_dict, 'high_quality')]
+            ),
             StreamFlavor(
                 media_type='video',
                 height=360,
                 width=640,
                 bitrate=880,
-                streams=[MockStream(state_dict, '1')]
+                streams=[MockStream(state_dict, 'low_quality')]
             ),
             StreamFlavor(
                 media_type='video',
                 height=720,
                 width=1280,
                 bitrate=1412,
-                streams=[MockStream(state_dict, '2')]
+                streams=[MockStream(state_dict, 'medium_quality')]
             ),
             StreamFlavor(
                 media_type='video',
-                height=1080,
-                width=1920,
-                bitrate=2808,
-                streams=[MockStream(state_dict, '3')]
+                height=720,
+                width=1280,
+                bitrate=1872,
+                streams=[MockStream(state_dict, 'medium_quality_high_bitrate')]
             )
         ],
         title=title,
@@ -121,7 +129,62 @@ def test_download_success(simple):
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
-    assert state['stream_id'] == '1'
+    assert state['stream_id'] == 'high_quality'
+
+
+def test_download_filter_resolution(simple):
+    state = {}
+    filters = StreamFilters(maxheight=700)
+    clips = [successful_clip(state)]
+    res = simple.downloader.download_episodes(clips, simple.io, filters, None)
+
+    assert res == RD_SUCCESS
+    assert state['command'] == 'download'
+    assert state['stream_id'] == 'low_quality'
+
+
+def test_download_filter_exact_resolution(simple):
+    state = {}
+    filters = StreamFilters(maxheight=720)
+    clips = [successful_clip(state)]
+    res = simple.downloader.download_episodes(clips, simple.io, filters, None)
+
+    assert res == RD_SUCCESS
+    assert state['command'] == 'download'
+    assert state['stream_id'] == 'medium_quality'
+
+
+def test_download_filter_bitrate1(simple):
+    state = {}
+    filters = StreamFilters(maxbitrate=1500)
+    clips = [successful_clip(state)]
+    res = simple.downloader.download_episodes(clips, simple.io, filters, None)
+
+    assert res == RD_SUCCESS
+    assert state['command'] == 'download'
+    assert state['stream_id'] == 'medium_quality'
+
+
+def test_download_filter_bitrate2(simple):
+    state = {}
+    filters = StreamFilters(maxbitrate=2000)
+    clips = [successful_clip(state)]
+    res = simple.downloader.download_episodes(clips, simple.io, filters, None)
+
+    assert res == RD_SUCCESS
+    assert state['command'] == 'download'
+    assert state['stream_id'] == 'medium_quality_high_bitrate'
+
+
+def test_download_multiple_filters(simple):
+    state = {}
+    filters = StreamFilters(maxheight=720, maxbitrate=1000)
+    clips = [successful_clip(state)]
+    res = simple.downloader.download_episodes(clips, simple.io, filters, None)
+
+    assert res == RD_SUCCESS
+    assert state['command'] == 'download'
+    assert state['stream_id'] == 'low_quality'
 
 
 def test_pipe_success(simple):
@@ -131,7 +194,7 @@ def test_pipe_success(simple):
 
     assert res == RD_SUCCESS
     assert state['command'] == 'pipe'
-    assert state['stream_id'] == '1'
+    assert state['stream_id'] == 'high_quality'
 
 
 def test_print_urls(simple):
@@ -143,7 +206,7 @@ def test_print_urls(simple):
         res = simple.downloader.print_urls(clips, simple.filters)
 
     assert res == RD_SUCCESS
-    assert output == ['https://example.com/video/1.mp4']
+    assert output == ['https://example.com/video/high_quality.mp4']
     assert 'command' not in state
 
 
@@ -186,6 +249,12 @@ def test_print_metadata(simple):
                     'height': 720,
                     'width': 1280,
                     'bitrate': 1412
+                },
+                {
+                    'media_type': 'video',
+                    'height': 720,
+                    'width': 1280,
+                    'bitrate': 1872
                 },
                 {
                     'media_type': 'video',
