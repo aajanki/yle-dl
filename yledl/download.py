@@ -2,6 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import codecs
+import json
 import logging
 import os.path
 import sys
@@ -78,12 +79,9 @@ class YleDlDownloader(object):
         return self.process(clips, print_title, filters)
 
     def print_metadata(self, clips, filters):
-        def print_metadata(clip, stream):
-            # FIXME
-            return RD_SUCCESS
-
-        return self.process(clips, print_metadata, filters)
-
+        meta = [clip.metadata() for clip in clips]
+        print_enc(json.dumps(meta, indent=2))
+        return RD_SUCCESS
 
     def process(self, clips, streamfunc, filters):
         overall_status = RD_SUCCESS
@@ -124,7 +122,7 @@ class YleDlDownloader(object):
 
         selected = []
         for sub in subtitles:
-            matching_lang = (filters.sublang_matches(sub.language, '') or
+            matching_lang = (filters.sublang_matches(sub.lang, '') or
                              filters.sublang == 'all')
             if sub.url and matching_lang:
                 selected.append(sub)
@@ -138,7 +136,7 @@ class YleDlDownloader(object):
         basename = os.path.splitext(videofilename)[0]
         subtitlefiles = []
         for sub in subtitles:
-            filename = basename + '.' + sub.language + '.srt'
+            filename = basename + '.' + sub.lang + '.srt'
             if os.path.isfile(filename):
                 logger.debug('Subtitle file {} already exists, skipping'
                              .format(filename))

@@ -169,28 +169,6 @@ class KalturaUtils(object):
 
 class Flavors(object):
     @staticmethod
-    def single_flavor_meta(flavor, media_type=None):
-        if media_type is None:
-            media_type = Flavors.media_type(flavor)
-
-        res = {'media_type': media_type}
-        if 'height' in flavor:
-            res['height'] = flavor['height']
-        if 'width' in flavor:
-            res['width'] = flavor['width']
-        if 'bitrate' in flavor or 'audioBitrateKbps' in flavor:
-            res['bitrate'] = (flavor.get('bitrate', 0) +
-                              flavor.get('audioBitrateKbps', 0))
-        return res
-
-    @staticmethod
-    def bitrate_meta(bitrate, media_type):
-        return {
-            'bitrate': bitrate,
-            'media_type': media_type
-        }
-
-    @staticmethod
     def media_type(media):
         return 'audio' if media.get('type') == 'AudioObject' else 'video'
 
@@ -318,6 +296,31 @@ class Clip(object):
     expiration_timestamp = attr.ib(converter=attr.converters.optional(str))
     subtitles = attr.ib(default=attr.Factory(list))
 
+    def metadata(self):
+        meta = [
+            ('webpage', self.webpage),
+            ('title', self.title),
+            ('flavors', [self.flavor_meta(f) for f in self.flavors]),
+            ('duration_seconds', self.duration_seconds),
+            ('subtitles', [vars(st) for st in self.subtitles]),
+            ('region', self.region),
+            ('publish_timestamp', self.publish_timestamp),
+            ('expiration_timestamp', self.expiration_timestamp)
+        ]
+        return self.ignore_none_values(meta)
+
+    def flavor_meta(self, flavor):
+        meta = [
+            ('media_type', flavor.media_type),
+            ('height', flavor.height),
+            ('width', flavor.width),
+            ('bitrate', int(flavor.bitrate))
+        ]
+        return self.ignore_none_values(meta)
+
+    def ignore_none_values(self, li):
+        return {key: value for (key, value) in li if value is not None}
+
 
 @attr.s
 class StreamFlavor(object):
@@ -354,7 +357,7 @@ class FailedClip(Clip):
 @attr.s
 class Subtitle(object):
     url = attr.ib()
-    language = attr.ib()
+    lang = attr.ib()
 
 
 class ClipExtractor(object):

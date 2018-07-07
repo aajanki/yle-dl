@@ -3,6 +3,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
 import copy
+import json
 import os
 import pytest
 from yledl import YleDlDownloader, Clip, FailedClip, BaseDownloader, \
@@ -156,6 +157,53 @@ def test_print_titles(simple):
 
     assert res == RD_SUCCESS
     assert output == titles
+
+
+def test_print_metadata(simple):
+    state = {}
+    clips = [successful_clip(state)]
+
+    res = None
+    with Capturing() as output:
+        res = simple.downloader.print_metadata(clips, simple.filters)
+    metadata = json.loads('\n'.join(output))
+
+    assert res == RD_SUCCESS
+    assert 'command' not in state
+    assert metadata == [
+        {
+            'webpage': 'https://areena.yle.fi/1-1234567',
+            'title': 'Test clip: S01E01-2018-07-01T00:00',
+            'flavors': [
+                {
+                    'media_type': 'video',
+                    'height': 360,
+                    'width': 640,
+                    'bitrate': 880
+                },
+                {
+                    'media_type': 'video',
+                    'height': 720,
+                    'width': 1280,
+                    'bitrate': 1412
+                },
+                {
+                    'media_type': 'video',
+                    'height': 1080,
+                    'width': 1920,
+                    'bitrate': 2808
+                }
+            ],
+            'duration_seconds': 950,
+            'subtitles': [
+                {'url': 'https://example.com/subtitle/fin.srt', 'lang': 'fin'},
+                {'url': 'https://example.com/subtitle/swe.srt', 'lang': 'swe'}
+            ],
+            'region': 'Finland',
+            'publish_timestamp': '2018-07-01T00:00:00+03:00',
+            'expiration_timestamp': '2019-01-01T00:00:00+03:00'
+        }
+    ]
 
 
 def test_download_failed_clip(simple):
