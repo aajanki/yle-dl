@@ -9,7 +9,7 @@ import pytest
 from yledl import StreamFilters, IOContext, BackendFactory, \
     RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
-from yledl.downloader import YleDlDownloader
+from yledl.downloader import YleDlDownloader, SubtitleDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
 from utils import Capturing
 
@@ -55,6 +55,12 @@ class MockStream(object):
 
     def create_downloader(self, backends):
         return StateCollectingBackend(self.state_dict, self.id)
+
+
+class MockSubtitleDownloader(SubtitleDownloader):
+    def download(self, subtitles, videofilename):
+        # Don't actually download anything
+        return []
 
 
 def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
@@ -119,7 +125,8 @@ def simple():
     return DownloaderParametersFixture(
         io=IOContext(destdir='/tmp/'),
         filters=StreamFilters(),
-        downloader=YleDlDownloader([BackendFactory.ADOBEHDSPHP])
+        downloader=YleDlDownloader([BackendFactory.ADOBEHDSPHP],
+                                   MockSubtitleDownloader())
     )
 
 

@@ -16,9 +16,77 @@ from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
 logger = logging.getLogger('yledl')
 
 
+class SubtitleDownloader(object):
+    def select_and_download(self, subtitles, videofilename, filters):
+        """Filter subtitles and save them to disk.
+
+        Returns a list of filenames where subtitles were saved.
+        """
+        selected = self.select(subtitles, filters)
+        return self.download(selected, videofilename)
+
+    def select(self, subtitles, filters):
+        """Return a list of subtitles that match the filters."""
+        if filters.hardsubs:
+            return []
+
+        selected = []
+        for sub in subtitles:
+            matching_lang = (filters.sublang_matches(sub.lang, '') or
+                             filters.sublang == 'all')
+            if sub.url and matching_lang:
+                selected.append(sub)
+
+        if selected and filters.sublang != 'all':
+            selected = selected[:1]
+
+        return selected
+
+    def download(self, subtitles, videofilename):
+        """Download each subtitle and save them to disk.
+
+        Returns a list of filenames where the subtitles were saved.
+        """
+        basename = os.path.splitext(videofilename)[0]
+        subtitlefiles = []
+        for sub in subtitles:
+            filename = basename + '.' + sub.lang + '.srt'
+            if os.path.isfile(filename):
+                logger.debug('Subtitle file {} already exists, skipping'
+                             .format(filename))
+            else:
+                try:
+                    download_to_file(sub.url, filename)
+                    self.add_BOM(filename)
+                    logger.info('Subtitles saved to ' + filename)
+                    subtitlefiles.append(filename)
+                except IOError:
+                    logger.exception('Failed to download subtitles '
+                                     'at %s' % sub.url)
+        return subtitlefiles
+
+    def add_BOM(self, filename):
+        """Add byte-order mark into a file.
+
+        Assumes (but does not check!) that the file is UTF-8 encoded.
+        """
+        enc = sys.getfilesystemencoding()
+        encoded_filename = filename.encode(enc, 'replace')
+
+        with open(encoded_filename, 'rb') as infile:
+            content = infile.read()
+            if content.startswith(codecs.BOM_UTF8):
+                return
+
+        with open(encoded_filename, 'wb') as outfile:
+            outfile.write(codecs.BOM_UTF8)
+            outfile.write(content)
+
+
 class YleDlDownloader(object):
-    def __init__(self, backends):
+    def __init__(self, backends, subtitle_downloader=SubtitleDownloader()):
         self.backends = backends
+        self.subtitle_downloader = subtitle_downloader
 
     def download_episodes(self, clips, io, filters, postprocess_command):
         def download(clip, stream):
@@ -32,9 +100,10 @@ class YleDlDownloader(object):
             clip_title = clip.title or 'ylestream'
             outputfile = downloader.output_filename(clip_title, io)
             downloader.warn_on_unsupported_feature(io)
-            selected_subtitles = self.select_subtitles(clip.subtitles, filters)
-            subtitlefiles = \
-                self.download_subtitles(selected_subtitles, outputfile)
+
+            subtitlefiles = self.subtitle_downloader.select_and_download(
+                clip.subtitles, outputfile, filters)
+
             dl_result = downloader.save_stream(clip_title, io)
             if dl_result == RD_SUCCESS:
                 self.postprocess(postprocess_command, outputfile,
@@ -52,7 +121,7 @@ class YleDlDownloader(object):
                              'supported.' % clip.webpage)
                 return RD_FAILED
             dl.warn_on_unsupported_feature(io)
-            subtitles = self.select_subtitles(clip.subtitles, filters)
+            subtitles = self.subtitle_downloader.select(clip.subtitles, filters)
             subtitle_url = subtitles[0].url if subtitles else None
             return dl.pipe(io, subtitle_url)
 
@@ -153,58 +222,6 @@ class YleDlDownloader(object):
         else:
             stream = None
         return stream
-
-    def select_subtitles(self, subtitles, filters):
-        if filters.hardsubs:
-            return []
-
-        selected = []
-        for sub in subtitles:
-            matching_lang = (filters.sublang_matches(sub.lang, '') or
-                             filters.sublang == 'all')
-            if sub.url and matching_lang:
-                selected.append(sub)
-
-        if selected and filters.sublang != 'all':
-            selected = selected[:1]
-
-        return selected
-
-    def download_subtitles(self, subtitles, videofilename):
-        basename = os.path.splitext(videofilename)[0]
-        subtitlefiles = []
-        for sub in subtitles:
-            filename = basename + '.' + sub.lang + '.srt'
-            if os.path.isfile(filename):
-                logger.debug('Subtitle file {} already exists, skipping'
-                             .format(filename))
-            else:
-                try:
-                    download_to_file(sub.url, filename)
-                    self.add_BOM(filename)
-                    logger.info('Subtitles saved to ' + filename)
-                    subtitlefiles.append(filename)
-                except IOError:
-                    logger.exception('Failed to download subtitles '
-                                     'at %s' % sub.url)
-        return subtitlefiles
-
-    def add_BOM(self, filename):
-        """Add byte-order mark into a file.
-
-        Assumes (but does not check!) that the file is UTF-8 encoded.
-        """
-        enc = sys.getfilesystemencoding()
-        encoded_filename = filename.encode(enc, 'replace')
-
-        with open(encoded_filename, 'rb') as infile:
-            content = infile.read()
-            if content.startswith(codecs.BOM_UTF8):
-                return
-
-        with open(encoded_filename, 'wb') as outfile:
-            outfile.write(codecs.BOM_UTF8)
-            outfile.write(content)
 
     def postprocess(self, postprocess_command, videofile, subtitlefiles):
         if postprocess_command:
