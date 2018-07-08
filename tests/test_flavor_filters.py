@@ -2,58 +2,65 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import pytest
-from yledl.downloaders import filter_flavors
+from yledl import YleDlDownloader, StreamFilters, BackendFactory
+from yledl.extractors import StreamFlavor
 
 
 flavors = [
-    {"id": 1, "bitrate": 190, "width": 224, "height": 126},
+    StreamFlavor(streams=[1], bitrate=190, width=224, height=126, media_type=''),
 
-    {"id": 5, "bitrate": 1506, "width": 1280, "height": 720},
-    {"id": 6, "bitrate": 2628, "width": 1280, "height": 720},
-    {"id": 7, "bitrate": 4128, "width": 1920, "height": 1080},
+    StreamFlavor(streams=[5], bitrate=1506, width=1280, height=720, media_type=''),
+    StreamFlavor(streams=[6], bitrate=2628, width=1280, height=720, media_type=''),
+    StreamFlavor(streams=[7], bitrate=4128, width=1920, height=1080, media_type=''),
 
-    {"id": 4, "bitrate": 964, "width": 640, "height": 360},
-    {"id": 3, "bitrate": 668, "width": 640, "height": 360},
-    {"id": 2, "bitrate": 469, "width": 640, "height": 360}
+    StreamFlavor(streams=[4], bitrate=964, width=640, height=360, media_type=''),
+    StreamFlavor(streams=[3], bitrate=668, width=640, height=360, media_type=''),
+    StreamFlavor(streams=[2], bitrate=469, width=640, height=360, media_type='')
 ]
 
 
+def filter_flavors(flavors, max_height, max_bitrate):
+    backends = [BackendFactory.ADOBEHDSPHP]
+    filters = StreamFilters(maxheight=max_height, maxbitrate=max_bitrate)
+    return YleDlDownloader(backends).select_flavor(flavors, filters)
+
+
 def test_empty_input():
-    assert filter_flavors([], None, None) == {}
-    assert filter_flavors([], 720, None) == {}
-    assert filter_flavors([], None, 5000) == {}
-    assert filter_flavors([], 720, 5000) == {}
+    assert filter_flavors([], None, None) == None
+    assert filter_flavors([], 720, None) == None
+    assert filter_flavors([], None, 5000) == None
+    assert filter_flavors([], 720, 5000) == None
 
 
 def test_no_filters():
-    assert filter_flavors(flavors, None, None)['id'] == 7
+    assert filter_flavors(flavors, None, None).streams == [7]
 
 
 def test_bitrate_filter():
-    assert filter_flavors(flavors, None, 10)['id'] == 1
-    assert filter_flavors(flavors, None, 200)['id'] == 1
-    assert filter_flavors(flavors, None, 963)['id'] == 3
-    assert filter_flavors(flavors, None, 964)['id'] == 4
-    assert filter_flavors(flavors, None, 1000)['id'] == 4
-    assert filter_flavors(flavors, None, 5000)['id'] == 7
+    assert filter_flavors(flavors, None, 10).streams == [1]
+    assert filter_flavors(flavors, None, 200).streams == [1]
+    assert filter_flavors(flavors, None, 963).streams == [3]
+    assert filter_flavors(flavors, None, 964).streams == [4]
+    assert filter_flavors(flavors, None, 1000).streams == [4]
+    assert filter_flavors(flavors, None, 5000).streams == [7]
 
 
 def test_resolution_filter():
-    assert filter_flavors(flavors, 100, None)['id'] == 1
-    assert filter_flavors(flavors, 480, None)['id'] == 2
-    assert filter_flavors(flavors, 719, None)['id'] == 2
-    assert filter_flavors(flavors, 720, None)['id'] == 5
-    assert filter_flavors(flavors, 1080, None)['id'] == 7
-    assert filter_flavors(flavors, 2160, None)['id'] == 7
+    assert filter_flavors(flavors, 100, None).streams == [1]
+    assert filter_flavors(flavors, 480, None).streams == [2]
+    assert filter_flavors(flavors, 719, None).streams == [2]
+    assert filter_flavors(flavors, 720, None).streams == [5]
+    assert filter_flavors(flavors, 1080, None).streams == [7]
+    assert filter_flavors(flavors, 2160, None).streams == [7]
 
 
 def test_combined_filters():
-    assert filter_flavors(flavors, 10, 10)['id'] == 1
-    assert filter_flavors(flavors, 200, 10)['id'] == 1
-    assert filter_flavors(flavors, 10, 200)['id'] == 1
-    assert filter_flavors(flavors, 360, 400)['id'] == 1
-    assert filter_flavors(flavors, 360, 650)['id'] == 2
-    assert filter_flavors(flavors, 360, 700)['id'] == 3
-    assert filter_flavors(flavors, 360, 5000)['id'] == 4
-    assert filter_flavors(flavors, 720, 200)['id'] == 1
-    assert filter_flavors(flavors, 2160, 1506)['id'] == 5
+    assert filter_flavors(flavors, 10, 10).streams == [1]
+    assert filter_flavors(flavors, 200, 10).streams == [1]
+    assert filter_flavors(flavors, 10, 200).streams == [1]
+    assert filter_flavors(flavors, 360, 400).streams == [1]
+    assert filter_flavors(flavors, 360, 650).streams == [2]
+    assert filter_flavors(flavors, 360, 700).streams == [3]
+    assert filter_flavors(flavors, 360, 5000).streams == [4]
+    assert filter_flavors(flavors, 720, 200).streams == [1]
+    assert filter_flavors(flavors, 2160, 1506).streams == [5]

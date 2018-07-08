@@ -13,6 +13,7 @@ import subprocess
 import sys
 from builtins import str
 from future.moves.urllib.error import HTTPError
+from future.utils import python_2_unicode_compatible
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import yledl_user_agent
@@ -634,3 +635,37 @@ class FallbackBackend(object):
                 return latest_result
 
         return latest_result
+
+
+@python_2_unicode_compatible
+class BackendFactory(object):
+    ADOBEHDSPHP = 'adobehdsphp'
+    YOUTUBEDL = 'youtubedl'
+
+    @staticmethod
+    def is_valid_hds_backend(hds_backend):
+        return (hds_backend == BackendFactory.ADOBEHDSPHP or
+                hds_backend == BackendFactory.YOUTUBEDL)
+
+    @staticmethod
+    def parse_backends(backend_names):
+        backends = []
+        for bn in backend_names:
+            if not BackendFactory.is_valid_hds_backend(bn):
+                logger.warning('Invalid backend: ' + bn)
+                continue
+
+            backends.append(BackendFactory(bn))
+        return backends
+
+    def __init__(self, hds_backend):
+        self.hds_backend = hds_backend
+
+    def __str__(self):
+        return 'HDS backend: %s' % self.hds_backend
+
+    def hds(self):
+        if self.hds_backend == self.YOUTUBEDL:
+            return YoutubeDLHDSBackend
+        else:
+            return HDSBackend

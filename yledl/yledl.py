@@ -31,11 +31,13 @@ import codecs
 import logging
 import argparse
 from future.moves.urllib.parse import urlparse, urlunparse, quote
-from .version import version
-from .utils import print_enc, which
-from .downloaders import downloader_factory, StreamFilters, IOContext, \
-    DownloadLimits, BackendFactory
+from .backends import BackendFactory
+from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
+from .extractors import extractor_factory
+from .io import StreamFilters, IOContext, DownloadLimits
+from .utils import print_enc, which
+from .version import version
 
 
 def yledl_logger():
@@ -227,24 +229,27 @@ def download(url, action, io, stream_filters, backends, postprocess_command):
     RD_INCOMPLETE if a stream was downloaded partially but the
     download was interrupted.
     """
-    dl = downloader_factory(url, backends)
-    if not dl:
+    extractor = extractor_factory(url, stream_filters)
+    if not extractor:
         logger.error('Unsupported URL %s.' % url)
         logger.error('Is this really a Yle video page?')
         return RD_FAILED
 
+    clips = extractor.extract(url)
+    dl = YleDlDownloader(backends)
+
     if action == StreamAction.PRINT_STREAM_URL:
-        return dl.print_urls(url, stream_filters)
+        return dl.print_urls(clips, stream_filters)
     elif action == StreamAction.PRINT_EPISODE_PAGES:
-        return dl.print_episode_pages(url, stream_filters)
+        return dl.print_episode_pages(clips, stream_filters)
     elif action == StreamAction.PRINT_STREAM_TITLE:
-        return dl.print_titles(url, io, stream_filters)
+        return dl.print_titles(clips, io, stream_filters)
     elif action == StreamAction.PRINT_METADATA:
-        return dl.print_metadata(url, stream_filters)
+        return dl.print_metadata(clips, stream_filters)
     elif action == StreamAction.PIPE:
-        return dl.pipe(url, io, stream_filters)
+        return dl.pipe(clips, io, stream_filters)
     else:
-        return dl.download_episodes(url, io, stream_filters,
+        return dl.download_episodes(clips, io, stream_filters,
                                     postprocess_command)
 
 

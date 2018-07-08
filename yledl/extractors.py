@@ -10,6 +10,7 @@ import time
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree
+from .io import normalize_language_code
 from .streams import *
 
 try:
@@ -45,16 +46,6 @@ def extractor_factory(url, filters):
         return AreenaExtractor()
     else:
         return None
-
-
-def normalize_language_code(lang, subtype):
-    if lang == 'all' or lang == 'none':
-        return lang
-    elif subtype == 'hearingimpaired':
-        return lang + 'h'
-    else:
-        language_map = {'fi': 'fin', 'sv': 'swe'}
-        return language_map.get(lang, lang)
 
 
 class JSONP(object):
