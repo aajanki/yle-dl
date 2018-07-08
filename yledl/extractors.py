@@ -6,6 +6,7 @@ import base64
 import json
 import logging
 import re
+import time
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree
@@ -22,8 +23,28 @@ except ImportError:
 logger = logging.getLogger('yledl')
 
 
-def extractor_factory(url):
-    return AreenaExtractor()
+def extractor_factory(url, filters):
+    if re.match(r'^https?://yle\.fi/aihe/', url) or \
+       re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url):
+        return ElavaArkistoExtractor()
+    elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
+        return ArkivetExtractor()
+    elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
+          re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
+        return AreenaLiveRadioExtractor(filters)
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/30-901\?', url):
+        # Football World Cup 2018
+        return AreenaSportsExtractor()
+    elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url) or
+          re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/[-0-9]+\?play=yle-[-a-z0-9]+', url)):
+        return AreenaLiveTVExtractor(filters)
+    elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
+        return YleUutisetExtractor()
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
+            re.match(r'^https?://yle\.fi/', url):
+        return AreenaExtractor()
+    else:
+        return None
 
 
 def normalize_language_code(lang, subtype):
@@ -376,23 +397,11 @@ class ClipExtractor(object):
         raise NotImplementedError("extract_clip must be overridden")
 
 
-class AreenaParsers(object):
-    @staticmethod
-    def program_id_from_url(url):
-        parsed = urlparse(url)
-        query_dict = parse_qs(parsed.query)
-        play = query_dict.get('play')
-        if parsed.path.startswith('/tv/ohjelmat/') and play:
-            return play[0]
-        else:
-            return parsed.path.split('/')[-1]
-
-
 class AreenaPlaylist(object):
     def get_playlist(self, url):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
-        series_id = AreenaParsers.program_id_from_url(url)
+        series_id = self.program_id_from_url(url)
         if not self.is_tv_ohjelmat_url(url):
             playlist = self.get_playlist_old_style_url(url, series_id)
 
@@ -406,6 +415,15 @@ class AreenaPlaylist(object):
             playlist = [url]
 
         return playlist
+
+    def program_id_from_url(self, url):
+        parsed = urlparse(url)
+        query_dict = parse_qs(parsed.query)
+        play = query_dict.get('play')
+        if parsed.path.startswith('/tv/ohjelmat/') and play:
+            return play[0]
+        else:
+            return parsed.path.split('/')[-1]
 
     def is_tv_ohjelmat_url(self, url):
         return urlparse(url).path.startswith('/tv/ohjelmat/')
@@ -474,13 +492,16 @@ class AreenaPlaylist(object):
         return len(body) != 0
 
 
+### Extract streams from an Areena webpage ###
+
+
 class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
 
     def extract_clip(self, clip_url):
-        pid = AreenaParsers.program_id_from_url(clip_url)
+        pid = self.program_id_from_url(clip_url)
         program_info = self.program_info_for_pid(pid)
         return self.create_clip_or_failure(pid, program_info, clip_url)
 
@@ -515,6 +536,13 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
 
     def flavors_by_program_info(self, program_id, program_info, pageurl):
         media_id = self.program_media_id(program_info)
+        if media_id:
+            return self.flavors_by_media_id(program_info, media_id,
+                                            program_id, pageurl)
+        else:
+            return None
+
+    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
         is_html5 = media_id.startswith('29-')
         proto = 'HLS' if is_html5 else 'HDS'
         medias = self.akamai_medias(program_id, media_id, program_info)
@@ -743,3 +771,268 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
     def fin_or_swe_text(self, alternatives):
         return self.localized_text(alternatives, 'fin') or \
             self.localized_text(alternatives, 'swe')
+
+
+### Areena, full HD, 50 Hz ###
+
+
+class AreenaSportsExtractor(AreenaExtractor):
+    def program_info_url(self, pid):
+        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
+            'language=fin&ssl=true&countryCode=FI&app_id=player_static_prod' \
+            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
+
+    def program_media_id(self, program_info):
+        return self._event_data(program_info).get('media_id')
+
+    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
+        if media_id.startswith('55-'):
+            return self.full_hd_flavors(program_info)
+        else:
+            return super(AreenaSportsExtractor, self) \
+                .flavors_by_media_id(program_info, media_id,
+                                     program_id, pageurl)
+
+    def full_hd_flavors(self, program_info):
+        ondemand = self._event_data(program_info)
+        manifesturl = ondemand.get('manifest_url')
+        if manifesturl:
+            return [
+                StreamFlavor(
+                    media_type='video',
+                    streams=[SportsStreamUrl(manifesturl)]
+                )
+            ]
+        else:
+            return [] # FIXME: InvalidFlavors('Manifest URL is missing')
+
+    def program_info_duration_seconds(self, program_info):
+        event = self._event_data(program_info)
+        return event.get('duration', {}).get('duration_in_seconds')
+
+    def program_title(self, program_info):
+        ondemand = self._event_data(program_info)
+        titleObject = ondemand.get('title')
+        return (self.fin_or_swe_text(titleObject) or 'areena').strip()
+
+    def _event_data(self, program_info):
+        data = program_info.get('data', {})
+        return data.get('ongoing_ondemand') or data.get('ongoing_event', {})
+
+
+### Areena Live TV ###
+
+
+class AreenaLiveTVExtractor(AreenaExtractor):
+    # TODO: get rid of the constructor and the filters argument
+    def __init__(self, filters):
+        AreenaExtractor.__init__(self)
+        self.outlet_sort_key = self.create_outlet_sort_key(filters)
+
+    def program_info_url(self, program_id):
+        quoted_pid = quote_plus(program_id)
+        return 'https://player.yle.fi/api/v1/services.jsonp?' \
+            'id=%s&callback=yleEmbed.simulcastJsonpCallback&' \
+            'region=fi&instance=1&dataId=%s' % \
+            (quoted_pid, quoted_pid)
+
+    def program_media_id(self, program_info):
+        outlets = program_info.get('data', {}).get('outlets', [{}])
+        sorted_outlets = sorted(outlets, key=self.outlet_sort_key)
+        selected_outlet = sorted_outlets[0]
+        return selected_outlet.get('outlet', {}).get('media', {}).get('id')
+
+    def create_outlet_sort_key(self, filters):
+        preferred_ordering = {"fi": 1, None: 2, "sv": 3}
+
+        def key_func(outlet):
+            language = outlet.get("outlet", {}).get("language", [None])[0]
+            if filters.audiolang_matches(language):
+                return 0  # Prefer the language selected by the user
+            else:
+                return preferred_ordering.get(language) or 99
+
+        return key_func
+    
+    def program_title(self, program_info):
+        service = self._service_info(program_info)
+        title = self.fi_or_sv_text(service.get('title')) or 'areena'
+        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
+        return title
+
+    def available_at_region(self, program_info):
+        return self._service_info(program_info).get('region')
+
+    def _service_info(self, program_info):
+        return program_info.get('data', {}).get('service', {})
+
+
+### Areena live radio ###
+
+
+class AreenaLiveRadioExtractor(AreenaLiveTVExtractor):
+    def get_playlist(self, url):
+        return [url]
+
+    def program_id_from_url(self, url):
+        parsed = urlparse(url)
+        query_dict = parse_qs(parsed.query)
+        if query_dict.get('_c'):
+            return query_dict.get('_c')[0]
+        else:
+            return parsed.path.split('/')[-1]
+
+    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
+        mw = self.load_mwembed(media_id, program_id, pageurl)
+        package_data = self.package_data_from_mwembed(mw)
+        streams = package_data.get('entryResult', {}) \
+                              .get('meta', {}) \
+                              .get('liveStreamConfigurations', [])
+        if streams and 'url' in streams[0]:
+            hls_url = streams[0].get('url')
+            return [
+                StreamFlavor(
+                    media_type='video',
+                    streams=[KalturaLiveAudioStreamUrl(hls_url)]
+                )
+            ]
+        else:
+            return []
+
+    def program_info_url(self, pid):
+        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
+            'ssl=true&countryCode=FI&app_id=player_static_prod' \
+            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
+
+    def program_media_id(self, program_info):
+        return self._channel_data(program_info).get('media_id')
+
+    def program_title(self, program_info):
+        titles = self._channel_data(program_info).get('title', {})
+        title = self.fin_or_swe_text(titles) or 'areena'
+        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
+        return title
+
+    def _channel_data(self, program_info):
+        return program_info.get('data', {}).get('ongoing_channel', {})
+
+
+### Elava Arkisto ###
+
+
+class ElavaArkistoExtractor(AreenaExtractor):
+    def get_playlist(self, url):
+        tree = download_html_tree(url)
+        if tree is None:
+            return []
+
+        ids = tree.xpath("//article[@id='main-content']//div/@data-id")
+
+        # TODO: The 26- IDs will point to non-existing pages. This
+        # only shows up on --showepisodepage, everything else works.
+        return ['https://areena.yle.fi/' + x for x in ids]
+
+    def program_info_url(self, program_id):
+        if program_id.startswith('26-'):
+            did = program_id.split('-')[-1]
+            return ('https://yle.fi/elavaarkisto/embed/%s.jsonp'
+                    '?callback=yleEmbed.eaJsonpCallback'
+                    '&instance=1&id=%s&lang=fi' %
+                    (quote_plus(did), quote_plus(did)))
+        else:
+            return (super(ElavaArkistoExtractor, self)
+                    .program_info_url(program_id))
+
+    def flavors_by_program_info(self, program_id, program_info, pageurl):
+        download_url = program_info.get('downloadUrl')
+        if download_url:
+            stream = HTTPStreamUrl(download_url)
+            return [StreamFlavor(media_type='video', streams=[])]
+        else:
+            return (super(ElavaArkistoExtractor, self)
+                    .flavors_by_program_info(program_id, program_info, pageurl))
+
+    def program_media_id(self, program_info):
+        mediakanta_id = program_info.get('mediakantaId')
+        if mediakanta_id:
+            return '6-' + mediakanta_id
+        else:
+            return (super(ElavaArkistoExtractor, self)
+                    .program_media_id(program_info))
+
+    def program_title(self, program_info):
+        return program_info.get('otsikko') or \
+            program_info.get('title') or \
+            program_info.get('originalTitle') or \
+            super(ElavaArkistoExtractor, self).program_title(program_info) or \
+            'elavaarkisto'
+
+
+### Svenska Arkivet ###
+
+
+class ArkivetExtractor(AreenaExtractor):
+    def get_playlist(self, url):
+        # The note about '26-' in ElavaArkistoDownloader applies here
+        # as well
+        ids = self.get_dataids(url)
+        return ['https://areena.yle.fi/' + x for x in ids]
+
+    def program_info_url(self, program_id):
+        if program_id.startswith('26-'):
+            plain_id = program_id.split('-')[-1]
+            return 'https://player.yle.fi/api/v1/arkivet.jsonp?' \
+                'id=%s&callback=yleEmbed.eaJsonpCallback&instance=1&lang=sv' % \
+                (quote_plus(plain_id))
+        else:
+            return super(ArkivetExtractor, self).program_info_url(program_id)
+
+    def program_media_id(self, program_info):
+        mediakanta_id = program_info.get('data', {}) \
+                                    .get('ea', {}) \
+                                    .get('mediakantaId')
+        if mediakanta_id:
+            return "6-" + mediakanta_id
+        else:
+            return super(ArkivetExtractor, self).program_media_id(program_info)
+
+    def program_title(self, program_info):
+        ea = program_info.get('data', {}).get('ea', {})
+        return (ea.get('otsikko') or
+                ea.get('title') or
+                ea.get('originalTitle') or
+                super(ArkivetExtractor, self).program_title(program_info) or
+                'yle-arkivet')
+
+    def get_dataids(self, url):
+        tree = download_html_tree(url)
+        if tree is None:
+            return []
+
+        dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
+        dataids = [str(d) for d in dataids]
+        return [d if '-' in d else '1-' + d for d in dataids]
+
+
+### News clips at the Yle news site ###
+
+
+class YleUutisetExtractor(AreenaExtractor):
+    def get_playlist(self, url):
+        html = download_html_tree(url)
+        if html is None:
+            return None
+
+        divs = html.xpath('//div[contains(@class, "yle_areena_player") and @data-id]')
+        dataids = [x.get('data-id') for x in divs]
+
+        logger.debug('Found Areena data IDs: {}'.format(','.join(dataids)))
+
+        return [self.id_to_areena_url(id) for id in dataids]
+
+    def id_to_areena_url(self, data_id):
+        if '-' in data_id:
+            areena_id = data_id
+        else:
+            areena_id = '1-' + data_id
+        return 'https://areena.yle.fi/' + areena_id
