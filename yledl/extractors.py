@@ -878,14 +878,20 @@ class AreenaLiveRadioExtractor(AreenaLiveTVExtractor):
     def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
         mw = self.load_mwembed(media_id, program_id, pageurl)
         package_data = self.package_data_from_mwembed(mw)
-        streams = package_data.get('entryResult', {}) \
-                              .get('meta', {}) \
-                              .get('liveStreamConfigurations', [])
+        meta = package_data.get('entryResult', {}).get('meta', {})
+        streams = meta.get('liveStreamConfigurations', [])
         if streams and 'url' in streams[0]:
+            bitrate = None
+            bitrates = meta.get('bitrates', [])
+            if bitrates:
+                bitrate = bitrates[0].get('bitrate')
+
             hls_url = streams[0].get('url')
+
             return [
                 StreamFlavor(
                     media_type='audio',
+                    bitrate=bitrate,
                     streams=[KalturaLiveAudioStreamUrl(hls_url)]
                 )
             ]
