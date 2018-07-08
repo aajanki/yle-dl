@@ -343,9 +343,9 @@ class Clip(object):
 @attr.s
 class StreamFlavor(object):
     media_type = attr.ib()
-    height = attr.ib(converter=attr.converters.optional(int))
-    width = attr.ib(converter=attr.converters.optional(int))
-    bitrate = attr.ib(converter=attr.converters.optional(int))
+    height = attr.ib(default=None, converter=attr.converters.optional(int))
+    width = attr.ib(default=None, converter=attr.converters.optional(int))
+    bitrate = attr.ib(default=None, converter=attr.converters.optional(int))
     streams = attr.ib(default=attr.Factory(list))
 
 

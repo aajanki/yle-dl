@@ -115,23 +115,16 @@ def incomplete_flavors_clip(state_dict):
         flavors=[
             StreamFlavor(
                 media_type='video',
-                height=None,
-                width=None,
-                bitrate=None,
                 streams=[MockStream(state_dict, '1')]
             ),
             StreamFlavor(
                 media_type='video',
                 height=360,
                 width=640,
-                bitrate=None,
                 streams=[MockStream(state_dict, '2')]
             ),
             StreamFlavor(
                 media_type='video',
-                height=None,
-                width=None,
-                bitrate=None,
                 streams=[MockStream(state_dict, '3')]
             )
         ],
