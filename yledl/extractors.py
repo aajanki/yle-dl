@@ -885,7 +885,7 @@ class AreenaLiveRadioExtractor(AreenaLiveTVExtractor):
             hls_url = streams[0].get('url')
             return [
                 StreamFlavor(
-                    media_type='video',
+                    media_type='audio',
                     streams=[KalturaLiveAudioStreamUrl(hls_url)]
                 )
             ]
