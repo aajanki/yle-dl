@@ -184,9 +184,13 @@ class YleDlDownloader(object):
 
         filtered = self.apply_hard_subtitle_filter(flavors, filters)
         filtered = self.apply_resolution_filters(filtered, filters)
-        selected = (filtered or flavors)[-1]
 
-        logger.debug('Selected flavor: {}'.format(selected))
+        if filtered:
+            selected = filtered[-1]
+            logger.debug('Selected flavor: {}'.format(selected))
+        else:
+            selected = None
+
         return selected
 
     def apply_hard_subtitle_filter(self, flavors, filters):

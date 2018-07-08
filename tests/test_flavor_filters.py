@@ -82,3 +82,7 @@ def test_hard_subtitle_filters():
     assert filter_flavors(hard_sub_flavors).streams == ['none']
     assert filter_flavors(hard_sub_flavors, hard_sub='fi').streams == ['fi']
     assert filter_flavors(hard_sub_flavors, hard_sub='sv').streams == ['sv']
+
+
+def test_hard_subtitle_filters_no_match():
+    assert filter_flavors(flavors, hard_sub='fi') == None
