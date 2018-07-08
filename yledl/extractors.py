@@ -237,12 +237,13 @@ class AkamaiFlavorParser(object):
 
     def rtmp_flavors(self, media, media_url, pageurl):
         streams = [Areena2014RTMPStreamUrl(pageurl, media_url)]
+        bitrate = media.get('bitrate', 0) + media.get('audioBitrateKbps', 0)
         return [
             StreamFlavor(
                 media_type=Flavors.media_type(media),
                 height=media.get('height'),
                 width=media.get('width'),
-                bitrate=media.get('bitrate'),
+                bitrate=bitrate,
                 streams=streams)
         ]
 
