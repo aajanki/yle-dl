@@ -313,7 +313,7 @@ class Clip(object):
     def metadata(self):
         flavors_meta = sorted(
             [self.flavor_meta(f) for f in self.flavors],
-            key=lambda x: x['bitrate'])
+            key=lambda x: x.get('bitrate', 0))
 
         meta = [
             ('webpage', self.webpage),
@@ -332,7 +332,7 @@ class Clip(object):
             ('media_type', flavor.media_type),
             ('height', flavor.height),
             ('width', flavor.width),
-            ('bitrate', int(flavor.bitrate))
+            ('bitrate', flavor.bitrate)
         ]
         return self.ignore_none_values(meta)
 

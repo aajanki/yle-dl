@@ -109,6 +109,40 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
     )
 
 
+def incomplete_flavors_clip(state_dict):
+    return Clip(
+        webpage='https://areena.yle.fi/1-1234567',
+        flavors=[
+            StreamFlavor(
+                media_type='video',
+                height=None,
+                width=None,
+                bitrate=None,
+                streams=[MockStream(state_dict, '1')]
+            ),
+            StreamFlavor(
+                media_type='video',
+                height=360,
+                width=640,
+                bitrate=None,
+                streams=[MockStream(state_dict, '2')]
+            ),
+            StreamFlavor(
+                media_type='video',
+                height=None,
+                width=None,
+                bitrate=None,
+                streams=[MockStream(state_dict, '3')]
+            )
+        ],
+        title='Test clip: S01E01-2018-07-01T00:00',
+        duration_seconds=None,
+        region='Finland',
+        publish_timestamp=None,
+        expiration_timestamp=None
+    )
+
+
 def failed_clip():
     return FailedClip('https://areena.yle.fi/1-1234567', 'Failed test clip')
 
@@ -139,6 +173,17 @@ def test_download_success(simple):
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
     assert state['stream_id'] == 'high_quality'
+
+
+def test_download_incomplete_metadata(simple):
+    state = {}
+    clips = [incomplete_flavors_clip(state)]
+    res = simple.downloader.download_episodes(
+        clips, simple.io, simple.filters, None)
+
+    assert res == RD_SUCCESS
+    assert state['command'] == 'download'
+    assert state['stream_id'] == '3'
 
 
 def test_download_filter_resolution(simple):
@@ -280,6 +325,40 @@ def test_print_metadata(simple):
             'region': 'Finland',
             'publish_timestamp': '2018-07-01T00:00:00+03:00',
             'expiration_timestamp': '2019-01-01T00:00:00+03:00'
+        }
+    ]
+
+
+def test_print_metadata_incomplete(simple):
+    state = {}
+    clips = [incomplete_flavors_clip(state)]
+
+    res = None
+    with Capturing() as output:
+        res = simple.downloader.print_metadata(clips, simple.filters)
+    metadata = json.loads('\n'.join(output))
+
+    assert res == RD_SUCCESS
+    assert 'command' not in state
+    assert metadata == [
+        {
+            'webpage': 'https://areena.yle.fi/1-1234567',
+            'title': 'Test clip: S01E01-2018-07-01T00:00',
+            'flavors': [
+                {
+                    'media_type': 'video'
+                },
+                {
+                    'media_type': 'video',
+                    'height': 360,
+                    'width': 640
+                },
+                {
+                    'media_type': 'video',
+                }
+            ],
+            'region': 'Finland',
+            'subtitles': []
         }
     ]
 
