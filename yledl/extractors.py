@@ -337,6 +337,9 @@ class Clip(object):
 
     def flavor_meta(self, flavor):
         hard_sub_lang = flavor.hard_subtitle and flavor.hard_subtitle.lang
+        if hard_sub_lang:
+            hard_sub_lang = normalize_language_code(hard_sub_lang, None)
+
         meta = [
             ('media_type', flavor.media_type),
             ('height', flavor.height),

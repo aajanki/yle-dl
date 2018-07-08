@@ -297,7 +297,7 @@ def test_print_metadata(simple):
                     'height': 360,
                     'width': 640,
                     'bitrate': 864,
-                    'hard_subtitle_language': 'fi'
+                    'hard_subtitle_language': 'fin'
                 },
                 {
                     'media_type': 'video',
