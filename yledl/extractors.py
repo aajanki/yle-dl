@@ -222,6 +222,12 @@ class AkamaiFlavorParser(object):
 
     def hds_flavors(self, media, media_url, manifest):
         flavors = []
+
+        hard_subtitle = None
+        hard_subtitle_lang = media.get('hardsubtitle', {}).get('lang')
+        if hard_subtitle_lang:
+            hard_subtitle = Subtitle(url=None, lang=hard_subtitle_lang)
+
         for mf in manifest:
             bitrate = mf.get('bitrate')
             flavor_id = mf.get('mediaurl')
@@ -231,7 +237,8 @@ class AkamaiFlavorParser(object):
                 height=mf.get('height'),
                 width=mf.get('width'),
                 bitrate=bitrate,
-                streams=streams))
+                streams=streams,
+                hard_subtitle=hard_subtitle))
 
         return flavors
 
@@ -329,11 +336,13 @@ class Clip(object):
         return self.ignore_none_values(meta)
 
     def flavor_meta(self, flavor):
+        hard_sub_lang = flavor.hard_subtitle and flavor.hard_subtitle.lang
         meta = [
             ('media_type', flavor.media_type),
             ('height', flavor.height),
             ('width', flavor.width),
-            ('bitrate', flavor.bitrate)
+            ('bitrate', flavor.bitrate),
+            ('hard_subtitle_language', hard_sub_lang)
         ]
         return self.ignore_none_values(meta)
 
@@ -348,6 +357,7 @@ class StreamFlavor(object):
     width = attr.ib(default=None, converter=attr.converters.optional(int))
     bitrate = attr.ib(default=None, converter=attr.converters.optional(int))
     streams = attr.ib(default=attr.Factory(list))
+    hard_subtitle = attr.ib(default=None)
 
 
 class FailedFlavor(StreamFlavor):

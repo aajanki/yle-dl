@@ -3,7 +3,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import pytest
 from yledl import YleDlDownloader, StreamFilters, BackendFactory
-from yledl.extractors import StreamFlavor
+from yledl.extractors import StreamFlavor, Subtitle
 
 
 flavors = [
@@ -19,9 +19,21 @@ flavors = [
 ]
 
 
-def filter_flavors(flavors, max_height, max_bitrate):
+hard_sub_flavors = [
+    StreamFlavor(streams=['fi'], bitrate=510, width=640, height=360,
+                 hard_subtitle=Subtitle(url=None, lang='fi'), media_type=''),
+    StreamFlavor(streams=['sv'], bitrate=469, width=640, height=360,
+                 hard_subtitle=Subtitle(url=None, lang='sv'), media_type=''),
+    StreamFlavor(streams=['none'], bitrate=489, width=640, height=360,
+                 media_type='')
+]
+
+
+def filter_flavors(flavors, max_height=None, max_bitrate=None, hard_sub=None):
     backends = [BackendFactory.ADOBEHDSPHP]
-    filters = StreamFilters(maxheight=max_height, maxbitrate=max_bitrate)
+    filters = StreamFilters(maxheight=max_height,
+                            maxbitrate=max_bitrate,
+                            hardsubs=hard_sub)
     return YleDlDownloader(backends).select_flavor(flavors, filters)
 
 
@@ -64,3 +76,9 @@ def test_combined_filters():
     assert filter_flavors(flavors, 360, 5000).streams == [4]
     assert filter_flavors(flavors, 720, 200).streams == [1]
     assert filter_flavors(flavors, 2160, 1506).streams == [5]
+
+
+def test_hard_subtitle_filters():
+    assert filter_flavors(hard_sub_flavors).streams == ['none']
+    assert filter_flavors(hard_sub_flavors, hard_sub='fi').streams == ['fi']
+    assert filter_flavors(hard_sub_flavors, hard_sub='sv').streams == ['sv']

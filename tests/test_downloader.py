@@ -84,6 +84,14 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
             ),
             StreamFlavor(
                 media_type='video',
+                height=360,
+                width=640,
+                bitrate=864,
+                streams=[MockStream(state_dict, 'low_quality_finnish_subs')],
+                hard_subtitle=Subtitle(url=None, lang='fi')
+            ),
+            StreamFlavor(
+                media_type='video',
                 height=720,
                 width=1280,
                 bitrate=1412,
@@ -153,8 +161,7 @@ def simple():
         io=IOContext(destdir='/tmp/'),
         filters=StreamFilters(),
         downloader=YleDlDownloader([BackendFactory.ADOBEHDSPHP],
-                                   MockSubtitleDownloader())
-    )
+                                   MockSubtitleDownloader()))
 
 
 def test_download_success(simple):
@@ -285,6 +292,13 @@ def test_print_metadata(simple):
             'webpage': 'https://areena.yle.fi/1-1234567',
             'title': 'Test clip: S01E01-2018-07-01T00:00',
             'flavors': [
+                {
+                    'media_type': 'video',
+                    'height': 360,
+                    'width': 640,
+                    'bitrate': 864,
+                    'hard_subtitle_language': 'fi'
+                },
                 {
                     'media_type': 'video',
                     'height': 360,

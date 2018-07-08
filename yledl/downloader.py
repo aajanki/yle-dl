@@ -173,6 +173,33 @@ class YleDlDownloader(object):
         if not flavors:
             return None
 
+        logger.debug('Available flavors: {}'.format([{
+            'bitrate': fl.bitrate,
+            'height': fl.height,
+            'width': fl.width,
+            'hard_subtitle': fl.hard_subtitle
+        } for fl in flavors]))
+        logger.debug('max_height: {}, max_bitrate: {}'.format(
+            filters.maxheight, filters.maxbitrate))
+
+        filtered = self.apply_hard_subtitle_filter(flavors, filters)
+        filtered = self.apply_resolution_filters(filtered, filters)
+        selected = (filtered or flavors)[-1]
+
+        logger.debug('Selected flavor: {}'.format(selected))
+        return selected
+
+    def apply_hard_subtitle_filter(self, flavors, filters):
+        if filters.hardsubs:
+            return [
+                fl for fl in flavors
+                if (fl.hard_subtitle and
+                    fl.hard_subtitle.lang == filters.hardsubs)
+            ]
+        else:
+            return [fl for fl in flavors if not fl.hard_subtitle]
+
+    def apply_resolution_filters(self, flavors, filters):
         def sort_max_bitrate(x):
             return x.bitrate or 0
 
@@ -181,14 +208,6 @@ class YleDlDownloader(object):
 
         def sort_max_resolution_max_bitrate(x):
             return (x.height or 0, x.bitrate or 0)
-
-        logger.debug('Available flavors: {}'.format([{
-            'bitrate': fl.bitrate,
-            'height': fl.height,
-            'width': fl.width
-        } for fl in flavors]))
-        logger.debug('max_height: {}, max_bitrate: {}'.format(
-            filters.maxheight, filters.maxbitrate))
 
         filtered = [
             fl for fl in flavors
@@ -210,9 +229,7 @@ class YleDlDownloader(object):
             reverse = filters.maxheight is not None or filters.maxbitrate is not None
             keyfunc = sort_max_bitrate
 
-        selected = sorted(acceptable_flavors, key=keyfunc, reverse=reverse)[-1]
-        logger.debug('Selected flavor: {}'.format(selected))
-        return selected
+        return sorted(acceptable_flavors, key=keyfunc, reverse=reverse)
 
     def select_stream(self, flavors, filters):
         flavor = self.select_flavor(flavors, filters)
