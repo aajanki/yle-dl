@@ -10,6 +10,7 @@ from .utils import print_enc, sane_filename
 from .http import download_to_file
 from .backends import Subprocess
 from .exitcodes import RD_SUCCESS, RD_FAILED
+from .io import normalize_language_code
 
 
 logger = logging.getLogger('yledl')
@@ -198,7 +199,8 @@ class YleDlDownloader(object):
             return [
                 fl for fl in flavors
                 if (fl.hard_subtitle and
-                    fl.hard_subtitle.lang == filters.hardsubs)
+                    normalize_language_code(fl.hard_subtitle.lang, None)
+                    == filters.hardsubs)
             ]
         else:
             return [fl for fl in flavors if not fl.hard_subtitle]
