@@ -6,8 +6,8 @@ import logging
 import os.path
 import xml.dom.minidom
 from future.moves.urllib.parse import urlparse
-from .backends import RTMPBackend, HDSBackend, YoutubeDLHDSBackend, \
-    HLSBackend, HLSAudioBackend, WgetBackend, FallbackBackend, Subprocess
+from .backends import RTMPBackend, HLSBackend, HLSAudioBackend, \
+    WgetBackend, FallbackBackend
 from .http import download_page
 
 

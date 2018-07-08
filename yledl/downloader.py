@@ -9,8 +9,7 @@ import sys
 from .utils import print_enc, sane_filename
 from .http import download_to_file
 from .backends import Subprocess
-from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
-    RD_SUBPROCESS_EXECUTE_FAILED, to_external_rd_code
+from .exitcodes import RD_SUCCESS, RD_FAILED
 
 
 logger = logging.getLogger('yledl')

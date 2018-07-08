@@ -11,7 +11,9 @@ from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree
 from .io import normalize_language_code
-from .streams import *
+from .streams import Areena2014HDSStreamUrl, Areena2014RTMPStreamUrl
+from .streams import KalturaStreamUrl, KalturaLiveAudioStreamUrl
+from .streams import HTTPStreamUrl, SportsStreamUrl, InvalidStreamUrl
 
 try:
     # pycryptodome
@@ -535,7 +537,6 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
 
     def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
         is_html5 = media_id.startswith('29-')
-        proto = 'HLS' if is_html5 else 'HDS'
         medias = self.akamai_medias(program_id, media_id, program_info)
 
         if media_id and is_html5:
@@ -938,7 +939,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
         download_url = program_info.get('downloadUrl')
         if download_url:
             stream = HTTPStreamUrl(download_url)
-            return [StreamFlavor(media_type='video', streams=[])]
+            return [StreamFlavor(media_type='video', streams=[stream])]
         else:
             return (super(ElavaArkistoExtractor, self)
                     .flavors_by_program_info(program_id, program_info, pageurl))
