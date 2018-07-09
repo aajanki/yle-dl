@@ -79,6 +79,8 @@ def test_areena_series_urls():
     assert all(['manifest.f4m' in url for url in urls])
 
 
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
+                    reason="Test works only in Finland")
 def test_areena_live_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/tv/suorat/yle-tv1')
 
@@ -97,6 +99,8 @@ def test_areena_live_metadata():
     assert metadata[0]['region'] == 'Finland'
 
 
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
+                    reason="Test works only in Finland")
 def test_areena_ohjelmat_embedded_live_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/tv/ohjelmat/30-595?play=yle-tv2')
 
