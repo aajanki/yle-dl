@@ -7,7 +7,7 @@ import os.path
 import xml.dom.minidom
 from future.moves.urllib.parse import urlparse
 from .backends import RTMPBackend, HLSBackend, HLSAudioBackend, \
-    WgetBackend, FallbackBackend
+    HDSBackend, YoutubeDLHDSBackend, WgetBackend
 from .http import download_page
 
 
@@ -33,7 +33,7 @@ class AreenaStreamBase(object):
         return ''
 
 
-class Areena2014HDSStreamUrl(AreenaStreamBase):
+class AreenaHDSStreamUrl(AreenaStreamBase):
     def __init__(self, hds_url, bitrate, flavor_id):
         AreenaStreamBase.__init__(self)
 
@@ -44,14 +44,15 @@ class Areena2014HDSStreamUrl(AreenaStreamBase):
     def to_url(self):
         return self.hds_url
 
-    def create_downloader(self, backends):
-        downloaders = []
-        for backend in backends:
-            dl_constructor = backend.hds()
-            downloaders.append(dl_constructor(self.hds_url, self.bitrate,
-                                              self.flavor_id, self.ext))
+    def create_downloader(self):
+        return HDSBackend(self.hds_url, self.bitrate,
+                          self.flavor_id, self.ext)
 
-        return FallbackBackend(downloaders)
+
+class AreenaYoutubeDLHDSStreamUrl(AreenaHDSStreamUrl):
+    def create_downloader(self):
+        return YoutubeDLHDSBackend(self.hds_url, self.bitrate,
+                                   self.flavor_id, self.ext)
 
 
 class Areena2014RTMPStreamUrl(AreenaStreamBase):
@@ -85,7 +86,7 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
         else:
             return []
 
-    def create_downloader(self, backends):
+    def create_downloader(self):
         args = self.to_rtmpdump_args()
         if not args:
             return None
@@ -231,11 +232,11 @@ class HTTPStreamUrl(object):
     def to_url(self):
         return self.url
 
-    def create_downloader(self, backends):
+    def create_downloader(self):
         return WgetBackend(self.url, self.ext)
 
 
-class KalturaStreamUrl(HTTPStreamUrl):
+class KalturaHLSStreamUrl(HTTPStreamUrl):
     def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
         self.ext = ext
         self.stream_format = stream_format
@@ -250,14 +251,8 @@ class KalturaStreamUrl(HTTPStreamUrl):
         else:
             return self.http_manifest_url
 
-    def create_downloader(self, backends):
-        if self.stream_format == 'url':
-            return FallbackBackend([
-                WgetBackend(self.http_manifest_url, self.ext),
-                HLSBackend(self.hls_manifest_url, self.ext)
-            ])
-        else:
-            return HLSBackend(self.hls_manifest_url, self.ext)
+    def create_downloader(self):
+        return HLSBackend(self.hls_manifest_url, self.ext)
 
     def _manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
         return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
@@ -273,12 +268,17 @@ class KalturaStreamUrl(HTTPStreamUrl):
                     ext=manifest_ext))
 
 
+class KalturaWgetStreamUrl(KalturaHLSStreamUrl):
+    def create_downloader(self):
+        return WgetBackend(self.http_manifest_url, self.ext)
+
+
 class KalturaLiveAudioStreamUrl(HTTPStreamUrl):
     def __init__(self, hlsurl):
         super(KalturaLiveAudioStreamUrl, self).__init__(hlsurl)
         self.ext = '.mp3'
 
-    def create_downloader(self, backends):
+    def create_downloader(self):
         return HLSAudioBackend(self.url, self.ext)
 
 
@@ -287,7 +287,7 @@ class SportsStreamUrl(HTTPStreamUrl):
         super(SportsStreamUrl, self).__init__(manifesturl)
         self.ext = '.mp4'
 
-    def create_downloader(self, backends):
+    def create_downloader(self):
         return HLSBackend(self.url, self.ext, long_probe=True)
 
 
@@ -304,6 +304,9 @@ class InvalidStreamUrl(object):
 
     def to_url(self):
         return ''
+
+    def create_downloader(self):
+        return None
 
 
 @attr.s

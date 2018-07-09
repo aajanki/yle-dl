@@ -13,7 +13,6 @@ import subprocess
 import sys
 from builtins import str
 from future.moves.urllib.error import HTTPError
-from future.utils import python_2_unicode_compatible
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import yledl_user_agent
@@ -262,6 +261,7 @@ class RTMPBackend(ExternalDownloader):
             IOCapability.RESUME,
             IOCapability.DURATION
         ])
+        self.name = Backends.RTMPDUMP
 
     def save_stream(self, clip_title, io):
         # rtmpdump fails to resume if the file doesn't contain at
@@ -317,6 +317,7 @@ class HDSBackend(ExternalDownloader):
             IOCapability.DURATION,
             IOCapability.RATELIMIT
         ])
+        self.name = Backends.ADOBEHDSPHP
 
     def _bitrate_option(self, bitrate):
         return ['--quality', str(bitrate)] if bitrate else []
@@ -398,6 +399,7 @@ class YoutubeDLHDSBackend(BaseDownloader):
             IOCapability.PROXY,
             IOCapability.RATELIMIT
         ])
+        self.name = Backends.YOUTUBEDL
 
     def save_stream(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
@@ -458,8 +460,9 @@ class HLSBackend(ExternalDownloader):
     def __init__(self, url, output_extension, long_probe=False):
         ExternalDownloader.__init__(self, output_extension)
         self.url = url
-        self.io_capabilities = frozenset([IOCapability.DURATION])
         self.long_probe = long_probe
+        self.io_capabilities = frozenset([IOCapability.DURATION])
+        self.name = Backends.FFMPEG
 
     def output_filename(self, clip_title, io):
         return self._construct_output_filename(clip_title, io, False)
@@ -540,6 +543,7 @@ class WgetBackend(ExternalDownloader):
             IOCapability.RATELIMIT,
             IOCapability.PROXY
         ])
+        self.name = Backends.WGET
 
     def build_args(self, clip_title, io):
         output_name = self.output_filename(clip_title, io)
@@ -578,94 +582,32 @@ class WgetBackend(ExternalDownloader):
         return env
 
 
-### Try multiple downloaders until one succeeds ###
-
-
-class FallbackBackend(object):
-    def __init__(self, downloaders):
-        self.downloaders = downloaders
-
-    def save_stream(self, clip_title, io):
-        def save_stream_cleanup(downloader):
-            def wrapped(clip_title, io):
-                outputfile = downloader.output_filename(clip_title, io)
-                res = downloader.save_stream(clip_title, io)
-                if needs_retry(res) and os.path.isfile(outputfile):
-                    logger.debug('Removing the partially downloaded file')
-                    try:
-                        os.remove(outputfile)
-                    except OSError:
-                        logger.warn('Failed to remove a partial output file')
-                return res
-
-            return wrapped
-
-        def needs_retry(res):
-            return res not in [RD_SUCCESS, RD_INCOMPLETE]
-        
-        return self._retry_call(save_stream_cleanup, needs_retry,
-                                clip_title, io)
-
-    def pipe(self, io, subtitle_url):
-        def pipe_action(downloader):
-            return downloader.pipe
-
-        def needs_retry(res):
-            return res == RD_SUBPROCESS_EXECUTE_FAILED
-
-        self._retry_call(pipe_action, needs_retry, io, subtitle_url)
-        return RD_SUCCESS
-
-    def output_filename(self, clip_title, io):
-        if self.downloaders:
-            return self.downloaders[0].output_filename(clip_title, io)
-
-    def warn_on_unsupported_feature(self, io):
-        if self.downloaders:
-            self.downloaders[0].warn_on_unsupported_feature(io)
-
-    def _retry_call(self, get_action, needs_retry, *args, **kwargs):
-        latest_result = RD_SUCCESS
-        for downloader in self.downloaders:
-            logger.debug('Now trying downloader {}'.format(
-                type(downloader).__name__))
-            method = get_action(downloader)
-            latest_result = method(*args, **kwargs)
-            if not needs_retry(latest_result):
-                return latest_result
-
-        return latest_result
-
-
-@python_2_unicode_compatible
-class BackendFactory(object):
+class Backends(object):
     ADOBEHDSPHP = 'adobehdsphp'
     YOUTUBEDL = 'youtubedl'
+    RTMPDUMP = 'rtmpdump'
+    FFMPEG = 'ffmpeg'
+    WGET = 'wget'
+
+    default_order = [
+        WGET,
+        FFMPEG,
+        ADOBEHDSPHP,
+        YOUTUBEDL,
+        RTMPDUMP
+    ]
 
     @staticmethod
-    def is_valid_hds_backend(hds_backend):
-        return (hds_backend == BackendFactory.ADOBEHDSPHP or
-                hds_backend == BackendFactory.YOUTUBEDL)
+    def is_valid_backend(backend_name):
+        return backend_name in Backends.default_order
 
     @staticmethod
     def parse_backends(backend_names):
         backends = []
         for bn in backend_names:
-            if not BackendFactory.is_valid_hds_backend(bn):
+            if not Backends.is_valid_backend(bn):
                 logger.warning('Invalid backend: ' + bn)
                 continue
 
-            backends.append(BackendFactory(bn))
+            backends.append(bn)
         return backends
-
-    def __init__(self, hds_backend):
-        self.hds_backend = hds_backend
-
-    def __str__(self):
-        return 'HDS backend: %s' % self.hds_backend
-
-    def hds(self):
-        if self.hds_backend == self.YOUTUBEDL:
-            return YoutubeDLHDSBackend
-        else:
-            return HDSBackend

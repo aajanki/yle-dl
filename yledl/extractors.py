@@ -11,9 +11,11 @@ from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree
 from .io import normalize_language_code
-from .streams import Areena2014HDSStreamUrl, Areena2014RTMPStreamUrl
-from .streams import KalturaStreamUrl, KalturaLiveAudioStreamUrl
+from .streams import AreenaHDSStreamUrl, AreenaYoutubeDLHDSStreamUrl
+from .streams import KalturaHLSStreamUrl, KalturaWgetStreamUrl
+from .streams import KalturaLiveAudioStreamUrl, Areena2014RTMPStreamUrl
 from .streams import HTTPStreamUrl, SportsStreamUrl, InvalidStreamUrl
+
 
 try:
     # pycryptodome
@@ -231,7 +233,10 @@ class AkamaiFlavorParser(object):
         for mf in manifest:
             bitrate = mf.get('bitrate')
             flavor_id = mf.get('mediaurl')
-            streams = [Areena2014HDSStreamUrl(media_url, bitrate, flavor_id)]
+            streams = [
+                AreenaHDSStreamUrl(media_url, bitrate, flavor_id),
+                AreenaYoutubeDLHDSStreamUrl(media_url, bitrate, flavor_id),
+            ]
             flavors.append(StreamFlavor(
                 media_type=Flavors.media_type(media),
                 height=mf.get('height'),
@@ -285,7 +290,8 @@ class KalturaFlavorParser(object):
                 bitrate = fl.get('bitrate', 0) + fl.get('audioBitrateKbps', 0)
                 if bitrate <= 0:
                     bitrate = None
-                streams = [KalturaStreamUrl(entry_id, flavor_id, stream_format, ext)]
+                streams = self.streams_for_flavor(entry_id, flavor_id,
+                                                  stream_format, ext)
 
                 flavors.append(StreamFlavor(
                     media_type=Flavors.media_type(fl),
@@ -295,6 +301,15 @@ class KalturaFlavorParser(object):
                     streams=streams))
 
         return flavors
+
+    def streams_for_flavor(self, entry_id, flavor_id, stream_format, ext):
+        streams = [
+            KalturaHLSStreamUrl(entry_id, flavor_id, stream_format, ext)
+        ]
+        if stream_format == 'url':
+            streams.append(KalturaWgetStreamUrl(
+                entry_id, flavor_id, stream_format, ext))
+        return streams
 
     def is_h264_flavor(self, flavor):
         tags = flavor.get('tags', '').split(',')
@@ -340,12 +355,16 @@ class Clip(object):
         if hard_sub_lang:
             hard_sub_lang = normalize_language_code(hard_sub_lang, None)
 
+        backends = [s.create_downloader().name
+                    for s in flavor.streams if s.create_downloader()]
+
         meta = [
             ('media_type', flavor.media_type),
             ('height', flavor.height),
             ('width', flavor.width),
             ('bitrate', flavor.bitrate),
-            ('hard_subtitle_language', hard_sub_lang)
+            ('hard_subtitle_language', hard_sub_lang),
+            ('backends', backends)
         ]
         return self.ignore_none_values(meta)
 

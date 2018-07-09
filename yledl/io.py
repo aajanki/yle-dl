@@ -2,6 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 from pkg_resources import resource_filename
+from .backends import Backends
 
 
 def normalize_language_code(lang, subtype):
@@ -49,13 +50,18 @@ class StreamFilters(object):
     versions to download.
     """
     def __init__(self, latest_only=False, audiolang='', sublang='all',
-                 hardsubs=False, maxbitrate=None, maxheight=None):
+                 hardsubs=False, maxbitrate=None, maxheight=None,
+                 enabled_backends=None):
         self.latest_only = latest_only
         self.audiolang = audiolang
         self.sublang = sublang
         self.hardsubs = hardsubs
         self.maxbitrate = maxbitrate
         self.maxheight = maxheight
+        if enabled_backends:
+            self.enabled_backends = enabled_backends
+        else:
+            self.enabled_backends = Backends.default_order
 
     def sublang_matches(self, langcode, subtype):
         return self._lang_matches(self.sublang, langcode, subtype)

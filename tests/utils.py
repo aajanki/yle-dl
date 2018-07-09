@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import json
 from io import BytesIO
-from yledl import download, StreamFilters, BackendFactory, IOContext, \
+from yledl import download, StreamFilters, IOContext, \
     DownloadLimits, StreamAction, RD_SUCCESS
 
 
@@ -37,7 +37,6 @@ def fetch_metadata(url):
 
 
 def fetch(url, action):
-    backends = [BackendFactory(BackendFactory.ADOBEHDSPHP)]
     basic_filters = StreamFilters()
     io = IOContext(destdir='/tmp/')
 
@@ -46,7 +45,6 @@ def fetch(url, action):
                        action,
                        io,
                        stream_filters = basic_filters,
-                       backends = backends,
                        postprocess_command = None)
         assert res == RD_SUCCESS
 

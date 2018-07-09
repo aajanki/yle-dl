@@ -31,7 +31,7 @@ import codecs
 import logging
 import argparse
 from future.moves.urllib.parse import urlparse, urlunparse, quote
-from .backends import BackendFactory
+from .backends import Backends
 from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory
@@ -174,12 +174,15 @@ def arg_parser():
     dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument('--backend', metavar='BE',
                           type=to_unicode,
-                          default="adobehdsphp,youtubedl",
+                          default="wget,ffmpeg,adobehdsphp,youtubedl,rtmpdump",
                           help='Downloaders that are tried until one of them '
-                          ' succeeds (a comma-separated list).\n'
+                          ' succeeds (a comma-separated list). '
                           'Possible values: '
+                          '"wget", '
+                          '"ffmpeg", '
                           '"adobehdsphp" = AdobeHDS.php, '
-                          '"youtubedl" = youtube-dl')
+                          '"youtubedl" = youtube-dl, '
+                          '"rtmpdump"')
     dl_group.add_argument('--rtmpdump', metavar='PATH',
                           type=to_unicode,
                           help='Set path to the rtmpdump binary')
@@ -216,7 +219,7 @@ def encode_url_utf8(url):
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def download(url, action, io, stream_filters, backends, postprocess_command):
+def download(url, action, io, stream_filters, postprocess_command):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -236,7 +239,7 @@ def download(url, action, io, stream_filters, backends, postprocess_command):
         return RD_FAILED
 
     clips = extractor.extract(url)
-    dl = YleDlDownloader(backends)
+    dl = YleDlDownloader()
 
     if action == StreamAction.PRINT_STREAM_URL:
         return dl.print_urls(clips, stream_filters)
@@ -364,7 +367,7 @@ def main(argv=sys.argv):
                                        StreamAction.PRINT_METADATA]))):
         print_enc(parser.description)
 
-    backends = BackendFactory.parse_backends(args.backend.split(','))
+    backends = Backends.parse_backends(args.backend.split(','))
     if len(backends) == 0:
         sys.exit(RD_FAILED)
 
@@ -372,7 +375,8 @@ def main(argv=sys.argv):
     maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
-                                   args.hardsubs, maxbitrate, maxheight)
+                                   args.hardsubs, maxbitrate, maxheight,
+                                   backends)
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):
@@ -381,8 +385,7 @@ def main(argv=sys.argv):
             logger.info('Now downloading from URL {}/{}: {}'.format(
                 i + 1, len(urls), url))
 
-        res = download(url, action, io, stream_filters, backends,
-                       args.postprocess)
+        res = download(url, action, io, stream_filters, args.postprocess)
 
         if res != RD_SUCCESS:
             exit_status = res

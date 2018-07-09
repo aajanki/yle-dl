@@ -11,6 +11,7 @@ from .http import download_to_file
 from .backends import Subprocess
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .io import normalize_language_code
+from .streams import InvalidStreamUrl
 
 
 logger = logging.getLogger('yledl')
@@ -84,13 +85,12 @@ class SubtitleDownloader(object):
 
 
 class YleDlDownloader(object):
-    def __init__(self, backends, subtitle_downloader=SubtitleDownloader()):
-        self.backends = backends
+    def __init__(self, subtitle_downloader=SubtitleDownloader()):
         self.subtitle_downloader = subtitle_downloader
 
     def download_episodes(self, clips, io, filters, postprocess_command):
         def download(clip, stream):
-            downloader = stream.create_downloader(self.backends)
+            downloader = stream.create_downloader()
             if not downloader:
                 logger.error('Downloading the stream at %s is not yet '
                              'supported.' % clip.webpage)
@@ -115,7 +115,7 @@ class YleDlDownloader(object):
 
     def pipe(self, clips, io, filters):
         def pipe_clip(clip, stream):
-            dl = stream.create_downloader(self.backends)
+            dl = stream.create_downloader()
             if not dl:
                 logger.error('Downloading the stream at %s is not yet '
                              'supported.' % clip.webpage)
@@ -158,15 +158,17 @@ class YleDlDownloader(object):
         for clip in clips:
             stream = self.select_stream(clip.flavors, filters)
 
-            if stream:
-                if not stream.is_valid():
-                    logger.error('Unsupported stream: %s' %
-                                 stream.get_error_message())
-                    overall_status = RD_FAILED
-                else:
-                    res = streamfunc(clip, stream)
-                    if res != RD_SUCCESS:
-                        overall_status = res
+            if not stream:
+                logger.error('No stream found')
+                overall_status = RD_FAILED
+            elif not stream.is_valid():
+                logger.error('Unsupported stream: %s' %
+                             stream.get_error_message())
+                overall_status = RD_FAILED
+            else:
+                res = streamfunc(clip, stream)
+                if res != RD_SUCCESS and overall_status != RD_FAILED:
+                    overall_status = res
 
         return overall_status
 
@@ -239,11 +241,30 @@ class YleDlDownloader(object):
 
     def select_stream(self, flavors, filters):
         flavor = self.select_flavor(flavors, filters)
-        if flavor and flavor.streams:
-            stream = flavor.streams[-1] # FIXME: select by backend
+        streams = flavor and flavor.streams
+        return self.filter_by_backend(streams or [], filters.enabled_backends)
+
+    def filter_by_backend(self, streams, enabled_backends):
+        streams_with_backend_names = []
+        for s in streams:
+            downloader = s.create_downloader()
+            if s.is_valid() and downloader:
+                streams_with_backend_names.append((s, downloader.name))
+
+        for be in enabled_backends:
+            for (stream, stream_be) in streams_with_backend_names:
+                if stream_be == be:
+                    return stream
+
+        if any(not s.is_valid() for s in streams):
+            return next(s for s in streams if not s.is_valid())
+        elif streams:
+            supported_backends = [x[1] for x in streams_with_backend_names]
+            return InvalidStreamUrl('Required backend not enabled. '
+                                    'Try: --backend {}'
+                                    .format(','.join(supported_backends)))
         else:
-            stream = None
-        return stream
+            return InvalidStreamUrl('No streams found!')
 
     def postprocess(self, postprocess_command, videofile, subtitlefiles):
         if postprocess_command:

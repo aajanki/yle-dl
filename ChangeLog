@@ -2,6 +2,11 @@ download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
+xx xxx 2018, Version 2.34
+
+- All downloader backends can now be enabled or disabled using the --backend argument
+- --showmetadata displays the available backends for each stream
+
 19 Jun 2018, Version 2.33
 
 - Support for football word cup streams

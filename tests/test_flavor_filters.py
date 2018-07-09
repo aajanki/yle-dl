@@ -2,8 +2,23 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import pytest
-from yledl import YleDlDownloader, StreamFilters, BackendFactory
+from yledl import YleDlDownloader, StreamFilters
 from yledl.extractors import StreamFlavor, Subtitle
+from yledl.streams import AreenaStreamBase, InvalidStreamUrl
+
+
+class MockBackend(object):
+    def __init__(self, name):
+        self.name = name
+
+
+class MockStream(AreenaStreamBase):
+    def __init__(self, backend):
+        AreenaStreamBase.__init__(self)
+        self.backend = MockBackend(backend)
+
+    def create_downloader(self):
+        return self.backend
 
 
 flavors = [
@@ -30,11 +45,10 @@ hard_sub_flavors = [
 
 
 def filter_flavors(flavors, max_height=None, max_bitrate=None, hard_sub=None):
-    backends = [BackendFactory.ADOBEHDSPHP]
     filters = StreamFilters(maxheight=max_height,
                             maxbitrate=max_bitrate,
                             hardsubs=hard_sub)
-    return YleDlDownloader(backends).select_flavor(flavors, filters)
+    return YleDlDownloader().select_flavor(flavors, filters)
 
 
 def test_empty_input():
@@ -86,3 +100,69 @@ def test_hard_subtitle_filters():
 
 def test_hard_subtitle_filters_no_match():
     assert filter_flavors(flavors, hard_sub='fin') == None
+
+
+def test_backend_filter_first_preferred():
+    streams = [
+        MockStream('ffmpeg'),
+        MockStream('wget'),
+        MockStream('youtubedl')
+    ]
+    enabled = ['wget', 'ffmpeg', 'youtubedl', 'rtmpdump']
+    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+
+    assert filtered.create_downloader().name == enabled[0]
+
+
+def test_backend_filter_first_preferred_2():
+    streams = [MockStream('rtmpdump')]
+    enabled = ['wget', 'ffmpeg', 'youtubedl', 'rtmpdump']
+    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+
+    assert filtered.create_downloader().name == enabled[3]
+
+
+def test_backend_filter_no_match():
+    streams = [
+        MockStream('ffmpeg'),
+        MockStream('wget'),
+        MockStream('youtubedl')
+    ]
+    enabled = ['rtmpdump']
+    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+
+    assert not filtered.is_valid()
+    assert 'Required backend not enabled' in filtered.get_error_message()
+
+
+def test_backend_filter_no_streams():
+    enabled = ['ffmpeg']
+    filtered = YleDlDownloader().filter_by_backend([], enabled)
+
+    assert not filtered.is_valid()
+
+
+def test_backend_filter_failed_stream():
+    streams = [
+        MockStream('ffmpeg'),
+        InvalidStreamUrl('wget stream failed'),
+        MockStream('youtubedl')
+    ]
+    enabled = ['wget']
+    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+
+    assert not filtered.is_valid()
+    assert filtered.get_error_message() == 'wget stream failed'
+
+
+def test_backend_filter_failed_fallback():
+    streams = [
+        MockStream('ffmpeg'),
+        InvalidStreamUrl('wget stream failed'),
+        MockStream('youtubedl')
+    ]
+    enabled = ['wget', 'youtubedl', 'ffmpeg']
+    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+
+    assert filtered.is_valid()
+    assert filtered.create_downloader().name == enabled[1]

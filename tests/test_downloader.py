@@ -6,8 +6,7 @@ import copy
 import json
 import os
 import pytest
-from yledl import StreamFilters, IOContext, BackendFactory, \
-    RD_SUCCESS, RD_FAILED
+from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader, SubtitleDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
@@ -19,6 +18,7 @@ class StateCollectingBackend(BaseDownloader):
         BaseDownloader.__init__(self, '.mp4')
         self.id = id
         self.state_dict = state_dict
+        self.name = 'ffmpeg'
 
     def save_stream(self, clip_title, io):
         self.state_dict['command'] = 'download'
@@ -53,7 +53,7 @@ class MockStream(object):
     def to_url(self):
         return 'https://example.com/video/{}.mp4'.format(self.id)
 
-    def create_downloader(self, backends):
+    def create_downloader(self):
         return StateCollectingBackend(self.state_dict, self.id)
 
 
@@ -160,8 +160,7 @@ def simple():
     return DownloaderParametersFixture(
         io=IOContext(destdir='/tmp/'),
         filters=StreamFilters(),
-        downloader=YleDlDownloader([BackendFactory.ADOBEHDSPHP],
-                                   MockSubtitleDownloader()))
+        downloader=YleDlDownloader(MockSubtitleDownloader()))
 
 
 def test_download_success(simple):
@@ -297,31 +296,36 @@ def test_print_metadata(simple):
                     'height': 360,
                     'width': 640,
                     'bitrate': 864,
-                    'hard_subtitle_language': 'fin'
+                    'hard_subtitle_language': 'fin',
+                    'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
                     'height': 360,
                     'width': 640,
-                    'bitrate': 880
+                    'bitrate': 880,
+                    'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
                     'height': 720,
                     'width': 1280,
-                    'bitrate': 1412
+                    'bitrate': 1412,
+                    'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
                     'height': 720,
                     'width': 1280,
-                    'bitrate': 1872
+                    'bitrate': 1872,
+                    'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
                     'height': 1080,
                     'width': 1920,
-                    'bitrate': 2808
+                    'bitrate': 2808,
+                    'backends': ['ffmpeg']
                 }
             ],
             'duration_seconds': 950,
@@ -353,15 +357,18 @@ def test_print_metadata_incomplete(simple):
             'title': 'Test clip: S01E01-2018-07-01T00:00',
             'flavors': [
                 {
-                    'media_type': 'video'
+                    'media_type': 'video',
+                    'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
                     'height': 360,
-                    'width': 640
+                    'width': 640,
+                    'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
+                    'backends': ['ffmpeg']
                 }
             ],
             'region': 'Finland',
