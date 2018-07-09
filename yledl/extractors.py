@@ -9,7 +9,7 @@ import re
 import time
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
-from .http import download_page, download_html_tree
+from .http import download_page, download_html_tree, html_unescape
 from .streamfilters import normalize_language_code
 from .streams import AreenaHDSStream, AreenaYoutubeDLHDSStream
 from .streams import KalturaHLSStream, KalturaWgetStream
@@ -1054,12 +1054,25 @@ class YleUutisetExtractor(AreenaExtractor):
         if html is None:
             return None
 
-        divs = html.xpath('//div[contains(@class, "yle_areena_player") and @data-id]')
-        dataids = [x.get('data-id') for x in divs]
+        state_tag = html.xpath('//div[@id="initialState"]')
+        if not state_tag:
+            return []
 
-        logger.debug('Found Areena data IDs: {}'.format(','.join(dataids)))
+        state = json.loads(html_unescape(state_tag[0].get('data-state', '{}')))
+        medias = state.get('article', {}).get('mainMedia', [])
+        data_ids = [m.get('id') for m in medias]
 
-        return [self.id_to_areena_url(id) for id in dataids]
+        logger.debug('Found Areena data IDs: {}'.format(','.join(data_ids)))
+
+        return [self.id_to_areena_url(id) for id in data_ids]
+
+    def extract_video_id(self, img):
+        src = str(img.get('src'))
+        m = re.search(r'/13-([-0-9]+)-\d+\.jpg$', src)
+        if m:
+            return m.group(1)
+        else:
+            return None
 
     def id_to_areena_url(self, data_id):
         if '-' in data_id:

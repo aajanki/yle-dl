@@ -6,6 +6,7 @@ xx xxx 2018, Version 2.34
 
 - All downloader backends can now be enabled or disabled using the --backend argument
 - --showmetadata displays the available backends for each stream
+- Fixed news clip downloading after changes to the Yle news site
 
 19 Jun 2018, Version 2.33
 

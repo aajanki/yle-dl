@@ -89,6 +89,14 @@ def html_meta_charset(html_bytes):
         return None
 
 
+def html_unescape(escaped_html):
+    s = escaped_html.replace("&lt;", "<")
+    s = s.replace("&gt;", ">")
+    s = s.replace("&quot;", '"')
+    s = s.replace("&amp;", "&")
+    return s
+
+
 def _create_session():
     session = requests.Session()
 
