@@ -109,7 +109,7 @@ class YleDlDownloader(object):
                 self.postprocess(postprocess_command, outputfile,
                                  subtitlefiles)
 
-            return RD_SUCCESS
+            return dl_result
 
         return self.process(clips, download, filters)
 
