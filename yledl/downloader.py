@@ -9,7 +9,8 @@ import sys
 from .utils import print_enc, sane_filename
 from .http import download_to_file
 from .backends import Subprocess
-from .exitcodes import RD_SUCCESS, RD_FAILED
+from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
+    RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .io import normalize_language_code
 from .streams import InvalidStreamUrl
 
@@ -111,7 +112,10 @@ class YleDlDownloader(object):
 
             return dl_result
 
-        return self.process(clips, download, filters)
+        def needs_retry(res):
+            return res not in [RD_SUCCESS, RD_INCOMPLETE]
+
+        return self.process(clips, download, needs_retry, filters)
 
     def pipe(self, clips, io, filters):
         def pipe_clip(clip, stream):
@@ -125,14 +129,17 @@ class YleDlDownloader(object):
             subtitle_url = subtitles[0].url if subtitles else None
             return dl.pipe(io, subtitle_url)
 
-        return self.process(clips, pipe_clip, filters)
+        def needs_retry(res):
+            return res == RD_SUBPROCESS_EXECUTE_FAILED
+
+        return self.process(clips, pipe_clip, needs_retry, filters)
 
     def print_urls(self, clips, filters):
         def print_url(clip, stream):
             print_enc(stream.to_url())
             return RD_SUCCESS
 
-        return self.process(clips, print_url, filters)
+        return self.process(clips, print_url, self.no_retry, filters)
 
     def print_episode_pages(self, clips, filters):
         for clip in clips:
@@ -145,32 +152,43 @@ class YleDlDownloader(object):
             print_enc(sane_filename(clip.title, io.excludechars))
             return RD_SUCCESS
 
-        return self.process(clips, print_title, filters)
+        return self.process(clips, print_title, self.no_retry, filters)
 
     def print_metadata(self, clips, filters):
         meta = [clip.metadata() for clip in clips]
         print_enc(json.dumps(meta, indent=2))
         return RD_SUCCESS
 
-    def process(self, clips, streamfunc, filters):
+    def process(self, clips, streamfunc, needs_retry, filters):
         overall_status = RD_SUCCESS
 
         for clip in clips:
-            stream = self.select_stream(clip.flavors, filters)
+            streams = self.select_streams(clip.flavors, filters)
 
-            if not stream:
+            if not streams:
                 logger.error('No stream found')
                 overall_status = RD_FAILED
-            elif not stream.is_valid():
+            elif all(not stream.is_valid() for stream in streams):
                 logger.error('Unsupported stream: %s' %
-                             stream.get_error_message())
+                             streams[0].get_error_message())
                 overall_status = RD_FAILED
             else:
-                res = streamfunc(clip, stream)
+                res = self.try_all_streams(
+                    streamfunc, clip, streams, needs_retry)
                 if res != RD_SUCCESS and overall_status != RD_FAILED:
                     overall_status = res
 
-        return overall_status
+        return to_external_rd_code(overall_status)
+
+    def try_all_streams(self, streamfunc, clip, streams, needs_retry):
+        latest_result = RD_FAILED
+        for stream in streams:
+            if stream.is_valid():
+                latest_result = streamfunc(clip, stream)
+                if not needs_retry(latest_result):
+                    return latest_result
+
+        return latest_result
 
     def select_flavor(self, flavors, filters):
         if not flavors:
@@ -239,7 +257,7 @@ class YleDlDownloader(object):
 
         return sorted(acceptable_flavors, key=keyfunc, reverse=reverse)
 
-    def select_stream(self, flavors, filters):
+    def select_streams(self, flavors, filters):
         flavor = self.select_flavor(flavors, filters)
         streams = flavor and flavor.streams
         return self.filter_by_backend(streams or [], filters.enabled_backends)
@@ -251,20 +269,26 @@ class YleDlDownloader(object):
             if s.is_valid() and downloader:
                 streams_with_backend_names.append((s, downloader.name))
 
+        filtered = []
         for be in enabled_backends:
             for (stream, stream_be) in streams_with_backend_names:
                 if stream_be == be:
-                    return stream
+                    filtered.append(stream)
 
-        if any(not s.is_valid() for s in streams):
-            return next(s for s in streams if not s.is_valid())
+        if filtered:
+            return filtered
+        elif any(not s.is_valid() for s in streams):
+            return [next(s for s in streams if not s.is_valid())]
         elif streams:
             supported_backends = [x[1] for x in streams_with_backend_names]
-            return InvalidStreamUrl('Required backend not enabled. '
-                                    'Try: --backend {}'
-                                    .format(','.join(supported_backends)))
+            return [InvalidStreamUrl('Required backend not enabled. '
+                                     'Try: --backend {}'
+                                     .format(','.join(supported_backends)))]
         else:
-            return InvalidStreamUrl('No streams found!')
+            return []
+
+    def no_retry(self, res):
+        return False
 
     def postprocess(self, postprocess_command, videofile, subtitlefiles):
         if postprocess_command:

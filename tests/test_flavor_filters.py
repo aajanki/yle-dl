@@ -111,7 +111,7 @@ def test_backend_filter_first_preferred():
     enabled = ['wget', 'ffmpeg', 'youtubedl', 'rtmpdump']
     filtered = YleDlDownloader().filter_by_backend(streams, enabled)
 
-    assert filtered.create_downloader().name == enabled[0]
+    assert filtered[0].create_downloader().name == enabled[0]
 
 
 def test_backend_filter_first_preferred_2():
@@ -119,7 +119,7 @@ def test_backend_filter_first_preferred_2():
     enabled = ['wget', 'ffmpeg', 'youtubedl', 'rtmpdump']
     filtered = YleDlDownloader().filter_by_backend(streams, enabled)
 
-    assert filtered.create_downloader().name == enabled[3]
+    assert filtered[0].create_downloader().name == enabled[3]
 
 
 def test_backend_filter_no_match():
@@ -131,15 +131,16 @@ def test_backend_filter_no_match():
     enabled = ['rtmpdump']
     filtered = YleDlDownloader().filter_by_backend(streams, enabled)
 
-    assert not filtered.is_valid()
-    assert 'Required backend not enabled' in filtered.get_error_message()
+    assert len(filtered) == 1
+    assert not filtered[0].is_valid()
+    assert 'Required backend not enabled' in filtered[0].get_error_message()
 
 
 def test_backend_filter_no_streams():
     enabled = ['ffmpeg']
     filtered = YleDlDownloader().filter_by_backend([], enabled)
 
-    assert not filtered.is_valid()
+    assert len(filtered) == 0
 
 
 def test_backend_filter_failed_stream():
@@ -151,8 +152,9 @@ def test_backend_filter_failed_stream():
     enabled = ['wget']
     filtered = YleDlDownloader().filter_by_backend(streams, enabled)
 
-    assert not filtered.is_valid()
-    assert filtered.get_error_message() == 'wget stream failed'
+    assert len(filtered) == 1
+    assert not filtered[0].is_valid()
+    assert filtered[0].get_error_message() == 'wget stream failed'
 
 
 def test_backend_filter_failed_fallback():
@@ -164,5 +166,8 @@ def test_backend_filter_failed_fallback():
     enabled = ['wget', 'youtubedl', 'ffmpeg']
     filtered = YleDlDownloader().filter_by_backend(streams, enabled)
 
-    assert filtered.is_valid()
-    assert filtered.create_downloader().name == enabled[1]
+    assert len(filtered) == 2
+    assert filtered[0].is_valid()
+    assert filtered[0].create_downloader().name == enabled[1]
+    assert filtered[1].is_valid()
+    assert filtered[1].create_downloader().name == enabled[2]

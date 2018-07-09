@@ -10,25 +10,28 @@ from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader, SubtitleDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
+from yledl.streams import InvalidStreamUrl
 from utils import Capturing
 
 
 class StateCollectingBackend(BaseDownloader):
-    def __init__(self, state_dict, id):
+    def __init__(self, state_dict, id, name):
         BaseDownloader.__init__(self, '.mp4')
         self.id = id
         self.state_dict = state_dict
-        self.name = 'ffmpeg'
+        self.name = name
 
     def save_stream(self, clip_title, io):
         self.state_dict['command'] = 'download'
         self.state_dict['stream_id'] = self.id
+        self.state_dict['backend'] = self.name
 
         return RD_SUCCESS
 
     def pipe(self, io, subtitle_url):
         self.state_dict['command'] = 'pipe'
         self.state_dict['stream_id'] = self.id
+        self.state_dict['backend'] = self.name
 
         return RD_SUCCESS
 
@@ -39,10 +42,19 @@ class StateCollectingBackend(BaseDownloader):
         pass
 
 
+class FailingBackend(StateCollectingBackend):
+    def save_stream(self, clip_title, io):
+        return RD_FAILED
+
+    def pipe(self, io, subtitle_url):
+        return RD_FAILED
+
+
 class MockStream(object):
-    def __init__(self, state_dict, id):
+    def __init__(self, state_dict, id, backend_name='ffmpeg'):
         self.id = id
         self.state_dict = state_dict
+        self.backend_name = backend_name
 
     def is_valid(self):
         return True
@@ -54,7 +66,12 @@ class MockStream(object):
         return 'https://example.com/video/{}.mp4'.format(self.id)
 
     def create_downloader(self):
-        return StateCollectingBackend(self.state_dict, self.id)
+        return StateCollectingBackend(self.state_dict, self.id, self.backend_name)
+
+
+class FailingStream(MockStream):
+    def create_downloader(self):
+        return FailingBackend(self.state_dict, self.id, self.backend_name)
 
 
 class MockSubtitleDownloader(SubtitleDownloader):
@@ -144,8 +161,56 @@ def incomplete_flavors_clip(state_dict):
     )
 
 
+def multistream_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
+    return Clip(
+        webpage='https://areena.yle.fi/1-1234567',
+        flavors=[
+            StreamFlavor(
+                media_type='video',
+                height=360,
+                width=640,
+                bitrate=864,
+                streams=[
+                    FailingStream(state_dict, '1', 'wget'),
+                    InvalidStreamUrl('Invalid stream'),
+                    MockStream(state_dict, '3', 'wget'),
+                    MockStream(state_dict, '4', 'youtubedl')
+                ]
+            )
+        ],
+        title='Test clip: S01E01-2018-07-01T00:00',
+        duration_seconds=950,
+        region='Finland',
+        publish_timestamp=None,
+        expiration_timestamp=None
+    )
+
+
 def failed_clip():
     return FailedClip('https://areena.yle.fi/1-1234567', 'Failed test clip')
+
+
+def failed_stream_clip(state_dict):
+    return Clip(
+        webpage='https://areena.yle.fi/1-1234567',
+        flavors=[
+            StreamFlavor(
+                media_type='video',
+                height=360,
+                width=640,
+                bitrate=864,
+                streams=[
+                    FailingStream(state_dict, '1', 'wget'),
+                    FailingStream(state_dict, '2', 'ffmpeg')
+                ]
+            )
+        ],
+        title='Test clip: S01E01-2018-07-01T00:00',
+        duration_seconds=950,
+        region='Finland',
+        publish_timestamp=None,
+        expiration_timestamp=None
+    )
 
 
 @attr.s
@@ -383,3 +448,23 @@ def test_download_failed_clip(simple):
         clips, simple.io, simple.filters, None)
 
     assert res == RD_FAILED
+
+
+def test_download_failed_stream(simple):
+    state = {}
+    clips = [failed_stream_clip(state)]
+    res = simple.downloader.download_episodes(
+        clips, simple.io, simple.filters, None)
+
+    assert res == RD_FAILED
+
+
+def test_download_fallback(simple):
+    state = {}
+    clips = [multistream_clip(state)]
+    res = simple.downloader.download_episodes(
+        clips, simple.io, simple.filters, None)
+
+    assert res == RD_SUCCESS
+    assert state['command'] == 'download'
+    assert state['stream_id'] == '3'
