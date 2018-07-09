@@ -110,7 +110,7 @@ class YleDlDownloader(object):
                 self.postprocess(postprocess_command, outputfile,
                                  subtitlefiles)
 
-            return dl_result
+            return (dl_result, outputfile)
 
         def needs_retry(res):
             return res not in [RD_SUCCESS, RD_INCOMPLETE]
@@ -127,7 +127,8 @@ class YleDlDownloader(object):
             dl.warn_on_unsupported_feature(io)
             subtitles = self.subtitle_downloader.select(clip.subtitles, filters)
             subtitle_url = subtitles[0].url if subtitles else None
-            return dl.pipe(io, subtitle_url)
+            res = dl.pipe(io, subtitle_url)
+            return (res, None)
 
         def needs_retry(res):
             return res == RD_SUBPROCESS_EXECUTE_FAILED
@@ -137,7 +138,7 @@ class YleDlDownloader(object):
     def print_urls(self, clips, filters):
         def print_url(clip, stream):
             print_enc(stream.to_url())
-            return RD_SUCCESS
+            return (RD_SUCCESS, None)
 
         return self.process(clips, print_url, self.no_retry, filters)
 
@@ -150,7 +151,7 @@ class YleDlDownloader(object):
     def print_titles(self, clips, io, filters):
         def print_title(clip, stream):
             print_enc(sane_filename(clip.title, io.excludechars))
-            return RD_SUCCESS
+            return (RD_SUCCESS, None)
 
         return self.process(clips, print_title, self.no_retry, filters)
 
@@ -187,9 +188,16 @@ class YleDlDownloader(object):
         latest_result = RD_FAILED
         for stream in streams:
             if stream.is_valid():
-                latest_result = streamfunc(clip, stream)
-                if not needs_retry(latest_result):
-                    return latest_result
+                downloader = stream.create_downloader()
+                dlname = downloader and downloader.name
+                logger.debug('Now trying downloader {}'.format(dlname))
+
+                (latest_result, outputfile) = streamfunc(clip, stream)
+                if needs_retry(latest_result):
+                    self.remove_retry_file(outputfile)
+                    continue
+
+                return latest_result
 
         return latest_result
 
@@ -292,6 +300,14 @@ class YleDlDownloader(object):
 
     def no_retry(self, res):
         return False
+
+    def remove_retry_file(self, filename):
+        if filename and os.path.isfile(filename):
+            logger.debug('Removing the partially downloaded file')
+            try:
+                os.remove(filename)
+            except OSError:
+                logger.warn('Failed to remove a partial output file')
 
     def postprocess(self, postprocess_command, videofile, subtitlefiles):
         if postprocess_command:
