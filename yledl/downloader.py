@@ -160,8 +160,11 @@ class YleDlDownloader(object):
         return RD_SUCCESS
 
     def process(self, clips, streamfunc, needs_retry, filters):
-        overall_status = RD_SUCCESS
+        if not clips:
+            logger.error('No streams found')
+            return RD_SUCCESS
 
+        overall_status = RD_SUCCESS
         for clip in clips:
             streams = self.select_streams(clip.flavors, filters)
 
