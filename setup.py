@@ -38,7 +38,8 @@ setup(
     packages=['yledl'],
     include_package_data=True,
     install_requires=[
-        'pycryptodomex', 'requests', 'lxml', 'future', 'PySocks', 'mini-amf', 'attrs'
+        'pycryptodomex', 'requests', 'lxml', 'future', 'PySocks', 'mini-amf',
+        'attrs >= 17.4.0'
     ] + ssl_sni_requires,
     extras_require = {
         'youtubedl-backend': ['youtube_dl']
