@@ -186,15 +186,21 @@ class YleDlDownloader(object):
 
     def try_all_streams(self, streamfunc, clip, streams, needs_retry):
         latest_result = RD_FAILED
+        output_file = None
         for stream in streams:
             if stream.is_valid():
+                # Remove if there is a partially downloaded file from the
+                # earlier failed stream
+                if output_file:
+                    self.remove_retry_file(output_file)
+                    output_file = None
+                
                 downloader = stream.create_downloader()
                 dlname = downloader and downloader.name
                 logger.debug('Now trying downloader {}'.format(dlname))
 
-                (latest_result, outputfile) = streamfunc(clip, stream)
+                (latest_result, output_file) = streamfunc(clip, stream)
                 if needs_retry(latest_result):
-                    self.remove_retry_file(outputfile)
                     continue
 
                 return latest_result
