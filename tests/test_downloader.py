@@ -10,7 +10,7 @@ from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader, SubtitleDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
-from yledl.streams import InvalidStreamUrl
+from yledl.streams import InvalidStream
 from utils import Capturing
 
 
@@ -172,7 +172,7 @@ def multistream_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
                 bitrate=864,
                 streams=[
                     FailingStream(state_dict, '1', 'wget'),
-                    InvalidStreamUrl('Invalid stream'),
+                    InvalidStream('Invalid stream'),
                     MockStream(state_dict, '3', 'wget'),
                     MockStream(state_dict, '4', 'youtubedl')
                 ]

@@ -11,10 +11,10 @@ from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree
 from .io import normalize_language_code
-from .streams import AreenaHDSStreamUrl, AreenaYoutubeDLHDSStreamUrl
-from .streams import KalturaHLSStreamUrl, KalturaWgetStreamUrl
-from .streams import KalturaLiveAudioStreamUrl, Areena2014RTMPStreamUrl
-from .streams import HTTPStreamUrl, SportsStreamUrl, InvalidStreamUrl
+from .streams import AreenaHDSStream, AreenaYoutubeDLHDSStream
+from .streams import KalturaHLSStream, KalturaWgetStream
+from .streams import KalturaLiveAudioStream, Areena2014RTMPStream
+from .streams import HTTPStream, SportsStream, InvalidStream
 
 
 try:
@@ -234,8 +234,8 @@ class AkamaiFlavorParser(object):
             bitrate = mf.get('bitrate')
             flavor_id = mf.get('mediaurl')
             streams = [
-                AreenaHDSStreamUrl(media_url, bitrate, flavor_id),
-                AreenaYoutubeDLHDSStreamUrl(media_url, bitrate, flavor_id),
+                AreenaHDSStream(media_url, bitrate, flavor_id),
+                AreenaYoutubeDLHDSStream(media_url, bitrate, flavor_id),
             ]
             flavors.append(StreamFlavor(
                 media_type=Flavors.media_type(media),
@@ -248,7 +248,7 @@ class AkamaiFlavorParser(object):
         return flavors
 
     def rtmp_flavors(self, media, media_url, pageurl):
-        streams = [Areena2014RTMPStreamUrl(pageurl, media_url)]
+        streams = [Areena2014RTMPStream(pageurl, media_url)]
         bitrate = media.get('bitrate', 0) + media.get('audioBitrateKbps', 0)
         return [
             StreamFlavor(
@@ -304,10 +304,10 @@ class KalturaFlavorParser(object):
 
     def streams_for_flavor(self, entry_id, flavor_id, stream_format, ext):
         streams = [
-            KalturaHLSStreamUrl(entry_id, flavor_id, stream_format, ext)
+            KalturaHLSStream(entry_id, flavor_id, stream_format, ext)
         ]
         if stream_format == 'url':
-            streams.append(KalturaWgetStreamUrl(
+            streams.append(KalturaWgetStream(
                 entry_id, flavor_id, stream_format, ext))
         return streams
 
@@ -389,7 +389,7 @@ class FailedFlavor(StreamFlavor):
                               height=None,
                               width=None,
                               bitrate=None,
-                              streams=[InvalidStreamUrl(error_message)])
+                              streams=[InvalidStream(error_message)])
 
 
 class FailedClip(Clip):
@@ -825,7 +825,7 @@ class AreenaSportsExtractor(AreenaExtractor):
             return [
                 StreamFlavor(
                     media_type='video',
-                    streams=[SportsStreamUrl(manifesturl)]
+                    streams=[SportsStream(manifesturl)]
                 )
             ]
         else:
@@ -924,7 +924,7 @@ class AreenaLiveRadioExtractor(AreenaLiveTVExtractor):
                 StreamFlavor(
                     media_type='audio',
                     bitrate=bitrate,
-                    streams=[KalturaLiveAudioStreamUrl(hls_url)]
+                    streams=[KalturaLiveAudioStream(hls_url)]
                 )
             ]
         else:
@@ -977,7 +977,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
     def flavors_by_program_info(self, program_id, program_info, pageurl):
         download_url = program_info.get('downloadUrl')
         if download_url:
-            stream = HTTPStreamUrl(download_url)
+            stream = HTTPStream(download_url)
             return [StreamFlavor(media_type='video', streams=[stream])]
         else:
             return (super(ElavaArkistoExtractor, self)

@@ -4,7 +4,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import pytest
 from yledl import YleDlDownloader, StreamFilters
 from yledl.extractors import StreamFlavor, Subtitle
-from yledl.streams import AreenaStreamBase, InvalidStreamUrl
+from yledl.streams import AreenaStreamBase, InvalidStream
 
 
 class MockBackend(object):
@@ -146,7 +146,7 @@ def test_backend_filter_no_streams():
 def test_backend_filter_failed_stream():
     streams = [
         MockStream('ffmpeg'),
-        InvalidStreamUrl('wget stream failed'),
+        InvalidStream('wget stream failed'),
         MockStream('youtubedl')
     ]
     enabled = ['wget']
@@ -160,7 +160,7 @@ def test_backend_filter_failed_stream():
 def test_backend_filter_failed_fallback():
     streams = [
         MockStream('ffmpeg'),
-        InvalidStreamUrl('wget stream failed'),
+        InvalidStream('wget stream failed'),
         MockStream('youtubedl')
     ]
     enabled = ['wget', 'youtubedl', 'ffmpeg']

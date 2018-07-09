@@ -33,7 +33,7 @@ class AreenaStreamBase(object):
         return ''
 
 
-class AreenaHDSStreamUrl(AreenaStreamBase):
+class AreenaHDSStream(AreenaStreamBase):
     def __init__(self, hds_url, bitrate, flavor_id):
         AreenaStreamBase.__init__(self)
 
@@ -49,13 +49,13 @@ class AreenaHDSStreamUrl(AreenaStreamBase):
                           self.flavor_id, self.ext)
 
 
-class AreenaYoutubeDLHDSStreamUrl(AreenaHDSStreamUrl):
+class AreenaYoutubeDLHDSStream(AreenaHDSStream):
     def create_downloader(self):
         return YoutubeDLHDSBackend(self.hds_url, self.bitrate,
                                    self.flavor_id, self.ext)
 
 
-class Areena2014RTMPStreamUrl(AreenaStreamBase):
+class Areena2014RTMPStream(AreenaStreamBase):
     # Extracted from
     # http://areena.yle.fi/static/player/1.2.8/flowplayer/flowplayer.commercial-3.2.7-encrypted.swf
     AES_KEY = b'hjsadf89hk123ghk'
@@ -216,7 +216,7 @@ class Areena2014RTMPStreamUrl(AreenaStreamBase):
         return args
 
 
-class HTTPStreamUrl(object):
+class HTTPStream(object):
     def __init__(self, url):
         self.url = url
         path = urlparse(url)[2]
@@ -236,7 +236,7 @@ class HTTPStreamUrl(object):
         return WgetBackend(self.url, self.ext)
 
 
-class KalturaHLSStreamUrl(HTTPStreamUrl):
+class KalturaHLSStream(HTTPStream):
     def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
         self.ext = ext
         self.stream_format = stream_format
@@ -268,30 +268,30 @@ class KalturaHLSStreamUrl(HTTPStreamUrl):
                     ext=manifest_ext))
 
 
-class KalturaWgetStreamUrl(KalturaHLSStreamUrl):
+class KalturaWgetStream(KalturaHLSStream):
     def create_downloader(self):
         return WgetBackend(self.http_manifest_url, self.ext)
 
 
-class KalturaLiveAudioStreamUrl(HTTPStreamUrl):
+class KalturaLiveAudioStream(HTTPStream):
     def __init__(self, hlsurl):
-        super(KalturaLiveAudioStreamUrl, self).__init__(hlsurl)
+        super(KalturaLiveAudioStream, self).__init__(hlsurl)
         self.ext = '.mp3'
 
     def create_downloader(self):
         return HLSAudioBackend(self.url, self.ext)
 
 
-class SportsStreamUrl(HTTPStreamUrl):
+class SportsStream(HTTPStream):
     def __init__(self, manifesturl):
-        super(SportsStreamUrl, self).__init__(manifesturl)
+        super(SportsStream, self).__init__(manifesturl)
         self.ext = '.mp4'
 
     def create_downloader(self):
         return HLSBackend(self.url, self.ext, long_probe=True)
 
 
-class InvalidStreamUrl(object):
+class InvalidStream(object):
     def __init__(self, error_message):
         self.error = error_message
         self.ext = None

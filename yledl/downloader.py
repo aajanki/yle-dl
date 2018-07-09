@@ -12,7 +12,7 @@ from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .io import normalize_language_code
-from .streams import InvalidStreamUrl
+from .streams import InvalidStream
 
 
 logger = logging.getLogger('yledl')
@@ -281,9 +281,9 @@ class YleDlDownloader(object):
             return [next(s for s in streams if not s.is_valid())]
         elif streams:
             supported_backends = [x[1] for x in streams_with_backend_names]
-            return [InvalidStreamUrl('Required backend not enabled. '
-                                     'Try: --backend {}'
-                                     .format(','.join(supported_backends)))]
+            return [InvalidStream('Required backend not enabled. '
+                                  'Try: --backend {}'
+                                  .format(','.join(supported_backends)))]
         else:
             return []
 
