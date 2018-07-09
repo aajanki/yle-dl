@@ -35,7 +35,8 @@ from .backends import Backends
 from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory
-from .io import StreamFilters, IOContext, DownloadLimits
+from .io import IOContext, DownloadLimits
+from .streamfilters import StreamFilters
 from .utils import print_enc, which
 from .version import version
 

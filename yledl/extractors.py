@@ -10,7 +10,7 @@ import time
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree
-from .io import normalize_language_code
+from .streamfilters import normalize_language_code
 from .streams import AreenaHDSStream, AreenaYoutubeDLHDSStream
 from .streams import KalturaHLSStream, KalturaWgetStream
 from .streams import KalturaLiveAudioStream, Areena2014RTMPStream

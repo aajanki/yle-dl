@@ -11,7 +11,7 @@ from .http import download_to_file
 from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
-from .io import normalize_language_code
+from .streamfilters import normalize_language_code
 from .streams import InvalidStream
 
 
