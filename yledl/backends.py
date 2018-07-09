@@ -609,5 +609,7 @@ class Backends(object):
                 logger.warning('Invalid backend: ' + bn)
                 continue
 
-            backends.append(bn)
+            if bn not in backends:
+                backends.append(bn)
+
         return backends
