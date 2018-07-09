@@ -252,8 +252,8 @@ def download(url, action, io, stream_filters, postprocess_command):
     elif action == StreamAction.PIPE:
         return dl.pipe(clips, io, stream_filters)
     else:
-        return dl.download_episodes(clips, io, stream_filters,
-                                    postprocess_command)
+        return dl.download_clips(clips, io, stream_filters,
+                                 postprocess_command)
 
 
 def bitrate_from_arg(arg):

@@ -89,7 +89,7 @@ class YleDlDownloader(object):
     def __init__(self, subtitle_downloader=SubtitleDownloader()):
         self.subtitle_downloader = subtitle_downloader
 
-    def download_episodes(self, clips, io, filters, postprocess_command):
+    def download_clips(self, clips, io, filters, postprocess_command):
         def download(clip, stream):
             downloader = stream.create_downloader()
             if not downloader:
