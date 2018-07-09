@@ -326,11 +326,11 @@ class KalturaFlavorParser(object):
 class Clip(object):
     webpage = attr.ib()
     flavors = attr.ib()
-    title = attr.ib(converter=attr.converters.optional(str))
-    duration_seconds = attr.ib(converter=attr.converters.optional(int))
-    region = attr.ib(converter=attr.converters.optional(str))
-    publish_timestamp = attr.ib(converter=attr.converters.optional(str))
-    expiration_timestamp = attr.ib(converter=attr.converters.optional(str))
+    title = attr.ib(default='')
+    duration_seconds = attr.ib(default=None, converter=attr.converters.optional(int))
+    region = attr.ib(default='Finland')
+    publish_timestamp = attr.ib(default=None)
+    expiration_timestamp = attr.ib(default=None)
     subtitles = attr.ib(default=attr.Factory(list))
 
     def metadata(self):
