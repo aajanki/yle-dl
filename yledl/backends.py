@@ -126,9 +126,9 @@ class BaseDownloader(object):
 
 class ExternalDownloader(BaseDownloader):
     def save_stream(self, clip_title, io):
-        args = self.build_args(clip_title, io)
         env = self.extra_environment(io)
         outputfile = self.output_filename(clip_title, io)
+        args = self.build_args(outputfile, io)
         self.log_output_file(outputfile)
         retcode = self.external_downloader([args], env)
         if retcode == RD_SUCCESS:
@@ -144,7 +144,7 @@ class ExternalDownloader(BaseDownloader):
             commands.append(subtitle_command)
         return self.external_downloader(commands, env)
 
-    def build_args(self, clip_title, io):
+    def build_args(self, output_name, io):
         return []
 
     def build_pipe_args(self, io):
@@ -274,10 +274,10 @@ class RTMPBackend(ExternalDownloader):
 
         return super(RTMPBackend, self).save_stream(clip_title, io)
 
-    def build_args(self, clip_title, io):
+    def build_args(self, output_name, io):
         args = [io.rtmpdump_binary]
         args += self.args
-        args += ['-o', self.output_filename(clip_title, io)]
+        args += ['-o', output_name]
         if io.resume:
             args.append('-e')
         if io.download_limits.duration:
@@ -334,11 +334,8 @@ class HDSBackend(ExternalDownloader):
 
         return options
 
-    def build_args(self, clip_title, io):
-        args = [
-            '--delete',
-            '--outfile', self.output_filename(clip_title, io)
-        ]
+    def build_args(self, output_name, io):
+        args = ['--delete', '--outfile', output_name]
         return self.adobehds_command_line(io, args)
 
     def save_stream(self, clip_title, io):
@@ -480,8 +477,7 @@ class HLSBackend(ExternalDownloader):
         else:
             return []
 
-    def build_args(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
+    def build_args(self, output_name, io):
         return self.ffmpeg_command_line(
             io,
             ['-bsf:a', 'aac_adtstoasc', '-vcodec', 'copy',
@@ -522,8 +518,7 @@ class HLSBackend(ExternalDownloader):
 
 
 class HLSAudioBackend(HLSBackend):
-    def build_args(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
+    def build_args(self, output_name, io):
         return self.ffmpeg_command_line(
             io, ['-map', '0:4?', '-f', 'mp3', 'file:' + output_name])
 
@@ -546,8 +541,7 @@ class WgetBackend(ExternalDownloader):
         ])
         self.name = Backends.WGET
 
-    def build_args(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
+    def build_args(self, output_name, io):
         args = self.shared_wget_args(io.wget_binary, output_name)
         args.extend([
             '--progress=bar',
