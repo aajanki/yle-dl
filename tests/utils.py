@@ -38,6 +38,7 @@ def fetch_metadata(url):
 
 def fetch(url, action):
     basic_filters = StreamFilters()
+    # Initialize rtmpdump_binary to avoid a file system lookup in tests
     io = IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump')
 
     with Capturing() as output:
