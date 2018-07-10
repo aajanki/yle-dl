@@ -98,14 +98,13 @@ class YleDlDownloader(object):
                 logger.error('Try --showurl')
                 return RD_FAILED
 
-            clip_title = clip.title or 'ylestream'
-            outputfile = downloader.output_filename(clip_title, io)
             downloader.warn_on_unsupported_feature(io)
 
+            outputfile = self.output_name_for_clip(clip, downloader, io)
             subtitlefiles = self.subtitle_downloader.select_and_download(
                 clip.subtitles, outputfile, filters)
 
-            dl_result = downloader.save_stream(clip_title, io)
+            dl_result = downloader.save_stream(outputfile, io)
             if dl_result == RD_SUCCESS:
                 self.postprocess(postprocess_command, outputfile,
                                  subtitlefiles)
@@ -300,6 +299,10 @@ class YleDlDownloader(object):
                                   .format(','.join(supported_backends)))]
         else:
             return []
+
+    def output_name_for_clip(self, clip, downloader, io):
+        clip_title = clip.title or 'ylestream'
+        return downloader.output_filename(clip_title, io)
 
     def remove_retry_file(self, filename):
         if filename and os.path.isfile(filename):

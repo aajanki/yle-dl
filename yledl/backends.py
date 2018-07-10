@@ -51,7 +51,7 @@ class BaseDownloader(object):
            IOCapability.DURATION not in self.io_capabilities:
             logger.warning('--duration will be ignored on this stream')
 
-    def save_stream(self, clip_title, io):
+    def save_stream(self, output_name, io):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
@@ -125,14 +125,13 @@ class BaseDownloader(object):
 
 
 class ExternalDownloader(BaseDownloader):
-    def save_stream(self, clip_title, io):
+    def save_stream(self, output_name, io):
         env = self.extra_environment(io)
-        outputfile = self.output_filename(clip_title, io)
-        args = self.build_args(outputfile, io)
-        self.log_output_file(outputfile)
+        args = self.build_args(output_name, io)
+        self.log_output_file(output_name)
         retcode = self.external_downloader([args], env)
         if retcode == RD_SUCCESS:
-            self.log_output_file(outputfile, True)
+            self.log_output_file(output_name, True)
         return retcode
 
     def pipe(self, io, subtitle_url):
@@ -264,15 +263,14 @@ class RTMPBackend(ExternalDownloader):
         ])
         self.name = Backends.RTMPDUMP
 
-    def save_stream(self, clip_title, io):
+    def save_stream(self, output_name, io):
         # rtmpdump fails to resume if the file doesn't contain at
         # least one audio frame. Remove small files to force a restart
         # from the beginning.
-        filename = self.output_filename(clip_title, io)
-        if io.resume and self.is_small_file(filename):
-            self.remove(filename)
+        if io.resume and self.is_small_file(output_name):
+            self.remove(output_name)
 
-        return super(RTMPBackend, self).save_stream(clip_title, io)
+        return super(RTMPBackend, self).save_stream(output_name, io)
 
     def build_args(self, output_name, io):
         args = [io.rtmpdump_binary]
@@ -338,15 +336,14 @@ class HDSBackend(ExternalDownloader):
         args = ['--delete', '--outfile', output_name]
         return self.adobehds_command_line(io, args)
 
-    def save_stream(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
+    def save_stream(self, output_name, io):
         if (io.resume and output_name != '-' and
             os.path.isfile(output_name) and
             not self.fragments_exist(self.flavor_id)):
             logger.info('{} has already been downloaded.'.format(output_name))
             return RD_SUCCESS
         else:
-            return super(HDSBackend, self).save_stream(clip_title, io)
+            return super(HDSBackend, self).save_stream(output_name, io)
 
     def fragments_exist(self, flavor_id):
         pattern = r'.*_{}_Seg[0-9]+-Frag[0-9]+$'.format(re.escape(flavor_id))
@@ -399,8 +396,7 @@ class YoutubeDLHDSBackend(BaseDownloader):
         ])
         self.name = Backends.YOUTUBEDL
 
-    def save_stream(self, clip_title, io):
-        output_name = self.output_filename(clip_title, io)
+    def save_stream(self, output_name, io):
         return self._execute_youtube_dl(output_name, io)
 
     def pipe(self, io, subtitle_url):
