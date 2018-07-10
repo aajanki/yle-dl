@@ -52,6 +52,18 @@ def convert_download_limits(arg):
     return arg or DownloadLimits()
 
 
+def ffmpeg_default(arg):
+    return arg or 'ffmpeg'
+
+
+def ffprobe_default(arg):
+    return arg or 'ffprobe'
+
+
+def wget_default(arg):
+    return arg or 'wget'
+
+
 @attr.s
 class DownloadLimits(object):
     duration = attr.ib(default=None)
@@ -68,6 +80,6 @@ class IOContext(object):
     proxy = attr.ib(default=None)
     rtmpdump_binary = attr.ib(default=None, converter=find_rtmpdump)
     hds_binary = attr.ib(default=None, converter=convert_hds_argument)
-    ffmpeg_binary = attr.ib(default='ffmpeg')
-    ffprobe_binary = attr.ib(default='ffprobe')
-    wget_binary = attr.ib(default='wget')
+    ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
+    ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
+    wget_binary = attr.ib(default='wget', converter=wget_default)
