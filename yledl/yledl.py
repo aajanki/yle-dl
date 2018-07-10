@@ -239,7 +239,7 @@ def download(url, action, io, stream_filters, postprocess_command):
         logger.error('Is this really a Yle video page?')
         return RD_FAILED
 
-    clips = extractor.extract(url)
+    clips = extractor.extract(url, stream_filters.latest_only)
     dl = YleDlDownloader()
 
     if action == StreamAction.PRINT_STREAM_URL:

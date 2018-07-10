@@ -412,8 +412,11 @@ class Subtitle(object):
 
 
 class ClipExtractor(object):
-    def extract(self, url):
+    def extract(self, url, latest_only):
         playlist = self.get_playlist(url)
+        if latest_only:
+            playlist = playlist[:1]
+
         return [self.extract_clip(clipurl) for clipurl in playlist]
 
     def get_playlist(self, url):
