@@ -2,16 +2,13 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
-import copy
 import json
-import os
 import pytest
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader, SubtitleDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
 from yledl.streams import InvalidStream
-from utils import Capturing
 
 
 class StateCollectingBackend(BaseDownloader):
@@ -316,42 +313,30 @@ def test_pipe_success(simple):
 
 
 def test_print_urls(simple):
-    state = {}
-    clips = [successful_clip(state)]
+    clips = [successful_clip({}), successful_clip({})]
+    urls = simple.downloader.get_urls(clips, simple.filters)
 
-    res = None
-    with Capturing() as output:
-        res = simple.downloader.print_urls(clips, simple.filters)
-
-    assert res == RD_SUCCESS
-    assert output == ['https://example.com/video/high_quality.mp4']
-    assert 'command' not in state
+    assert urls == [
+        'https://example.com/video/high_quality.mp4',
+        'https://example.com/video/high_quality.mp4'
+    ]
 
 
 def test_print_titles(simple):
     titles = ['Uutiset', 'Pasila: S01E01-2018-07-01T00:00']
     clips = [successful_clip({}, t) for t in titles]
 
-    res = None
-    with Capturing() as output:
-        res = simple.downloader.print_titles(clips, simple.io, simple.filters)
-
-    assert res == RD_SUCCESS
-    assert output == titles
+    assert simple.downloader.get_titles(clips, simple.io) == titles
 
 
 def test_print_metadata(simple):
     state = {}
     clips = [successful_clip(state)]
+    metadata = simple.downloader.get_metadata(clips)
+    parsed_metadata = json.loads(metadata[0])
 
-    res = None
-    with Capturing() as output:
-        res = simple.downloader.print_metadata(clips, simple.filters)
-    metadata = json.loads('\n'.join(output))
-
-    assert res == RD_SUCCESS
-    assert 'command' not in state
-    assert metadata == [
+    assert len(metadata) == 1
+    assert parsed_metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
             'title': 'Test clip: S01E01-2018-07-01T00:00',
@@ -408,15 +393,11 @@ def test_print_metadata(simple):
 def test_print_metadata_incomplete(simple):
     state = {}
     clips = [incomplete_flavors_clip(state)]
+    metadata = simple.downloader.get_metadata(clips)
+    parsed_metadata = json.loads(metadata[0])
 
-    res = None
-    with Capturing() as output:
-        res = simple.downloader.print_metadata(clips, simple.filters)
-    metadata = json.loads('\n'.join(output))
-
-    assert res == RD_SUCCESS
-    assert 'command' not in state
-    assert metadata == [
+    assert len(metadata) == 1
+    assert parsed_metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
             'title': 'Test clip: S01E01-2018-07-01T00:00',

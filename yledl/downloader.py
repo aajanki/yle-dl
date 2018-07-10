@@ -6,7 +6,7 @@ import json
 import logging
 import os.path
 import sys
-from .utils import print_enc, sane_filename
+from .utils import sane_filename
 from .http import download_to_file
 from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
@@ -135,30 +135,27 @@ class YleDlDownloader(object):
 
         return self.process(clips, pipe_clip, needs_retry, filters)
 
-    def print_urls(self, clips, filters):
-        def print_url(clip, stream):
-            print_enc(stream.to_url())
-            return (RD_SUCCESS, None)
-
-        return self.process(clips, print_url, self.no_retry, filters)
-
-    def print_episode_pages(self, clips, filters):
+    def get_urls(self, clips, filters):
+        urls = []
         for clip in clips:
-            print_enc(clip.webpage)
+            streams = self.select_streams(clip.flavors, filters)
+            if streams and any(s.is_valid() for s in streams):
+                valid_stream = next(s for s in streams if s.is_valid())
+                urls.append(valid_stream.to_url())
+        return urls
 
-        return RD_SUCCESS
+    def get_episode_pages(self, clips):
+        return [clip.webpage for clip in clips]
 
-    def print_titles(self, clips, io, filters):
-        def print_title(clip, stream):
-            print_enc(sane_filename(clip.title, io.excludechars))
-            return (RD_SUCCESS, None)
+    def get_titles(self, clips, io):
+        return [sane_filename(m.get('title', ''), io.excludechars)
+                for m in self.metadata_generator(clips)]
 
-        return self.process(clips, print_title, self.no_retry, filters)
+    def metadata_generator(self, clips):
+        return (clip.metadata() for clip in clips)
 
-    def print_metadata(self, clips, filters):
-        meta = [clip.metadata() for clip in clips]
-        print_enc(json.dumps(meta, indent=2))
-        return RD_SUCCESS
+    def get_metadata(self, clips):
+        return [json.dumps(list(self.metadata_generator(clips)), indent=2)]
 
     def process(self, clips, streamfunc, needs_retry, filters):
         if not clips:
@@ -303,9 +300,6 @@ class YleDlDownloader(object):
                                   .format(','.join(supported_backends)))]
         else:
             return []
-
-    def no_retry(self, res):
-        return False
 
     def remove_retry_file(self, filename):
         if filename and os.path.isfile(filename):

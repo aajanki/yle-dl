@@ -243,18 +243,27 @@ def download(url, action, io, stream_filters, postprocess_command):
     dl = YleDlDownloader()
 
     if action == StreamAction.PRINT_STREAM_URL:
-        return dl.print_urls(clips, stream_filters)
+        print_lines(dl.get_urls(clips, stream_filters))
+        return RD_SUCCESS
     elif action == StreamAction.PRINT_EPISODE_PAGES:
-        return dl.print_episode_pages(clips, stream_filters)
+        print_lines(dl.get_episode_pages(clips))
+        return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_TITLE:
-        return dl.print_titles(clips, io, stream_filters)
+        print_lines(dl.get_titles(clips, io))
+        return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        return dl.print_metadata(clips, stream_filters)
+        print_lines(dl.get_metadata(clips))
+        return RD_SUCCESS
     elif action == StreamAction.PIPE:
         return dl.pipe(clips, io, stream_filters)
     else:
         return dl.download_clips(clips, io, stream_filters,
                                  postprocess_command)
+
+
+def print_lines(lines):
+    for line in lines:
+        print_enc(line)
 
 
 def bitrate_from_arg(arg):
