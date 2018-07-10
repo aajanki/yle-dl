@@ -38,7 +38,7 @@ def fetch_metadata(url):
 
 def fetch(url, action):
     basic_filters = StreamFilters()
-    io = IOContext(destdir='/tmp/')
+    io = IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump')
 
     with Capturing() as output:
         res = download(url,

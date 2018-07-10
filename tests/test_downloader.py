@@ -220,7 +220,7 @@ class DownloaderParametersFixture(object):
 @pytest.fixture
 def simple():
     return DownloaderParametersFixture(
-        io=IOContext(destdir='/tmp/'),
+        io=IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump'),
         filters=StreamFilters(),
         downloader=YleDlDownloader(MockSubtitleDownloader()))
 

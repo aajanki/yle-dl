@@ -37,7 +37,7 @@ from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory
 from .io import IOContext, DownloadLimits
 from .streamfilters import StreamFilters
-from .utils import print_enc, which
+from .utils import print_enc
 from .version import version
 
 
@@ -295,39 +295,6 @@ def resolution_from_arg(arg):
         return None
 
 
-def find_rtmpdump(rtmpdump_arg):
-    binary = rtmpdump_arg
-
-    if not binary:
-        if sys.platform == 'win32':
-            binary = which('rtmpdump.exe')
-        else:
-            binary = which('rtmpdump')
-    if not binary:
-        binary = 'rtmpdump'
-
-    return binary
-
-
-def find_adobehds(adobehds_arg):
-    if adobehds_arg:
-        return adobehds_arg.split(' ')
-    else:
-        return None
-
-
-def find_ffmpeg(ffmpeg_arg):
-    return ffmpeg_arg or 'ffmpeg'
-
-
-def find_ffprobe(ffprobe_arg):
-    return ffprobe_arg or 'ffprobe'
-
-
-def find_wget(cmd):
-    return cmd or 'wget'
-
-
 ### main program ###
 
 
@@ -341,10 +308,8 @@ def main(argv=sys.argv):
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     dl_limits = DownloadLimits(args.duration, args.ratelimit)
     io = IOContext(args.outputfile, args.destdir, args.resume,
-                   dl_limits, excludechars, args.proxy,
-                   find_rtmpdump(args.rtmpdump),
-                   find_adobehds(args.adobehds), find_ffmpeg(args.ffmpeg),
-                   find_ffprobe(args.ffprobe), find_wget(args.wget))
+                   dl_limits, excludechars, args.proxy, args.rtmpdump,
+                   args.adobehds, args.ffmpeg, args.ffprobe, args.wget)
 
     urls = []
     if args.url:

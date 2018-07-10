@@ -1,6 +1,4 @@
 from __future__ import print_function, absolute_import, unicode_literals
-import os
-import os.path
 import sys
 
 
@@ -22,25 +20,6 @@ def print_enc(msg, out=None, linefeed_and_flush=True):
     if linefeed_and_flush:
         bytes_out.write(b'\n')
         bytes_out.flush()
-
-
-def which(program):
-    """Search for program on $PATH and return the full path if found."""
-    # Adapted from http://stackoverflow.com/questions/377017
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
 
 
 def sane_filename(name, excludechars):

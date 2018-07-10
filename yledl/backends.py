@@ -16,7 +16,8 @@ from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import yledl_user_agent
-from .utils import which, sane_filename
+from .io import which
+from .utils import sane_filename
 
 
 logger = logging.getLogger('yledl')
