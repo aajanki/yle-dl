@@ -8,7 +8,7 @@ import os.path
 import sys
 from .utils import sane_filename
 from .http import download_to_file
-from .backends import IOCapability, Subprocess
+from .backends import IOCapability, PreferredFileExtension, Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .streamfilters import normalize_language_code
@@ -136,6 +136,19 @@ class YleDlDownloader(object):
             return res == RD_SUBPROCESS_EXECUTE_FAILED
 
         return self.process(clips, pipe_clip, needs_retry, filters)
+
+    def download_subtitles(self, clips, io, filters):
+        downloaded_subtitle_files = []
+        for clip in clips:
+            # The video file extension will be ignored. The subtitle
+            # file extension will be .srt in any case.
+            ext = PreferredFileExtension('.flv')
+            base_name = clip.output_file_name(ext, io)
+            subtitle_files = self.subtitle_downloader.select_and_download(
+                clip.subtitles, base_name, filters)
+            downloaded_subtitle_files.append(subtitle_files)
+
+        return downloaded_subtitle_files
 
     def get_urls(self, clips, filters):
         urls = []

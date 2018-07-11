@@ -3,6 +3,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
 import json
+import os.path
 import pytest
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
@@ -74,7 +75,7 @@ class FailingStream(MockStream):
 class MockSubtitleDownloader(SubtitleDownloader):
     def download(self, subtitles, videofilename):
         # Don't actually download anything
-        return []
+        return [os.path.basename(s.url) for s in subtitles]
 
 
 def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
@@ -449,3 +450,12 @@ def test_download_fallback(simple):
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
     assert state['stream_id'] == '3'
+
+
+def test_download_subtitles(simple):
+    state = {}
+    clips = [successful_clip(state)]
+    subtitles = simple.downloader.download_subtitles(
+        clips, simple.io, simple.filters)
+
+    assert subtitles == [['fin.srt', 'swe.srt']]

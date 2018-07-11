@@ -67,6 +67,7 @@ class StreamAction(object):
     PRINT_STREAM_TITLE = 4
     PRINT_EPISODE_PAGES = 5
     PRINT_METADATA = 6
+    DOWNLOAD_SUBTITLES_ONLY = 7
 
 
 def arg_parser():
@@ -128,6 +129,8 @@ def arg_parser():
                               help='Print web page for each episode')
     action_group.add_argument('--showmetadata', action='store_true',
                               help='Print metadata about available streams')
+    action_group.add_argument('--subtitlesonly', action='store_true',
+                              help='Download only subtitles, not the video')
     io_group.add_argument('--vfat', action='store_true',
                           help='Output Windows-compatible filenames')
     io_group.add_argument('--resume', action='store_true',
@@ -256,6 +259,9 @@ def download(url, action, io, stream_filters, postprocess_command):
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
         return dl.pipe(clips, io, stream_filters)
+    elif action == StreamAction.DOWNLOAD_SUBTITLES_ONLY:
+        dl.download_subtitles(clips, io, stream_filters)
+        return RD_SUCCESS
     else:
         return dl.download_clips(clips, io, stream_filters,
                                  postprocess_command)
@@ -332,6 +338,8 @@ def main(argv=sys.argv):
         action = StreamAction.PRINT_METADATA
     elif args.pipe or (args.outputfile == '-'):
         action = StreamAction.PIPE
+    elif args.subtitlesonly:
+        action = StreamAction.DOWNLOAD_SUBTITLES_ONLY
     else:
         action = StreamAction.DOWNLOAD
 

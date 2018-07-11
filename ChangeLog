@@ -4,6 +4,7 @@ Distributed under the GPL v3
 
 xx xxx 2018, Version 2.34
 
+- Possibility to download only the subtitles, not the video: --subtitlesonly
 - All downloader backends can now be enabled or disabled using the --backend argument
 - --showmetadata displays the available backends for each stream
 - Fixed news clip downloading after changes to the Yle news site
