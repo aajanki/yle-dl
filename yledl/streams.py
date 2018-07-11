@@ -31,6 +31,9 @@ class AreenaStreamBase(object):
     def to_url(self):
         return ''
 
+    def create_downloader(self):
+        return None
+
 
 class AreenaHDSStream(AreenaStreamBase):
     def __init__(self, hds_url, bitrate, flavor_id):
@@ -280,21 +283,9 @@ class SportsStream(HTTPStream):
         return HLSBackend(self.url, '.mp4', long_probe=True)
 
 
-class InvalidStream(object):
+class InvalidStream(AreenaStreamBase):
     def __init__(self, error_message):
         self.error = error_message
-
-    def is_valid(self):
-        return False
-
-    def get_error_message(self):
-        return self.error
-
-    def to_url(self):
-        return ''
-
-    def create_downloader(self):
-        return None
 
 
 @attr.s
