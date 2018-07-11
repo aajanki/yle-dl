@@ -8,7 +8,7 @@ import os.path
 import sys
 from .utils import sane_filename
 from .http import download_to_file
-from .backends import Subprocess
+from .backends import IOCapability, Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .streamfilters import normalize_language_code
@@ -104,8 +104,11 @@ class YleDlDownloader(object):
             subtitlefiles = self.subtitle_downloader.select_and_download(
                 clip.subtitles, outputfile, filters)
 
+            self.log_output_file(outputfile)
             dl_result = downloader.save_stream(outputfile, io)
+
             if dl_result == RD_SUCCESS:
+                self.log_output_file(outputfile, True)
                 self.postprocess(postprocess_command, outputfile,
                                  subtitlefiles)
 
@@ -301,8 +304,17 @@ class YleDlDownloader(object):
             return []
 
     def output_name_for_clip(self, clip, downloader, io):
-        clip_title = clip.title or 'ylestream'
-        return downloader.output_filename(clip_title, io)
+        resume_job = (io.resume and
+                      IOCapability.RESUME in downloader.io_capabilities)
+        extension = downloader.file_extension
+        return clip.output_file_name(extension, io, resume_job)
+
+    def log_output_file(self, outputfile, done=False):
+        if outputfile and outputfile != '-':
+            if done:
+                logger.info('Stream saved to ' + outputfile)
+            else:
+                logger.info('Output file: ' + outputfile)
 
     def remove_retry_file(self, filename):
         if filename and os.path.isfile(filename):

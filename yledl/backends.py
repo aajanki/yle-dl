@@ -10,14 +10,12 @@ import platform
 import re
 import signal
 import subprocess
-import sys
 from builtins import str
 from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import yledl_user_agent
 from .io import which
-from .utils import sane_filename
 
 
 logger = logging.getLogger('yledl')
@@ -29,13 +27,26 @@ class IOCapability(object):
     DURATION = 'duration'
 
 
+class PreferredFileExtension(object):
+    def __init__(self, extension):
+        assert extension.startswith('.')
+        self.extension = extension
+        self.is_mandatory = False
+
+
+class MandatoryFileExtension(object):
+    def __init__(self, extension):
+        assert extension.startswith('.')
+        self.extension = extension
+        self.is_mandatory = True
+
+
 ### Base class for downloading a stream to a local file ###
 
 
 class BaseDownloader(object):
-    def __init__(self, output_extension):
-        self.ext = output_extension
-        self._cached_output_file = None
+    def __init__(self):
+        self.file_extension = MandatoryFileExtension('.flv')
         self.io_capabilities = frozenset()
 
     def warn_on_unsupported_feature(self, io):
@@ -59,67 +70,6 @@ class BaseDownloader(object):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
-    def outputfile_from_clip_title(self, clip_title, io, resume):
-        if self._cached_output_file:
-            return self._cached_output_file
-
-        ext = self.ext or '.flv'
-        filename = sane_filename(clip_title, io.excludechars) + ext
-        if io.destdir:
-            filename = os.path.join(io.destdir, filename)
-        if not resume:
-            filename = self.next_available_filename(filename)
-        self._cached_output_file = filename
-        return filename
-
-    def next_available_filename(self, proposed):
-        i = 1
-        enc = sys.getfilesystemencoding()
-        filename = proposed
-        basename, ext = os.path.splitext(filename)
-        while os.path.exists(filename.encode(enc, 'replace')):
-            logger.info('%s exists, trying an alternative name' % filename)
-            filename = basename + '-' + str(i) + ext
-            i += 1
-
-        return filename
-
-    def append_ext_if_missing(self, filename, default_ext):
-        if '.' in filename:
-            return filename
-        else:
-            return filename + (default_ext or '.flv')
-
-    def replace_extension(self, filename, ext):
-        basename, old_ext = os.path.splitext(filename)
-        if not old_ext or old_ext != ext:
-            if old_ext:
-                logger.warn('Unsupported extension {}. Replacing it with {}'.format(old_ext, ext))
-            return basename + ext
-        else:
-            return filename
-
-    def log_output_file(self, outputfile, done=False):
-        if outputfile and outputfile != '-':
-            if done:
-                logger.info('Stream saved to ' + outputfile)
-            else:
-                logger.info('Output file: ' + outputfile)
-
-    def output_filename(self, clip_title, io):
-        return self._construct_output_filename(clip_title, io, True)
-
-    def _construct_output_filename(self, clip_title, io, force_extension):
-        if io.outputfilename:
-            if force_extension:
-                return self.replace_extension(io.outputfilename, self.ext)
-            else:
-                return self.append_ext_if_missing(
-                    io.outputfilename, self.ext)
-        else:
-            resume_job = io.resume and IOCapability.RESUME in self.io_capabilities
-            return self.outputfile_from_clip_title(clip_title, io, resume_job)
-
 
 ### Download a stream to a file using an external program ###
 
@@ -128,11 +78,7 @@ class ExternalDownloader(BaseDownloader):
     def save_stream(self, output_name, io):
         env = self.extra_environment(io)
         args = self.build_args(output_name, io)
-        self.log_output_file(output_name)
-        retcode = self.external_downloader([args], env)
-        if retcode == RD_SUCCESS:
-            self.log_output_file(output_name, True)
-        return retcode
+        return self.external_downloader([args], env)
 
     def pipe(self, io, subtitle_url):
         commands = [self.build_pipe_args(io)]
@@ -255,7 +201,7 @@ class Subprocess(object):
 
 class RTMPBackend(ExternalDownloader):
     def __init__(self, rtmpdump_args):
-        ExternalDownloader.__init__(self, '.flv')
+        ExternalDownloader.__init__(self)
         self.args = rtmpdump_args
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
@@ -305,8 +251,8 @@ class RTMPBackend(ExternalDownloader):
 
 
 class HDSBackend(ExternalDownloader):
-    def __init__(self, url, bitrate, flavor_id, output_extension):
-        ExternalDownloader.__init__(self, output_extension)
+    def __init__(self, url, bitrate, flavor_id):
+        ExternalDownloader.__init__(self)
         self.url = url
         self.bitrate = bitrate
         self.flavor_id = flavor_id
@@ -385,8 +331,8 @@ class HDSBackend(ExternalDownloader):
 
 
 class YoutubeDLHDSBackend(BaseDownloader):
-    def __init__(self, url, bitrate, flavor_id, output_extension):
-        BaseDownloader.__init__(self, output_extension)
+    def __init__(self, url, bitrate, flavor_id):
+        BaseDownloader.__init__(self)
         self.url = url
         self.bitrate = bitrate
         self.io_capabilities = frozenset([
@@ -409,9 +355,6 @@ class YoutubeDLHDSBackend(BaseDownloader):
         except ImportError:
             logger.error('Failed to import youtube_dl')
             return RD_FAILED
-
-        if outputfile != '-':
-            self.log_output_file(outputfile)
 
         ydlopts = {
             'logtostderr': True,
@@ -436,8 +379,6 @@ class YoutubeDLHDSBackend(BaseDownloader):
             logger.exception('HTTP request failed')
             return RD_FAILED
 
-        if outputfile != '-':
-            self.log_output_file(outputfile, True)
         return RD_SUCCESS
 
     def _bitrate_parameter(self, bitrate):
@@ -451,15 +392,13 @@ class YoutubeDLHDSBackend(BaseDownloader):
 
 
 class HLSBackend(ExternalDownloader):
-    def __init__(self, url, output_extension, long_probe=False):
-        ExternalDownloader.__init__(self, output_extension)
+    def __init__(self, url, extension, long_probe=False):
+        ExternalDownloader.__init__(self)
         self.url = url
+        self.file_extension = PreferredFileExtension(extension)
         self.long_probe = long_probe
         self.io_capabilities = frozenset([IOCapability.DURATION])
         self.name = Backends.FFMPEG
-
-    def output_filename(self, clip_title, io):
-        return self._construct_output_filename(clip_title, io, False)
 
     def _duration_arg(self, download_limits):
         if download_limits.duration:
@@ -514,6 +453,9 @@ class HLSBackend(ExternalDownloader):
 
 
 class HLSAudioBackend(HLSBackend):
+    def __init__(self, url):
+        HLSBackend.__init__(self, url, '.mp3', False)
+
     def build_args(self, output_name, io):
         return self.ffmpeg_command_line(
             io, ['-map', '0:4?', '-f', 'mp3', 'file:' + output_name])
@@ -527,9 +469,10 @@ class HLSAudioBackend(HLSBackend):
 
 
 class WgetBackend(ExternalDownloader):
-    def __init__(self, url, output_extension):
-        ExternalDownloader.__init__(self, output_extension)
+    def __init__(self, url, file_extension):
+        ExternalDownloader.__init__(self)
         self.url = url
+        self.file_extension = MandatoryFileExtension(file_extension)
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.RATELIMIT,

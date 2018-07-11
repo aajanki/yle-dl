@@ -17,7 +17,6 @@ logger = logging.getLogger('yledl')
 class AreenaStreamBase(object):
     def __init__(self):
         self.error = None
-        self.ext = '.flv'
         self.bitrate = None
 
     def is_valid(self):
@@ -45,14 +44,12 @@ class AreenaHDSStream(AreenaStreamBase):
         return self.hds_url
 
     def create_downloader(self):
-        return HDSBackend(self.hds_url, self.bitrate,
-                          self.flavor_id, self.ext)
+        return HDSBackend(self.hds_url, self.bitrate, self.flavor_id)
 
 
 class AreenaYoutubeDLHDSStream(AreenaHDSStream):
     def create_downloader(self):
-        return YoutubeDLHDSBackend(self.hds_url, self.bitrate,
-                                   self.flavor_id, self.ext)
+        return YoutubeDLHDSBackend(self.hds_url, self.bitrate, self.flavor_id)
 
 
 class Areena2014RTMPStream(AreenaStreamBase):
@@ -237,7 +234,7 @@ class HTTPStream(object):
 
 
 class KalturaHLSStream(HTTPStream):
-    def __init__(self, entryid, flavorid, stream_format, ext='.mp4'):
+    def __init__(self, entryid, flavorid, stream_format, ext):
         self.ext = ext
         self.stream_format = stream_format
         self.http_manifest_url = self._manifest_url(
@@ -274,27 +271,18 @@ class KalturaWgetStream(KalturaHLSStream):
 
 
 class KalturaLiveAudioStream(HTTPStream):
-    def __init__(self, hlsurl):
-        super(KalturaLiveAudioStream, self).__init__(hlsurl)
-        self.ext = '.mp3'
-
     def create_downloader(self):
-        return HLSAudioBackend(self.url, self.ext)
+        return HLSAudioBackend(self.url)
 
 
 class SportsStream(HTTPStream):
-    def __init__(self, manifesturl):
-        super(SportsStream, self).__init__(manifesturl)
-        self.ext = '.mp4'
-
     def create_downloader(self):
-        return HLSBackend(self.url, self.ext, long_probe=True)
+        return HLSBackend(self.url, '.mp4', long_probe=True)
 
 
 class InvalidStream(object):
     def __init__(self, error_message):
         self.error = error_message
-        self.ext = None
 
     def is_valid(self):
         return False

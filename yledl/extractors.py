@@ -5,8 +5,10 @@ import attr
 import base64
 import json
 import logging
+import os.path
 import re
 import time
+import sys
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree, html_unescape
@@ -15,6 +17,7 @@ from .streams import AreenaHDSStream, AreenaYoutubeDLHDSStream
 from .streams import KalturaHLSStream, KalturaWgetStream
 from .streams import KalturaLiveAudioStream, Areena2014RTMPStream
 from .streams import HTTPStream, SportsStream, InvalidStream
+from .utils import sane_filename
 
 
 try:
@@ -332,6 +335,55 @@ class Clip(object):
     publish_timestamp = attr.ib(default=None)
     expiration_timestamp = attr.ib(default=None)
     subtitles = attr.ib(default=attr.Factory(list))
+
+    def output_file_name(self, extension, io, resume_job=False):
+        if io.outputfilename:
+            return self.filename_from_template(io.outputfilename, extension)
+        else:
+            return self.filename_from_title(extension, io, resume_job)
+
+    def filename_from_title(self, extension, io, resume_job):
+        title = self.title or 'ylestream'
+        ext = extension.extension
+        filename = sane_filename(title, io.excludechars) + ext
+        if io.destdir:
+            filename = os.path.join(io.destdir, filename)
+        if not resume_job:
+            filename = self.next_available_filename(filename)
+        return filename
+
+    def next_available_filename(self, proposed):
+        i = 1
+        enc = sys.getfilesystemencoding()
+        filename = proposed
+        basename, ext = os.path.splitext(filename)
+        while os.path.exists(filename.encode(enc, 'replace')):
+            logger.info('%s exists, trying an alternative name' % filename)
+            filename = basename + '-' + str(i) + ext
+            i += 1
+        return filename
+
+    def filename_from_template(self, basename, extension):
+        if extension.is_mandatory:
+            return self.replace_extension(basename, extension)
+        else:
+            return self.append_ext_if_missing(basename, extension)
+
+    def replace_extension(self, filename, extension):
+        ext = extension.extension
+        basename, old_ext = os.path.splitext(filename)
+        if not old_ext or old_ext != ext:
+            if old_ext:
+                logger.warn('Unsupported extension {}. Replacing it with {}'.format(old_ext, ext))
+            return basename + ext
+        else:
+            return filename
+
+    def append_ext_if_missing(self, filename, extension):
+        if '.' in filename:
+            return filename
+        else:
+            return filename + extension.extension
 
     def metadata(self):
         flavors_meta = sorted(

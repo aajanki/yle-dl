@@ -13,7 +13,7 @@ from yledl.streams import InvalidStream
 
 class StateCollectingBackend(BaseDownloader):
     def __init__(self, state_dict, id, name):
-        BaseDownloader.__init__(self, '.mp4')
+        BaseDownloader.__init__(self)
         self.id = id
         self.state_dict = state_dict
         self.name = name
