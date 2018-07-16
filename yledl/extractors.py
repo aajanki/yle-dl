@@ -15,7 +15,8 @@ from .http import download_page, download_html_tree, html_unescape
 from .streamfilters import normalize_language_code
 from .streams import AreenaHDSStream, AreenaYoutubeDLHDSStream
 from .streams import KalturaHLSStream, KalturaWgetStream
-from .streams import KalturaLiveAudioStream, Areena2014RTMPStream
+from .streams import KalturaLiveTVStream, KalturaLiveAudioStream
+from .streams import Areena2014RTMPStream
 from .streams import HTTPStream, SportsStream, InvalidStream
 from .utils import sane_filename
 
@@ -39,13 +40,14 @@ def extractor_factory(url, filters):
         return ArkivetExtractor()
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
-        return AreenaLiveRadioExtractor(filters)
+        return AreenaLiveRadioExtractor()
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/30-901\?', url):
         # Football World Cup 2018
         return AreenaSportsExtractor()
-    elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url) or
-          re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/[-0-9]+\?play=yle-[-a-z0-9]+', url)):
-        return AreenaLiveTVExtractor(filters)
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
+        return AreenaLiveTVHLSExtractor()
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/[-0-9]+\?play=yle-[-a-z0-9]+', url):
+        return AreenaLiveTVHDSExtractor(filters)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
         return YleUutisetExtractor()
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
@@ -120,7 +122,7 @@ class KalturaUtils(object):
         return (mw or {}).get('content', '')
 
     def mwembed_url(self, entryid, program_id):
-        return ('https://cdnapisec.kaltura.com/html5/html5lib/v2.60.2/'
+        return ('https://cdnapisec.kaltura.com/html5/html5lib/v2.67/'
                 'mwEmbedFrame.php?&wid=_1955031&uiconf_id=37558971'
                 '&cache_st=1442926927&entry_id={entry_id}'
                 '&flashvars\[streamerType\]=auto'
@@ -903,7 +905,7 @@ class AreenaSportsExtractor(AreenaExtractor):
 ### Areena Live TV ###
 
 
-class AreenaLiveTVExtractor(AreenaExtractor):
+class AreenaLiveTVHDSExtractor(AreenaExtractor):
     # TODO: get rid of the constructor and the filters argument
     def __init__(self, filters):
         AreenaExtractor.__init__(self)
@@ -947,13 +949,70 @@ class AreenaLiveTVExtractor(AreenaExtractor):
         return program_info.get('data', {}).get('service', {})
 
 
-### Areena live radio ###
-
-
-class AreenaLiveRadioExtractor(AreenaLiveTVExtractor):
+class AreenaLiveTVHLSExtractor(AreenaExtractor):
     def get_playlist(self, url):
         return [url]
 
+    def program_id_from_url(self, url):
+        parsed = urlparse(url)
+        return parsed.path.split('/')[-1]
+
+    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
+        (streams, bitrate) = self.live_stream_configurations(media_id, program_id, pageurl)
+        if streams and 'url' in streams[0]:
+            hls_url = streams[0].get('url')
+            return [self.stream_flavor(hls_url, bitrate)]
+        else:
+            return []
+
+    def stream_flavor(self, hls_url, bitrate):
+        return StreamFlavor(
+            media_type='video',
+            bitrate=bitrate,
+            streams=[KalturaLiveTVStream(hls_url)]
+        )
+
+    def live_stream_configurations(self, media_id, program_id, pageurl):
+        mw = self.load_mwembed(media_id, program_id, pageurl)
+        package_data = self.package_data_from_mwembed(mw)
+        meta = package_data.get('entryResult', {}).get('meta', {})
+
+        bitrates = meta.get('bitrates', [])
+        bitrate = bitrates[0].get('bitrate') if bitrates else None
+
+        configurations = meta.get('liveStreamConfigurations', [])
+
+        return configurations, bitrate
+
+    def program_info_url(self, pid):
+        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
+            'ssl=true&countryCode=FI&app_id=player_static_prod' \
+            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
+
+    def program_media_id(self, program_info):
+        extended_media_id = self.channel_data(program_info).get('media_id')
+        if '-' in extended_media_id:
+            return extended_media_id.split('-')[1]
+        else:
+            return extended_media_id
+
+    def program_title(self, program_info):
+        titles = self.channel_data(program_info).get('title', {})
+        title = self.fin_or_swe_text(titles) or 'areena'
+        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
+        return title
+
+    def channel_data(self, program_info):
+        return program_info.get('data', {}).get('ongoing_channel', {})
+
+    def available_at_region(self, program_info):
+        return 'Finland'
+
+
+### Areena live radio ###
+
+
+class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
     def program_id_from_url(self, url):
         parsed = urlparse(url)
         query_dict = parse_qs(parsed.query)
@@ -962,45 +1021,12 @@ class AreenaLiveRadioExtractor(AreenaLiveTVExtractor):
         else:
             return parsed.path.split('/')[-1]
 
-    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
-        mw = self.load_mwembed(media_id, program_id, pageurl)
-        package_data = self.package_data_from_mwembed(mw)
-        meta = package_data.get('entryResult', {}).get('meta', {})
-        streams = meta.get('liveStreamConfigurations', [])
-        if streams and 'url' in streams[0]:
-            bitrate = None
-            bitrates = meta.get('bitrates', [])
-            if bitrates:
-                bitrate = bitrates[0].get('bitrate')
-
-            hls_url = streams[0].get('url')
-
-            return [
-                StreamFlavor(
-                    media_type='audio',
-                    bitrate=bitrate,
-                    streams=[KalturaLiveAudioStream(hls_url)]
-                )
-            ]
-        else:
-            return []
-
-    def program_info_url(self, pid):
-        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
-            'ssl=true&countryCode=FI&app_id=player_static_prod' \
-            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
-
-    def program_media_id(self, program_info):
-        return self._channel_data(program_info).get('media_id')
-
-    def program_title(self, program_info):
-        titles = self._channel_data(program_info).get('title', {})
-        title = self.fin_or_swe_text(titles) or 'areena'
-        title += time.strftime('-%Y-%m-%d-%H:%M:%S')
-        return title
-
-    def _channel_data(self, program_info):
-        return program_info.get('data', {}).get('ongoing_channel', {})
+    def stream_flavor(self, hls_url, bitrate):
+        return StreamFlavor(
+            media_type='audio',
+            bitrate=bitrate,
+            streams=[KalturaLiveAudioStream(hls_url)]
+        )
 
 
 ### Elava Arkisto ###

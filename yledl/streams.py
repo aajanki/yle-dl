@@ -273,6 +273,11 @@ class KalturaWgetStream(KalturaHLSStream):
         return WgetBackend(self.http_manifest_url, self.ext)
 
 
+class KalturaLiveTVStream(HTTPStream):
+    def create_downloader(self):
+        return HLSBackend(self.url, '.mp4')
+
+
 class KalturaLiveAudioStream(HTTPStream):
     def create_downloader(self):
         return HLSAudioBackend(self.url)
