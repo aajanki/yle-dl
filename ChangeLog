@@ -2,6 +2,12 @@ download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
+xx xxx 2018, version 2.35
+
+- Download the HLS variant of the live TV streams by default (similar to the
+  web Areena). Use "--backend adobehdsphp" to download the HDS variants like
+  the earlier versions.
+
 12 Jul 2018, Version 2.34
 
 - Possibility to download only the subtitles, not the video: --subtitlesonly
@@ -11,7 +17,7 @@ Distributed under the GPL v3
 
 19 Jun 2018, Version 2.33
 
-- Support for football word cup streams
+- Support for the football world cup streams
 - Fixed live radio streams. They were broken because of changes in Areena.
 
 15 Apr 2018, Version 2.32
