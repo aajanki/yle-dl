@@ -14,11 +14,12 @@ from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .http import download_page, download_html_tree, html_unescape
 from .streamfilters import normalize_language_code
+from .streamflavor import StreamFlavor, FailedFlavor
 from .streams import AreenaHDSStream, AreenaYoutubeDLHDSStream
 from .streams import KalturaHLSStream, KalturaWgetStream
 from .streams import KalturaLiveTVStream, KalturaLiveAudioStream
 from .streams import Areena2014RTMPStream
-from .streams import HTTPStream, SportsStream, InvalidStream
+from .streams import HTTPStream, SportsStream
 from .utils import sane_filename
 
 
@@ -426,26 +427,6 @@ class Clip(object):
 
     def ignore_none_values(self, li):
         return {key: value for (key, value) in li if value is not None}
-
-
-@attr.s
-class StreamFlavor(object):
-    media_type = attr.ib()
-    height = attr.ib(default=None, converter=attr.converters.optional(int))
-    width = attr.ib(default=None, converter=attr.converters.optional(int))
-    bitrate = attr.ib(default=None, converter=attr.converters.optional(int))
-    streams = attr.ib(default=attr.Factory(list))
-    hard_subtitle = attr.ib(default=None)
-
-
-class FailedFlavor(StreamFlavor):
-    def __init__(self, error_message):
-        StreamFlavor.__init__(self,
-                              media_type='unknown',
-                              height=None,
-                              width=None,
-                              bitrate=None,
-                              streams=[InvalidStream(error_message)])
 
 
 class FailedClip(Clip):

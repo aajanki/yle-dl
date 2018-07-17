@@ -3,7 +3,9 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import pytest
 from yledl import YleDlDownloader, StreamFilters
-from yledl.extractors import StreamFlavor, Subtitle
+from yledl.backends import Backends
+from yledl.extractors import Subtitle
+from yledl.streamflavor import StreamFlavor
 from yledl.streams import AreenaStreamBase, InvalidStream
 
 
@@ -13,161 +15,174 @@ class MockBackend(object):
 
 
 class MockStream(AreenaStreamBase):
-    def __init__(self, backend):
+    def __init__(self, backend, name=None):
         AreenaStreamBase.__init__(self)
         self.backend = MockBackend(backend)
+        self.name = name
 
     def create_downloader(self):
         return self.backend
 
 
 flavors = [
-    StreamFlavor(streams=[1], bitrate=190, width=224, height=126, media_type=''),
+    StreamFlavor(streams=[MockStream('ffmpeg', 1)], bitrate=190, width=224, height=126, media_type=''),
 
-    StreamFlavor(streams=[5], bitrate=1506, width=1280, height=720, media_type=''),
-    StreamFlavor(streams=[6], bitrate=2628, width=1280, height=720, media_type=''),
-    StreamFlavor(streams=[7], bitrate=4128, width=1920, height=1080, media_type=''),
+    StreamFlavor(streams=[MockStream('ffmpeg', 5)], bitrate=1506, width=1280, height=720, media_type=''),
+    StreamFlavor(streams=[MockStream('ffmpeg', 6)], bitrate=2628, width=1280, height=720, media_type=''),
+    StreamFlavor(streams=[MockStream('ffmpeg', 7)], bitrate=4128, width=1920, height=1080, media_type=''),
 
-    StreamFlavor(streams=[4], bitrate=964, width=640, height=360, media_type=''),
-    StreamFlavor(streams=[3], bitrate=668, width=640, height=360, media_type=''),
-    StreamFlavor(streams=[2], bitrate=469, width=640, height=360, media_type='')
+    StreamFlavor(streams=[MockStream('ffmpeg', 4)], bitrate=964, width=640, height=360, media_type=''),
+    StreamFlavor(streams=[MockStream('ffmpeg', 3)], bitrate=668, width=640, height=360, media_type=''),
+    StreamFlavor(streams=[MockStream('ffmpeg', 2)], bitrate=469, width=640, height=360, media_type='')
 ]
 
 
 hard_sub_flavors = [
-    StreamFlavor(streams=['fi'], bitrate=510, width=640, height=360,
+    StreamFlavor(streams=[MockStream('ffmpeg', 'fi')],
+                 bitrate=510, width=640, height=360,
                  hard_subtitle=Subtitle(url=None, lang='fi'), media_type=''),
-    StreamFlavor(streams=['sv'], bitrate=469, width=640, height=360,
+    StreamFlavor(streams=[MockStream('ffmpeg', 'sv')],
+                 bitrate=469, width=640, height=360,
                  hard_subtitle=Subtitle(url=None, lang='sv'), media_type=''),
-    StreamFlavor(streams=['none'], bitrate=489, width=640, height=360,
-                 media_type='')
+    StreamFlavor(streams=[MockStream('ffmpeg', 'none')],
+                 bitrate=489, width=640, height=360, media_type='')
 ]
 
 
-def filter_flavors(flavors, max_height=None, max_bitrate=None, hard_sub=None):
+def video_flavor(streams):
+    return StreamFlavor(media_type='video', streams=streams)
+
+
+def filter_flavors(flavors, max_height=None, max_bitrate=None, hard_sub=None, enabled_backends=None):
+    if enabled_backends is None:
+        enabled_backends = list(Backends.default_order)
+
     filters = StreamFilters(maxheight=max_height,
                             maxbitrate=max_bitrate,
-                            hardsubs=hard_sub)
+                            hardsubs=hard_sub,
+                            enabled_backends=enabled_backends)
     return YleDlDownloader().select_flavor(flavors, filters)
 
 
+def stream_names(flavor):
+    return [s.name for s in flavor.streams]
+
+
 def test_empty_input():
-    assert filter_flavors([], None, None) == None
-    assert filter_flavors([], 720, None) == None
-    assert filter_flavors([], None, 5000) == None
-    assert filter_flavors([], 720, 5000) == None
+    assert filter_flavors([], None, None) is None
+    assert filter_flavors([], 720, None) is None
+    assert filter_flavors([], None, 5000) is None
+    assert filter_flavors([], 720, 5000) is None
 
 
 def test_no_filters():
-    assert filter_flavors(flavors, None, None).streams == [7]
+    assert stream_names(filter_flavors(flavors, None, None)) == [7]
 
 
 def test_bitrate_filter():
-    assert filter_flavors(flavors, None, 10).streams == [1]
-    assert filter_flavors(flavors, None, 200).streams == [1]
-    assert filter_flavors(flavors, None, 963).streams == [3]
-    assert filter_flavors(flavors, None, 964).streams == [4]
-    assert filter_flavors(flavors, None, 1000).streams == [4]
-    assert filter_flavors(flavors, None, 5000).streams == [7]
+    assert stream_names(filter_flavors(flavors, None, 10)) == [1]
+    assert stream_names(filter_flavors(flavors, None, 200)) == [1]
+    assert stream_names(filter_flavors(flavors, None, 963)) == [3]
+    assert stream_names(filter_flavors(flavors, None, 964)) == [4]
+    assert stream_names(filter_flavors(flavors, None, 1000)) == [4]
+    assert stream_names(filter_flavors(flavors, None, 5000)) == [7]
 
 
 def test_resolution_filter():
-    assert filter_flavors(flavors, 100, None).streams == [1]
-    assert filter_flavors(flavors, 480, None).streams == [2]
-    assert filter_flavors(flavors, 719, None).streams == [2]
-    assert filter_flavors(flavors, 720, None).streams == [5]
-    assert filter_flavors(flavors, 1080, None).streams == [7]
-    assert filter_flavors(flavors, 2160, None).streams == [7]
+    assert stream_names(filter_flavors(flavors, 100, None)) == [1]
+    assert stream_names(filter_flavors(flavors, 480, None)) == [2]
+    assert stream_names(filter_flavors(flavors, 719, None)) == [2]
+    assert stream_names(filter_flavors(flavors, 720, None)) == [5]
+    assert stream_names(filter_flavors(flavors, 1080, None)) == [7]
+    assert stream_names(filter_flavors(flavors, 2160, None)) == [7]
 
 
 def test_combined_filters():
-    assert filter_flavors(flavors, 10, 10).streams == [1]
-    assert filter_flavors(flavors, 200, 10).streams == [1]
-    assert filter_flavors(flavors, 10, 200).streams == [1]
-    assert filter_flavors(flavors, 360, 400).streams == [1]
-    assert filter_flavors(flavors, 360, 650).streams == [2]
-    assert filter_flavors(flavors, 360, 700).streams == [3]
-    assert filter_flavors(flavors, 360, 5000).streams == [4]
-    assert filter_flavors(flavors, 720, 200).streams == [1]
-    assert filter_flavors(flavors, 2160, 1506).streams == [5]
+    assert stream_names(filter_flavors(flavors, 10, 10)) == [1]
+    assert stream_names(filter_flavors(flavors, 200, 10)) == [1]
+    assert stream_names(filter_flavors(flavors, 10, 200)) == [1]
+    assert stream_names(filter_flavors(flavors, 360, 400)) == [1]
+    assert stream_names(filter_flavors(flavors, 360, 650)) == [2]
+    assert stream_names(filter_flavors(flavors, 360, 700)) == [3]
+    assert stream_names(filter_flavors(flavors, 360, 5000)) == [4]
+    assert stream_names(filter_flavors(flavors, 720, 200)) == [1]
+    assert stream_names(filter_flavors(flavors, 2160, 1506)) == [5]
 
 
 def test_hard_subtitle_filters():
-    assert filter_flavors(hard_sub_flavors).streams == ['none']
-    assert filter_flavors(hard_sub_flavors, hard_sub='fin').streams == ['fi']
-    assert filter_flavors(hard_sub_flavors, hard_sub='swe').streams == ['sv']
+    assert stream_names(filter_flavors(hard_sub_flavors)) == ['none']
+    assert stream_names(filter_flavors(hard_sub_flavors, hard_sub='fin')) == ['fi']
+    assert stream_names(filter_flavors(hard_sub_flavors, hard_sub='swe')) == ['sv']
 
 
 def test_hard_subtitle_filters_no_match():
-    assert filter_flavors(flavors, hard_sub='fin') == None
+    assert filter_flavors(flavors, hard_sub='fin') is None
 
 
 def test_backend_filter_first_preferred():
-    streams = [
+    test_flavors = [video_flavor([
         MockStream('ffmpeg'),
         MockStream('wget'),
         MockStream('youtubedl')
-    ]
+    ])]
     enabled = ['wget', 'ffmpeg', 'youtubedl', 'rtmpdump']
-    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+    flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
-    assert filtered[0].create_downloader().name == enabled[0]
+    assert flavor.streams[0].create_downloader().name == enabled[0]
 
 
 def test_backend_filter_first_preferred_2():
-    streams = [MockStream('rtmpdump')]
+    test_flavors = [video_flavor([MockStream('rtmpdump')])]
     enabled = ['wget', 'ffmpeg', 'youtubedl', 'rtmpdump']
-    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+    flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
-    assert filtered[0].create_downloader().name == enabled[3]
+    assert flavor.streams[0].create_downloader().name == enabled[3]
 
 
 def test_backend_filter_no_match():
-    streams = [
+    test_flavors = [video_flavor([
         MockStream('ffmpeg'),
         MockStream('wget'),
         MockStream('youtubedl')
-    ]
+    ])]
     enabled = ['rtmpdump']
-    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+    flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
-    assert len(filtered) == 1
-    assert not filtered[0].is_valid()
-    assert 'Required backend not enabled' in filtered[0].get_error_message()
+    assert len(flavor.streams) == 1
+    assert not flavor.streams[0].is_valid()
+    assert 'Required backend not enabled' in flavor.streams[0].get_error_message()
 
 
 def test_backend_filter_no_streams():
-    enabled = ['ffmpeg']
-    filtered = YleDlDownloader().filter_by_backend([], enabled)
+    flavor = filter_flavors([], enabled_backends=['ffmpeg'])
 
-    assert len(filtered) == 0
+    assert flavor is None
 
 
 def test_backend_filter_failed_stream():
-    streams = [
+    test_flavors = [video_flavor([
         MockStream('ffmpeg'),
         InvalidStream('wget stream failed'),
         MockStream('youtubedl')
-    ]
+    ])]
     enabled = ['wget']
-    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+    flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
-    assert len(filtered) == 1
-    assert not filtered[0].is_valid()
-    assert filtered[0].get_error_message() == 'wget stream failed'
+    assert len(flavor.streams) == 1
+    assert not flavor.streams[0].is_valid()
 
 
 def test_backend_filter_failed_fallback():
-    streams = [
+    test_flavors = [video_flavor([
         MockStream('ffmpeg'),
         InvalidStream('wget stream failed'),
         MockStream('youtubedl')
-    ]
+    ])]
     enabled = ['wget', 'youtubedl', 'ffmpeg']
-    filtered = YleDlDownloader().filter_by_backend(streams, enabled)
+    flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
-    assert len(filtered) == 2
-    assert filtered[0].is_valid()
-    assert filtered[0].create_downloader().name == enabled[1]
-    assert filtered[1].is_valid()
-    assert filtered[1].create_downloader().name == enabled[2]
+    assert len(flavor.streams) == 2
+    assert flavor.streams[0].is_valid()
+    assert flavor.streams[0].create_downloader().name == enabled[1]
+    assert flavor.streams[1].is_valid()
+    assert flavor.streams[1].create_downloader().name == enabled[2]

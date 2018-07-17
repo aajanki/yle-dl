@@ -2,6 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import codecs
+import copy
 import json
 import logging
 import os.path
@@ -12,7 +13,7 @@ from .backends import IOCapability, PreferredFileExtension, Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .streamfilters import normalize_language_code
-from .streams import InvalidStream
+from .streamflavor import FailedFlavor
 
 
 logger = logging.getLogger('yledl')
@@ -233,6 +234,7 @@ class YleDlDownloader(object):
             filters.maxheight, filters.maxbitrate))
 
         filtered = self.apply_hard_subtitle_filter(flavors, filters)
+        filtered = self.apply_backend_filter(filtered, filters)
         filtered = self.apply_resolution_filters(filtered, filters)
 
         if filtered:
@@ -253,6 +255,37 @@ class YleDlDownloader(object):
             ]
         else:
             return [fl for fl in flavors if not fl.hard_subtitle]
+
+    def apply_backend_filter(self, flavors, filters):
+        def filter_streams_by_backend(flavor):
+            streams_with_backend_names = []
+            for s in flavor.streams:
+                downloader = s.create_downloader()
+                if s.is_valid() and downloader:
+                    streams_with_backend_names.append((s, downloader.name))
+
+            sorted_streams = []
+            for be in filters.enabled_backends:
+                for (stream, stream_be) in streams_with_backend_names:
+                    if stream_be == be:
+                        sorted_streams.append(stream)
+
+            res = copy.copy(flavor)
+            res.streams = sorted_streams
+            return res
+
+        if not flavors:
+            return []
+
+        filtered = [filter_streams_by_backend(fl) for fl in flavors]
+        filtered = [fl for fl in filtered if fl.streams]
+
+        if filtered:
+            return filtered
+        elif flavors:
+            return [self.backend_not_enabled_flavor(flavors)]
+        else:
+            return []
 
     def apply_resolution_filters(self, flavors, filters):
         def sort_max_bitrate(x):
@@ -286,35 +319,25 @@ class YleDlDownloader(object):
 
         return sorted(acceptable_flavors, key=keyfunc, reverse=reverse)
 
+    def backend_not_enabled_flavor(self, flavors):
+        supported_backends = []
+        for fl in flavors:
+            for s in fl.streams:
+                if s.is_valid():
+                    be_name = s.create_downloader().name
+                    if be_name not in supported_backends:
+                        supported_backends.append(be_name)
+
+        return FailedFlavor('Required backend not enabled. '
+                            'Try: --backend {}'
+                            .format(','.join(supported_backends)))
+
     def select_streams(self, flavors, filters):
         flavor = self.select_flavor(flavors, filters)
-        streams = flavor and flavor.streams
-        return self.filter_by_backend(streams or [], filters.enabled_backends)
-
-    def filter_by_backend(self, streams, enabled_backends):
-        streams_with_backend_names = []
-        for s in streams:
-            downloader = s.create_downloader()
-            if s.is_valid() and downloader:
-                streams_with_backend_names.append((s, downloader.name))
-
-        filtered = []
-        for be in enabled_backends:
-            for (stream, stream_be) in streams_with_backend_names:
-                if stream_be == be:
-                    filtered.append(stream)
-
-        if filtered:
-            return filtered
-        elif any(not s.is_valid() for s in streams):
-            return [next(s for s in streams if not s.is_valid())]
-        elif streams:
-            supported_backends = [x[1] for x in streams_with_backend_names]
-            return [InvalidStream('Required backend not enabled. '
-                                  'Try: --backend {}'
-                                  .format(','.join(supported_backends)))]
+        if flavor:
+            return flavor.streams or []
         else:
-            return []
+            return None
 
     def output_name_for_clip(self, clip, downloader, io):
         resume_job = (io.resume and
