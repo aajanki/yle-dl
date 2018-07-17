@@ -3,6 +3,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
 import base64
+import itertools
 import json
 import logging
 import os.path
@@ -19,6 +20,7 @@ from .streams import KalturaLiveTVStream, KalturaLiveAudioStream
 from .streams import Areena2014RTMPStream
 from .streams import HTTPStream, SportsStream, InvalidStream
 from .utils import sane_filename
+
 
 
 try:
@@ -45,7 +47,7 @@ def extractor_factory(url, filters):
         # Football World Cup 2018
         return AreenaSportsExtractor()
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
-        return AreenaLiveTVHLSExtractor()
+        return MergingExtractor([AreenaLiveTVHLSExtractor(), AreenaLiveTVHDSExtractor(filters)])
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/[-0-9]+\?play=yle-[-a-z0-9]+', url):
         return AreenaLiveTVHDSExtractor(filters)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
@@ -478,6 +480,32 @@ class ClipExtractor(object):
 
     def extract_clip(self, url):
         raise NotImplementedError("extract_clip must be overridden")
+
+
+class MergingExtractor(ClipExtractor):
+    """Executes several ClipExtractors and combines stream flavors from all of them."""
+
+    def __init__(self, extractors):
+        self.extractors = extractors
+
+    def get_playlist(self, url):
+        playlist = []
+        for extractor in self.extractors:
+            for clip_url in extractor.get_playlist(url):
+                if clip_url not in playlist:
+                    playlist.append(clip_url)
+        return playlist
+
+    def extract_clip(self, url):
+        clips = [x.extract_clip(url) for x in self.extractors]
+        clips = [c for c in clips if not isinstance(c, FailedClip)]
+        if clips:
+            all_flavors = list(itertools.chain.from_iterable(c.flavors for c in clips))
+            clip = clips[0]
+            clip.flavors = all_flavors
+            return clip
+        else:
+            return []
 
 
 class AreenaPlaylist(object):
