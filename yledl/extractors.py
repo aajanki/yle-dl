@@ -975,9 +975,11 @@ class AreenaLiveTVHLSExtractor(AreenaExtractor):
             return []
 
     def stream_flavor(self, hls_url, bitrate):
+        # The bitrate parsed from the metadata is bogus anyway. Let's use a
+        # large value here to boost this stream over the HDS streams.
         return StreamFlavor(
             media_type='video',
-            bitrate=bitrate,
+            bitrate=3000,
             streams=[KalturaLiveTVStream(hls_url)]
         )
 
