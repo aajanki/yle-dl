@@ -252,7 +252,7 @@ class KalturaHLSStream(HTTPStream):
             return self.http_manifest_url
 
     def create_downloader(self):
-        return HLSBackend(self.hls_manifest_url, self.ext)
+        return HLSBackend(self.to_url(), self.ext)
 
     def _manifest_url(self, entry_id, flavor_id, stream_format, manifest_ext):
         return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
