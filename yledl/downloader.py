@@ -224,14 +224,14 @@ class YleDlDownloader(object):
         if not flavors:
             return None
 
-        logger.debug('Available flavors: {}'.format([{
-            'bitrate': fl.bitrate,
-            'height': fl.height,
-            'width': fl.width,
-            'hard_subtitle': fl.hard_subtitle
-        } for fl in flavors]))
-        logger.debug('max_height: {}, max_bitrate: {}'.format(
-            filters.maxheight, filters.maxbitrate))
+        logger.debug('Available flavors:')
+        for fl in flavors:
+            logger.debug('bitrate: {bitrate}, height: {height}, '
+                         'width: {width}, '
+                         'hard_subtitle: {hard_subtitle}'
+                         .format(**vars(fl)))
+        logger.debug('max_height: {maxheight}, max_bitrate: {maxbitrate}'
+                     .format(**vars(filters)))
 
         filtered = self.apply_hard_subtitle_filter(flavors, filters)
         filtered = self.apply_backend_filter(filtered, filters)
@@ -299,8 +299,10 @@ class YleDlDownloader(object):
 
         filtered = [
             fl for fl in flavors
-            if (filters.maxbitrate is None or fl.bitrate <= filters.maxbitrate) and
-            (filters.maxheight is None or fl.height <= filters.maxheight)
+            if (filters.maxbitrate is None or
+                (fl.bitrate or 0) <= filters.maxbitrate) and
+            (filters.maxheight is None or
+             (fl.height or 0) <= filters.maxheight)
         ]
 
         if filtered:

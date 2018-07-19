@@ -5,7 +5,7 @@ import pytest
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import Backends
 from yledl.extractors import Subtitle
-from yledl.streamflavor import StreamFlavor
+from yledl.streamflavor import StreamFlavor, FailedFlavor
 from yledl.streams import AreenaStreamBase, InvalidStream
 
 
@@ -69,14 +69,28 @@ def stream_names(flavor):
 
 
 def test_empty_input():
-    assert filter_flavors([], None, None) is None
-    assert filter_flavors([], 720, None) is None
-    assert filter_flavors([], None, 5000) is None
-    assert filter_flavors([], 720, 5000) is None
+    assert filter_flavors([]) is None
+    assert filter_flavors([], max_height=720) is None
+    assert filter_flavors([], max_bitrate=5000) is None
+    assert filter_flavors([], max_height=720, max_bitrate=5000) is None
+
+
+def test_only_failed_flavors():
+    failed_flavors = [
+        FailedFlavor('First failure'),
+        FailedFlavor('Second failure'),
+        FailedFlavor('Third failure')
+    ]
+
+    assert isinstance(filter_flavors(failed_flavors), FailedFlavor)
+    assert isinstance(filter_flavors(failed_flavors, max_height=720),
+                      FailedFlavor)
+    assert isinstance(filter_flavors(failed_flavors, max_bitrate=2000),
+                      FailedFlavor)
 
 
 def test_no_filters():
-    assert stream_names(filter_flavors(flavors, None, None)) == [7]
+    assert stream_names(filter_flavors(flavors)) == [7]
 
 
 def test_bitrate_filter():
@@ -107,6 +121,25 @@ def test_combined_filters():
     assert stream_names(filter_flavors(flavors, 360, 5000)) == [4]
     assert stream_names(filter_flavors(flavors, 720, 200)) == [1]
     assert stream_names(filter_flavors(flavors, 2160, 1506)) == [5]
+
+
+def test_combined_filter_with_some_failed_flavors():
+    test_flavors = [
+        FailedFlavor('Failure'),
+        StreamFlavor(streams=[MockStream('ffmpeg', 2)], bitrate=190,
+                     width=224, height=126, media_type=''),
+        StreamFlavor(streams=[MockStream('ffmpeg', 3)], bitrate=469,
+                     width=640, height=360, media_type=''),
+        FailedFlavor('Second failure'),
+        StreamFlavor(streams=[MockStream('ffmpeg', 5)], bitrate=1506,
+                     width=1280, height=720, media_type='')
+    ]
+
+    assert stream_names(filter_flavors(test_flavors)) == [5]
+    assert stream_names(filter_flavors(test_flavors, max_height=720,
+                                       max_bitrate=200)) == [2]
+    assert stream_names(filter_flavors(test_flavors, max_height=400,
+                                       max_bitrate=2000)) == [3]
 
 
 def test_hard_subtitle_filters():
