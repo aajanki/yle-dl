@@ -142,6 +142,21 @@ def test_combined_filter_with_some_failed_flavors():
                                        max_bitrate=2000)) == [3]
 
 
+def test_combined_filter_bitrate_only_and_some_failures():
+    test_flavors = [
+        FailedFlavor('Failure'),
+        StreamFlavor(streams=[MockStream('ffmpeg', 1)], bitrate=517,
+                     media_type='video'),
+        FailedFlavor('Second failure')
+    ]
+
+    assert stream_names(filter_flavors(test_flavors)) == [1]
+    assert stream_names(filter_flavors(test_flavors, max_height=720)) == [1]
+    assert stream_names(filter_flavors(test_flavors, max_bitrate=200)) == [1]
+    assert stream_names(filter_flavors(
+        test_flavors, max_height=720, max_bitrate=200)) == [1]
+
+
 def test_hard_subtitle_filters():
     assert stream_names(filter_flavors(hard_sub_flavors)) == ['none']
     assert stream_names(filter_flavors(hard_sub_flavors, hard_sub='fin')) == ['fi']
