@@ -610,10 +610,12 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
         media_id = self.program_media_id(program_info)
         medias = self.akamai_medias(program_id, media_id, program_info)
         subtitles = self.parse_subtitles(medias)
-        
         flavors = self.flavors_by_program_info(
             program_id, program_info, pageurl)
-        if flavors:
+        failed = self.failed_clip_if_only_invalid_streams(flavors, pageurl)
+        if failed:
+            return failed
+        elif flavors:
             return Clip(
                 webpage=pageurl,
                 flavors=flavors,
@@ -625,6 +627,13 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
                 subtitles=subtitles)
         else:
             return FailedClip(pageurl, 'Media not found')
+
+    def failed_clip_if_only_invalid_streams(self, flavors, pageurl):
+        all_streams = list(itertools.chain.from_iterable(fl.streams for fl in flavors))
+        if all_streams and all(not s.is_valid() for s in all_streams):
+            return FailedClip(pageurl, all_streams[0].get_error_message())
+        else:
+            return None
 
     def flavors_by_program_info(self, program_id, program_info, pageurl):
         media_id = self.program_media_id(program_info)
@@ -645,7 +654,7 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
                 program_id, media_id, pageurl)
 
             if error:
-                return [] # InvalidFlavors(error)  ## FIXME
+                return [FailedFlavor(error)]
             else:
                 return KalturaFlavorParser().parse(flavors_data, meta)
 
@@ -653,7 +662,7 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
             return AkamaiFlavorParser().parse(medias, pageurl, self.AES_KEY)
 
         else:
-            return None
+            return [FailedFlavor('Unknown stream flavor')]
 
     def akamai_medias(self, program_id, media_id, program_info):
         is_html5 = media_id.startswith('29-')
@@ -895,7 +904,7 @@ class AreenaSportsExtractor(AreenaExtractor):
                 )
             ]
         else:
-            return [] # FIXME: InvalidFlavors('Manifest URL is missing')
+            return [FailedFlavor('Manifest URL is missing')]
 
     def program_info_duration_seconds(self, program_info):
         event = self._event_data(program_info)
