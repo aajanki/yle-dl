@@ -16,6 +16,7 @@ from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import yledl_user_agent
 from .io import which
+from .rtmp import rtmp_parameters_to_url, rtmp_parameters_to_rtmpdump_args
 
 
 logger = logging.getLogger('yledl')
@@ -48,6 +49,10 @@ class BaseDownloader(object):
     def __init__(self):
         self.file_extension = MandatoryFileExtension('.flv')
         self.io_capabilities = frozenset()
+        self.error_message = None
+
+    def is_valid(self):
+        return True
 
     def warn_on_unsupported_feature(self, io):
         if io.resume and IOCapability.RESUME not in self.io_capabilities:
@@ -69,6 +74,10 @@ class BaseDownloader(object):
     def pipe(self, io, subtitle_url):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
+
+    def stream_url(self):
+        """Derived classes can override this to return the URL of the stream"""
+        return None
 
 
 ### Download a stream to a file using an external program ###
@@ -200,14 +209,17 @@ class Subprocess(object):
 
 
 class RTMPBackend(ExternalDownloader):
-    def __init__(self, rtmpdump_args):
+    def __init__(self, rtmp_params):
         ExternalDownloader.__init__(self)
-        self.args = rtmpdump_args
+        self.rtmp_params = rtmp_params
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.DURATION
         ])
         self.name = Backends.RTMPDUMP
+
+    def is_valid(self):
+        return bool(self.rtmp_params)
 
     def save_stream(self, output_name, io):
         # rtmpdump fails to resume if the file doesn't contain at
@@ -220,7 +232,7 @@ class RTMPBackend(ExternalDownloader):
 
     def build_args(self, output_name, io):
         args = [io.rtmpdump_binary]
-        args += self.args
+        args += rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
         args += ['-o', output_name]
         if io.resume:
             args.append('-e')
@@ -230,9 +242,12 @@ class RTMPBackend(ExternalDownloader):
 
     def build_pipe_args(self, io):
         args = [io.rtmpdump_binary]
-        args += self.args
+        args += rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
         args += ['-o', '-']
         return args
+
+    def stream_url(self):
+        return rtmp_parameters_to_url(self.rtmp_params)
 
     def is_small_file(self, filename):
         try:
@@ -320,6 +335,9 @@ class HDSBackend(ExternalDownloader):
             args.extend(extra_args)
         return args
 
+    def stream_url(self):
+        return self.url
+
     def cleanup_cookies(self):
         try:
             os.remove('Cookies.txt')
@@ -348,6 +366,9 @@ class YoutubeDLHDSBackend(BaseDownloader):
     def pipe(self, io, subtitle_url):
         # TODO: subtitles
         return self._execute_youtube_dl('-', io)
+
+    def stream_url(self):
+        return self.url
 
     def _execute_youtube_dl(self, outputfile, io):
         try:
@@ -451,6 +472,9 @@ class HLSBackend(ExternalDownloader):
         args.extend(output_options)
         return args
 
+    def stream_url(self):
+        return self.url
+
 
 class HLSAudioBackend(HLSBackend):
     def __init__(self, url):
@@ -514,6 +538,30 @@ class WgetBackend(ExternalDownloader):
             else:
                 env = {'https_proxy': io.proxy}
         return env
+
+    def stream_url(self):
+        return self.url
+
+
+### Backend representing a failed stream ###
+
+
+class FailingBackend(BaseDownloader):
+    def __init__(self, error_message):
+        BaseDownloader.__init__(self)
+        self.error_message = error_message
+        self.name = None
+
+    def is_valid(self):
+        return False
+
+    def save_stream(self, output_name, io):
+        logger.error(self.error_message)
+        return RD_FAILED
+
+    def pipe(self, io, subtitle_url):
+        logger.error(self.error_message)
+        return RD_FAILED
 
 
 class Backends(object):

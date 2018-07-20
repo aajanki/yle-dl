@@ -12,14 +12,12 @@ import time
 import sys
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
+from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
+    WgetBackend, YoutubeDLHDSBackend
 from .http import download_page, download_html_tree, html_unescape
+from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
-from .streams import AreenaHDSStream, AreenaYoutubeDLHDSStream
-from .streams import KalturaHLSStream, KalturaWgetStream
-from .streams import KalturaLiveTVStream, KalturaLiveAudioStream
-from .streams import Areena2014RTMPStream
-from .streams import HTTPStream, SportsStream
 from .utils import sane_filename
 
 
@@ -242,8 +240,8 @@ class AkamaiFlavorParser(object):
             bitrate = mf.get('bitrate')
             flavor_id = mf.get('mediaurl')
             streams = [
-                AreenaHDSStream(media_url, bitrate, flavor_id),
-                AreenaYoutubeDLHDSStream(media_url, bitrate, flavor_id),
+                HDSBackend(media_url, bitrate, flavor_id),
+                YoutubeDLHDSBackend(media_url, bitrate, flavor_id)
             ]
             flavors.append(StreamFlavor(
                 media_type=Flavors.media_type(media),
@@ -256,7 +254,11 @@ class AkamaiFlavorParser(object):
         return flavors
 
     def rtmp_flavors(self, media, media_url, pageurl):
-        streams = [Areena2014RTMPStream(pageurl, media_url)]
+        rtmp_params = create_rtmp_params(media_url, pageurl)
+        if rtmp_params:
+            streams = [RTMPBackend(rtmp_params)]
+        else:
+            streams = []
         bitrate = media.get('bitrate', 0) + media.get('audioBitrateKbps', 0)
         return [
             StreamFlavor(
@@ -311,13 +313,27 @@ class KalturaFlavorParser(object):
         return flavors
 
     def streams_for_flavor(self, entry_id, flavor_id, stream_format, ext):
+        murl = self.manifest_url(entry_id, flavor_id, stream_format, ext)
         streams = [
-            KalturaHLSStream(entry_id, flavor_id, stream_format, ext)
+            HLSBackend(murl, ext)
         ]
         if stream_format == 'url':
-            streams.append(KalturaWgetStream(
-                entry_id, flavor_id, stream_format, ext))
+            streams.append(WgetBackend(murl, ext))
         return streams
+
+    def manifest_url(self, entry_id, flavor_id, stream_format, ext):
+        manifest_ext = '.m3u8' if stream_format == 'applehttp' else ext
+        return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
+                'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
+                'format/{stream_format}/protocol/https/a{ext}?'
+                'referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
+                '&playSessionId=11111111-1111-1111-1111-111111111111'
+                '&clientTag=html5:v2.56&preferredBitrate=600'
+                '&uiConfId=37558971'.format(
+                    entry_id=entry_id,
+                    flavor_id=flavor_id,
+                    stream_format=stream_format,
+                    ext=manifest_ext))
 
     def is_h264_flavor(self, flavor):
         tags = flavor.get('tags', '').split(',')
@@ -412,8 +428,7 @@ class Clip(object):
         if hard_sub_lang:
             hard_sub_lang = normalize_language_code(hard_sub_lang, None)
 
-        backends = [s.create_downloader().name
-                    for s in flavor.streams if s.create_downloader()]
+        backends = [s.name for s in flavor.streams]
 
         meta = [
             ('media_type', flavor.media_type),
@@ -900,7 +915,7 @@ class AreenaSportsExtractor(AreenaExtractor):
             return [
                 StreamFlavor(
                     media_type='video',
-                    streams=[SportsStream(manifesturl)]
+                    streams=[HLSBackend(manifesturl, '.mp4', long_probe=True)]
                 )
             ]
         else:
@@ -989,7 +1004,7 @@ class AreenaLiveTVHLSExtractor(AreenaExtractor):
         return StreamFlavor(
             media_type='video',
             bitrate=3000,
-            streams=[KalturaLiveTVStream(hls_url)]
+            streams=[HLSBackend(hls_url, '.mp4')]
         )
 
     def live_stream_configurations(self, media_id, program_id, pageurl):
@@ -1045,7 +1060,7 @@ class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
         return StreamFlavor(
             media_type='audio',
             bitrate=bitrate,
-            streams=[KalturaLiveAudioStream(hls_url)]
+            streams=[HLSAudioBackend(hls_url)]
         )
 
 
@@ -1078,8 +1093,10 @@ class ElavaArkistoExtractor(AreenaExtractor):
     def flavors_by_program_info(self, program_id, program_info, pageurl):
         download_url = program_info.get('downloadUrl')
         if download_url:
-            stream = HTTPStream(download_url)
-            return [StreamFlavor(media_type='video', streams=[stream])]
+            path = urlparse(download_url)[2]
+            ext = os.path.splitext(path)[1] or None
+            backend = WgetBackend(download_url, ext)
+            return [StreamFlavor(media_type='video', streams=[backend])]
         else:
             return (super(ElavaArkistoExtractor, self)
                     .flavors_by_program_info(program_id, program_info, pageurl))

@@ -9,11 +9,10 @@ from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader, SubtitleDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
-from yledl.streams import InvalidStream
 
 
 class StateCollectingBackend(BaseDownloader):
-    def __init__(self, state_dict, id, name):
+    def __init__(self, state_dict, id, name='ffmpeg'):
         BaseDownloader.__init__(self)
         self.id = id
         self.state_dict = state_dict
@@ -33,6 +32,9 @@ class StateCollectingBackend(BaseDownloader):
 
         return RD_SUCCESS
 
+    def stream_url(self):
+        return 'https://example.com/video/{}.mp4'.format(self.id)
+
     def next_available_filename(self, proposed):
         return proposed
 
@@ -41,35 +43,14 @@ class StateCollectingBackend(BaseDownloader):
 
 
 class FailingBackend(StateCollectingBackend):
+    def is_valid(self):
+        return False
+
     def save_stream(self, clip_title, io):
         return RD_FAILED
 
     def pipe(self, io, subtitle_url):
         return RD_FAILED
-
-
-class MockStream(object):
-    def __init__(self, state_dict, id, backend_name='ffmpeg'):
-        self.id = id
-        self.state_dict = state_dict
-        self.backend_name = backend_name
-
-    def is_valid(self):
-        return True
-
-    def get_error_message(self):
-        return None
-
-    def to_url(self):
-        return 'https://example.com/video/{}.mp4'.format(self.id)
-
-    def create_downloader(self):
-        return StateCollectingBackend(self.state_dict, self.id, self.backend_name)
-
-
-class FailingStream(MockStream):
-    def create_downloader(self):
-        return FailingBackend(self.state_dict, self.id, self.backend_name)
 
 
 class MockSubtitleDownloader(SubtitleDownloader):
@@ -88,21 +69,21 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
                 height=1080,
                 width=1920,
                 bitrate=2808,
-                streams=[MockStream(state_dict, 'high_quality')]
+                streams=[StateCollectingBackend(state_dict, 'high_quality')]
             ),
             StreamFlavor(
                 media_type='video',
                 height=360,
                 width=640,
                 bitrate=880,
-                streams=[MockStream(state_dict, 'low_quality')]
+                streams=[StateCollectingBackend(state_dict, 'low_quality')]
             ),
             StreamFlavor(
                 media_type='video',
                 height=360,
                 width=640,
                 bitrate=864,
-                streams=[MockStream(state_dict, 'low_quality_finnish_subs')],
+                streams=[StateCollectingBackend(state_dict, 'low_quality_finnish_subs')],
                 hard_subtitle=Subtitle(url=None, lang='fi')
             ),
             StreamFlavor(
@@ -110,14 +91,14 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
                 height=720,
                 width=1280,
                 bitrate=1412,
-                streams=[MockStream(state_dict, 'medium_quality')]
+                streams=[StateCollectingBackend(state_dict, 'medium_quality')]
             ),
             StreamFlavor(
                 media_type='video',
                 height=720,
                 width=1280,
                 bitrate=1872,
-                streams=[MockStream(state_dict, 'medium_quality_high_bitrate')]
+                streams=[StateCollectingBackend(state_dict, 'medium_quality_high_bitrate')]
             )
         ],
         title=title,
@@ -138,17 +119,17 @@ def incomplete_flavors_clip(state_dict):
         flavors=[
             StreamFlavor(
                 media_type='video',
-                streams=[MockStream(state_dict, '1')]
+                streams=[StateCollectingBackend(state_dict, '1')]
             ),
             StreamFlavor(
                 media_type='video',
                 height=360,
                 width=640,
-                streams=[MockStream(state_dict, '2')]
+                streams=[StateCollectingBackend(state_dict, '2')]
             ),
             StreamFlavor(
                 media_type='video',
-                streams=[MockStream(state_dict, '3')]
+                streams=[StateCollectingBackend(state_dict, '3')]
             )
         ],
         title='Test clip: S01E01-2018-07-01T00:00',
@@ -169,10 +150,10 @@ def multistream_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
                 width=640,
                 bitrate=864,
                 streams=[
-                    FailingStream(state_dict, '1', 'wget'),
-                    InvalidStream('Invalid stream'),
-                    MockStream(state_dict, '3', 'wget'),
-                    MockStream(state_dict, '4', 'youtubedl')
+                    FailingBackend(state_dict, '1', 'wget'),
+                    FailingBackend(state_dict, '2', 'Invalid stream'),
+                    StateCollectingBackend(state_dict, '3', 'wget'),
+                    StateCollectingBackend(state_dict, '4', 'youtubedl')
                 ]
             )
         ],
@@ -198,8 +179,8 @@ def failed_stream_clip(state_dict):
                 width=640,
                 bitrate=864,
                 streams=[
-                    FailingStream(state_dict, '1', 'wget'),
-                    FailingStream(state_dict, '2', 'ffmpeg')
+                    FailingBackend(state_dict, '1', 'wget'),
+                    FailingBackend(state_dict, '2', 'ffmpeg')
                 ]
             )
         ],

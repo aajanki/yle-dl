@@ -2,7 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
-from .streams import InvalidStream
+from .backends import FailingBackend
 
 @attr.s
 class StreamFlavor(object):
@@ -21,4 +21,4 @@ class FailedFlavor(StreamFlavor):
                               height=None,
                               width=None,
                               bitrate=None,
-                              streams=[InvalidStream(error_message)])
+                              streams=[FailingBackend(error_message)])

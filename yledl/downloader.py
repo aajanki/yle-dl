@@ -91,8 +91,7 @@ class YleDlDownloader(object):
         self.subtitle_downloader = subtitle_downloader
 
     def download_clips(self, clips, io, filters, postprocess_command):
-        def download(clip, stream):
-            downloader = stream.create_downloader()
+        def download(clip, downloader):
             if not downloader:
                 logger.error('Downloading the stream at %s is not yet '
                              'supported.' % clip.webpage)
@@ -121,16 +120,15 @@ class YleDlDownloader(object):
         return self.process(clips, download, needs_retry, filters)
 
     def pipe(self, clips, io, filters):
-        def pipe_clip(clip, stream):
-            dl = stream.create_downloader()
-            if not dl:
+        def pipe_clip(clip, downloader):
+            if not downloader:
                 logger.error('Downloading the stream at %s is not yet '
                              'supported.' % clip.webpage)
                 return RD_FAILED
-            dl.warn_on_unsupported_feature(io)
+            downloader.warn_on_unsupported_feature(io)
             subtitles = self.subtitle_downloader.select(clip.subtitles, filters)
             subtitle_url = subtitles[0].url if subtitles else None
-            res = dl.pipe(io, subtitle_url)
+            res = downloader.pipe(io, subtitle_url)
             return (res, None)
 
         def needs_retry(res):
@@ -157,7 +155,7 @@ class YleDlDownloader(object):
             streams = self.select_streams(clip.flavors, filters)
             if streams and any(s.is_valid() for s in streams):
                 valid_stream = next(s for s in streams if s.is_valid())
-                urls.append(valid_stream.to_url())
+                urls.append(valid_stream.stream_url())
         return urls
 
     def get_episode_pages(self, clips):
@@ -187,7 +185,7 @@ class YleDlDownloader(object):
                 overall_status = RD_FAILED
             elif all(not stream.is_valid() for stream in streams):
                 logger.error('Unsupported stream: %s' %
-                             streams[0].get_error_message())
+                             streams[0].error_message)
                 overall_status = RD_FAILED
             else:
                 res = self.try_all_streams(
@@ -208,9 +206,7 @@ class YleDlDownloader(object):
                     self.remove_retry_file(output_file)
                     output_file = None
                 
-                downloader = stream.create_downloader()
-                dlname = downloader and downloader.name
-                logger.debug('Now trying downloader {}'.format(dlname))
+                logger.debug('Now trying downloader {}'.format(stream.name))
 
                 (latest_result, output_file) = streamfunc(clip, stream)
                 if needs_retry(latest_result):
@@ -258,17 +254,11 @@ class YleDlDownloader(object):
 
     def apply_backend_filter(self, flavors, filters):
         def filter_streams_by_backend(flavor):
-            streams_with_backend_names = []
-            for s in flavor.streams:
-                downloader = s.create_downloader()
-                if s.is_valid() and downloader:
-                    streams_with_backend_names.append((s, downloader.name))
-
             sorted_streams = []
             for be in filters.enabled_backends:
-                for (stream, stream_be) in streams_with_backend_names:
-                    if stream_be == be:
-                        sorted_streams.append(stream)
+                for downloader in flavor.streams:
+                    if downloader.name == be:
+                        sorted_streams.append(downloader)
 
             res = copy.copy(flavor)
             res.streams = sorted_streams
@@ -322,13 +312,10 @@ class YleDlDownloader(object):
         return sorted(acceptable_flavors, key=keyfunc, reverse=reverse)
 
     def backend_not_enabled_flavor(self, flavors):
-        supported_backends = []
+        supported_backends = set()
         for fl in flavors:
-            for s in fl.streams:
-                if s.is_valid():
-                    be_name = s.create_downloader().name
-                    if be_name not in supported_backends:
-                        supported_backends.append(be_name)
+            supported_backends.update(
+                s.name for s in fl.streams if s.is_valid())
 
         return FailedFlavor('Required backend not enabled. '
                             'Try: --backend {}'
