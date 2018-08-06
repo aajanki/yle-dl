@@ -170,6 +170,19 @@ downloading RTMP streams).
 
 Firewall must allow outgoing traffic on ports 80 and 1935.
 
+
+Config file
+-----------
+
+Arguments that start with '--' can also be set in a config file. The
+default config file is `~/.yledl.conf` or one can be specified via
+`--config`. See [yledl.conf.sample][] for an example configuration.
+
+Config file syntax allows: key=value, flag=true. If an arg is
+specified in more than one place, then command line values override
+config file values which override defaults.
+
+
 Examples
 --------
 

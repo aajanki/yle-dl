@@ -29,7 +29,7 @@ import sys
 import re
 import codecs
 import logging
-import argparse
+import configargparse
 from future.moves.urllib.parse import urlparse, urlunparse, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
@@ -71,7 +71,7 @@ class StreamAction(object):
 
 
 def arg_parser():
-    class ArgumentParserEncoded(argparse.ArgumentParser):
+    class ArgumentParserEncoded(configargparse.ArgumentParser):
         def _print_message(self, message, file=None):
             if message:
                 if file is None:
@@ -94,14 +94,17 @@ def arg_parser():
     description = \
         ('yle-dl %s: Download media files from Yle Areena and Elävä Arkisto\n'
          'Copyright (C) 2009-2018 Antti Ajanki <antti.ajanki@iki.fi>, '
-         'license: GPLv3' % version)
+         'license: GPLv3\n' % version)
 
     parser = ArgumentParserEncoded(
+        default_config_files=['~/.yledl.conf'],
         description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
+        formatter_class=configargparse.RawDescriptionHelpFormatter)
     parser.add_argument('-V', '--verbose', '--debug',
                         action='store_true', dest='debug',
                         help='Show verbose debug output')
+    parser.add_argument('-c', '--config', metavar='FILENAME',
+                        is_config_file=True, help='config file path')
 
     io_group = parser.add_argument_group('Input and output')
     url_group = io_group.add_mutually_exclusive_group()

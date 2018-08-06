@@ -1,0 +1,17 @@
+# Sample configuration file for yle-dl.
+#
+# Edit and copy this file to ~/.yledl.conf
+#
+# See 'yle-dl --help' for all arguments that can be configured here.
+
+# Save the downloaded videos in /videos/areena
+#destdir=/videos/areena
+
+# Maximum horizontal resolution to download
+#resolution=720
+
+# Resume if there is a partially downloaded file
+#resume=true
+
+# Generate Windows compatible filenames
+#vfat=true
