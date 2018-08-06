@@ -176,7 +176,8 @@ Config file
 
 Arguments that start with '--' can also be set in a config file. The
 default config file is `~/.yledl.conf` or one can be specified via
-`--config`. See [yledl.conf.sample][] for an example configuration.
+`--config`. See [yledl.conf.sample](yledl.conf.sample) for an example
+configuration.
 
 Config file syntax allows: key=value, flag=true. If an arg is
 specified in more than one place, then command line values override
