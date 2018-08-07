@@ -317,13 +317,27 @@ class YleDlDownloader(object):
             supported_backends.update(
                 s.name for s in fl.streams if s.is_valid())
 
+        error_messages = [s.error_message
+                          for s in fl.streams if not s.is_valid()
+                          for fl in flavors]
+
         if supported_backends:
             msg = ('Required backend not enabled. Try: --backend {}'
                    .format(','.join(supported_backends)))
+        elif error_messages:
+            msg = error_messages[0]
         else:
             msg = 'Stream not found'
 
         return FailedFlavor(msg)
+
+    def error_flavor(self, flavors):
+        for fl in flavors:
+            for s in fl.streams:
+                if not s.is_valid():
+                    return FailedFlavor(s.error_message)
+
+        return None
 
     def select_streams(self, flavors, filters):
         flavor = self.select_flavor(flavors, filters)
