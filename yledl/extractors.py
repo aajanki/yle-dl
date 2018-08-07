@@ -424,11 +424,17 @@ class Clip(object):
         return self.ignore_none_values(meta)
 
     def flavor_meta(self, flavor):
+        if all(not s.is_valid() for s in flavor.streams):
+            return self.error_flavor_meta(flavor)
+        else:
+            return self.valid_flavor_meta(flavor)
+
+    def valid_flavor_meta(self, flavor):
         hard_sub_lang = flavor.hard_subtitle and flavor.hard_subtitle.lang
         if hard_sub_lang:
             hard_sub_lang = normalize_language_code(hard_sub_lang, None)
 
-        backends = [s.name for s in flavor.streams]
+        backends = [s.name for s in flavor.streams if s.is_valid()]
 
         meta = [
             ('media_type', flavor.media_type),
@@ -439,6 +445,16 @@ class Clip(object):
             ('backends', backends)
         ]
         return self.ignore_none_values(meta)
+
+    def error_flavor_meta(self, flavor):
+        error_messages = [s.error_message for s in flavor.streams
+                          if not s.is_valid() and s.error_message]
+        if error_messages:
+            msg = error_messages[0]
+        else:
+            msg = 'Unknown error'
+
+        return {'error': msg}
 
     def ignore_none_values(self, li):
         return {key: value for (key, value) in li if value is not None}

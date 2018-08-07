@@ -378,7 +378,6 @@ def test_print_metadata_incomplete(simple):
     metadata = simple.downloader.get_metadata(clips)
     parsed_metadata = json.loads(metadata[0])
 
-    assert len(metadata) == 1
     assert parsed_metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
@@ -421,6 +420,24 @@ def test_download_failed_stream(simple):
 
     assert res == RD_FAILED
 
+
+def test_print_metadata_failed_clip(simple):
+    state = {}
+    clips = [failed_clip()]
+    metadata = simple.downloader.get_metadata(clips)
+    parsed_metadata = json.loads(metadata[0])
+
+    assert parsed_metadata == [
+        {
+            'webpage': 'https://areena.yle.fi/1-1234567',
+            'flavors': [
+                {
+                    'error': failed_clip().flavors[0].streams[0].error_message
+                }
+            ],
+            'subtitles': []
+        }
+    ]
 
 def test_download_fallback(simple):
     state = {}
