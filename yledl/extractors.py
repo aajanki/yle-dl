@@ -314,9 +314,7 @@ class KalturaFlavorParser(object):
 
     def streams_for_flavor(self, entry_id, flavor_id, stream_format, ext):
         murl = self.manifest_url(entry_id, flavor_id, stream_format, ext)
-        streams = [
-            HLSBackend(murl, ext)
-        ]
+        streams = [HLSBackend(murl, ext)]
         if stream_format == 'url':
             streams.append(WgetBackend(murl, ext))
         return streams
@@ -328,7 +326,7 @@ class KalturaFlavorParser(object):
                 'format/{stream_format}/protocol/https/a{ext}?'
                 'referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
                 '&playSessionId=11111111-1111-1111-1111-111111111111'
-                '&clientTag=html5:v2.56&preferredBitrate=600'
+                '&clientTag=html5:v2.67&preferredBitrate=600'
                 '&uiConfId=37558971'.format(
                     entry_id=entry_id,
                     flavor_id=flavor_id,
