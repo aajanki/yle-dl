@@ -646,7 +646,7 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
     def failed_clip_if_only_invalid_streams(self, flavors, pageurl):
         all_streams = list(itertools.chain.from_iterable(fl.streams for fl in flavors))
         if all_streams and all(not s.is_valid() for s in all_streams):
-            return FailedClip(pageurl, all_streams[0].get_error_message())
+            return FailedClip(pageurl, all_streams[0].error_message)
         else:
             return None
 
