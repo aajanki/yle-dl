@@ -42,13 +42,14 @@ def extractor_factory(url, filters):
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioExtractor()
-    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/30-901\?', url):
-        # Football World Cup 2018
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/30-[0-9]+\?.*play=[-0-9]+', url):
+        # Football World Cup 2018, Yleisurheilun EM 2018
         return AreenaSportsExtractor()
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
-        return MergingExtractor([AreenaLiveTVHLSExtractor(), AreenaLiveTVHDSExtractor(filters)])
-    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/[-0-9]+\?play=yle-[-a-z0-9]+', url):
-        return AreenaLiveTVHDSExtractor(filters)
+        return MergingExtractor([
+            AreenaLiveTVHLSExtractor(),
+            AreenaLiveTVHDSExtractor(filters)
+        ])
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
         return YleUutisetExtractor()
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \

@@ -7,7 +7,8 @@ xx xxx 2018, version 2.35
 - Download the HLS variant of the live TV streams by default (similar to the
   web Areena). Use "--backend adobehdsphp" to download the HDS variants like
   the earlier versions.
-- Argument values can now be set in a config file. See yledl.conf.sample.
+- Argument values can now be set in a config file. See yledl.conf.sample
+- Improved support for European Athletics Championships streams
 
 12 Jul 2018, Version 2.34
 
