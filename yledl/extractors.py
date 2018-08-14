@@ -478,6 +478,18 @@ class Subtitle(object):
     lang = attr.ib()
 
 
+@attr.s
+class AreenaApiProgramInfo(object):
+    media_id = attr.ib()
+    title = attr.ib()
+    medias = attr.ib()
+    flavors = attr.ib()
+    duration_seconds = attr.ib()
+    available_at_region = attr.ib()
+    publish_timestamp = attr.ib()
+    expiration_timestamp = attr.ib()
+
+
 class ClipExtractor(object):
     def extract(self, url, latest_only):
         playlist = self.get_playlist(url)
@@ -624,7 +636,7 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
 
     def extract_clip(self, clip_url):
         pid = self.program_id_from_url(clip_url)
-        program_info = self.program_info_for_pid(pid)
+        program_info = self.program_info_for_pid(pid, clip_url)
         return self.create_clip_or_failure(pid, program_info, clip_url)
 
     def create_clip_or_failure(self, pid, program_info, url):
@@ -637,23 +649,20 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
         return self.create_clip(pid, program_info, url)
 
     def create_clip(self, program_id, program_info, pageurl):
-        media_id = self.program_media_id(program_info)
-        medias = self.akamai_medias(program_id, media_id, program_info)
-        subtitles = self.parse_subtitles(medias)
-        flavors = self.flavors_by_program_info(
-            program_id, program_info, pageurl)
-        failed = self.failed_clip_if_only_invalid_streams(flavors, pageurl)
+        subtitles = self.parse_subtitles(program_info.medias)
+        failed = self.failed_clip_if_only_invalid_streams(
+            program_info.flavors, pageurl)
         if failed:
             return failed
-        elif flavors:
+        elif program_info.flavors:
             return Clip(
                 webpage=pageurl,
-                flavors=flavors,
-                title=self.program_title(program_info),
-                duration_seconds=self.program_info_duration_seconds(program_info),
-                region=self.available_at_region(program_info),
-                publish_timestamp=self.publish_timestamp(program_info),
-                expiration_timestamp=self.expiration_timestamp(program_info),
+                flavors=program_info.flavors,
+                title=program_info.title,
+                duration_seconds=program_info.duration_seconds,
+                region=program_info.available_at_region,
+                publish_timestamp=program_info.publish_timestamp,
+                expiration_timestamp=program_info.expiration_timestamp,
                 subtitles=subtitles)
         else:
             return FailedClip(pageurl, 'Media not found')
@@ -773,18 +782,28 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
     def expiration_timestamp(self, program_info):
         return self.publish_event(program_info).get('endTime')
 
-    def program_info_for_pid(self, pid):
+    def program_info_for_pid(self, pid, pageurl):
         if not pid:
             return None
 
-        program_info = JSONP.load_jsonp(self.program_info_url(pid))
-        if not program_info:
+        data = JSONP.load_jsonp(self.program_info_url(pid))
+        if not data:
             return None
 
         logger.debug('program data:')
-        logger.debug(json.dumps(program_info))
+        logger.debug(json.dumps(data))
 
-        return program_info
+        media_id = self.program_media_id(data)
+        return AreenaApiProgramInfo(
+            media_id = media_id,
+            title = self.program_title(data),
+            medias = self.akamai_medias(pid, media_id, data),
+            flavors = self.flavors_by_program_info(pid, data, pageurl),
+            duration_seconds = self.program_info_duration_seconds(data),
+            available_at_region = self.available_at_region(data),
+            publish_timestamp = self.publish_timestamp(data),
+            expiration_timestamp = self.expiration_timestamp(data)
+        )
 
     def program_info_url(self, program_id):
         return 'https://player.yle.fi/api/v1/programs.jsonp?' \
