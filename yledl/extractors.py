@@ -74,6 +74,19 @@ class JSONP(object):
         return json_parsed
 
     @staticmethod
+    def load_json(url, headers=None):
+        json_string = download_page(url, headers)
+        if not json_string:
+            return None
+
+        try:
+            json_parsed = json.loads(json_string)
+        except ValueError:
+            return None
+
+        return json_parsed
+
+    @staticmethod
     def remove_jsonp_padding(jsonp):
         if not jsonp:
             return None
@@ -626,10 +639,31 @@ class AreenaPlaylist(object):
         return len(body) != 0
 
 
+class AreenaPreviewApiParser(object):
+    def preview_media_id(self, data):
+        return self.preview_ongoing(data).get('media_id')
+
+    def preview_duration_seconds(self, data):
+        return self.preview_ongoing(data).get('duration', {}).get('duration_in_seconds')
+
+    def preview_title(self, data, fin_or_swe_text):
+        title_object = self.preview_ongoing(data).get('title', {})
+        return fin_or_swe_text(title_object).strip()
+
+    def preview_available_at_region(self, data):
+        return self.preview_ongoing(data).get('region')
+
+    def preview_timestamp(self, data):
+        return self.preview_ongoing(data).get('start_time')
+
+    def preview_ongoing(self, data):
+        return data.get('data', {}).get('ongoing_ondemand', {})
+
+
 ### Extract streams from an Areena webpage ###
 
 
-class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
+class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, ClipExtractor):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
@@ -786,29 +820,44 @@ class AreenaExtractor(AreenaPlaylist, KalturaUtils, ClipExtractor):
         if not pid:
             return None
 
-        data = JSONP.load_jsonp(self.program_info_url(pid))
-        if not data:
+        info = JSONP.load_jsonp(self.program_info_url(pid))
+        logger.debug('program data:')
+        logger.debug(json.dumps(info))
+
+        preview = JSONP.load_json(self.preview_url(pid))
+        logger.debug('preview data:')
+        logger.debug(json.dumps(preview))
+
+        media_id = (self.program_media_id(info) or
+                    self.preview_media_id(preview))
+        if not media_id:
             return None
 
-        logger.debug('program data:')
-        logger.debug(json.dumps(data))
-
-        media_id = self.program_media_id(data)
         return AreenaApiProgramInfo(
             media_id = media_id,
-            title = self.program_title(data),
-            medias = self.akamai_medias(pid, media_id, data),
-            flavors = self.flavors_by_program_info(pid, data, pageurl),
-            duration_seconds = self.program_info_duration_seconds(data),
-            available_at_region = self.available_at_region(data),
-            publish_timestamp = self.publish_timestamp(data),
-            expiration_timestamp = self.expiration_timestamp(data)
+            title = (self.program_title(info) or
+                     self.preview_title(preview, self.fin_or_swe_text)),
+            medias = self.akamai_medias(pid, media_id, info),
+            flavors = self.flavors_by_program_info(pid, info, pageurl),
+            duration_seconds = (self.program_info_duration_seconds(info) or
+                                self.preview_duration_seconds(preview)),
+            available_at_region = (self.available_at_region(info) or
+                                   self.preview_available_at_region(preview)),
+            publish_timestamp = (self.publish_timestamp(info) or
+                                 self.preview_timestamp(preview)),
+            expiration_timestamp = self.expiration_timestamp(info)
         )
 
     def program_info_url(self, program_id):
         return 'https://player.yle.fi/api/v1/programs.jsonp?' \
             'id=%s&callback=yleEmbed.programJsonpCallback' % \
             (quote_plus(program_id))
+
+    def preview_url(self, program_id):
+        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
+            'language=fin&ssl=true&countryCode=FI' \
+            '&app_id=player_static_prod' \
+            '&app_key=8930d72170e48303cf5f3867780d549b'.format(program_id)
 
     def publish_event_is_current(self, event):
         return event.get('temporalStatus') == 'currently'
