@@ -42,9 +42,6 @@ def extractor_factory(url, filters):
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioExtractor()
-    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/ohjelmat/30-[0-9]+\?.*play=[-0-9]+', url):
-        # Football World Cup 2018, Yleisurheilun EM 2018
-        return AreenaSportsExtractor()
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return MergingExtractor([
             AreenaLiveTVHLSExtractor(),
@@ -656,8 +653,12 @@ class AreenaPreviewApiParser(object):
     def preview_timestamp(self, data):
         return self.preview_ongoing(data).get('start_time')
 
-    def preview_ongoing(self, data):
-        return data.get('data', {}).get('ongoing_ondemand', {})
+    def preview_manifest_url(self, data):
+        return self.preview_ongoing(data).get('manifest_url')
+
+    def preview_ongoing(self, preview):
+        data = (preview or {}).get('data', {})
+        return data.get('ongoing_ondemand') or data.get('ongoing_event', {})
 
 
 ### Extract streams from an Areena webpage ###
@@ -708,32 +709,26 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         else:
             return None
 
-    def flavors_by_program_info(self, program_id, program_info, pageurl):
+    def media_flavors(self, program_id, program_info, manifest_url, pageurl):
         media_id = self.program_media_id(program_info)
         if media_id:
             return self.flavors_by_media_id(program_info, media_id,
-                                            program_id, pageurl)
+                                            program_id, manifest_url, pageurl)
         else:
             return None
 
-    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
-        is_html5 = media_id.startswith('29-')
+    def flavors_by_media_id(self, program_info, media_id, program_id,
+                            manifest_url, pageurl):
         medias = self.akamai_medias(program_id, media_id, program_info)
 
-        if media_id and is_html5:
-            logger.debug('Detected an HTML5 video')
-
-            flavors_data, meta, error = self.kaltura_flavors_meta(
-                program_id, media_id, pageurl)
-
-            if error:
-                return [FailedFlavor(error)]
-            else:
-                return KalturaFlavorParser().parse(flavors_data, meta)
-
+        if media_id and media_id.startswith('55-'):
+            logger.debug('Detected a full-HD media')
+            return self.full_hd_flavors(manifest_url)
+        elif media_id and media_id.startswith('29-'):
+            logger.debug('Detected an HTML5 media')
+            return self.html5_flavors(media_id, program_id, pageurl)
         elif media_id and medias:
             return AkamaiFlavorParser().parse(medias, pageurl, self.AES_KEY)
-
         else:
             return [FailedFlavor('Unknown stream flavor')]
 
@@ -746,6 +741,26 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         return descriptor.get('data', {}) \
                          .get('media', {}) \
                          .get(descriptor_proto, [])
+
+    def full_hd_flavors(self, manifest_url):
+        if manifest_url:
+            return [
+                StreamFlavor(
+                    media_type='video',
+                    streams=[HLSBackend(manifest_url, '.mp4', long_probe=True)]
+                )
+            ]
+        else:
+            return [FailedFlavor('Manifest URL is missing')]
+
+    def html5_flavors(self, media_id, program_id, pageurl):
+        flavors_data, meta, error = self.kaltura_flavors_meta(
+            program_id, media_id, pageurl)
+
+        if error:
+            return [FailedFlavor(error)]
+        else:
+            return KalturaFlavorParser().parse(flavors_data, meta)
 
     def parse_subtitles(self, medias):
         subtitles = []
@@ -833,12 +848,13 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         if not media_id:
             return None
 
+        manifest_url = self.preview_manifest_url(preview)
         return AreenaApiProgramInfo(
             media_id = media_id,
             title = (self.program_title(info) or
                      self.preview_title(preview, self.fin_or_swe_text)),
             medias = self.akamai_medias(pid, media_id, info),
-            flavors = self.flavors_by_program_info(pid, info, pageurl),
+            flavors = self.media_flavors(pid, info, manifest_url, pageurl),
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or
@@ -971,53 +987,6 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             self.localized_text(alternatives, 'swe')
 
 
-### Areena, full HD, 50 Hz ###
-
-
-class AreenaSportsExtractor(AreenaExtractor):
-    def program_info_url(self, pid):
-        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
-            'language=fin&ssl=true&countryCode=FI&app_id=player_static_prod' \
-            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
-
-    def program_media_id(self, program_info):
-        return self._event_data(program_info).get('media_id')
-
-    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
-        if media_id.startswith('55-'):
-            return self.full_hd_flavors(program_info)
-        else:
-            return super(AreenaSportsExtractor, self) \
-                .flavors_by_media_id(program_info, media_id,
-                                     program_id, pageurl)
-
-    def full_hd_flavors(self, program_info):
-        ondemand = self._event_data(program_info)
-        manifesturl = ondemand.get('manifest_url')
-        if manifesturl:
-            return [
-                StreamFlavor(
-                    media_type='video',
-                    streams=[HLSBackend(manifesturl, '.mp4', long_probe=True)]
-                )
-            ]
-        else:
-            return [FailedFlavor('Manifest URL is missing')]
-
-    def program_info_duration_seconds(self, program_info):
-        event = self._event_data(program_info)
-        return event.get('duration', {}).get('duration_in_seconds')
-
-    def program_title(self, program_info):
-        ondemand = self._event_data(program_info)
-        titleObject = ondemand.get('title')
-        return (self.fin_or_swe_text(titleObject) or 'areena').strip()
-
-    def _event_data(self, program_info):
-        data = program_info.get('data', {})
-        return data.get('ongoing_ondemand') or data.get('ongoing_event', {})
-
-
 ### Areena Live TV ###
 
 
@@ -1073,7 +1042,7 @@ class AreenaLiveTVHLSExtractor(AreenaExtractor):
         parsed = urlparse(url)
         return parsed.path.split('/')[-1]
 
-    def flavors_by_media_id(self, program_info, media_id, program_id, pageurl):
+    def flavors_by_media_id(self, program_info, media_id, program_id, manifest_url, pageurl):
         (streams, bitrate) = self.live_stream_configurations(media_id, program_id, pageurl)
         if streams and 'url' in streams[0]:
             hls_url = streams[0].get('url')
@@ -1173,7 +1142,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
             return (super(ElavaArkistoExtractor, self)
                     .program_info_url(program_id))
 
-    def flavors_by_program_info(self, program_id, program_info, pageurl):
+    def media_flavors(self, program_id, program_info, manifest_url, pageurl):
         download_url = program_info.get('downloadUrl')
         if download_url:
             path = urlparse(download_url)[2]
@@ -1182,7 +1151,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
             return [StreamFlavor(media_type='video', streams=[backend])]
         else:
             return (super(ElavaArkistoExtractor, self)
-                    .flavors_by_program_info(program_id, program_info, pageurl))
+                    .media_flavors(program_id, program_info, manifest_url, pageurl))
 
     def program_media_id(self, program_info):
         mediakanta_id = program_info.get('mediakantaId')
