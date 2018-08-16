@@ -710,6 +710,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return None
 
     def media_flavors(self, program_id, program_info, manifest_url, pageurl):
+        flavors = []
         media_id = self.program_media_id(program_info)
         download_url = program_info.get('downloadUrl')
 
@@ -717,12 +718,16 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             path = urlparse(download_url)[2]
             ext = os.path.splitext(path)[1] or None
             backend = WgetBackend(download_url, ext)
-            return [StreamFlavor(media_type='video', streams=[backend])]
-        elif media_id:
-            return self.flavors_by_media_id(program_info, media_id,
-                                            program_id, manifest_url, pageurl)
-        else:
-            return None
+            flavors.append([
+                StreamFlavor(media_type='video', streams=[backend])
+            ])
+
+        if media_id:
+            flavors.extend(
+                self.flavors_by_media_id(program_info, media_id,
+                                         program_id, manifest_url, pageurl))
+
+        return flavors or None
 
     def flavors_by_media_id(self, program_info, media_id, program_id,
                             manifest_url, pageurl):
