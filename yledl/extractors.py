@@ -709,10 +709,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         else:
             return None
 
-    def media_flavors(self, program_id, program_info, medias, manifest_url, pageurl):
+    def media_flavors(self, media_id, program_id, medias, manifest_url,
+                      download_url, pageurl):
         flavors = []
-        media_id = self.program_media_id(program_info)
-        download_url = program_info.get('downloadUrl')
 
         if download_url:
             path = urlparse(download_url)[2]
@@ -865,6 +864,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return None
 
         manifest_url = self.preview_manifest_url(preview)
+        download_url = info.get('downloadUrl')
         medias = self.akamai_medias(pid, media_id, info)
         return AreenaApiProgramInfo(
             media_id = media_id,
@@ -872,7 +872,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                      self.preview_title(preview, self.fin_or_swe_text)),
             medias = medias,
             flavors = self.media_flavors(
-                pid, info, medias, manifest_url, pageurl),
+                media_id, pid, medias, manifest_url, download_url, pageurl),
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or
@@ -1060,7 +1060,7 @@ class AreenaLiveTVHLSExtractor(AreenaExtractor):
         parsed = urlparse(url)
         return parsed.path.split('/')[-1]
 
-    def flavors_by_media_id(self, program_info, media_id, program_id, manifest_url, pageurl):
+    def flavors_by_media_id(self, media_id, program_id, medias, manifest_url, pageurl):
         (streams, bitrate) = self.live_stream_configurations(media_id, program_id, pageurl)
         if streams and 'url' in streams[0]:
             hls_url = streams[0].get('url')
