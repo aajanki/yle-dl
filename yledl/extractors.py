@@ -731,10 +731,10 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
     def flavors_by_media_id(self, media_id, program_id, medias,
                             manifest_url, pageurl):
-        if media_id and media_id.startswith('55-'):
+        if self.is_full_hd_media(media_id):
             logger.debug('Detected a full-HD media')
             return self.full_hd_flavors(manifest_url)
-        elif media_id and media_id.startswith('29-'):
+        elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
             return self.html5_flavors(media_id, program_id, pageurl)
         elif media_id and medias:
@@ -742,8 +742,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         else:
             return [FailedFlavor('Unknown stream flavor')]
 
+    def is_html5_media(self, media_id):
+        return media_id and media_id.startswith('29-')
+
+    def is_full_hd_media(self, media_id):
+        return media_id and media_id.startswith('55-')
+
     def akamai_medias(self, program_id, media_id, program_info):
-        is_html5 = media_id.startswith('29-')
+        is_html5 = self.is_html5_media(media_id)
         default_proto = 'HLS' if is_html5 else 'HDS'
         proto = self.program_protocol(program_info, default_proto)
         descriptor = self.yle_media_descriptor(program_id, media_id, proto)
