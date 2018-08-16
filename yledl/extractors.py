@@ -709,7 +709,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         else:
             return None
 
-    def media_flavors(self, program_id, program_info, manifest_url, pageurl):
+    def media_flavors(self, program_id, program_info, medias, manifest_url, pageurl):
         flavors = []
         media_id = self.program_media_id(program_info)
         download_url = program_info.get('downloadUrl')
@@ -724,15 +724,13 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
         if media_id:
             flavors.extend(
-                self.flavors_by_media_id(program_info, media_id,
-                                         program_id, manifest_url, pageurl))
+                self.flavors_by_media_id(
+                    media_id, program_id, medias, manifest_url, pageurl))
 
         return flavors or None
 
-    def flavors_by_media_id(self, program_info, media_id, program_id,
+    def flavors_by_media_id(self, media_id, program_id, medias,
                             manifest_url, pageurl):
-        medias = self.akamai_medias(program_id, media_id, program_info)
-
         if media_id and media_id.startswith('55-'):
             logger.debug('Detected a full-HD media')
             return self.full_hd_flavors(manifest_url)
@@ -861,12 +859,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return None
 
         manifest_url = self.preview_manifest_url(preview)
+        medias = self.akamai_medias(pid, media_id, info)
         return AreenaApiProgramInfo(
             media_id = media_id,
             title = (self.program_title(info) or
                      self.preview_title(preview, self.fin_or_swe_text)),
-            medias = self.akamai_medias(pid, media_id, info),
-            flavors = self.media_flavors(pid, info, manifest_url, pageurl),
+            medias = medias,
+            flavors = self.media_flavors(
+                pid, info, medias, manifest_url, pageurl),
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or
