@@ -711,7 +711,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
     def media_flavors(self, program_id, program_info, manifest_url, pageurl):
         media_id = self.program_media_id(program_info)
-        if media_id:
+        download_url = program_info.get('downloadUrl')
+
+        if download_url:
+            path = urlparse(download_url)[2]
+            ext = os.path.splitext(path)[1] or None
+            backend = WgetBackend(download_url, ext)
+            return [StreamFlavor(media_type='video', streams=[backend])]
+        elif media_id:
             return self.flavors_by_media_id(program_info, media_id,
                                             program_id, manifest_url, pageurl)
         else:
@@ -1141,17 +1148,6 @@ class ElavaArkistoExtractor(AreenaExtractor):
         else:
             return (super(ElavaArkistoExtractor, self)
                     .program_info_url(program_id))
-
-    def media_flavors(self, program_id, program_info, manifest_url, pageurl):
-        download_url = program_info.get('downloadUrl')
-        if download_url:
-            path = urlparse(download_url)[2]
-            ext = os.path.splitext(path)[1] or None
-            backend = WgetBackend(download_url, ext)
-            return [StreamFlavor(media_type='video', streams=[backend])]
-        else:
-            return (super(ElavaArkistoExtractor, self)
-                    .media_flavors(program_id, program_info, manifest_url, pageurl))
 
     def program_media_id(self, program_info):
         mediakanta_id = program_info.get('mediakantaId')
