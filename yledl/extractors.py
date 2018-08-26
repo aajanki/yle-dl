@@ -742,7 +742,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             all_streams = list(itertools.chain.from_iterable(
                 fl.streams for fl in flavors))
         else:
-            all_stream = []
+            all_streams = []
 
         if all_streams and all(not s.is_valid() for s in all_streams):
             return FailedClip(pageurl, all_streams[0].error_message)
