@@ -738,7 +738,12 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return FailedClip(pageurl, 'Media not found')
 
     def failed_clip_if_only_invalid_streams(self, flavors, pageurl):
-        all_streams = list(itertools.chain.from_iterable(fl.streams for fl in flavors))
+        if flavors:
+            all_streams = list(itertools.chain.from_iterable(
+                fl.streams for fl in flavors))
+        else:
+            all_stream = []
+
         if all_streams and all(not s.is_valid() for s in all_streams):
             return FailedClip(pageurl, all_streams[0].error_message)
         else:
