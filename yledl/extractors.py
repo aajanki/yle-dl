@@ -685,6 +685,9 @@ class AreenaPreviewApiParser(object):
         else:
             return 'video'
 
+    def preview_is_live(self, data):
+        return (data or {}).get('data', {}).get('ongoing_channel') is not None
+
     def preview_ongoing(self, preview):
         data = (preview or {}).get('data', {})
         return (data.get('ongoing_ondemand') or
@@ -938,17 +941,23 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
     def expiration_timestamp(self, program_info):
         return self.publish_event(program_info).get('endTime')
 
+    def force_program_info(self):
+        return False
+
     def program_info_for_pid(self, pid, pageurl):
         if not pid:
             return None
 
-        info = JSONP.load_jsonp(self.program_info_url(pid))
-        logger.debug('program data:')
-        logger.debug(json.dumps(info))
-
         preview = JSONP.load_json(self.preview_url(pid))
         logger.debug('preview data:')
         logger.debug(json.dumps(preview))
+
+        if self.preview_is_live(preview) and not self.force_program_info():
+            info = None
+        else:
+            info = JSONP.load_jsonp(self.program_info_url(pid))
+            logger.debug('program data:')
+            logger.debug(json.dumps(info))
 
         media_id = (self.program_media_id(info) or
                     self.preview_media_id(preview))
@@ -1067,6 +1076,9 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
     def __init__(self, filters):
         AreenaExtractor.__init__(self)
         self.outlet_sort_key = self.create_outlet_sort_key(filters)
+
+    def force_program_info(self):
+        return True
 
     def program_info_url(self, program_id):
         quoted_pid = quote_plus(program_id)
