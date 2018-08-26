@@ -245,14 +245,15 @@ def download(url, action, io, stream_filters, postprocess_command):
         logger.error('Is this really a Yle video page?')
         return RD_FAILED
 
+    if action == StreamAction.PRINT_EPISODE_PAGES:
+        print_lines(extractor.get_playlist(url))
+        return RD_SUCCESS
+
     clips = extractor.extract(url, stream_filters.latest_only)
     dl = YleDlDownloader()
 
     if action == StreamAction.PRINT_STREAM_URL:
         print_lines(dl.get_urls(clips, stream_filters))
-        return RD_SUCCESS
-    elif action == StreamAction.PRINT_EPISODE_PAGES:
-        print_lines(dl.get_episode_pages(clips))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_TITLE:
         print_lines(dl.get_titles(clips, io))
