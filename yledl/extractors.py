@@ -301,7 +301,7 @@ class KalturaFlavorParser(object):
 
         return self.parse_streams(filtered_flavors, stream_format)
 
-    def parse_live(self, configurations):
+    def parse_live(self, configurations, media_type):
         assert len(configurations) > 0
 
         url = configurations[0].get('url')
@@ -310,15 +310,15 @@ class KalturaFlavorParser(object):
         if protocol != 'applehttp':
             return [FailedFlavor('Unknown live stream protocol: {}'.format(protocol))]
         elif url:
-            return [self.live_applehttp_flavor(url)]
+            return [self.live_applehttp_flavor(url, media_type)]
         else:
             return [FailedFlavor('No live stream URL')]
 
-    def live_applehttp_flavor(self, hls_url):
+    def live_applehttp_flavor(self, hls_url, media_type):
         # The bitrate in the metadata is bogus anyway. Let's use a
         # large value here to boost this stream over the HDS streams.
         return StreamFlavor(
-            media_type='video',
+            media_type=media_type,
             bitrate=3000,
             streams=[HLSBackend(hls_url, '.mp4')]
         )
@@ -679,6 +679,12 @@ class AreenaPreviewApiParser(object):
     def preview_manifest_url(self, data):
         return self.preview_ongoing(data).get('manifest_url')
 
+    def preview_media_type(self, data):
+        if self.preview_ongoing(data).get('content_type') == 'AudioObject':
+            return 'audio'
+        else:
+            return 'video'
+
     def preview_ongoing(self, preview):
         data = (preview or {}).get('data', {})
         return (data.get('ongoing_ondemand') or
@@ -791,7 +797,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return None
 
     def media_flavors(self, media_id, program_id, medias, manifest_url,
-                      download_url, pageurl):
+                      download_url, media_type, pageurl):
         flavors = []
 
         if download_url:
@@ -799,24 +805,25 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             ext = os.path.splitext(path)[1] or None
             backend = WgetBackend(download_url, ext)
             flavors.append([
-                StreamFlavor(media_type='video', streams=[backend])
+                StreamFlavor(media_type=media_type, streams=[backend])
             ])
 
         if media_id:
             flavors.extend(
                 self.flavors_by_media_id(
-                    media_id, program_id, medias, manifest_url, pageurl))
+                    media_id, program_id, medias, manifest_url,
+                    media_type, pageurl))
 
         return flavors or None
 
     def flavors_by_media_id(self, media_id, program_id, medias,
-                            manifest_url, pageurl):
+                            manifest_url, media_type, pageurl):
         if self.is_full_hd_media(media_id):
             logger.debug('Detected a full-HD media')
-            return self.full_hd_flavors(manifest_url)
+            return self.full_hd_flavors(manifest_url, media_type)
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
-            return self.html5_flavors(media_id, program_id, pageurl)
+            return self.html5_flavors(media_id, program_id, media_type, pageurl)
         elif media_id and medias:
             return AkamaiFlavorParser().parse(medias, pageurl, self.AES_KEY)
         else:
@@ -838,18 +845,18 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                          .get('media', {}) \
                          .get(descriptor_proto, [])
 
-    def full_hd_flavors(self, manifest_url):
+    def full_hd_flavors(self, manifest_url, media_type):
         if manifest_url:
             return [
                 StreamFlavor(
-                    media_type='video',
+                    media_type=media_type,
                     streams=[HLSBackend(manifest_url, '.mp4', long_probe=True)]
                 )
             ]
         else:
             return [FailedFlavor('Manifest URL is missing')]
 
-    def html5_flavors(self, media_id, program_id, pageurl):
+    def html5_flavors(self, media_id, program_id, media_type, pageurl):
         flavors_data, meta, error = self.kaltura_flavors_meta(
             program_id, media_id, pageurl)
         live_configurations = meta.get('liveStreamConfigurations')
@@ -858,7 +865,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return [FailedFlavor(error)]
         elif live_configurations:
             logger.debug('This is a live stream')
-            return KalturaFlavorParser().parse_live(live_configurations)
+            return KalturaFlavorParser().parse_live(live_configurations, media_type)
         else:
             return KalturaFlavorParser().parse(flavors_data, meta)
 
@@ -951,6 +958,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         manifest_url = self.preview_manifest_url(preview)
         download_url = info and info.get('downloadUrl')
         medias = self.akamai_medias(pid, media_id, info)
+        media_type = self.preview_media_type(preview)
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
         return AreenaApiProgramInfo(
@@ -959,7 +967,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                      self.preview_title(preview, publish_timestamp)),
             medias = medias,
             flavors = self.media_flavors(
-                media_id, pid, medias, manifest_url, download_url, pageurl),
+                media_id, pid, medias, manifest_url, download_url,
+                media_type, pageurl),
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or
