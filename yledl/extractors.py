@@ -718,7 +718,9 @@ class TitleFormatter(object):
         title = self.remove_genre_prefix(title)
 
         if publish_timestamp:
-            title += '-' + publish_timestamp.replace('/', '-').replace(' ', '-')
+            short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', publish_timestamp or '')
+            title_ts = short.group(0) if short else publish_timestamp
+            title += '-' + title_ts.replace('/', '-').replace(' ', '-')
 
         return title
 
