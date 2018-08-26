@@ -301,6 +301,28 @@ class KalturaFlavorParser(object):
 
         return self.parse_streams(filtered_flavors, stream_format)
 
+    def parse_live(self, configurations):
+        assert len(configurations) > 0
+
+        url = configurations[0].get('url')
+        protocol = configurations[0].get('protocol')
+
+        if protocol != 'applehttp':
+            return [FailedFlavor('Unknown live stream protocol: {}'.format(protocol))]
+        elif url:
+            return [self.live_applehttp_flavor(url)]
+        else:
+            return [FailedFlavor('No live stream URL')]
+
+    def live_applehttp_flavor(self, hls_url):
+        # The bitrate in the metadata is bogus anyway. Let's use a
+        # large value here to boost this stream over the HDS streams.
+        return StreamFlavor(
+            media_type='video',
+            bitrate=3000,
+            streams=[HLSBackend(hls_url, '.mp4')]
+        )
+
     def parse_streams(self, flavors_data, stream_format):
         flavors = []
         for fl in flavors_data:
@@ -659,7 +681,9 @@ class AreenaPreviewApiParser(object):
 
     def preview_ongoing(self, preview):
         data = (preview or {}).get('data', {})
-        return data.get('ongoing_ondemand') or data.get('ongoing_event', {})
+        return (data.get('ongoing_ondemand') or
+                data.get('ongoing_event', {}) or
+                data.get('ongoing_channel', {}))
 
 
 class TitleFormatter(object):
@@ -828,9 +852,13 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
     def html5_flavors(self, media_id, program_id, pageurl):
         flavors_data, meta, error = self.kaltura_flavors_meta(
             program_id, media_id, pageurl)
+        live_configurations = meta.get('liveStreamConfigurations')
 
         if error:
             return [FailedFlavor(error)]
+        elif live_configurations:
+            logger.debug('This is a live stream')
+            return KalturaFlavorParser().parse_live(live_configurations)
         else:
             return KalturaFlavorParser().parse(flavors_data, meta)
 
@@ -843,7 +871,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
     def program_protocol(self, program_info, default_video_proto):
         event = self.publish_event(program_info)
         if (event.get('media', {}).get('type') == 'AudioObject' or
-            program_info.get('mediaFormat') == 'audio'):
+            (program_info or {}).get('mediaFormat') == 'audio'):
             return 'RTMPE'
         else:
             return default_video_proto
@@ -921,7 +949,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return None
 
         manifest_url = self.preview_manifest_url(preview)
-        download_url = info.get('downloadUrl')
+        download_url = info and info.get('downloadUrl')
         medias = self.akamai_medias(pid, media_id, info)
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
@@ -935,7 +963,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or
-                                   self.preview_available_at_region(preview)),
+                                   self.preview_available_at_region(preview) or
+                                   'Finland'),
             publish_timestamp = publish_timestamp,
             expiration_timestamp = self.expiration_timestamp(info)
         )
@@ -996,6 +1025,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         return self.publish_event(program_info).get('region')
 
     def program_title(self, program_info, publish_timestamp):
+        if not program_info:
+            return None
+
         program = program_info.get('data', {}).get('program', {})
         titleObject = program.get('title')
         title = Localization.fi_or_sv_text(titleObject) or 'areena'
@@ -1073,58 +1105,9 @@ class AreenaLiveTVHLSExtractor(AreenaExtractor):
         parsed = urlparse(url)
         return parsed.path.split('/')[-1]
 
-    def flavors_by_media_id(self, media_id, program_id, medias, manifest_url, pageurl):
-        (streams, bitrate) = self.live_stream_configurations(media_id, program_id, pageurl)
-        if streams and 'url' in streams[0]:
-            hls_url = streams[0].get('url')
-            return [self.stream_flavor(hls_url, bitrate)]
-        else:
-            return []
-
-    def stream_flavor(self, hls_url, bitrate):
-        # The bitrate parsed from the metadata is bogus anyway. Let's use a
-        # large value here to boost this stream over the HDS streams.
-        return StreamFlavor(
-            media_type='video',
-            bitrate=3000,
-            streams=[HLSBackend(hls_url, '.mp4')]
-        )
-
-    def live_stream_configurations(self, media_id, program_id, pageurl):
-        mw = self.load_mwembed(media_id, program_id, pageurl)
-        package_data = self.package_data_from_mwembed(mw)
-        meta = package_data.get('entryResult', {}).get('meta', {})
-
-        bitrates = meta.get('bitrates', [])
-        bitrate = bitrates[0].get('bitrate') if bitrates else None
-
-        configurations = meta.get('liveStreamConfigurations', [])
-
-        return configurations, bitrate
-
-    def program_info_url(self, pid):
-        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
-            'ssl=true&countryCode=FI&app_id=player_static_prod' \
-            '&app_key=8930d72170e48303cf5f3867780d549b'.format(quote_plus(pid))
-
-    def program_media_id(self, program_info):
-        extended_media_id = self.channel_data(program_info).get('media_id')
-        if '-' in extended_media_id:
-            return extended_media_id.split('-')[1]
-        else:
-            return extended_media_id
-
-    def program_title(self, program_info, publish_timestamp):
-        titles = self.channel_data(program_info).get('title', {})
-        title = Localization.fin_or_swe_text(titles) or 'areena'
-        timestamp = publish_timestamp or time.strftime('%Y-%m-%d-%H:%M:%S')
-        return TitleFormatter().title(title, timestamp)
-
-    def channel_data(self, program_info):
-        return program_info.get('data', {}).get('ongoing_channel', {})
-
-    def available_at_region(self, program_info):
-        return 'Finland'
+    def preview_title(self, data, publish_timestamp):
+        now = time.strftime('%Y-%m-%d-%H:%M:%S')
+        return super(AreenaLiveTVHLSExtractor, self).preview_title(data, now)
 
 
 ### Areena live radio ###

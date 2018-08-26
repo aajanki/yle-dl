@@ -105,7 +105,7 @@ def test_areena_ohjelmat_embedded_live_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/tv/ohjelmat/30-595?play=yle-tv2')
 
     assert len(streamurl) == 1
-    assert 'manifest.f4m' in streamurl[0]
+    assert 'master.m3u8' in streamurl[0]
 
 
 @pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
