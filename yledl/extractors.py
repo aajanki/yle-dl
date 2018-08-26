@@ -10,6 +10,8 @@ import os.path
 import re
 import time
 import sys
+from . import localization
+from . import titleformatter
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
@@ -19,7 +21,6 @@ from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
 from .utils import sane_filename
-
 
 
 try:
@@ -667,8 +668,8 @@ class AreenaPreviewApiParser(object):
 
     def preview_title(self, data, publish_timestamp):
         title_object = self.preview_ongoing(data).get('title', {})
-        raw_title = Localization.fin_or_swe_text(title_object).strip()
-        return TitleFormatter().title(raw_title, publish_timestamp)
+        raw_title = localization.fin_or_swe_text(title_object).strip()
+        return titleformatter.title(raw_title, publish_timestamp)
 
     def preview_available_at_region(self, data):
         return self.preview_ongoing(data).get('region')
@@ -693,64 +694,6 @@ class AreenaPreviewApiParser(object):
         return (data.get('ongoing_ondemand') or
                 data.get('ongoing_event', {}) or
                 data.get('ongoing_channel', {}))
-
-
-class TitleFormatter(object):
-    def title(self, raw_title, publish_timestamp, subheading=None,
-              season=None, episode=None):
-        title = raw_title
-        if title is None:
-            return None
-
-        if ':' in title:
-            prefix, rest = title.split(':', 1)
-            if prefix in rest:
-                title = rest.strip()
-
-        if season and episode:
-            title += ': S%02dE%02d' % (season, episode)
-        elif episode:
-            title += ': E%02d' % (episode)
-
-        if subheading and subheading not in title:
-            title += ': ' + subheading
-
-        title = self.remove_genre_prefix(title)
-
-        if publish_timestamp:
-            short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', publish_timestamp or '')
-            title_ts = short.group(0) if short else publish_timestamp
-            title += '-' + title_ts.replace('/', '-').replace(' ', '-')
-
-        return title
-
-    def remove_genre_prefix(self, title):
-        genre_prefixes = ['Elokuva:', 'Kino:', 'Kino Klassikko:',
-                          'Kino Suomi:', 'Kotikatsomo:', 'Uusi Kino:', 'Dok:',
-                          'Dokumenttiprojekti:', 'Historia:']
-        for prefix in genre_prefixes:
-            if title.startswith(prefix):
-                return title[len(prefix):].strip()
-        return title
-
-
-class Localization(object):
-    @staticmethod
-    def localized_text(alternatives, language='fi'):
-        if alternatives:
-            return alternatives.get(language) or alternatives.get('fi')
-        else:
-            return None
-
-    @staticmethod
-    def fi_or_sv_text(alternatives):
-        return Localization.localized_text(alternatives, 'fi') or \
-            Localization.localized_text(alternatives, 'sv')
-
-    @staticmethod
-    def fin_or_swe_text(alternatives):
-        return Localization.localized_text(alternatives, 'fin') or \
-            Localization.localized_text(alternatives, 'swe')
 
 
 ### Extract streams from an Areena webpage ###
@@ -1050,10 +993,10 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
         program = program_info.get('data', {}).get('program', {})
         titleObject = program.get('title')
-        title = Localization.fi_or_sv_text(titleObject) or 'areena'
+        title = localization.fi_or_sv_text(titleObject) or 'areena'
 
-        itemTitle = Localization.fi_or_sv_text(program.get('itemTitle'))
-        promotionTitle = Localization.fi_or_sv_text(program.get('promotionTitle'))
+        itemTitle = localization.fi_or_sv_text(program.get('itemTitle'))
+        promotionTitle = localization.fi_or_sv_text(program.get('promotionTitle'))
 
         partOfSeasonObject = program.get('partOfSeason')
         if partOfSeasonObject:
@@ -1061,7 +1004,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         else:
             season = program.get('seasonNumber')
 
-        return TitleFormatter().title(
+        return titleformatter.title(
             raw_title=title,
             publish_timestamp=publish_timestamp,
             subheading=itemTitle or promotionTitle,
@@ -1109,9 +1052,9 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
     
     def program_title(self, program_info, publish_timestamp):
         service = self._service_info(program_info)
-        title = Localization.fi_or_sv_text(service.get('title')) or 'areena'
+        title = localization.fi_or_sv_text(service.get('title')) or 'areena'
         timestamp = publish_timestamp or time.strftime('%Y-%m-%d-%H:%M:%S')
-        return TitleFormatter().title(title, timestamp)
+        return titleformatter.title(title, timestamp)
 
     def available_at_region(self, program_info):
         return self._service_info(program_info).get('region')
