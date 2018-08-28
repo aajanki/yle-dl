@@ -554,14 +554,18 @@ class MergingExtractor(ClipExtractor):
 
     def extract_clip(self, url):
         clips = [x.extract_clip(url) for x in self.extractors]
-        clips = [c for c in clips if not isinstance(c, FailedClip)]
-        if clips:
-            all_flavors = list(itertools.chain.from_iterable(c.flavors for c in clips))
-            clip = clips[0]
+        valid_clips = [c for c in clips if not isinstance(c, FailedClip)]
+        failed_clips = [c for c in clips if isinstance(c, FailedClip)]
+        if valid_clips:
+            all_flavors = list(itertools.chain.from_iterable(
+                c.flavors for c in valid_clips))
+            clip = valid_clips[0]
             clip.flavors = all_flavors
             return clip
+        elif failed_clips:
+            return failed_clips[0]
         else:
-            return []
+            return FailedClip(url, 'No clips to merge')
 
 
 class AreenaPlaylist(object):
@@ -1038,10 +1042,13 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
             (quoted_pid, quoted_pid)
 
     def program_media_id(self, program_info):
-        outlets = program_info.get('data', {}).get('outlets', [{}])
-        sorted_outlets = sorted(outlets, key=self.outlet_sort_key)
-        selected_outlet = sorted_outlets[0]
-        return selected_outlet.get('outlet', {}).get('media', {}).get('id')
+        if program_info:
+            outlets = program_info.get('data', {}).get('outlets', [{}])
+            sorted_outlets = sorted(outlets, key=self.outlet_sort_key)
+            selected_outlet = sorted_outlets[0]
+            return selected_outlet.get('outlet', {}).get('media', {}).get('id')
+        else:
+            return None
 
     def create_outlet_sort_key(self, filters):
         preferred_ordering = {"fi": 1, None: 2, "sv": 3}
