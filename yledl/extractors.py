@@ -521,6 +521,7 @@ class AreenaApiProgramInfo(object):
     available_at_region = attr.ib()
     publish_timestamp = attr.ib()
     expiration_timestamp = attr.ib()
+    pending = attr.ib()
 
 
 class ClipExtractor(object):
@@ -693,11 +694,15 @@ class AreenaPreviewApiParser(object):
     def preview_is_live(self, data):
         return (data or {}).get('data', {}).get('ongoing_channel') is not None
 
+    def preview_is_pending(self, data):
+        return (data or {}).get('data', {}).get('pending_event') is not None
+
     def preview_ongoing(self, preview):
         data = (preview or {}).get('data', {})
         return (data.get('ongoing_ondemand') or
                 data.get('ongoing_event', {}) or
-                data.get('ongoing_channel', {}))
+                data.get('ongoing_channel', {}) or
+                data.get('pending_event'))
 
 
 ### Extract streams from an Areena webpage ###
@@ -726,7 +731,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         subtitles = self.parse_subtitles(program_info.medias)
         failed = self.failed_clip_if_only_invalid_streams(
             program_info.flavors, pageurl)
-        if failed:
+
+        if program_info.pending:
+            msg = 'Stream not yet available.'
+            if program_info.publish_timestamp:
+                msg = ('{} Becomes available on {}'
+                       .format(msg, program_info.publish_timestamp))
+            return FailedClip(pageurl, msg)
+        elif failed:
             return failed
         elif program_info.flavors:
             return Clip(
@@ -938,7 +950,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                                    self.preview_available_at_region(preview) or
                                    'Finland'),
             publish_timestamp = publish_timestamp,
-            expiration_timestamp = self.expiration_timestamp(info)
+            expiration_timestamp = self.expiration_timestamp(info),
+            pending = self.preview_is_pending(preview)
         )
 
     def program_info_url(self, program_id):
