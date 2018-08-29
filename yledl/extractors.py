@@ -1092,7 +1092,7 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
         return self._service_info(program_info).get('region')
 
     def _service_info(self, program_info):
-        return program_info.get('data', {}).get('service', {})
+        return (program_info or {}).get('data', {}).get('service', {})
 
 
 class AreenaLiveTVHLSExtractor(AreenaExtractor):
