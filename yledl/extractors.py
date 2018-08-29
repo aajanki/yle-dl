@@ -702,7 +702,8 @@ class AreenaPreviewApiParser(object):
         return (data.get('ongoing_ondemand') or
                 data.get('ongoing_event', {}) or
                 data.get('ongoing_channel', {}) or
-                data.get('pending_event'))
+                data.get('pending_event') or
+                {})
 
 
 ### Extract streams from an Areena webpage ###
@@ -803,6 +804,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
     def is_full_hd_media(self, media_id):
         return media_id and media_id.startswith('55-')
+
+    def is_elava_arkisto_media(self, media_id):
+        return media_id and media_id.startswith('26-')
 
     def akamai_medias(self, program_id, media_id, program_info):
         is_html5 = self.is_html5_media(media_id)
@@ -914,9 +918,12 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         if not pid:
             return None
 
-        preview = JSONP.load_json(self.preview_url(pid))
-        logger.debug('preview data:')
-        logger.debug(json.dumps(preview))
+        if self.is_elava_arkisto_media(pid):
+            preview = None
+        else:
+            preview = JSONP.load_json(self.preview_url(pid))
+            logger.debug('preview data:')
+            logger.debug(json.dumps(preview))
 
         if self.preview_is_live(preview) and not self.force_program_info():
             info = None
@@ -1137,7 +1144,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
         return ['https://areena.yle.fi/' + x for x in ids]
 
     def program_info_url(self, program_id):
-        if program_id.startswith('26-'):
+        if self.is_elava_arkisto_media(program_id):
             did = program_id.split('-')[-1]
             return ('https://yle.fi/elavaarkisto/embed/%s.jsonp'
                     '?callback=yleEmbed.eaJsonpCallback'
@@ -1175,7 +1182,7 @@ class ArkivetExtractor(AreenaExtractor):
         return ['https://areena.yle.fi/' + x for x in ids]
 
     def program_info_url(self, program_id):
-        if program_id.startswith('26-'):
+        if self.is_elava_arkisto_media(program_id):
             plain_id = program_id.split('-')[-1]
             return 'https://player.yle.fi/api/v1/arkivet.jsonp?' \
                 'id=%s&callback=yleEmbed.eaJsonpCallback&instance=1&lang=sv' % \
