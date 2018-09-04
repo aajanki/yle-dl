@@ -387,7 +387,7 @@ class Clip(object):
     region = attr.ib(default='Finland')
     publish_timestamp = attr.ib(default=None)
     expiration_timestamp = attr.ib(default=None)
-    subtitles = attr.ib(default=attr.Factory(list))
+    subtitles = attr.ib(factory=list)
 
     def output_file_name(self, extension, io, resume_job=False):
         if io.outputfilename:

@@ -39,7 +39,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'pycryptodomex', 'requests', 'lxml', 'future', 'PySocks', 'mini-amf',
-        'attrs == 17.4.0', 'ConfigArgParse == 0.13.0'
+        'attrs >= 18.1.0, < 18.3.0', 'ConfigArgParse == 0.13.0'
     ] + ssl_sni_requires,
     extras_require = {
         'youtubedl-backend': ['youtube_dl']

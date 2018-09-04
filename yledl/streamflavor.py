@@ -10,7 +10,7 @@ class StreamFlavor(object):
     height = attr.ib(default=None, converter=attr.converters.optional(int))
     width = attr.ib(default=None, converter=attr.converters.optional(int))
     bitrate = attr.ib(default=None, converter=attr.converters.optional(int))
-    streams = attr.ib(default=attr.Factory(list))
+    streams = attr.ib(factory=list)
     hard_subtitle = attr.ib(default=None)
 
 
