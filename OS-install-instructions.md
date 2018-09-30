@@ -136,15 +136,18 @@ sudo pip install --upgrade yle-dl
 ### Python
 
 Download the latest Python 3 release from
-https://www.python.org/downloads/windows/ and install it in C:\Python.
+https://www.python.org/downloads/windows/ and install it in C:\somepath\Python.
 
 Append the following paths to the PATH environment variable in Control
 Panel > System and security > System > Advanced system settings >
 Environment Variables...:
 ```
-C:\Python\Python36
-C:\Python\Python36\Scripts
+C:\somepath\Python\Python36
+C:\somepath\Python\Python37
+C:\somepath\Python\Python36\Scripts
+C:\somepath\Python\Python37\Scripts
 %USERPROFILE%\AppData\Roaming\Python\Python36\Scripts
+%USERPROFILE%\AppData\Roaming\Python\Python37\Scripts
 ```
 
 ### ffmpeg
@@ -152,9 +155,9 @@ C:\Python\Python36\Scripts
 Download the binary from
 https://ffmpeg.org/download.html#build-windows. Select the latest
 release build (not a nightly git build), Windows 64-bit, Static.
-Extract the zip in `C:\ffmpeg`.
+Extract the zip in `C:\somepath\ffmpeg`.
 
-Append `C:\ffmpeg\bin` to the PATH environment variable.
+Append `C:\somepath\ffmpeg\bin` to the PATH environment variable.
 
 ### rtmpdump
 
@@ -162,36 +165,36 @@ rtmpdump is needed only for radio streams.
 
 Download the latest Windows build from
 https://rtmpdump.mplayerhq.hu/download/ and extract it to
-`C:\rtmpdump`.
+`C:\somepath\rtmpdump`.
 
-Append `C:\rtmpdump` to the PATH environment variable.
+Append `C:\somepath\rtmpdump` to the PATH environment variable.
 
 ### PHP
 
 PHP is needed only for live TV and a small subset of streams.
 
 Download the latest PHP 7.x.y binary (VC15 x64 Non Thread Safe) from
-https://windows.php.net/download/ and install it in `C:\php`.
+https://windows.php.net/download/ and install it in `C:\somepath\php`.
 
-Create a file `C:\php\php.ini` with the following content:
+Create a file `C:\somepath\php\php.ini` with the following content:
 ```
-extension_dir=C:\php\ext
+extension_dir=C:\somepath\php\ext
 extension=php_curl.dll
 extension=php_openssl.dll
 ```
 
 Create a new environment variable called PHPRC with the value
-`C:\php\php.ini` in Control Panel > System and security > System >
+`C:\somepath\php\php.ini` in Control Panel > System and security > System >
 Advanced system settings > Environment Variables...
 
-Append `C:\php` to the PATH environment variable.
+Append `C:\somepath\php` to the PATH environment variable.
 
 ### wget
 
 Download the latest wget.exe from https://eternallybored.org/misc/wget
-and copy it to C:\wget.
+and copy it to C:\somepath\wget.
 
-Append `C:\wget` to the PATH environment variable.
+Append `C:\somepath\wget` to the PATH environment variable.
 
 ### yle-dl
 
