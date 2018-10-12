@@ -809,6 +809,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         return media_id and media_id.startswith('26-')
 
     def akamai_medias(self, program_id, media_id, program_info):
+        if not media_id:
+            return []
+
         is_html5 = self.is_html5_media(media_id)
         default_proto = 'HLS' if is_html5 else 'HDS'
         proto = self.program_protocol(program_info, default_proto)
@@ -934,9 +937,6 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
         media_id = (self.program_media_id(info) or
                     self.preview_media_id(preview))
-        if not media_id:
-            return None
-
         manifest_url = self.preview_manifest_url(preview)
         download_url = info and info.get('downloadUrl')
         medias = self.akamai_medias(pid, media_id, info)
@@ -1120,12 +1120,14 @@ class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
         else:
             return parsed.path.split('/')[-1]
 
-    def stream_flavor(self, hls_url, bitrate):
-        return StreamFlavor(
-            media_type='audio',
-            bitrate=bitrate,
-            streams=[HLSAudioBackend(hls_url)]
-        )
+    def media_flavors(self, media_id, pid, medias, manifest_url, download_url, media_type, pageurl):
+        if manifest_url:
+            return [StreamFlavor(
+                media_type='audio',
+                streams=[HLSAudioBackend(manifest_url)]
+            )]
+        else:
+            None
 
 
 ### Elava Arkisto ###
