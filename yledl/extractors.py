@@ -673,6 +673,9 @@ class AreenaPreviewApiParser(object):
 
     def preview_title(self, data, publish_timestamp):
         title_object = self.preview_ongoing(data).get('title', {})
+        if not title_object:
+            return None
+
         raw_title = localization.fin_or_swe_text(title_object).strip()
         return titleformatter.title(raw_title, publish_timestamp)
 
