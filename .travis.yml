@@ -1,21 +1,21 @@
-dist: trusty
-
 language: python
+sudo: required
+dist: xenial
 
 python:
  - 2.7
  - 3.5
  - 3.6
-
-sudo: false
+ - 3.7
 
 addons:
   apt:
     packages:
     - rtmpdump
-    - python-crypto
-    - php5-cli
-    - php5-curl
+    - php-cli
+    - php-curl
+    - php-xml
+    - php-bcmath
 
 env:
   global:
