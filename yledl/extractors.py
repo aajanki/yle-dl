@@ -138,19 +138,19 @@ class KalturaUtils(object):
         return ('https://cdnapisec.kaltura.com/html5/html5lib/v2.67/'
                 'mwEmbedFrame.php?&wid=_1955031&uiconf_id=37558971'
                 '&cache_st=1442926927&entry_id={entry_id}'
-                '&flashvars\[streamerType\]=auto'
-                '&flashvars\[EmbedPlayer.HidePosterOnStart\]=true'
-                '&flashvars\[EmbedPlayer.OverlayControls\]=true'
-                '&flashvars\[IframeCustomPluginCss1\]='
+                '&flashvars\\[streamerType\\]=auto'
+                '&flashvars\\[EmbedPlayer.HidePosterOnStart\\]=true'
+                '&flashvars\\[EmbedPlayer.OverlayControls\\]=true'
+                '&flashvars\\[IframeCustomPluginCss1\\]='
                 '%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css'
-                '&flashvars\[mediaProxy\]='
+                '&flashvars\\[mediaProxy\\]='
                 '%7B%22mediaPlayFrom%22%3Anull%7D'
-                '&flashvars\[autoPlay\]=true'
-                '&flashvars\[KalturaSupport.LeadWithHTML5\]=true'
-                '&flashvars\[loop\]=false'
-                '&flashvars\[sourceSelector\]='
+                '&flashvars\\[autoPlay\\]=true'
+                '&flashvars\\[KalturaSupport.LeadWithHTML5\\]=true'
+                '&flashvars\\[loop\\]=false'
+                '&flashvars\\[sourceSelector\\]='
                 '%7B%22hideSource%22%3Atrue%7D'
-                '&flashvars\[comScoreStreamingTag\]='
+                '&flashvars\\[comScoreStreamingTag\\]='
                 '%7B%22logUrl%22%3A%22%2F%2Fda.yle.fi%2Fyle%2Fareena%2Fs'
                 '%3Fname%3Dareena.kaltura.prod%22%2C%22plugin%22%3Atrue'
                 '%2C%22position%22%3A%22before%22%2C%22persistentLabels'
@@ -158,9 +158,9 @@ class KalturaUtils(object):
                 '%22%3Atrue%2C%22asyncInit%22%3Atrue%2C%22relativeTo%22'
                 '%3A%22video%22%2C%22trackEventMonitor%22%3A'
                 '%22trackEvent%22%7D'
-                '&flashvars\[closedCaptions\]='
+                '&flashvars\\[closedCaptions\\]='
                 '%7B%22hideWhenEmpty%22%3Atrue%7D'
-                '&flashvars\[Kaltura.LeadHLSOnAndroid\]=true'
+                '&flashvars\\[Kaltura.LeadHLSOnAndroid\\]=true'
                 '&playerId=kaltura-{program_id}-1&forceMobileHTML5=true'
                 '&urid=2.60'
                 '&protocol=https'
@@ -185,7 +185,7 @@ class KalturaUtils(object):
         return web_flavors
 
     def package_data_from_mwembed(self, mw):
-        m = re.search('window.kalturaIframePackageData\s*=\s*', mw, re.DOTALL)
+        m = re.search(r'window.kalturaIframePackageData\s*=\s*', mw, re.DOTALL)
         if not m:
             return {}
 
