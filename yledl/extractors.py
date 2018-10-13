@@ -769,7 +769,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         else:
             return None
 
-    def media_flavors(self, media_id, program_id, medias, manifest_url,
+    def media_flavors(self, media_id, program_id, medias, hls_manifest_url,
                       download_url, media_type, pageurl):
         flavors = []
 
@@ -784,16 +784,19 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         if media_id:
             flavors.extend(
                 self.flavors_by_media_id(
-                    media_id, program_id, medias, manifest_url,
+                    media_id, program_id, medias, hls_manifest_url,
                     media_type, pageurl))
+        elif hls_manifest_url:
+            flavors.extend(
+                self.hls_flavors(hls_manifest_url, media_type))
 
         return flavors or None
 
     def flavors_by_media_id(self, media_id, program_id, medias,
-                            manifest_url, media_type, pageurl):
+                            hls_manifest_url, media_type, pageurl):
         if self.is_full_hd_media(media_id):
             logger.debug('Detected a full-HD media')
-            return self.full_hd_flavors(manifest_url, media_type)
+            return self.full_hd_flavors(hls_manifest_url, media_type)
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
             return self.html5_flavors(media_id, program_id, media_type, pageurl)
@@ -824,16 +827,24 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                          .get('media', {}) \
                          .get(descriptor_proto, [])
 
-    def full_hd_flavors(self, manifest_url, media_type):
-        if manifest_url:
+    def full_hd_flavors(self, hls_manifest_url, media_type):
+        if hls_manifest_url:
             return [
                 StreamFlavor(
                     media_type=media_type,
-                    streams=[HLSBackend(manifest_url, '.mp4', long_probe=True)]
+                    streams=[HLSBackend(hls_manifest_url, '.mp4', long_probe=True)]
                 )
             ]
         else:
             return [FailedFlavor('Manifest URL is missing')]
+
+    def hls_flavors(self, hls_manifest_url, media_type):
+        if media_type == 'video':
+            backend = HLSBackend(hls_manifest_url, '.mp4')
+        else:
+            backend = HLSAudioBackend(hls_manifest_url)
+
+        return [StreamFlavor(media_type=media_type, streams=[backend])]
 
     def html5_flavors(self, media_id, program_id, media_type, pageurl):
         flavors_data, meta, error = self.kaltura_flavors_meta(
@@ -1122,15 +1133,6 @@ class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
             return query_dict.get('_c')[0]
         else:
             return parsed.path.split('/')[-1]
-
-    def media_flavors(self, media_id, pid, medias, manifest_url, download_url, media_type, pageurl):
-        if manifest_url:
-            return [StreamFlavor(
-                media_type='audio',
-                streams=[HLSAudioBackend(manifest_url)]
-            )]
-        else:
-            None
 
 
 ### Elava Arkisto ###
