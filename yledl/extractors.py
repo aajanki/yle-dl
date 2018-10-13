@@ -774,12 +774,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         flavors = []
 
         if download_url:
-            path = urlparse(download_url)[2]
-            ext = os.path.splitext(path)[1] or None
-            backend = WgetBackend(download_url, ext)
-            flavors.append([
-                StreamFlavor(media_type=media_type, streams=[backend])
-            ])
+            flavors.extend(self.download_flavors(download_url, media_type))
 
         if media_id:
             flavors.extend(
@@ -858,6 +853,12 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return KalturaFlavorParser().parse_live(live_configurations, media_type)
         else:
             return KalturaFlavorParser().parse(flavors_data, meta)
+
+    def download_flavors(self, download_url, media_type):
+        path = urlparse(download_url)[2]
+        ext = os.path.splitext(path)[1] or None
+        backend = WgetBackend(download_url, ext)
+        return [StreamFlavor(media_type=media_type, streams=[backend])]
 
     def parse_subtitles(self, medias):
         subtitles = []
