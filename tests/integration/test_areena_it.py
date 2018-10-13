@@ -85,7 +85,7 @@ def test_areena_live_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/tv/suorat/yle-tv1')
 
     assert len(streamurl) == 1
-    assert '.m3u8' in streamurl[0]
+    assert '.f4m' in streamurl[0]
 
 
 @pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
