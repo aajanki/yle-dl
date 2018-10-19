@@ -5,7 +5,6 @@ import attr
 import logging
 import os.path
 import xml.dom.minidom
-from .http import download_page
 
 
 logger = logging.getLogger('yledl')
@@ -17,9 +16,9 @@ class PAPIStream(object):
     stream = attr.ib()
 
 
-def create_rtmp_params(streamurl, pageurl):
+def create_rtmp_params(streamurl, pageurl, httpclient):
     rtmp_stream = create_rtmpstream(streamurl)
-    params = stream_to_rtmp_parameters(rtmp_stream, pageurl, False)
+    params = stream_to_rtmp_parameters(rtmp_stream, pageurl, False, httpclient)
 
     if params is not None:
         params['app'] = params['app'].split('/', 1)[0]
@@ -66,7 +65,7 @@ def parse_rtmp_single_component_app(rtmpurl):
     return (app_only_rtmpurl, playpath, ext)
 
 
-def stream_to_rtmp_parameters(stream, pageurl, islive):
+def stream_to_rtmp_parameters(stream, pageurl, islive, httpclient):
     if not stream:
         return None
 
@@ -82,7 +81,7 @@ def stream_to_rtmp_parameters(stream, pageurl, islive):
         logger.exception('Failed to parse RTMP URL')
         return None
 
-    ident = download_page('http://%s/fcs/ident' % edgefcs)
+    ident = httpclient.download_page('http://%s/fcs/ident' % edgefcs)
     if ident is None:
         logger.exception('Failed to read ident')
         return None

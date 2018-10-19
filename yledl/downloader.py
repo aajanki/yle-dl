@@ -8,7 +8,6 @@ import logging
 import os.path
 import sys
 from .utils import sane_filename
-from .http import download_to_file
 from .backends import IOCapability, PreferredFileExtension, Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
@@ -20,6 +19,9 @@ logger = logging.getLogger('yledl')
 
 
 class SubtitleDownloader(object):
+    def __init__(self, httpclient):
+        self.httpclient = httpclient
+
     def select_and_download(self, subtitles, videofilename, filters):
         """Filter subtitles and save them to disk.
 
@@ -59,7 +61,7 @@ class SubtitleDownloader(object):
                              .format(filename))
             else:
                 try:
-                    download_to_file(sub.url, filename)
+                    self.httpclient.download_to_file(sub.url, filename)
                     self.add_BOM(filename)
                     logger.info('Subtitles saved to ' + filename)
                     subtitlefiles.append(filename)
@@ -87,7 +89,7 @@ class SubtitleDownloader(object):
 
 
 class YleDlDownloader(object):
-    def __init__(self, subtitle_downloader=SubtitleDownloader()):
+    def __init__(self, subtitle_downloader):
         self.subtitle_downloader = subtitle_downloader
 
     def download_clips(self, clips, io, filters, postprocess_command):

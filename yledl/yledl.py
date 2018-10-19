@@ -32,9 +32,10 @@ import logging
 import configargparse
 from future.moves.urllib.parse import urlparse, urlunparse, quote
 from .backends import Backends
-from .downloader import YleDlDownloader
+from .downloader import YleDlDownloader, SubtitleDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory
+from .http import HttpClient
 from .io import IOContext, DownloadLimits
 from .streamfilters import StreamFilters
 from .utils import print_enc
@@ -226,7 +227,7 @@ def encode_url_utf8(url):
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def download(url, action, io, stream_filters, postprocess_command):
+def download(url, action, io, httpclient, stream_filters, postprocess_command):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -239,7 +240,7 @@ def download(url, action, io, stream_filters, postprocess_command):
     RD_INCOMPLETE if a stream was downloaded partially but the
     download was interrupted.
     """
-    extractor = extractor_factory(url, stream_filters)
+    extractor = extractor_factory(url, stream_filters, httpclient)
     if not extractor:
         logger.error('Unsupported URL %s.' % url)
         logger.error('Is this really a Yle video page?')
@@ -250,7 +251,7 @@ def download(url, action, io, stream_filters, postprocess_command):
         return RD_SUCCESS
 
     clips = extractor.extract(url, stream_filters.latest_only)
-    dl = YleDlDownloader()
+    dl = YleDlDownloader(SubtitleDownloader(httpclient))
 
     if action == StreamAction.PRINT_STREAM_URL:
         print_lines(dl.get_urls(clips, stream_filters))
@@ -364,6 +365,7 @@ def main(argv=sys.argv):
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
                                    args.hardsubs, maxbitrate, maxheight,
                                    backends)
+    httpclient = HttpClient()
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):
@@ -372,7 +374,8 @@ def main(argv=sys.argv):
             logger.info('Now downloading from URL {}/{}: {}'.format(
                 i + 1, len(urls), url))
 
-        res = download(url, action, io, stream_filters, args.postprocess)
+        res = download(url, action, io, httpclient, stream_filters,
+                       args.postprocess)
 
         if res != RD_SUCCESS:
             exit_status = res

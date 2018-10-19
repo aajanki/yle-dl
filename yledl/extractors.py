@@ -16,7 +16,7 @@ from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
     WgetBackend, YoutubeDLHDSBackend
-from .http import download_page, download_html_tree, html_unescape
+from .http import html_unescape
 from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
@@ -34,33 +34,34 @@ except ImportError:
 logger = logging.getLogger('yledl')
 
 
-def extractor_factory(url, filters):
+def extractor_factory(url, filters, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url):
-        return ElavaArkistoExtractor()
+        return ElavaArkistoExtractor(httpclient)
     elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
-        return ArkivetExtractor()
+        return ArkivetExtractor(httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
-        return AreenaLiveRadioExtractor()
+        return AreenaLiveRadioExtractor(httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return MergingExtractor([
-            AreenaLiveTVHLSExtractor(),
-            AreenaLiveTVHDSExtractor(filters)
+            AreenaLiveTVHLSExtractor(httpclient),
+            AreenaLiveTVHDSExtractor(filters, httpclient)
         ])
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
-        return YleUutisetExtractor()
+        return YleUutisetExtractor(httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
             re.match(r'^https?://yle\.fi/', url):
-        return AreenaExtractor()
+        return AreenaExtractor(httpclient)
     else:
         return None
 
 
 class JSONP(object):
     @staticmethod
-    def load_jsonp(url, headers=None):
-        json_string = JSONP.remove_jsonp_padding(download_page(url, headers))
+    def load_jsonp(url, httpclient, headers=None):
+        json_string = JSONP.remove_jsonp_padding(
+            httpclient.download_page(url, headers))
         if not json_string:
             return None
 
@@ -72,8 +73,8 @@ class JSONP(object):
         return json_parsed
 
     @staticmethod
-    def load_json(url, headers=None):
-        json_string = download_page(url, headers)
+    def load_json(url, httpclient, headers=None):
+        json_string = httpclient.download_page(url, headers)
         if not json_string:
             return None
 
@@ -114,6 +115,9 @@ class AreenaDecrypt(object):
 
 
 class KalturaUtils(object):
+    def __init__(self, httpclient):
+        self.httpclient = httpclient
+
     def kaltura_flavors_meta(self, program_id, media_id, referer):
         mw = self.load_mwembed(media_id, program_id, referer)
         package_data = self.package_data_from_mwembed(mw)
@@ -126,7 +130,7 @@ class KalturaUtils(object):
         url = self.mwembed_url(entryid, program_id)
         logger.debug('mwembed URL: {}'.format(url))
 
-        mw = JSONP.load_jsonp(url, {'Referer': referer})
+        mw = JSONP.load_jsonp(url, self.httpclient, {'Referer': referer})
 
         if mw:
             logger.debug('mwembed:')
@@ -208,6 +212,9 @@ class Flavors(object):
 
 
 class AkamaiFlavorParser(object):
+    def __init__(self, httpclient):
+        self.httpclient = httpclient
+
     def parse(self, medias, pageurl, aes_key):
         flavors = []
         for media in medias:
@@ -221,7 +228,7 @@ class AkamaiFlavorParser(object):
         logger.debug('Media URL: {}'.format(media_url))
         if is_hds:
             if media_url:
-                manifest = hds.parse_manifest(download_page(media_url))
+                manifest = hds.parse_manifest(self.httpclient.download_page(media_url))
             else:
                 manifest = None
             return self.hds_flavors(media, media_url, manifest or [])
@@ -266,7 +273,7 @@ class AkamaiFlavorParser(object):
         return flavors
 
     def rtmp_flavors(self, media, media_url, pageurl):
-        rtmp_params = create_rtmp_params(media_url, pageurl)
+        rtmp_params = create_rtmp_params(media_url, pageurl, self.httpclient)
         if rtmp_params:
             streams = [RTMPBackend(rtmp_params)]
         else:
@@ -525,6 +532,9 @@ class AreenaApiProgramInfo(object):
 
 
 class ClipExtractor(object):
+    def __init__(self, httpclient):
+        self.httpclient = httpclient
+
     def extract(self, url, latest_only):
         playlist = self.get_playlist(url)
         if latest_only:
@@ -570,12 +580,16 @@ class MergingExtractor(ClipExtractor):
 
 
 class AreenaPlaylist(object):
+    def __init__(self, httpclient):
+        self.httpclient = httpclient
+
     def get_playlist(self, url):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
         series_id = self.program_id_from_url(url)
         if not self.is_tv_ohjelmat_url(url):
-            playlist = self.get_playlist_old_style_url(url, series_id)
+            playlist = self.get_playlist_old_style_url(
+                url, series_id)
 
         if playlist is None:
             logger.error('Failed to parse a playlist')
@@ -602,7 +616,7 @@ class AreenaPlaylist(object):
 
     def get_playlist_old_style_url(self, url, series_id):
         playlist = []
-        html = download_html_tree(url)
+        html = self.httpclient.download_html_tree(url)
         if html is not None and self.is_playlist_page(html):
             playlist = self.playlist_episode_urls(series_id)
         return playlist
@@ -629,7 +643,7 @@ class AreenaPlaylist(object):
                      'size = {size}, offset = {offset}'.format(
                          series_id=series_id, size=page_size, offset=offset))
 
-        playlist_json = download_page(
+        playlist_json = self.httpclient.download_page(
             self.playlist_url(series_id, page_size, offset))
         if not playlist_json:
             return None
@@ -796,7 +810,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             logger.debug('Detected an HTML5 media')
             return self.html5_flavors(media_id, program_id, media_type, pageurl)
         elif media_id and medias:
-            return AkamaiFlavorParser().parse(medias, pageurl, self.AES_KEY)
+            parser = AkamaiFlavorParser(self.httpclient)
+            return parser.parse(medias, pageurl, self.AES_KEY)
         else:
             return [FailedFlavor('Unknown stream flavor')]
 
@@ -881,7 +896,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                           '&instance=1' % \
             (quote_plus(media_id), quote_plus(program_id),
              quote_plus(protocol))
-        media = JSONP.load_jsonp(media_jsonp_url)
+        media = JSONP.load_jsonp(media_jsonp_url, self.httpclient)
 
         if media:
             logger.debug('media:')
@@ -939,14 +954,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         if self.is_elava_arkisto_media(pid):
             preview = None
         else:
-            preview = JSONP.load_json(self.preview_url(pid))
+            preview = JSONP.load_json(self.preview_url(pid), self.httpclient)
             logger.debug('preview data:')
             logger.debug(json.dumps(preview))
 
         if self.preview_is_live(preview) and not self.force_program_info():
             info = None
         else:
-            info = JSONP.load_jsonp(self.program_info_url(pid))
+            info = JSONP.load_jsonp(self.program_info_url(pid), self.httpclient)
             logger.debug('program data:')
             logger.debug(json.dumps(info))
 
@@ -1062,8 +1077,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
 class AreenaLiveTVHDSExtractor(AreenaExtractor):
     # TODO: get rid of the constructor and the filters argument
-    def __init__(self, filters):
-        AreenaExtractor.__init__(self)
+    def __init__(self, filters, httpclient):
+        super(AreenaLiveTVHDSExtractor, self).__init__(httpclient)
         self.outlet_sort_key = self.create_outlet_sort_key(filters)
 
     def force_program_info(self):
@@ -1141,7 +1156,7 @@ class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
 
 class ElavaArkistoExtractor(AreenaExtractor):
     def get_playlist(self, url):
-        tree = download_html_tree(url)
+        tree = self.httpclient.download_html_tree(url)
         if tree is None:
             return []
 
@@ -1217,7 +1232,7 @@ class ArkivetExtractor(AreenaExtractor):
                 'yle-arkivet')
 
     def get_dataids(self, url):
-        tree = download_html_tree(url)
+        tree = self.httpclient.download_html_tree(url)
         if tree is None:
             return []
 
@@ -1231,7 +1246,7 @@ class ArkivetExtractor(AreenaExtractor):
 
 class YleUutisetExtractor(AreenaExtractor):
     def get_playlist(self, url):
-        html = download_html_tree(url)
+        html = self.httpclient.download_html_tree(url)
         if html is None:
             return None
 
