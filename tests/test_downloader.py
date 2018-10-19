@@ -54,6 +54,9 @@ class FailingBackend(StateCollectingBackend):
 
 
 class MockSubtitleDownloader(SubtitleDownloader):
+    def __init__(self):
+        SubtitleDownloader.__init__(self, None)
+
     def download(self, subtitles, videofilename):
         # Don't actually download anything
         return [os.path.basename(s.url) for s in subtitles]

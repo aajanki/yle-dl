@@ -4,6 +4,7 @@ import json
 from io import BytesIO
 from yledl import download, StreamFilters, IOContext, \
     DownloadLimits, StreamAction, RD_SUCCESS
+from yledl.http import HttpClient
 
 
 # Context manager for capturing stdout output. See
@@ -40,11 +41,13 @@ def fetch(url, action):
     basic_filters = StreamFilters()
     # Initialize rtmpdump_binary to avoid a file system lookup in tests
     io = IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump')
+    httpclient = HttpClient()
 
     with Capturing() as output:
         res = download(url,
                        action,
                        io,
+                       httpclient,
                        stream_filters = basic_filters,
                        postprocess_command = None)
         assert res == RD_SUCCESS

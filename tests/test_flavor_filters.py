@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import pytest
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import Backends, FailingBackend
+from yledl.downloader import SubtitleDownloader
 from yledl.extractors import Subtitle
 from yledl.streamflavor import StreamFlavor, FailedFlavor
 
@@ -49,6 +50,10 @@ hard_sub_flavors = [
 ]
 
 
+def yle_dl_downloader():
+    return YleDlDownloader(SubtitleDownloader(None))
+
+
 def video_flavor(streams):
     return StreamFlavor(media_type='video', streams=streams)
 
@@ -62,7 +67,7 @@ def filter_flavors(flavors, max_height=None, max_bitrate=None,
                             maxbitrate=max_bitrate,
                             hardsubs=hard_sub,
                             enabled_backends=enabled_backends)
-    return YleDlDownloader().select_flavor(flavors, filters)
+    return yle_dl_downloader().select_flavor(flavors, filters)
 
 
 def backend_data(flavor):
