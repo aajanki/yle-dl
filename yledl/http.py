@@ -19,6 +19,7 @@ class HttpClient(object):
 
     def _create_session(self):
         session = requests.Session()
+        session.timeout=20
 
         try:
             from requests.packages.urllib3.util.retry import Retry
@@ -75,7 +76,7 @@ class HttpClient(object):
             headers.update(extra_headers)
 
         try:
-            r = self._session.get(url, headers=headers, timeout=20)
+            r = self._session.get(url, headers=headers)
             r.raise_for_status()
         except requests.exceptions.RequestException:
             logger.exception("Can't read {}".format(url))
