@@ -124,8 +124,7 @@ Valitsimet:
 --postprocess c Suorita ohjelma c onnistuneen latauksen jälkeen.
                 Ohjelmalle c annetaan parametriksi ladatun FLV tiedoston nimi
 		ja mahdollisten tekstitystiedostojen nimet.
---proxy uri     Käytä SOCKS-proxyä striimin metadatan lataamiseen
-                Esimerkki --proxy socks5://localhost:7777
+--proxy uri     Käytä HTTP(S)-proxyä. Esimerkki: --proxy localhost:8118
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 --pipe          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
 --backend vals  Järjestys, jossa lataajia kokeillaan kunnes jokin niistä
@@ -140,6 +139,9 @@ striimiä. Luettelon mahdollisista valitsimista (englanniksi) näkee
 komentamalla
 
 yle-dl --help
+
+Lataaminen SOCKS5-proxyn kautta on mahdollista käyttämällä
+tsocks-ohjelmaa.
 
 Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
 ulospäin menevä liikenne porteissa 80 ja 1935.

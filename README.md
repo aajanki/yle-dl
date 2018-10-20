@@ -153,7 +153,7 @@ yle-dl options:
 
 * `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded FLV file as the first parameter and subtitle files (if any) as the following parameters.
 
-* `--proxy uri`       Proxy for downloading stream manifests. Example: `--proxy socks5://localhost:7777`
+* `--proxy uri`       HTTP(S) proxy to use. Example: `--proxy localhost:8118`
 
 * `--destdir dir`     Save files to dir
 
@@ -167,6 +167,8 @@ Type `yle-dl --help` to see the full list of options.
 
 Any unrecognized options will be relayed to rtmpdump process (when
 downloading RTMP streams).
+
+To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/) or a similar wrapper.
 
 Firewall must allow outgoing traffic on ports 80 and 1935.
 

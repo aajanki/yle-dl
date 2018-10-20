@@ -38,7 +38,7 @@ setup(
     packages=['yledl'],
     include_package_data=True,
     install_requires=[
-        'pycryptodomex', 'requests[socks]', 'lxml', 'future', 'PySocks', 'mini-amf',
+        'pycryptodomex', 'requests', 'lxml', 'future', 'PySocks', 'mini-amf',
         'attrs >= 18.1.0, < 18.3.0', 'ConfigArgParse == 0.13.0'
     ] + ssl_sni_requires,
     extras_require = {

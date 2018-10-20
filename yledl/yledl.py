@@ -144,8 +144,7 @@ def arg_parser():
                           'interger in kB/s')
     io_group.add_argument('--proxy', metavar='URI',
                           type=to_unicode,
-                          help='SOCKS or HTTP proxy to use. '
-                          'Example: --proxy socks5://localhost:7777')
+                          help='HTTP(S) proxy to use. Example: --proxy localhost:8118')
     io_group.add_argument('--postprocess', metavar='CMD',
                           type=to_unicode,
                           help='Execute the command CMD after a successful '

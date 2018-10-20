@@ -2,6 +2,11 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
+xx xxx 2018, Version 2.37
+
+- Use --proxy for all metadata calls
+- Stop claiming that SOCKS5 proxies are supported
+
 31 Aug 2018, Version 2.36
 
 - Some streams previously failed because their type was misdetected
