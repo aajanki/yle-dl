@@ -144,7 +144,7 @@ def arg_parser():
                           'interger in kB/s')
     io_group.add_argument('--proxy', metavar='URI',
                           type=to_unicode,
-                          help='SOCKS or HTTP proxy for downloading streams. '
+                          help='SOCKS or HTTP proxy to use. '
                           'Example: --proxy socks5://localhost:7777')
     io_group.add_argument('--postprocess', metavar='CMD',
                           type=to_unicode,
@@ -365,7 +365,7 @@ def main(argv=sys.argv):
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
                                    args.hardsubs, maxbitrate, maxheight,
                                    backends)
-    httpclient = HttpClient()
+    httpclient = HttpClient(args.proxy)
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):

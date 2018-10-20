@@ -14,12 +14,18 @@ logger = logging.getLogger('yledl')
 
 
 class HttpClient(object):
-    def __init__(self):
-        self._session = self._create_session()
+    def __init__(self, proxy=None):
+        self._session = self._create_session(proxy)
 
-    def _create_session(self):
+    def _create_session(self, proxy):
         session = requests.Session()
         session.timeout=20
+
+        if proxy:
+            session.proxies = {
+                'http': proxy,
+                'https': proxy
+            }
 
         try:
             from requests.packages.urllib3.util.retry import Retry
@@ -109,5 +115,3 @@ def html_unescape(escaped_html):
     s = s.replace("&quot;", '"')
     s = s.replace("&amp;", "&")
     return s
-
-
