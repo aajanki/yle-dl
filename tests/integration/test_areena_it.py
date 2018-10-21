@@ -7,37 +7,42 @@ from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata
 
 
-def test_areena_akamai_title():
-    title = fetch_title('https://areena.yle.fi/1-1765055')
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
+                    reason="Test works only in Finland")
+def test_areena_akamai_hds_title():
+    title = fetch_title('https://areena.yle.fi/1-1855712')
 
     assert len(title) == 1
-    assert 'Suomi on ruotsalainen' in title[0]
-    assert 'Identiteetti' in title[0]
+    assert 'Repomiehen parhaat' in title[0]
 
 
-def test_areena_akamai_stream_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/1-1765055')
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
+                    reason="Test works only in Finland")
+def test_areena_akamai_hds_stream_url():
+    streamurl = fetch_stream_url('https://areena.yle.fi/1-1855712')
 
     assert len(streamurl) == 1
     assert 'manifest.f4m' in streamurl[0]
 
 
-def test_areena_akamai_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/1-1765055')
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
+                    reason="Test works only in Finland")
+def test_areena_akamai_hds_metadata():
+    metadata = fetch_metadata('https://areena.yle.fi/1-1855712')
 
     assert len(metadata) == 1
     flavors = metadata[0]['flavors']
-    assert len(flavors) == 15
+    assert len(flavors) == 1
     assert all(f.get('media_type') == 'video' for f in flavors)
     assert all('bitrate' in f and
                'height' in f and
                'width' in f
                for f in flavors)
-    assert metadata[0]['duration_seconds'] == 1624
-    assert metadata[0]['region'] == 'World'
-    assert metadata[0]['publish_timestamp'] == '2015-11-27T10:00:00+02:00'
+    assert metadata[0]['duration_seconds'] == 11
+    assert metadata[0]['region'] == 'Finland'
+    assert metadata[0]['publish_timestamp'] == '2013-03-07T20:30:00+02:00'
     assert 'expired_timestamp' not in metadata[0]
-    assert len(metadata[0]['subtitles']) == 3
+    assert len(metadata[0]['subtitles']) == 0
 
 
 def test_areena_html5_stream_url():
@@ -76,7 +81,7 @@ def test_areena_series_urls():
     urls = fetch_stream_url('https://areena.yle.fi/1-3826480')
 
     assert len(urls) == 10
-    assert all(['manifest.f4m' in url for url in urls])
+    assert all(['a.mp4' in url for url in urls])
 
 
 @pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
