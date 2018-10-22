@@ -1,5 +1,5 @@
 from __future__ import print_function, absolute_import, unicode_literals
-from utils import fetch_title, fetch_stream_url
+from utils import fetch_title, fetch_stream_url, fetch_metadata
 
 
 def test_arkisto_title():
@@ -15,3 +15,10 @@ def test_arkisto_stream_url():
 
     assert streamurl
     assert 'manifest.f4m' in streamurl[0]
+
+
+def test_arkisto_regression():
+    # There was a regression (#168) related to invalid downloadUrl
+    meta = fetch_metadata('https://yle.fi/aihe/artikkeli/2013/04/11'
+                          '/aanien-illoissa-kuunnellaan-kadonneitakin-aania')
+    assert len(meta) == 12
