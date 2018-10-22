@@ -969,6 +969,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                     self.preview_media_id(preview))
         manifest_url = self.preview_manifest_url(preview)
         download_url = info and info.get('downloadUrl')
+        download_url = self.ignore_invalid_download_url(download_url)
         medias = self.akamai_medias(pid, media_id, info)
         media_type = self.preview_media_type(preview)
         publish_timestamp = (self.publish_timestamp(info) or
@@ -1070,6 +1071,11 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             season=season,
             episode=program.get('episodeNumber')
         )
+
+    def ignore_invalid_download_url(self, url):
+        # Sometimes download url is missing the file name
+        return None if (url and url.endswith('/')) else url
+
 
 
 ### Areena Live TV ###
