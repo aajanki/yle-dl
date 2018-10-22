@@ -703,7 +703,9 @@ class AreenaPreviewApiParser(object):
         return self.preview_ongoing(data).get('manifest_url')
 
     def preview_media_type(self, data):
-        if self.preview_ongoing(data).get('content_type') == 'AudioObject':
+        if not data:
+            return None
+        elif self.preview_ongoing(data).get('content_type') == 'AudioObject':
             return 'audio'
         else:
             return 'video'
@@ -908,6 +910,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         event = self.publish_event(program_info)
         return event.get('media', {}).get('id')
 
+    def program_media_type(self, program_info):
+        return None
+
     def publish_event(self, program_info):
         events = (program_info or {}).get('data', {}) \
                                      .get('program', {}) \
@@ -971,7 +976,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         download_url = info and info.get('downloadUrl')
         download_url = self.ignore_invalid_download_url(download_url)
         medias = self.akamai_medias(pid, media_id, info)
-        media_type = self.preview_media_type(preview)
+        media_type = (self.program_media_type(info) or
+                      self.preview_media_type(preview))
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
         return AreenaApiProgramInfo(
@@ -1190,6 +1196,9 @@ class ElavaArkistoExtractor(AreenaExtractor):
         else:
             return (super(ElavaArkistoExtractor, self)
                     .program_media_id(program_info))
+
+    def program_media_type(self, program_info):
+        return program_info.get('mediaFormat')
 
     def program_title(self, program_info, publish_timestamp):
         return program_info.get('otsikko') or \
