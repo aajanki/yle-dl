@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
+xx xxx 2018, Version 2.38
+
+- More robust parsing for Elävä Arkisto
+
 21 Oct 2018, Version 2.37
 
 - Fixed live radio stream downloading
