@@ -22,7 +22,7 @@ def test_areena_akamai_hds_stream_url():
 
 
 def test_areena_akamai_hds_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/1-1855712')
+    metadata = fetch_metadata('https://areena.yle.fi/1-1418526')
 
     assert len(metadata) == 1
     flavors = metadata[0]['flavors']
@@ -32,9 +32,9 @@ def test_areena_akamai_hds_metadata():
                'height' in f and
                'width' in f
                for f in flavors)
-    assert metadata[0]['duration_seconds'] == 11
-    assert metadata[0]['region'] == 'Finland'
-    assert metadata[0]['publish_timestamp'] == '2013-03-07T20:30:00+02:00'
+    assert metadata[0]['duration_seconds'] == 1601
+    assert metadata[0]['region'] == 'World'
+    assert metadata[0]['publish_timestamp'] == '2012-01-19T12:00:00+02:00'
     assert 'expired_timestamp' not in metadata[0]
     assert len(metadata[0]['subtitles']) == 0
 
