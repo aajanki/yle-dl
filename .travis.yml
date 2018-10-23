@@ -17,10 +17,6 @@ addons:
     - php-xml
     - php-bcmath
 
-env:
-  global:
-    - ENABLE_FINLAND_TESTS=0
-
 install:
  # Install from wheel instead of from source in setup.py to speed up CI
  - pip install lxml

@@ -92,11 +92,12 @@ python3 setup.py pytest
 ```
 
 Some tests succeed only when run on a Finnish IP address because some
-Areena streams are available only in Finland. To skip those test, set
-the environment variable `ENABLE_FINLAND_TESTS` to 0:
+Areena streams are available only in Finland. By default these tests
+are skipped. The run all tests, set the environment variable
+`ENABLE_FINLAND_TESTS` to 1:
 
 ```
-export ENABLE_FINLAND_TESTS=0
+export ENABLE_FINLAND_TESTS=1
 python3 setup.py pytest
 ```
 
