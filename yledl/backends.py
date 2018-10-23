@@ -498,7 +498,7 @@ class WgetBackend(ExternalDownloader):
         self.url = url
 
         if not file_extension:
-            logger.warn(f'Mandatory file extension is missing for URL {url}')
+            logger.warn('Mandatory file extension is missing for URL {}'.format(url))
         self.file_extension = MandatoryFileExtension(file_extension or '')
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
