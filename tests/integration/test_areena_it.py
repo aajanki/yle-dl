@@ -7,26 +7,20 @@ from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
-                    reason="Test works only in Finland")
 def test_areena_akamai_hds_title():
-    title = fetch_title('https://areena.yle.fi/1-1855712')
+    title = fetch_title('https://areena.yle.fi/1-1418526')
 
     assert len(title) == 1
-    assert 'Repomiehen parhaat' in title[0]
+    assert 'The Deputy Mayor' in title[0]
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
-                    reason="Test works only in Finland")
 def test_areena_akamai_hds_stream_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/1-1855712')
+    streamurl = fetch_stream_url('https://areena.yle.fi/1-1418526')
 
     assert len(streamurl) == 1
     assert 'manifest.f4m' in streamurl[0]
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') == '0',
-                    reason="Test works only in Finland")
 def test_areena_akamai_hds_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/1-1855712')
 
