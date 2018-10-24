@@ -11,7 +11,6 @@ import re
 import time
 import sys
 from . import localization
-from . import titleformatter
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import hds
 from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
@@ -21,6 +20,7 @@ from .kaltura import YleKalturaApiClient
 from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
+from .titleformatter import TitleFormatter
 from .utils import sane_filename
 
 
@@ -510,13 +510,13 @@ class AreenaPreviewApiParser(object):
     def preview_duration_seconds(self, data):
         return self.preview_ongoing(data).get('duration', {}).get('duration_in_seconds')
 
-    def preview_title(self, data, publish_timestamp):
+    def preview_title(self, data, publish_timestamp, titleformatter):
         title_object = self.preview_ongoing(data).get('title', {})
         if not title_object:
             return None
 
         raw_title = localization.fin_or_swe_text(title_object).strip()
-        return titleformatter.title(raw_title, publish_timestamp)
+        return titleformatter.format(raw_title, publish_timestamp)
 
     def preview_available_at_region(self, data):
         return self.preview_ongoing(data).get('region')
@@ -803,10 +803,12 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                       self.preview_media_type(preview))
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
+        titleformatter = TitleFormatter()
+        title = (self.program_title(info, publish_timestamp, titleformatter) or
+                 self.preview_title(preview, publish_timestamp, titleformatter))
         return AreenaApiProgramInfo(
             media_id = media_id,
-            title = (self.program_title(info, publish_timestamp) or
-                     self.preview_title(preview, publish_timestamp)),
+            title = title,
             medias = medias,
             flavors = self.media_flavors(media_id, pid, medias, manifest_url,
                                          download_url, media_type, pageurl),
@@ -875,7 +877,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     def available_at_region(self, program_info):
         return self.publish_event(program_info).get('region')
 
-    def program_title(self, program_info, publish_timestamp):
+    def program_title(self, program_info, publish_timestamp, titleformatter):
         if not program_info:
             return None
 
@@ -892,7 +894,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         else:
             season = program.get('seasonNumber')
 
-        return titleformatter.title(
+        return titleformatter.format(
             raw_title=title,
             publish_timestamp=publish_timestamp,
             subheading=itemTitle or promotionTitle,
@@ -946,11 +948,11 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
 
         return key_func
     
-    def program_title(self, program_info, publish_timestamp):
+    def program_title(self, program_info, publish_timestamp, titleformatter):
         service = self._service_info(program_info)
         title = localization.fi_or_sv_text(service.get('title')) or 'areena'
         timestamp = publish_timestamp or time.strftime('%Y-%m-%d-%H:%M:%S')
-        return titleformatter.title(title, timestamp)
+        return titleformatter.format(title, timestamp)
 
     def available_at_region(self, program_info):
         return self._service_info(program_info).get('region')
@@ -967,9 +969,10 @@ class AreenaLiveTVHLSExtractor(AreenaExtractor):
         parsed = urlparse(url)
         return parsed.path.split('/')[-1]
 
-    def preview_title(self, data, publish_timestamp):
+    def preview_title(self, data, publish_timestamp, titleformatter):
         now = time.strftime('%Y-%m-%d-%H:%M:%S')
-        return super(AreenaLiveTVHLSExtractor, self).preview_title(data, now)
+        return (super(AreenaLiveTVHLSExtractor, self)
+                .preview_title(data, now, titleformatter))
 
 
 ### Areena live radio ###
@@ -1022,12 +1025,13 @@ class ElavaArkistoExtractor(AreenaExtractor):
     def program_media_type(self, program_info):
         return program_info.get('mediaFormat')
 
-    def program_title(self, program_info, publish_timestamp):
+    def program_title(self, program_info, publish_timestamp, titleformatter):
         return program_info.get('otsikko') or \
             program_info.get('title') or \
             program_info.get('originalTitle') or \
             (super(ElavaArkistoExtractor, self)
-             .program_title(program_info, publish_timestamp)) or \
+             .program_title(program_info, publish_timestamp,
+                            titleformatter)) or \
             'elavaarkisto'
 
 
@@ -1059,13 +1063,14 @@ class ArkivetExtractor(AreenaExtractor):
         else:
             return super(ArkivetExtractor, self).program_media_id(program_info)
 
-    def program_title(self, program_info, publish_timestamp):
+    def program_title(self, program_info, publish_timestamp, titleformatter):
         ea = program_info.get('data', {}).get('ea', {})
         return (ea.get('otsikko') or
                 ea.get('title') or
                 ea.get('originalTitle') or
                 (super(ArkivetExtractor, self)
-                 .program_title(program_info, publish_timestamp)) or
+                 .program_title(program_info, publish_timestamp,
+                                titleformatter)) or
                 'yle-arkivet')
 
     def get_dataids(self, url):
