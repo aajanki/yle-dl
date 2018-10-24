@@ -7,29 +7,21 @@ import re
 class TitleFormatter(object):
     def format(self, raw_title, publish_timestamp, subheading=None,
                season=None, episode=None):
-        title = raw_title
-        if title is None:
+        if raw_title is None:
             return None
 
+        title = self._remove_repeated_main_title(raw_title)
+        title += self._episode_postfix(season, episode)
+        title += self._subheading_postfix(title, subheading)
+        title = self._remove_genre_prefix(title)
+        title += self._timestamp_postfix(publish_timestamp)
+        return title
+
+    def _remove_repeated_main_title(self, title):
         if ':' in title:
             prefix, rest = title.split(':', 1)
             if prefix in rest:
-                title = rest.strip()
-
-        if season and episode:
-            title += ': S%02dE%02d' % (season, episode)
-        elif episode:
-            title += ': E%02d' % (episode)
-
-        if subheading and subheading not in title:
-            title += ': ' + subheading
-
-        title = self._remove_genre_prefix(title)
-
-        if publish_timestamp:
-            short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', publish_timestamp or '')
-            title_ts = short.group(0) if short else publish_timestamp
-            title += '-' + title_ts.replace('/', '-').replace(' ', '-')
+                return rest.strip()
 
         return title
 
@@ -41,3 +33,25 @@ class TitleFormatter(object):
             if title.startswith(prefix):
                 return title[len(prefix):].strip()
         return title
+
+    def _episode_postfix(self, season, episode):
+        if season and episode:
+            return ': S%02dE%02d' % (season, episode)
+        elif episode:
+            return ': E%02d' % (episode)
+        else:
+            return ''
+
+    def _subheading_postfix(self, title, subheading):
+        if subheading and subheading not in title:
+            return ': ' + subheading
+        else:
+            return ''
+
+    def _timestamp_postfix(self, publish_timestamp):
+        if publish_timestamp:
+            short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', publish_timestamp or '')
+            title_ts = short.group(0) if short else publish_timestamp
+            return '-' + title_ts.replace('/', '-').replace(' ', '-')
+        else:
+            return ''

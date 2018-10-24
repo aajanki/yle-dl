@@ -19,6 +19,9 @@ def test_title_timestamp():
     title = tf.format('test', '2018-01-02T03:04:05')
     assert title == 'test-2018-01-02T03:04'
 
+def test_repeated_main_title():
+    title = tf.format('Uutiset: Uutiset iltapäivällä', None)
+    assert title == 'Uutiset iltapäivällä'
 
 def test_subheading():
     title = tf.format('EM-kisat', None, subheading='Kymmenottelu')
