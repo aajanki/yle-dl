@@ -293,6 +293,11 @@ class KalturaFlavorParser(object):
     def parse(self, flavor_data, meta):
         # See http://cdnapi.kaltura.com/html5/html5lib/v2.56/load.php
         # for the actual Areena stream selection logic
+        audio_flavors, video_flavors = self.partition_audio(flavor_data)
+        return (self.parse_video(video_flavors, meta) +
+                self.parse_audio(audio_flavors))
+
+    def parse_video(self, flavor_data, meta):
         h264flavors = [f for f in flavor_data if self.is_h264_flavor(f)]
         if h264flavors:
             # Prefer non-adaptive HTTP stream
@@ -308,6 +313,21 @@ class KalturaFlavorParser(object):
             filtered_flavors = flavor_data
 
         return self.parse_streams(filtered_flavors, stream_format)
+
+    def parse_audio(self, flavor_data):
+        filtered_flavors = [f for f in flavor_data if self.is_web_flavor(f)]
+        return self.parse_streams(filtered_flavors, 'url')
+
+    def partition_audio(self, flavor_data):
+        audio_flavors = []
+        non_audio_flavors = []
+        for flavor in flavor_data:
+            if ('audio_only' in self.flavor_tags(flavor) or
+                flavor.get('containerFormat') == 'mpeg audio'):
+                audio_flavors.append(flavor)
+            else:
+                non_audio_flavors.append(flavor)
+        return (audio_flavors, non_audio_flavors)
 
     def parse_live(self, configurations, media_type):
         assert len(configurations) > 0
@@ -375,11 +395,19 @@ class KalturaFlavorParser(object):
                     ext=manifest_ext))
 
     def is_h264_flavor(self, flavor):
-        tags = flavor.get('tags', '').split(',')
+        tags = self.flavor_tags(flavor)
         ipad_h264 = 'ipad' in tags or 'iphone' in tags
         web_h264 = (('web' in tags or 'mbr' in tags) and
                     (flavor.get('fileExt') == 'mp4'))
         return ipad_h264 or web_h264
+
+    def is_web_flavor(self, flavor):
+        tags = self.flavor_tags(flavor)
+        return 'web' in tags and 'source' not in tags
+
+    def flavor_tags(self, flavor):
+        tags_string = flavor.get('tags')
+        return tags_string.split(',') if tags_string else []
 
 
 ## Clip
