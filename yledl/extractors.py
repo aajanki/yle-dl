@@ -208,7 +208,12 @@ class KalturaUtils(object):
 class Flavors(object):
     @staticmethod
     def media_type(media):
-        return 'audio' if media.get('type') == 'AudioObject' else 'video'
+        mtype = media.get('type')
+        if (mtype == 'AudioObject' or
+            (mtype is None and media.get('containerFormat') == 'mpeg audio')):
+            return 'audio'
+        else:
+            return 'video'
 
 
 class AkamaiFlavorParser(object):
