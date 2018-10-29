@@ -24,7 +24,7 @@ Installation
 
 Below are general installation instructions. See a [separate
 page](OS-install-instructions.md) for specialized installation
-instructions for Debian, Ubuntu, Mac OS X and Windows.
+instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 
 ### 1. Install the dependencies ###
 
