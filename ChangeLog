@@ -2,8 +2,9 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
-xx xxx 2018, Version 2.38
+Version 20181103
 
+- yle-dl will use date-based version numbers from now on
 - Support for new Areena radio streams
 - More robust parsing for Elävä Arkisto
 - To run tests that only succeed on a Finnish IP, set ENABLE_FINLAND_TESTS=1
