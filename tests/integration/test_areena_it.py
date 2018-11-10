@@ -51,7 +51,7 @@ def test_areena_html5_metadata():
 
     assert len(metadata) == 1
     flavors = metadata[0]['flavors']
-    assert len(flavors) == 4
+    assert len(flavors) == 2
     assert all(f.get('media_type') == 'video' for f in flavors)
     assert all('bitrate' in f and
                'height' in f and
