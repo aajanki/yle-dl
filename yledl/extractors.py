@@ -917,9 +917,11 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
         return subtitles
 
     def program_protocol(self, program_info, default_video_proto):
+        pinfo = program_info or {}
         event = self.publish_event(program_info)
         if (event.get('media', {}).get('type') == 'AudioObject' or
-            (program_info or {}).get('mediaFormat') == 'audio'):
+            pinfo.get('mediaFormat') == 'audio' or
+            pinfo.get('data', {}).get('ea', {}).get('mediaFormat') == 'audio'):
             return 'RTMPE'
         else:
             return default_video_proto
