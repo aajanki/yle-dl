@@ -64,6 +64,33 @@ def test_areena_html5_metadata():
     assert len(metadata[0]['subtitles']) == 1
 
 
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
+                    reason="Test works only in Finland")
+def test_areena_iphone_stream_url():
+    streamurl = fetch_stream_url('https://areena.yle.fi/1-4247408')
+
+    assert len(streamurl) == 1
+    assert streamurl[0].startswith('https://cdnapisec.kaltura.com/')
+
+
+@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
+                    reason="Test works only in Finland")
+def test_areena_iphone_metadata():
+    metadata = fetch_metadata('https://areena.yle.fi/1-4247408')
+
+    assert len(metadata) == 1
+    flavors = metadata[0]['flavors']
+    assert len(flavors) == 1
+    assert all(f.get('media_type') == 'video' for f in flavors)
+    assert all('bitrate' in f and
+               'height' in f and
+               'width' in f
+               for f in flavors)
+    assert metadata[0]['duration_seconds'] == 234
+    assert metadata[0]['region'] == 'Finland'
+    assert metadata[0]['publish_timestamp'] == '2017-11-08T01:15:00+02:00'
+
+
 def test_areena_series_titles():
     titles = fetch_title('https://areena.yle.fi/1-3826480')
 

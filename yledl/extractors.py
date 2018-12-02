@@ -180,7 +180,9 @@ class KalturaUtils(object):
                    .get('entryResult', {})
                    .get('contextData', {})
                    .get('flavorAssets', []))
-        web_flavors = [fl for fl in flavors if fl.get('isWeb', True)]
+        web_flavors = [fl for fl in flavors
+                       if (fl.get('isWeb', True) or
+                           'mobile' in self.flavor_tags(fl))]
         num_non_web = len(flavors) - len(web_flavors)
 
         if num_non_web > 0:
@@ -200,6 +202,10 @@ class KalturaUtils(object):
         except ValueError:
             logger.error('Failed to parse kalturaIframePackageData!')
             return {}
+
+    def flavor_tags(self, flavor):
+        tags_string = flavor.get('tags')
+        return tags_string.split(',') if tags_string else []
 
 
 ## Flavors
