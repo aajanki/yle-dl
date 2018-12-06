@@ -17,6 +17,7 @@ from . import hds
 from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
     WgetBackend, YoutubeDLHDSBackend
 from .http import html_unescape
+from .kaltura import YleKalturaApiClient
 from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
@@ -1021,14 +1022,23 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                       self.preview_media_type(preview))
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
+        if (preview is not None and
+            not self.preview_is_live(preview) and
+            self.is_html5_media(media_id) and
+            media_type == 'video'):
+            entry_id = self.kaltura_entry_id(media_id)
+            kapi_client = YleKalturaApiClient(self.httpclient._session)
+            flavors = kapi_client.get_flavors(entry_id)
+        else:
+            flavors = self.media_flavors(media_id, pid, medias, manifest_url,
+                                         download_url, media_type, pageurl)
+
         return AreenaApiProgramInfo(
             media_id = media_id,
             title = (self.program_title(info, publish_timestamp) or
                      self.preview_title(preview, publish_timestamp)),
             medias = medias,
-            flavors = self.media_flavors(
-                media_id, pid, medias, manifest_url, download_url,
-                media_type, pageurl),
+            flavors = flavors,
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or

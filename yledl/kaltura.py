@@ -1,0 +1,219 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, absolute_import, unicode_literals
+import attr
+import logging
+import json
+from .backends import HLSBackend, WgetBackend
+from .streamflavor import StreamFlavor, FailedFlavor
+
+
+logger = logging.getLogger('yledl')
+
+
+class KalturaApiClient(object):
+    def __init__(self, api_url, requests_session):
+        self.api_url = api_url
+        self.requests_session = requests_session
+
+    def start_widget_session(self, widget_id):
+        return {
+            'service': 'session',
+            'action': 'startWidgetSession',
+            'widgetId': widget_id
+        }
+
+    def list_base_entry(self, entry_id, ks):
+        return {
+            'service': 'baseEntry',
+            'action': 'list',
+            'ks': ks,
+            'filter': {
+                'redirectFromEntryId': entry_id
+            },
+            'responseProfile': {
+                'fields': 'id,name,description,thumbnailUrl,dataUrl,duration,'\
+                    'msDuration,flavorParamsIds,mediaType,type,tags,dvrStatus',
+                'type': 1
+            }
+        }
+
+    def list_metadata(self, entry_id, ks):
+        return {
+            'service': 'metadata_metadata',
+            'action': 'list',
+            'filter': {
+                'objectType': 'KalturaMetadataFilter',
+                'objectIdEqual': entry_id,
+                'metadataObjectTypeEqual': '1'
+            },
+            'ks': ks
+        }
+
+    def get_playback_context(self, entry_id, ks):
+        return {
+            'service': 'baseEntry',
+            'action': 'getPlaybackContext',
+            'entryId': entry_id,
+            'ks': ks,
+            'contextDataParams': {
+                'objectType': 'KalturaContextDataParams',
+                'flavorTags': 'all'
+            }
+        }
+
+    def multi_request(self, subrequests, client_tag, partner_id):
+        mrequest = {
+            'apiVersion': '3.3.0',
+            'format': 1,
+            'ks': '',
+            'clientTag': client_tag,
+            'partnerId': partner_id
+        }
+        mrequest.update({str(i): req for i, req in enumerate(subrequests)})
+        return mrequest
+
+    def perform_request(self, request):
+        endpoint = self.api_url + '/api_v3/service/multirequest'
+        r = self.requests_session.post(endpoint, json=request)
+        r.raise_for_status()
+        return r.json()
+
+
+class YleKalturaApiClient(KalturaApiClient):
+    partner_id = '1955031'
+    widget_id = '_1955031'
+    client_tag = 'html5:v0.32.8'
+    api_url = 'https://cdnapisec.kaltura.com'
+
+    def __init__(self, requests_session):
+        super(YleKalturaApiClient, self).__init__(self.api_url, requests_session)
+
+    def get_flavors(self, entry_id):
+        subrequests = [
+            self.start_widget_session(self.widget_id),
+            self.list_base_entry(entry_id, '{1:result:ks}'),
+            self.get_playback_context(entry_id, '{1:result:ks}'),
+            self.list_metadata(entry_id, '{1:result:ks}')
+        ]
+
+        logger.debug('Sending Kaltura API flavors request:')
+        logger.debug(json.dumps(subrequests, indent=2))
+
+        response = self.perform_request(
+            self.multi_request(subrequests, self.client_tag, self.partner_id))
+
+        logger.debug('Kaltura API response:')
+        logger.debug(json.dumps(response, indent=2))
+
+        return (self.maybe_unparseable_response(response) or
+                self.parse_stream_flavors(response[2]))
+
+    def parse_stream_flavors(self, playback_context):
+        flavor_assets = playback_context.get('flavorAssets', {})
+        sources = playback_context.get('sources', {})
+        delivery_profiles = self.delivery_profiles_by_flavor_id(sources)
+
+        filtered_flavors = [fl for fl in flavor_assets
+                            if self.is_web_stream(fl)]
+        num_non_web = len(flavor_assets) - len(filtered_flavors)
+        if num_non_web:
+            logger.debug('Ignored %d non-web flavors' % num_non_web)
+
+        return self.create_flavors(filtered_flavors, delivery_profiles)
+
+    def create_flavors(self, flavors, delivery_profiles):
+        res = []
+        for flavor in flavors:
+            flavor_id = flavor.get('id')
+            entry_id = flavor.get('entryId')
+            ext = '.' + flavor.get('fileExt', 'mp4')
+
+            backends = []
+            for profile in delivery_profiles.get(flavor_id, []):
+                backends.extend(profile.backends(
+                    entry_id, ext, self.partner_id, self.client_tag))
+
+            res.append(StreamFlavor(
+                media_type='video',
+                height=flavor.get('height'),
+                width=flavor.get('width'),
+                bitrate=flavor.get('bitrate'),
+                streams=backends
+            ))
+
+        return res
+
+    def flavor_tags(self, flavor):
+        tags_string = flavor.get('tags')
+        return tags_string.split(',') if tags_string else []
+
+    def is_web_stream(self, flavor):
+        tags = self.flavor_tags(flavor)
+        ipad = 'ipad' in tags or 'iphone' in tags
+        web = (('web' in tags or 'mbr' in tags) and
+               flavor.get('fileExt') == 'mp4')
+        return ipad or web
+
+    def delivery_profiles_by_flavor_id(self, sources):
+        format_whitelist = ['url', 'applehttp']
+        valid_sources = [s for s in sources
+                         if s.get('format') in format_whitelist]
+
+        profiles_by_id_and_format = {}
+        for source in valid_sources:
+            flavor_ids = source.get('flavorIds', '').split(',')
+            source_format = source.get('format')
+            url = source.get('url')
+            manifest_file = url.split('/')[-1]
+
+            for flavor_id in flavor_ids:
+                profile = DeliveryProfile(flavor_id, source_format,
+                                          manifest_file)
+
+                pkey = flavor_id + '_' + source_format
+                profiles_by_id_and_format[pkey] = profile
+
+        profiles = {}
+        for p in profiles_by_id_and_format.values():
+            profiles.setdefault(p.flavor_id, []).append(p)
+
+        return profiles
+
+    def maybe_unparseable_response(self, response):
+        if (len(response) != 4 or
+            response[2].get('objectType') != 'KalturaPlaybackContext'):
+            return [FailedFlavor('Unexpected response from Kaltura API')]
+        else:
+            return None
+
+
+@attr.s
+class DeliveryProfile(object):
+    flavor_id = attr.ib()
+    stream_format = attr.ib()
+    manifest_file = attr.ib()
+
+    def manifest_url(self, entry_id, partner_id, client_tag):
+        return ('https://cdnapisec.kaltura.com/p/{partner_id}/'
+                'sp/{partner_id}00/playManifest/entryId/{entry_id}/'
+                'flavorId/{flavor_id}/format/{stream_format}/protocol/https/'
+                '{manifest_file}?referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
+                '&playSessionId=11111111-1111-1111-1111-111111111111'
+                '&clientTag={client_tag}&preferredBitrate=600'
+                '&uiConfId=37558971'.format(
+                    partner_id=partner_id,
+                    entry_id=entry_id,
+                    flavor_id=self.flavor_id,
+                    stream_format=self.stream_format,
+                    manifest_file=self.manifest_file,
+                    client_tag=client_tag))
+
+    def backends(self, entry_id, file_ext, partner_id, client_tag):
+        manifest_url = self.manifest_url(entry_id, partner_id, client_tag)
+
+        backends = [HLSBackend(manifest_url, file_ext)]
+        if self.stream_format == 'url':
+            backends.append(WgetBackend(manifest_url, file_ext))
+
+        return backends
