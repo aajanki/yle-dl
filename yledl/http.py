@@ -90,6 +90,20 @@ class HttpClient(object):
 
         return r
 
+    def post(self, url, json_data, extra_headers=None):
+        headers = yledl_headers()
+        if extra_headers:
+            headers.update(extra_headers)
+
+        try:
+            r = self._session.post(url, json=json_data, headers=headers)
+            r.raise_for_status()
+        except requests.exceptions.RequestException:
+            logger.exception("Can't read from POST {}".format(url))
+            return None
+
+        return r
+
 
 def yledl_headers():
     headers = requests.utils.default_headers()

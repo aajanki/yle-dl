@@ -1027,8 +1027,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             self.is_html5_media(media_id) and
             media_type == 'video'):
             entry_id = self.kaltura_entry_id(media_id)
-            kapi_client = YleKalturaApiClient(self.httpclient._session)
-            flavors = kapi_client.get_flavors(entry_id)
+            kapi_client = YleKalturaApiClient(self.httpclient)
+            flavors = kapi_client.get_flavors(entry_id, pageurl)
         else:
             flavors = self.media_flavors(media_id, pid, medias, manifest_url,
                                          download_url, media_type, pageurl)

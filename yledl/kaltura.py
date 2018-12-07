@@ -12,9 +12,9 @@ logger = logging.getLogger('yledl')
 
 
 class KalturaApiClient(object):
-    def __init__(self, api_url, requests_session):
+    def __init__(self, api_url, httpclient):
         self.api_url = api_url
-        self.requests_session = requests_session
+        self.httpclient = httpclient
 
     def start_widget_session(self, widget_id):
         return {
@@ -73,10 +73,14 @@ class KalturaApiClient(object):
         mrequest.update({str(i): req for i, req in enumerate(subrequests)})
         return mrequest
 
-    def perform_request(self, request):
+    def perform_request(self, request, referrer, origin):
         endpoint = self.api_url + '/api_v3/service/multirequest'
-        r = self.requests_session.post(endpoint, json=request)
-        r.raise_for_status()
+        extra_headers = {
+            'Referer': referrer,
+            'Origin': origin,
+            'Cache-Control': 'max-age=0'
+        }
+        r = self.httpclient.post(endpoint, request, extra_headers)
         return r.json()
 
 
@@ -85,11 +89,12 @@ class YleKalturaApiClient(KalturaApiClient):
     widget_id = '_1955031'
     client_tag = 'html5:v0.32.8'
     api_url = 'https://cdnapisec.kaltura.com'
+    http_origin = 'https://areena.yle.fi'
 
     def __init__(self, requests_session):
         super(YleKalturaApiClient, self).__init__(self.api_url, requests_session)
 
-    def get_flavors(self, entry_id):
+    def get_flavors(self, entry_id, referrer):
         subrequests = [
             self.start_widget_session(self.widget_id),
             self.list_base_entry(entry_id, '{1:result:ks}'),
@@ -97,14 +102,15 @@ class YleKalturaApiClient(KalturaApiClient):
             self.list_metadata(entry_id, '{1:result:ks}')
         ]
 
-        logger.debug('Sending Kaltura API flavors request:')
-        logger.debug(json.dumps(subrequests, indent=2))
+        logger.debug('Sending Kaltura API flavors request:\n' +
+                     json.dumps(subrequests, indent=2))
 
         response = self.perform_request(
-            self.multi_request(subrequests, self.client_tag, self.partner_id))
+            self.multi_request(subrequests, self.client_tag, self.partner_id),
+            referrer, self.http_origin)
 
-        logger.debug('Kaltura API response:')
-        logger.debug(json.dumps(response, indent=2))
+        logger.debug('Kaltura API response:\n' +
+                     json.dumps(response, indent=2))
 
         return (self.maybe_unparseable_response(response) or
                 self.parse_stream_flavors(response[2]))
