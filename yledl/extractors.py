@@ -1022,10 +1022,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                       self.preview_media_type(preview))
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
-        if (preview is not None and
-            not self.preview_is_live(preview) and
-            self.is_html5_media(media_id) and
-            media_type == 'video'):
+        if self.is_html5_media(media_id):
             entry_id = self.kaltura_entry_id(media_id)
             kapi_client = YleKalturaApiClient(self.httpclient)
             flavors = kapi_client.get_flavors(entry_id, pageurl)

@@ -141,14 +141,19 @@ class YleKalturaApiClient(KalturaApiClient):
                     entry_id, ext, self.partner_id, self.client_tag))
 
             res.append(StreamFlavor(
-                media_type='video',
-                height=flavor.get('height'),
-                width=flavor.get('width'),
+                media_type=self.flavor_media_type(flavor),
+                height=flavor.get('height') or None,
+                width=flavor.get('width') or None,
                 bitrate=flavor.get('bitrate'),
                 streams=backends
             ))
 
         return res
+
+    def flavor_media_type(self, flavor):
+        audio_stream = ('audio_only' in self.flavor_tags(flavor) or
+                        flavor.get('containerFormat') == 'mpeg audio')
+        return 'audio' if audio_stream else 'video'
 
     def flavor_tags(self, flavor):
         tags_string = flavor.get('tags')
@@ -156,10 +161,10 @@ class YleKalturaApiClient(KalturaApiClient):
 
     def is_web_stream(self, flavor):
         tags = self.flavor_tags(flavor)
+        web = 'web' in tags and 'source' not in tags
+        mbr = 'mbr' in tags and flavor.get('fileExt') == 'mp4'
         ipad = 'ipad' in tags or 'iphone' in tags
-        web = (('web' in tags or 'mbr' in tags) and
-               flavor.get('fileExt') == 'mp4')
-        return ipad or web
+        return web or mbr or ipad
 
     def delivery_profiles_by_flavor_id(self, sources):
         format_whitelist = ['url', 'applehttp']
