@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import attr
 import logging
 import json
+import base64
 from .backends import HLSBackend, WgetBackend
 from .streamflavor import StreamFlavor, FailedFlavor
 
@@ -87,7 +88,7 @@ class KalturaApiClient(object):
 class YleKalturaApiClient(KalturaApiClient):
     partner_id = '1955031'
     widget_id = '_1955031'
-    client_tag = 'html5:v0.32.8'
+    client_tag = 'html5:v0.36.5'
     api_url = 'https://cdnapisec.kaltura.com'
     http_origin = 'https://areena.yle.fi'
 
@@ -113,9 +114,9 @@ class YleKalturaApiClient(KalturaApiClient):
                      json.dumps(response, indent=2))
 
         return (self.maybe_unparseable_response(response) or
-                self.parse_stream_flavors(response[2]))
+                self.parse_stream_flavors(response[2], referrer))
 
-    def parse_stream_flavors(self, playback_context):
+    def parse_stream_flavors(self, playback_context, referrer):
         flavor_assets = playback_context.get('flavorAssets', {})
         sources = playback_context.get('sources', {})
         delivery_profiles = self.delivery_profiles_by_flavor_id(sources)
@@ -126,9 +127,9 @@ class YleKalturaApiClient(KalturaApiClient):
         if num_non_web:
             logger.debug('Ignored %d non-web flavors' % num_non_web)
 
-        return self.create_flavors(filtered_flavors, delivery_profiles)
+        return self.create_flavors(filtered_flavors, delivery_profiles, referrer)
 
-    def create_flavors(self, flavors, delivery_profiles):
+    def create_flavors(self, flavors, delivery_profiles, referrer):
         res = []
         for flavor in flavors:
             flavor_id = flavor.get('id')
@@ -138,7 +139,7 @@ class YleKalturaApiClient(KalturaApiClient):
             backends = []
             for profile in delivery_profiles.get(flavor_id, []):
                 backends.extend(profile.backends(
-                    entry_id, ext, self.partner_id, self.client_tag))
+                    entry_id, ext, self.partner_id, self.client_tag, referrer))
 
             res.append(StreamFlavor(
                 media_type=self.flavor_media_type(flavor),
@@ -205,23 +206,24 @@ class DeliveryProfile(object):
     stream_format = attr.ib()
     manifest_file = attr.ib()
 
-    def manifest_url(self, entry_id, partner_id, client_tag):
-        return ('https://cdnapisec.kaltura.com/p/{partner_id}/'
+    def manifest_url(self, entry_id, partner_id, client_tag, referrer):
+        b64referrer = base64.b64encode(referrer.encode('utf-8')).decode('utf-8')
+        return ('https://cdnsecakmi.kaltura.com/p/{partner_id}/'
                 'sp/{partner_id}00/playManifest/entryId/{entry_id}/'
                 'flavorId/{flavor_id}/format/{stream_format}/protocol/https/'
-                '{manifest_file}?referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
+                '{manifest_file}?uiConfId=43362851&referrer={referrer}'
                 '&playSessionId=11111111-1111-1111-1111-111111111111'
-                '&clientTag={client_tag}&preferredBitrate=600'
-                '&uiConfId=37558971'.format(
+                '&clientTag={client_tag}'.format(
                     partner_id=partner_id,
                     entry_id=entry_id,
                     flavor_id=self.flavor_id,
                     stream_format=self.stream_format,
                     manifest_file=self.manifest_file,
+                    referrer=b64referrer,
                     client_tag=client_tag))
 
-    def backends(self, entry_id, file_ext, partner_id, client_tag):
-        manifest_url = self.manifest_url(entry_id, partner_id, client_tag)
+    def backends(self, entry_id, file_ext, partner_id, client_tag, referrer):
+        manifest_url = self.manifest_url(entry_id, partner_id, client_tag, referrer)
 
         backends = [HLSBackend(manifest_url, file_ext)]
         if self.stream_format == 'url':
