@@ -115,100 +115,6 @@ class AreenaDecrypt(object):
         return decrypter.decrypt(ciphertext)[:-padlen].decode('latin-1')
 
 
-class KalturaUtils(object):
-    def __init__(self, httpclient):
-        self.httpclient = httpclient
-
-    def kaltura_flavors_meta(self, program_id, media_id, referer):
-        mw = self.load_mwembed(media_id, program_id, referer)
-        package_data = self.package_data_from_mwembed(mw)
-        flavors = self.valid_flavors(package_data)
-        meta = package_data.get('entryResult', {}).get('meta', {})
-        return (flavors, meta, package_data.get('error'))
-
-    def load_mwembed(self, media_id, program_id, referer):
-        entryid = self.kaltura_entry_id(media_id)
-        url = self.mwembed_url(entryid, program_id)
-        logger.debug('mwembed URL: {}'.format(url))
-
-        mw = JSONP.load_jsonp(url, self.httpclient, {'Referer': referer})
-
-        if mw:
-            logger.debug('mwembed:')
-            logger.debug(json.dumps(mw))
-
-        return (mw or {}).get('content', '')
-
-    def mwembed_url(self, entryid, program_id):
-        return ('https://cdnapisec.kaltura.com/html5/html5lib/v2.67/'
-                'mwEmbedFrame.php?&wid=_1955031&uiconf_id=37558971'
-                '&cache_st=1442926927&entry_id={entry_id}'
-                '&flashvars\\[streamerType\\]=auto'
-                '&flashvars\\[EmbedPlayer.HidePosterOnStart\\]=true'
-                '&flashvars\\[EmbedPlayer.OverlayControls\\]=true'
-                '&flashvars\\[IframeCustomPluginCss1\\]='
-                '%%2F%%2Fplayer.yle.fi%%2Fassets%%2Fcss%%2Fkaltura.css'
-                '&flashvars\\[mediaProxy\\]='
-                '%7B%22mediaPlayFrom%22%3Anull%7D'
-                '&flashvars\\[autoPlay\\]=true'
-                '&flashvars\\[KalturaSupport.LeadWithHTML5\\]=true'
-                '&flashvars\\[loop\\]=false'
-                '&flashvars\\[sourceSelector\\]='
-                '%7B%22hideSource%22%3Atrue%7D'
-                '&flashvars\\[comScoreStreamingTag\\]='
-                '%7B%22logUrl%22%3A%22%2F%2Fda.yle.fi%2Fyle%2Fareena%2Fs'
-                '%3Fname%3Dareena.kaltura.prod%22%2C%22plugin%22%3Atrue'
-                '%2C%22position%22%3A%22before%22%2C%22persistentLabels'
-                '%22%3A%22ns_st_mp%3Dareena.kaltura.prod%22%2C%22debug'
-                '%22%3Atrue%2C%22asyncInit%22%3Atrue%2C%22relativeTo%22'
-                '%3A%22video%22%2C%22trackEventMonitor%22%3A'
-                '%22trackEvent%22%7D'
-                '&flashvars\\[closedCaptions\\]='
-                '%7B%22hideWhenEmpty%22%3Atrue%7D'
-                '&flashvars\\[Kaltura.LeadHLSOnAndroid\\]=true'
-                '&playerId=kaltura-{program_id}-1&forceMobileHTML5=true'
-                '&urid=2.60'
-                '&protocol=https'
-                '&callback=mwi_kaltura121210530'.format(
-                    entry_id=quote_plus(entryid),
-                    program_id=quote_plus(program_id)))
-
-    def kaltura_entry_id(self, mediaid):
-        return mediaid.split('-', 1)[-1]
-
-    def valid_flavors(self, package_data):
-        flavors = (package_data
-                   .get('entryResult', {})
-                   .get('contextData', {})
-                   .get('flavorAssets', []))
-        web_flavors = [fl for fl in flavors
-                       if (fl.get('isWeb', True) or
-                           'mobile' in self.flavor_tags(fl))]
-        num_non_web = len(flavors) - len(web_flavors)
-
-        if num_non_web > 0:
-            logger.debug('Ignored %d non-web flavors' % num_non_web)
-
-        return web_flavors
-
-    def package_data_from_mwembed(self, mw):
-        m = re.search(r'window.kalturaIframePackageData\s*=\s*', mw, re.DOTALL)
-        if not m:
-            return {}
-
-        try:
-            # The string contains extra stuff after the JSON object,
-            # so let's use raw_decode()
-            return json.JSONDecoder().raw_decode(mw[m.end():])[0]
-        except ValueError:
-            logger.error('Failed to parse kalturaIframePackageData!')
-            return {}
-
-    def flavor_tags(self, flavor):
-        tags_string = flavor.get('tags')
-        return tags_string.split(',') if tags_string else []
-
-
 ## Flavors
 
 
@@ -299,127 +205,6 @@ class AkamaiFlavorParser(object):
                 bitrate=bitrate,
                 streams=streams)
         ]
-
-
-class KalturaFlavorParser(object):
-    def parse(self, flavor_data, meta):
-        # See http://cdnapi.kaltura.com/html5/html5lib/v2.56/load.php
-        # for the actual Areena stream selection logic
-        audio_flavors, video_flavors = self.partition_audio(flavor_data)
-        return (self.parse_video(video_flavors, meta) +
-                self.parse_audio(audio_flavors))
-
-    def parse_video(self, flavor_data, meta):
-        h264flavors = [f for f in flavor_data if self.is_h264_flavor(f)]
-        if h264flavors:
-            # Prefer non-adaptive HTTP stream
-            stream_format = 'url'
-            filtered_flavors = h264flavors
-        elif meta.get('duration', 0) < 10:
-            # short and durationless streams are not available as HLS
-            stream_format = 'url'
-            filtered_flavors = flavor_data
-        else:
-            # fallback to HLS if nothing else is available
-            stream_format = 'applehttp'
-            filtered_flavors = flavor_data
-
-        return self.parse_streams(filtered_flavors, stream_format)
-
-    def parse_audio(self, flavor_data):
-        filtered_flavors = [f for f in flavor_data if self.is_web_flavor(f)]
-        return self.parse_streams(filtered_flavors, 'url')
-
-    def partition_audio(self, flavor_data):
-        audio_flavors = []
-        non_audio_flavors = []
-        for flavor in flavor_data:
-            if ('audio_only' in self.flavor_tags(flavor) or
-                flavor.get('containerFormat') == 'mpeg audio'):
-                audio_flavors.append(flavor)
-            else:
-                non_audio_flavors.append(flavor)
-        return (audio_flavors, non_audio_flavors)
-
-    def parse_live(self, configurations, media_type):
-        assert len(configurations) > 0
-
-        url = configurations[0].get('url')
-        protocol = configurations[0].get('protocol')
-
-        if protocol != 'applehttp':
-            return [FailedFlavor('Unknown live stream protocol: {}'.format(protocol))]
-        elif url:
-            return [self.live_applehttp_flavor(url, media_type)]
-        else:
-            return [FailedFlavor('No live stream URL')]
-
-    def live_applehttp_flavor(self, hls_url, media_type):
-        # The bitrate in the metadata is bogus anyway. Let's use a
-        # large value here to boost this stream over the HDS streams.
-        return StreamFlavor(
-            media_type=media_type,
-            bitrate=3000,
-            streams=[HLSBackend(hls_url, '.mp4')]
-        )
-
-    def parse_streams(self, flavors_data, stream_format):
-        flavors = []
-        for fl in flavors_data:
-            if 'entryId' in fl:
-                entry_id = fl.get('entryId')
-                flavor_id = fl.get('id') or '0_00000000'
-                ext = '.' + (fl.get('fileExt') or 'mp4')
-                bitrate = fl.get('bitrate', 0) + fl.get('audioBitrateKbps', 0)
-                if bitrate <= 0:
-                    bitrate = None
-                streams = self.streams_for_flavor(entry_id, flavor_id,
-                                                  stream_format, ext)
-
-                flavors.append(StreamFlavor(
-                    media_type=Flavors.media_type(fl),
-                    height=fl.get('height'),
-                    width=fl.get('width'),
-                    bitrate=bitrate,
-                    streams=streams))
-
-        return flavors
-
-    def streams_for_flavor(self, entry_id, flavor_id, stream_format, ext):
-        murl = self.manifest_url(entry_id, flavor_id, stream_format, ext)
-        streams = [HLSBackend(murl, ext)]
-        if stream_format == 'url':
-            streams.append(WgetBackend(murl, ext))
-        return streams
-
-    def manifest_url(self, entry_id, flavor_id, stream_format, ext):
-        manifest_ext = '.m3u8' if stream_format == 'applehttp' else ext
-        return ('https://cdnapisec.kaltura.com/p/1955031/sp/195503100/'
-                'playManifest/entryId/{entry_id}/flavorId/{flavor_id}/'
-                'format/{stream_format}/protocol/https/a{ext}?'
-                'referrer=aHR0cHM6Ly9hcmVlbmEueWxlLmZp'
-                '&playSessionId=11111111-1111-1111-1111-111111111111'
-                '&clientTag=html5:v2.67&preferredBitrate=600'
-                '&uiConfId=37558971'.format(
-                    entry_id=entry_id,
-                    flavor_id=flavor_id,
-                    stream_format=stream_format,
-                    ext=manifest_ext))
-
-    def is_h264_flavor(self, flavor):
-        tags = self.flavor_tags(flavor)
-        ipad_h264 = 'ipad' in tags or 'iphone' in tags
-        web_h264 = (('web' in tags or 'mbr' in tags) and
-                    (flavor.get('fileExt') == 'mp4'))
-        return ipad_h264 or web_h264
-
-    def is_web_flavor(self, flavor):
-        tags = self.flavor_tags(flavor)
-        return 'web' in tags and 'source' not in tags
-
-    def flavor_tags(self, flavor):
-        tags_string = flavor.get('tags')
-        return tags_string.split(',') if tags_string else []
 
 
 ## Clip
@@ -768,7 +553,7 @@ class AreenaPreviewApiParser(object):
 ### Extract streams from an Areena webpage ###
 
 
-class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, ClipExtractor):
+class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
@@ -850,7 +635,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             return self.full_hd_flavors(hls_manifest_url, media_type)
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
-            return self.html5_flavors(media_id, program_id, media_type, pageurl)
+            entry_id = self.kaltura_entry_id(media_id)
+            kapi_client = YleKalturaApiClient(self.httpclient)
+            return kapi_client.get_flavors(entry_id, pageurl)
         elif media_id and medias:
             parser = AkamaiFlavorParser(self.httpclient)
             return parser.parse(medias, pageurl, self.AES_KEY)
@@ -865,6 +652,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
 
     def is_elava_arkisto_media(self, media_id):
         return media_id and media_id.startswith('26-')
+
+    def kaltura_entry_id(self, mediaid):
+        return mediaid.split('-', 1)[-1]
 
     def akamai_medias(self, program_id, media_id, program_info):
         if not media_id:
@@ -897,19 +687,6 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
             backend = HLSAudioBackend(hls_manifest_url)
 
         return [StreamFlavor(media_type=media_type, streams=[backend])]
-
-    def html5_flavors(self, media_id, program_id, media_type, pageurl):
-        flavors_data, meta, error = self.kaltura_flavors_meta(
-            program_id, media_id, pageurl)
-        live_configurations = meta.get('liveStreamConfigurations')
-
-        if error:
-            return [FailedFlavor(error)]
-        elif live_configurations:
-            logger.debug('This is a live stream')
-            return KalturaFlavorParser().parse_live(live_configurations, media_type)
-        else:
-            return KalturaFlavorParser().parse(flavors_data, meta)
 
     def download_flavors(self, download_url, media_type):
         path = urlparse(download_url)[2]
@@ -1022,20 +799,13 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, KalturaUtils, Clip
                       self.preview_media_type(preview))
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
-        if self.is_html5_media(media_id):
-            entry_id = self.kaltura_entry_id(media_id)
-            kapi_client = YleKalturaApiClient(self.httpclient)
-            flavors = kapi_client.get_flavors(entry_id, pageurl)
-        else:
-            flavors = self.media_flavors(media_id, pid, medias, manifest_url,
-                                         download_url, media_type, pageurl)
-
         return AreenaApiProgramInfo(
             media_id = media_id,
             title = (self.program_title(info, publish_timestamp) or
                      self.preview_title(preview, publish_timestamp)),
             medias = medias,
-            flavors = flavors,
+            flavors = self.media_flavors(media_id, pid, medias, manifest_url,
+                                         download_url, media_type, pageurl),
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or

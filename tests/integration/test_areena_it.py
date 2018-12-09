@@ -43,7 +43,7 @@ def test_areena_html5_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-403848')
 
     assert len(streamurl) == 1
-    assert streamurl[0].startswith('https://cdnapisec.kaltura.com/')
+    assert '/a.mp4?' in streamurl[0]
 
 
 def test_areena_html5_metadata():
@@ -70,7 +70,7 @@ def test_areena_iphone_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-4247408')
 
     assert len(streamurl) == 1
-    assert streamurl[0].startswith('https://cdnapisec.kaltura.com/')
+    assert '/a.m3u8?' in streamurl[0]
 
 
 @pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
@@ -156,7 +156,7 @@ def test_areena_html5_clip_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-3523087')
 
     assert len(streamurl) == 1
-    assert streamurl[0].startswith('https://cdnapisec.kaltura.com/')
+    assert '/a.mp4?' in streamurl[0]
 
 
 def test_areena_episode_pages():
