@@ -2,6 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 from utils import fetch_title, fetch_stream_url, fetch_metadata
+from yledl import StreamFilters
 
 
 def test_radio_title():
@@ -35,13 +36,22 @@ def test_radio_stream_url_hls():
     assert 'a.mp3' in url[0]
 
 
+def test_radio_stream_url_media_url():
+    # The default stream is RTMP. This test is about the secondary
+    # "media_url" stream. Therefore the rtmpdump backend is disabled.
+    filters = StreamFilters(enabled_backends=['wget', 'ffmpeg'])
+    url = fetch_stream_url('https://areena.yle.fi/1-4561516', filters)
+
+    assert len(url) == 1
+    assert '.mp3?primaryToken=' in url[0]
+
+
 def test_radio_metadata_rtmp():
     metadata = fetch_metadata('https://areena.yle.fi/1-3361013')
 
     assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) == 1
-    assert metadata[0]['flavors'][0]['media_type'] == 'audio'
-    assert metadata[0]['flavors'][0]['bitrate'] == 192
+    assert len(metadata[0]['flavors']) == 2
+    assert all(f.get('media_type') == 'audio' for f in metadata[0]['flavors'])
     assert metadata[0]['duration_seconds'] == 2884
 
 

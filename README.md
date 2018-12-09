@@ -101,6 +101,12 @@ export ENABLE_FINLAND_TESTS=1
 python3 setup.py pytest
 ```
 
+Running only a single test file:
+
+```
+python3 setup.py pytest --addopts "-k tests/integration/test_areena_radio_it.py"
+```
+
 Packages for various distros
 ----------------------------
 

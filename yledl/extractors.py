@@ -527,6 +527,9 @@ class AreenaPreviewApiParser(object):
     def preview_manifest_url(self, data):
         return self.preview_ongoing(data).get('manifest_url')
 
+    def preview_media_url(self, data):
+        return self.preview_ongoing(data).get('media_url')
+
     def preview_media_type(self, data):
         if not data:
             return None
@@ -792,7 +795,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         media_id = (self.program_media_id(info) or
                     self.preview_media_id(preview))
         manifest_url = self.preview_manifest_url(preview)
-        download_url = info and info.get('downloadUrl')
+        download_url = ((info and info.get('downloadUrl')) or
+                        self.preview_media_url(preview))
         download_url = self.ignore_invalid_download_url(download_url)
         medias = self.akamai_medias(pid, media_id, info)
         media_type = (self.program_media_type(info) or

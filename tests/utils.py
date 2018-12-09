@@ -21,24 +21,24 @@ class Capturing(list):
         sys.stdout = self._stdout
 
 
-def fetch_title(url):
-    return fetch(url, StreamAction.PRINT_STREAM_TITLE)
+def fetch_title(url, filters=StreamFilters()):
+    return fetch(url, StreamAction.PRINT_STREAM_TITLE, filters)
 
 
-def fetch_stream_url(url):
-    return fetch(url, StreamAction.PRINT_STREAM_URL)
+def fetch_stream_url(url, filters=StreamFilters()):
+    return fetch(url, StreamAction.PRINT_STREAM_URL, filters)
 
 
-def fetch_episode_pages(url):
-    return fetch(url, StreamAction.PRINT_EPISODE_PAGES)
+def fetch_episode_pages(url, filters=StreamFilters()):
+    return fetch(url, StreamAction.PRINT_EPISODE_PAGES, filters)
 
 
-def fetch_metadata(url):
-    return json.loads('\n'.join(fetch(url, StreamAction.PRINT_METADATA)))
+def fetch_metadata(url, filters=StreamFilters()):
+    return json.loads('\n'.join(
+        fetch(url, StreamAction.PRINT_METADATA, filters)))
 
 
-def fetch(url, action):
-    basic_filters = StreamFilters()
+def fetch(url, action, filters):
     # Initialize rtmpdump_binary to avoid a file system lookup in tests
     io = IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump')
     httpclient = HttpClient()
@@ -48,7 +48,7 @@ def fetch(url, action):
                        action,
                        io,
                        httpclient,
-                       stream_filters = basic_filters,
+                       stream_filters = filters,
                        postprocess_command = None)
         assert res == RD_SUCCESS
 
