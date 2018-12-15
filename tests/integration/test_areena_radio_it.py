@@ -19,7 +19,8 @@ def test_radio_title_hls():
 
     assert len(title) == 1
     assert title[0].startswith(
-        'Ilmastonmuutos: Ihminen elää ilman vettä vain muutaman päivän')
+        'Tiedeykkönen Extra: Ilmastonmuutos: '
+        'Ihminen elää ilman vettä vain muutaman päivän')
 
 
 def test_radio_stream_url_rtmp():

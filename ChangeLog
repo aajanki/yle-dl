@@ -6,6 +6,7 @@ Distributed under the GPL v3
 
 - Fixed downloading of Areena audio streams
 - Fixed support for some videos that are only available at a low resolution
+- Include the series title in the default output file name
 
 Version 20181103
 

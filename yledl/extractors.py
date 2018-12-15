@@ -516,7 +516,7 @@ class AreenaPreviewApiParser(object):
             return None
 
         raw_title = localization.fin_or_swe_text(title_object).strip()
-        return titleformatter.format(raw_title, publish_timestamp)
+        return titleformatter.format(raw_title, publish_timestamp, None)
 
     def preview_available_at_region(self, data):
         return self.preview_ongoing(data).get('region')
@@ -882,22 +882,26 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             return None
 
         program = program_info.get('data', {}).get('program', {})
-        titleObject = program.get('title')
-        title = localization.fi_or_sv_text(titleObject) or 'areena'
+        title_object = program.get('title')
+        title = localization.fi_or_sv_text(title_object) or 'areena'
 
-        itemTitle = localization.fi_or_sv_text(program.get('itemTitle'))
-        promotionTitle = localization.fi_or_sv_text(program.get('promotionTitle'))
+        series_title_object = program.get('partOfSeries', {}).get('title')
+        series_title = localization.fi_or_sv_text(series_title_object)
 
-        partOfSeasonObject = program.get('partOfSeason')
-        if partOfSeasonObject:
-            season = partOfSeasonObject.get('seasonNumber')
+        item_title = localization.fi_or_sv_text(program.get('itemTitle'))
+        promotion_title = localization.fi_or_sv_text(program.get('promotionTitle'))
+
+        part_of_season_object = program.get('partOfSeason')
+        if part_of_season_object:
+            season = part_of_season_object.get('seasonNumber')
         else:
             season = program.get('seasonNumber')
 
         return titleformatter.format(
             raw_title=title,
+            series_title=series_title,
             publish_timestamp=publish_timestamp,
-            subheading=itemTitle or promotionTitle,
+            subheading=item_title or promotion_title,
             season=season,
             episode=program.get('episodeNumber')
         )
@@ -952,7 +956,7 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
         service = self._service_info(program_info)
         title = localization.fi_or_sv_text(service.get('title')) or 'areena'
         timestamp = publish_timestamp or time.strftime('%Y-%m-%d-%H:%M:%S')
-        return titleformatter.format(title, timestamp)
+        return titleformatter.format(title, timestamp, None)
 
     def available_at_region(self, program_info):
         return self._service_info(program_info).get('region')
