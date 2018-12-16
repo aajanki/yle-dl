@@ -12,10 +12,10 @@ class TitleFormatter(object):
 
         title = self._remove_repeated_main_title(raw_title)
         title = self._prepend_series_title(series_title, title)
-        title += self._append_episode(season, episode)
-        title += self._append_subheading(title, subheading)
+        title += self._episode_postfix(season, episode)
+        title += self._subheading_postfix(title, subheading)
         title = self._remove_genre_prefix(title)
-        title += self._append_timestamp(publish_timestamp)
+        title += self._timestamp_postfix(publish_timestamp)
         return title
 
     def _prepend_series_title(self, series_title, episode_title):
@@ -44,7 +44,7 @@ class TitleFormatter(object):
                 return title[len(prefix):].strip()
         return title
 
-    def _append_episode(self, season, episode):
+    def _episode_postfix(self, season, episode):
         if season and episode:
             return ': S%02dE%02d' % (season, episode)
         elif episode:
@@ -52,13 +52,13 @@ class TitleFormatter(object):
         else:
             return ''
 
-    def _append_subheading(self, title, subheading):
+    def _subheading_postfix(self, title, subheading):
         if subheading and subheading not in title:
             return ': ' + subheading
         else:
             return ''
 
-    def _append_timestamp(self, publish_timestamp):
+    def _timestamp_postfix(self, publish_timestamp):
         if publish_timestamp:
             short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', publish_timestamp or '')
             title_ts = short.group(0) if short else publish_timestamp
