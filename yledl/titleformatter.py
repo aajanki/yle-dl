@@ -5,12 +5,12 @@ import re
 
 
 class TitleFormatter(object):
-    def format(self, raw_title, publish_timestamp, series_title,
+    def format(self, title, publish_timestamp=None, series_title=None,
                subheading=None, season=None, episode=None):
-        if raw_title is None:
+        if title is None:
             return None
 
-        title = self._remove_repeated_main_title(raw_title)
+        title = self._remove_repeated_main_title(title)
         title = self._prepend_series_title(series_title, title)
         title += self._episode_postfix(season, episode)
         title += self._subheading_postfix(title, subheading)
