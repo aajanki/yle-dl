@@ -5,6 +5,7 @@ import attr
 import json
 import os.path
 import pytest
+from datetime import datetime, timedelta, timezone
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader, SubtitleDownloader
@@ -107,8 +108,8 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
         title=title,
         duration_seconds=950,
         region='Finland',
-        publish_timestamp='2018-07-01T00:00:00+03:00',
-        expiration_timestamp='2019-01-01T00:00:00+03:00',
+        publish_timestamp=datetime(2018, 7, 1, tzinfo=timezone(timedelta(hours=3))),
+        expiration_timestamp=datetime(2019, 1, 1, tzinfo=timezone(timedelta(hours=3))),
         subtitles=[
             Subtitle('https://example.com/subtitle/fin.srt', 'fin'),
             Subtitle('https://example.com/subtitle/swe.srt', 'swe')

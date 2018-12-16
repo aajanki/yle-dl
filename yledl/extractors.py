@@ -10,8 +10,9 @@ import os.path
 import re
 import time
 import sys
-from . import localization
+from datetime import datetime
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
+from . import localization
 from . import hds
 from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
     WgetBackend, YoutubeDLHDSBackend
@@ -282,10 +283,15 @@ class Clip(object):
             ('duration_seconds', self.duration_seconds),
             ('subtitles', [vars(st) for st in self.subtitles]),
             ('region', self.region),
-            ('publish_timestamp', self.publish_timestamp),
-            ('expiration_timestamp', self.expiration_timestamp)
+            ('publish_timestamp',
+             self.format_timestamp(self.publish_timestamp)),
+            ('expiration_timestamp',
+             self.format_timestamp(self.expiration_timestamp))
         ]
         return self.ignore_none_values(meta)
+
+    def format_timestamp(self, ts):
+        return ts.isoformat() if ts else None
 
     def flavor_meta(self, flavor):
         if all(not s.is_valid() for s in flavor.streams):
@@ -560,6 +566,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
+    yle_timestamp_format = '%Y-%m-%dT%H:%M:%S%z'
 
     def extract_clip(self, clip_url):
         pid = self.program_id_from_url(clip_url)
@@ -583,8 +590,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         if program_info.pending:
             msg = 'Stream not yet available.'
             if program_info.publish_timestamp:
-                msg = ('{} Becomes available on {}'
-                       .format(msg, program_info.publish_timestamp))
+                msg = ('{} Becomes available on {}'.format(
+                    msg, program_info.publish_timestamp.isoformat()))
             return FailedClip(pageurl, msg)
         elif failed:
             return failed
@@ -756,20 +763,19 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         else:
             return {}
 
-    def publish_date(self, program_info):
-        event = self.publish_event(program_info)
-        start_time = event.get('startTime')
-        short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', start_time or '')
-        if short:
-            return short.group(0)
-        else:
-            return start_time
-
     def publish_timestamp(self, program_info):
-        return self.publish_event(program_info).get('startTime')
+        ts = self.publish_event(program_info).get('startTime')
+        if ts:
+            return datetime.strptime(ts, self.yle_timestamp_format)
+        else:
+            return None
 
     def expiration_timestamp(self, program_info):
-        return self.publish_event(program_info).get('endTime')
+        ts = self.publish_event(program_info).get('endTime')
+        if ts:
+            return datetime.strptime(ts, self.yle_timestamp_format)
+        else:
+            return None
 
     def force_program_info(self):
         return False
@@ -955,8 +961,8 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
     def program_title(self, program_info, publish_timestamp, titleformatter):
         service = self._service_info(program_info)
         title = localization.fi_or_sv_text(service.get('title')) or 'areena'
-        timestamp = publish_timestamp or time.strftime('%Y-%m-%d-%H:%M:%S')
-        return titleformatter.format(title, timestamp)
+        timestamp = publish_timestamp or datetime.now()
+        return titleformatter.format(title, publish_timestamp=timestamp)
 
     def available_at_region(self, program_info):
         return self._service_info(program_info).get('region')
@@ -974,9 +980,8 @@ class AreenaLiveTVHLSExtractor(AreenaExtractor):
         return parsed.path.split('/')[-1]
 
     def preview_title(self, data, publish_timestamp, titleformatter):
-        now = time.strftime('%Y-%m-%d-%H:%M:%S')
         return (super(AreenaLiveTVHLSExtractor, self)
-                .preview_title(data, now, titleformatter))
+                .preview_title(data, datetime.now(), titleformatter))
 
 
 ### Areena live radio ###

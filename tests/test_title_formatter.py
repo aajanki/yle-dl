@@ -2,6 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import pytest
+from datetime import datetime, date
 from yledl.titleformatter import TitleFormatter
 
 tf = TitleFormatter()
@@ -16,8 +17,13 @@ def test_title_only():
 
 
 def test_title_timestamp():
-    title = tf.format('test', '2018-01-02T03:04:05')
+    title = tf.format('test', publish_timestamp=datetime(2018, 1, 2, 3, 4, 5))
     assert title == 'test-2018-01-02T03:04'
+
+
+def test_title_date_only():
+    title = tf.format('test', publish_timestamp=date(2018, 1, 2))
+    assert title == 'test-2018-01-02'
 
 
 def test_repeated_main_title():

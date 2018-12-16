@@ -2,6 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import re
+from datetime import datetime
 
 
 class TitleFormatter(object):
@@ -59,9 +60,9 @@ class TitleFormatter(object):
             return ''
 
     def _timestamp_postfix(self, publish_timestamp):
-        if publish_timestamp:
-            short = re.match(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}', publish_timestamp or '')
-            title_ts = short.group(0) if short else publish_timestamp
-            return '-' + title_ts.replace('/', '-').replace(' ', '-')
+        if publish_timestamp and hasattr(publish_timestamp, 'hour'):
+            return '-' + datetime.strftime(publish_timestamp, '%Y-%m-%dT%H:%M')
+        elif publish_timestamp:
+            return '-' + datetime.strftime(publish_timestamp, '%Y-%m-%d')
         else:
             return ''
