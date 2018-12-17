@@ -11,22 +11,26 @@ class TitleFormatter(object):
         if title is None:
             return None
 
-        title = self._remove_repeated_main_title(title)
-        title = self._prepend_series_title(series_title, title)
-        title += self._episode_postfix(season, episode)
-        title += self._subheading_postfix(title, subheading)
-        title = self._remove_genre_prefix(title)
-        title += self._timestamp_postfix(publish_timestamp)
-        return title
+        main_title = self._main_title(title, subheading)
+        return (self._series_title_prefix(series_title, main_title) +
+                main_title +
+                self._episode_postfix(season, episode) +
+                self._timestamp_postfix(publish_timestamp))
 
-    def _prepend_series_title(self, series_title, episode_title):
-        if series_title:
-            if episode_title.startswith(series_title):
-                return episode_title
-            else:
-                return series_title + ': ' + episode_title
+    def _main_title(self, title, subheading):
+        main_title = self._remove_genre_prefix(
+            self._remove_repeated_main_title(title))
+
+        if subheading and subheading not in main_title:
+            return main_title + ': ' + subheading
         else:
-            return episode_title
+            return main_title
+
+    def _series_title_prefix(self, series_title, episode_title):
+        if series_title and not episode_title.startswith(series_title):
+            return series_title + ': '
+        else:
+            return ''
 
     def _remove_repeated_main_title(self, title):
         if ':' in title:
@@ -50,12 +54,6 @@ class TitleFormatter(object):
             return ': S%02dE%02d' % (season, episode)
         elif episode:
             return ': E%02d' % (episode)
-        else:
-            return ''
-
-    def _subheading_postfix(self, title, subheading):
-        if subheading and subheading not in title:
-            return ': ' + subheading
         else:
             return ''
 

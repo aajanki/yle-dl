@@ -2,7 +2,7 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import pytest
-from datetime import datetime, date
+from datetime import datetime, date, timedelta, timezone
 from yledl.titleformatter import TitleFormatter
 
 tf = TitleFormatter()
@@ -37,14 +37,18 @@ def test_subheading():
 
 
 def test_no_repeated_subheading():
-    title = tf.format('Uutiset: Kymmenen uutiset',
-                      subheading='Uutiset')
+    title = tf.format('Uutiset: Kymmenen uutiset', subheading='Uutiset')
     assert title == 'Uutiset: Kymmenen uutiset'
 
 
 def test_season_and_episode():
     title = tf.format('Isänmaan toivot', season=2, episode=6)
     assert title == 'Isänmaan toivot: S02E06'
+
+
+def test_episode_without_season():
+    title = tf.format('Isänmaan toivot', episode=12)
+    assert title == 'Isänmaan toivot: E12'
 
 
 def test_remove_genre_prefix():
@@ -61,6 +65,19 @@ def test_no_repeated_series_title():
     assert title == 'Doctor Who'
 
 
-def test_no_repeated_series_title_2():
+def test_no_repeated_series_title_with_episode_title():
     title = tf.format('Doctor Who: Kerblam!', series_title='Doctor Who')
     assert title == 'Doctor Who: Kerblam!'
+
+
+def test_all_components():
+    title = tf.format('Vanhempainyhdistys',
+                      publish_timestamp=datetime(
+                          2018, 4, 12, 16, 30, 45,
+                          tzinfo=timezone(timedelta(hours=2))),
+                      series_title='Pasila',
+                      subheading='tekstitys englanniksi',
+                      season=1,
+                      episode=3)
+    assert title == 'Pasila: Vanhempainyhdistys: '\
+        'tekstitys englanniksi: S01E03-2018-04-12T16:30'
