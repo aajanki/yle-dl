@@ -90,54 +90,65 @@ def test_all_components(pasila):
 
 
 def test_template(pasila):
-    tf = TitleFormatter('${series}${title}${episode}${timestamp}')
-    assert tf.format(**pasila) == 'Pasila: Vanhempainyhdistys: '\
+    fmt = TitleFormatter('${series}${title}${episode}${timestamp}')
+    assert fmt.format(**pasila) == 'Pasila: Vanhempainyhdistys: '\
         'tekstitys englanniksi: S01E03-2018-04-12T16:30'
 
-    tf = TitleFormatter('${series}${episode}${timestamp}')
-    assert tf.format(**pasila) == 'Pasila: S01E03-2018-04-12T16:30'
+    fmt = TitleFormatter('${series}${episode}${timestamp}')
+    assert fmt.format(**pasila) == 'Pasila: S01E03-2018-04-12T16:30'
 
-    tf = TitleFormatter('${title}${timestamp}')
-    assert tf.format(**pasila) == 'Vanhempainyhdistys: '\
+    fmt = TitleFormatter('${title}${timestamp}')
+    assert fmt.format(**pasila) == 'Vanhempainyhdistys: '\
         'tekstitys englanniksi-2018-04-12T16:30'
 
-    tf = TitleFormatter('${timestamp}${title}')
-    assert tf.format(**pasila) == '2018-04-12T16:30: '\
+    fmt = TitleFormatter('${timestamp}${title}')
+    assert fmt.format(**pasila) == '2018-04-12T16:30: '\
         'Vanhempainyhdistys: tekstitys englanniksi'
 
 
+def test_template_date(pasila):
+    fmt = TitleFormatter('${series}${date}')
+    assert fmt.format(**pasila) == 'Pasila-2018-04-12'
+
+    fmt = TitleFormatter('${date}${series}')
+    assert fmt.format(**pasila) == '2018-04-12: Pasila'
+
+    fmt = TitleFormatter('${series}${date}${timestamp}')
+    assert fmt.format(**pasila) == 'Pasila-2018-04-12-2018-04-12T16:30'
+
+
 def test_template_literal(pasila):
-    tf = TitleFormatter('Areena ${series}${episode}')
-    assert tf.format(**pasila) == 'Areena : Pasila: S01E03'
+    fmt = TitleFormatter('Areena ${series}${episode}')
+    assert fmt.format(**pasila) == 'Areena : Pasila: S01E03'
 
-    tf = TitleFormatter('${series} Areena${episode}')
-    assert tf.format(**pasila) == 'Pasila Areena: S01E03'
+    fmt = TitleFormatter('${series} Areena${episode}')
+    assert fmt.format(**pasila) == 'Pasila Areena: S01E03'
 
-    tf = TitleFormatter('${series}${episode} Areena')
-    assert tf.format(**pasila) == 'Pasila: S01E03 Areena'
+    fmt = TitleFormatter('${series}${episode} Areena')
+    assert fmt.format(**pasila) == 'Pasila: S01E03 Areena'
 
-    tf = TitleFormatter('Areena ${series} Areena${episode} Areena')
-    assert tf.format(**pasila) == 'Areena : Pasila Areena: S01E03 Areena'
+    fmt = TitleFormatter('Areena ${series} Areena${episode} Areena')
+    assert fmt.format(**pasila) == 'Areena : Pasila Areena: S01E03 Areena'
 
 
 def test_template_duplicate_key(pasila):
-    tf = TitleFormatter('${series}${series}')
-    assert tf.format(**pasila) == 'Pasila: Pasila'
+    fmt = TitleFormatter('${series}${series}')
+    assert fmt.format(**pasila) == 'Pasila: Pasila'
 
 
 def test_unknown_templates_are_not_substituted(pasila):
-    tf = TitleFormatter('${series}${invalid}${timestamp}')
-    assert tf.format(**pasila) == 'Pasila: ${invalid}-2018-04-12T16:30'
+    fmt = TitleFormatter('${series}${invalid}${timestamp}')
+    assert fmt.format(**pasila) == 'Pasila: ${invalid}-2018-04-12T16:30'
 
 
 def test_unclosed_template(pasila):
-    tf = TitleFormatter('${series}${timestamp')
-    assert tf.format(**pasila) == 'Pasila${timestamp'
+    fmt = TitleFormatter('${series}${timestamp')
+    assert fmt.format(**pasila) == 'Pasila${timestamp'
 
-    tf = TitleFormatter('${series}${title${timestamp}')
-    assert tf.format(**pasila) == 'Pasila${title-2018-04-12T16:30'
+    fmt = TitleFormatter('${series}${title${timestamp}')
+    assert fmt.format(**pasila) == 'Pasila${title-2018-04-12T16:30'
 
 
 def test_template_incorrectly_balanced_brackets(pasila):
-    tf = TitleFormatter('${series}${title${timestamp}}')
-    assert tf.format(**pasila) == 'Pasila${title-2018-04-12T16:30}'
+    fmt = TitleFormatter('${series}${title${timestamp}}')
+    assert fmt.format(**pasila) == 'Pasila${title-2018-04-12T16:30}'

@@ -20,9 +20,12 @@ class TitleFormatter(object):
             'series': self._series_title(series_title, main_title),
             'title': main_title,
             'episode': self._episode_number(season, episode),
-            'timestamp': self._timestamp(publish_timestamp),
+            'timestamp': self._timestamp_string(publish_timestamp),
+            'date': self._date_string(publish_timestamp),
         }
-        separators = defaultdict(lambda: ': ', timestamp='-')
+        separators = defaultdict(lambda: ': ',
+                                 timestamp='-',
+                                 date='-')
 
         return self._substitute(self.tokens, values, separators)
 
@@ -94,11 +97,17 @@ class TitleFormatter(object):
         else:
             return ''
 
-    def _timestamp(self, publish_timestamp):
+    def _timestamp_string(self, publish_timestamp):
         if publish_timestamp and hasattr(publish_timestamp, 'hour'):
             return datetime.strftime(publish_timestamp, '%Y-%m-%dT%H:%M')
         elif publish_timestamp:
-            return datetime.strftime(publish_timestamp, '%Y-%m-%d')
+            return self._date_string(publish_timestamp)
+        else:
+            return ''
+
+    def _date_string(self, publish_timestamp):
+        if publish_timestamp:
+            return publish_timestamp.strftime('%Y-%m-%d')
         else:
             return ''
 
