@@ -3,19 +3,56 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import re
 from datetime import datetime
+from collections import defaultdict
 
 
 class TitleFormatter(object):
+    def __init__(self, template='${series}${title}${episode}${timestamp}'):
+        self.tokens = self._parse_template(template)
+    
     def format(self, title, publish_timestamp=None, series_title=None,
                subheading=None, season=None, episode=None):
         if title is None:
             return None
 
         main_title = self._main_title(title, subheading)
-        return (self._series_title_prefix(series_title, main_title) +
-                main_title +
-                self._episode_postfix(season, episode) +
-                self._timestamp_postfix(publish_timestamp))
+        values = {
+            'series': self._series_title(series_title, main_title),
+            'title': main_title,
+            'episode': self._episode_number(season, episode),
+            'timestamp': self._timestamp(publish_timestamp),
+        }
+        separators = defaultdict(lambda: ': ', timestamp='-')
+
+        return self._substitute(self.tokens, values, separators)
+
+    def _parse_template(self, template):
+        res = []
+
+        last_pos = 0
+        for m in re.finditer(r'\${[a-zA-Z]+?}', template):
+            if m.start() != last_pos:
+                res.append(Literal(template[last_pos:m.start()]))
+
+            var_name = m.group()
+            res.append(Substitution(var_name))
+            last_pos = m.end()
+
+        if last_pos != len(template):
+            res.append(Literal(template[last_pos:]))
+
+        return res
+
+    def _substitute(self, tokens, values, separators):
+        res = []
+        empty_separator = defaultdict(lambda: '')
+        for token in self.tokens:
+            sep = empty_separator if len(res) == 0 else separators
+            subst = token.substitute(values, sep)
+            if subst:
+                res.append(subst)
+
+        return ''.join(res)
 
     def _main_title(self, title, subheading):
         main_title = self._remove_genre_prefix(
@@ -26,9 +63,9 @@ class TitleFormatter(object):
         else:
             return main_title
 
-    def _series_title_prefix(self, series_title, episode_title):
+    def _series_title(self, series_title, episode_title):
         if series_title and not episode_title.startswith(series_title):
-            return series_title + ': '
+            return series_title
         else:
             return ''
 
@@ -49,18 +86,36 @@ class TitleFormatter(object):
                 return title[len(prefix):].strip()
         return title
 
-    def _episode_postfix(self, season, episode):
+    def _episode_number(self, season, episode):
         if season and episode:
-            return ': S%02dE%02d' % (season, episode)
+            return 'S%02dE%02d' % (season, episode)
         elif episode:
-            return ': E%02d' % (episode)
+            return 'E%02d' % (episode)
         else:
             return ''
 
-    def _timestamp_postfix(self, publish_timestamp):
+    def _timestamp(self, publish_timestamp):
         if publish_timestamp and hasattr(publish_timestamp, 'hour'):
-            return '-' + datetime.strftime(publish_timestamp, '%Y-%m-%dT%H:%M')
+            return datetime.strftime(publish_timestamp, '%Y-%m-%dT%H:%M')
         elif publish_timestamp:
-            return '-' + datetime.strftime(publish_timestamp, '%Y-%m-%d')
+            return datetime.strftime(publish_timestamp, '%Y-%m-%d')
         else:
             return ''
+
+
+class Substitution(object):
+    def __init__(self, variable_name):
+        self.variable_name = variable_name
+
+    def substitute(self, values, separators):
+        key = self.variable_name[2:-1]
+        val = values.get(key, self.variable_name)
+        return separators[key] + val if val else ''
+
+
+class Literal(object):
+    def __init__(self, text):
+        self.text = text
+
+    def substitute(self, values, separators):
+        return self.text

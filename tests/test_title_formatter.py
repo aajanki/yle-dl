@@ -8,6 +8,20 @@ from yledl.titleformatter import TitleFormatter
 tf = TitleFormatter()
 
 
+@pytest.fixture
+def pasila():
+    return {
+        'title': 'Vanhempainyhdistys',
+        'publish_timestamp': datetime(
+            2018, 4, 12, 16, 30, 45,
+            tzinfo=timezone(timedelta(hours=2))),
+        'series_title': 'Pasila',
+        'subheading':'tekstitys englanniksi',
+        'season': 1,
+        'episode': 3,
+    }
+
+
 def test_none_title():
     assert tf.format(None) is None
 
@@ -70,14 +84,60 @@ def test_no_repeated_series_title_with_episode_title():
     assert title == 'Doctor Who: Kerblam!'
 
 
-def test_all_components():
-    title = tf.format('Vanhempainyhdistys',
-                      publish_timestamp=datetime(
-                          2018, 4, 12, 16, 30, 45,
-                          tzinfo=timezone(timedelta(hours=2))),
-                      series_title='Pasila',
-                      subheading='tekstitys englanniksi',
-                      season=1,
-                      episode=3)
-    assert title == 'Pasila: Vanhempainyhdistys: '\
+def test_all_components(pasila):
+    assert tf.format(**pasila) == 'Pasila: Vanhempainyhdistys: '\
         'tekstitys englanniksi: S01E03-2018-04-12T16:30'
+
+
+def test_template(pasila):
+    tf = TitleFormatter('${series}${title}${episode}${timestamp}')
+    assert tf.format(**pasila) == 'Pasila: Vanhempainyhdistys: '\
+        'tekstitys englanniksi: S01E03-2018-04-12T16:30'
+
+    tf = TitleFormatter('${series}${episode}${timestamp}')
+    assert tf.format(**pasila) == 'Pasila: S01E03-2018-04-12T16:30'
+
+    tf = TitleFormatter('${title}${timestamp}')
+    assert tf.format(**pasila) == 'Vanhempainyhdistys: '\
+        'tekstitys englanniksi-2018-04-12T16:30'
+
+    tf = TitleFormatter('${timestamp}${title}')
+    assert tf.format(**pasila) == '2018-04-12T16:30: '\
+        'Vanhempainyhdistys: tekstitys englanniksi'
+
+
+def test_template_literal(pasila):
+    tf = TitleFormatter('Areena ${series}${episode}')
+    assert tf.format(**pasila) == 'Areena : Pasila: S01E03'
+
+    tf = TitleFormatter('${series} Areena${episode}')
+    assert tf.format(**pasila) == 'Pasila Areena: S01E03'
+
+    tf = TitleFormatter('${series}${episode} Areena')
+    assert tf.format(**pasila) == 'Pasila: S01E03 Areena'
+
+    tf = TitleFormatter('Areena ${series} Areena${episode} Areena')
+    assert tf.format(**pasila) == 'Areena : Pasila Areena: S01E03 Areena'
+
+
+def test_template_duplicate_key(pasila):
+    tf = TitleFormatter('${series}${series}')
+    assert tf.format(**pasila) == 'Pasila: Pasila'
+
+
+def test_unknown_templates_are_not_substituted(pasila):
+    tf = TitleFormatter('${series}${invalid}${timestamp}')
+    assert tf.format(**pasila) == 'Pasila: ${invalid}-2018-04-12T16:30'
+
+
+def test_unclosed_template(pasila):
+    tf = TitleFormatter('${series}${timestamp')
+    assert tf.format(**pasila) == 'Pasila${timestamp'
+
+    tf = TitleFormatter('${series}${title${timestamp}')
+    assert tf.format(**pasila) == 'Pasila${title-2018-04-12T16:30'
+
+
+def test_template_incorrectly_balanced_brackets(pasila):
+    tf = TitleFormatter('${series}${title${timestamp}}')
+    assert tf.format(**pasila) == 'Pasila${title-2018-04-12T16:30}'
