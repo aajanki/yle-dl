@@ -8,7 +8,6 @@ import json
 import logging
 import os.path
 import re
-import time
 import sys
 from datetime import datetime
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
