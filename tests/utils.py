@@ -5,6 +5,7 @@ from io import BytesIO
 from yledl import download, StreamFilters, IOContext, \
     DownloadLimits, StreamAction, RD_SUCCESS
 from yledl.http import HttpClient
+from yledl.titleformatter import TitleFormatter
 
 
 # Context manager for capturing stdout output. See
@@ -42,12 +43,14 @@ def fetch(url, action, filters):
     # Initialize rtmpdump_binary to avoid a file system lookup in tests
     io = IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump')
     httpclient = HttpClient()
+    title_formatter = TitleFormatter()
 
     with Capturing() as output:
         res = download(url,
                        action,
                        io,
                        httpclient,
+                       title_formatter,
                        stream_filters = filters,
                        postprocess_command = None)
         assert res == RD_SUCCESS
