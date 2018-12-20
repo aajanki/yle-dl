@@ -29,6 +29,7 @@ def parse_areena_timestamp(timestamp):
     if timestamp is None:
         return None
 
+    timestamp = timestamp.strip()
     if sys.version_info.major == 3:
         parsed = parse_areena_timestamp_py3(timestamp)
     else:
