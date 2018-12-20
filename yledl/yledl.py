@@ -38,6 +38,7 @@ from .extractors import extractor_factory
 from .http import HttpClient
 from .io import IOContext, DownloadLimits
 from .streamfilters import StreamFilters
+from .titleformatter import TitleFormatter
 from .utils import print_enc
 from .version import version
 
@@ -118,6 +119,16 @@ def arg_parser():
     io_group.add_argument('-o', metavar='FILENAME', dest='outputfile',
                           type=to_unicode,
                           help='Save stream to the named file')
+    io_group.add_argument('--output-template', metavar='TEMPLATE',
+                          default='${series}${title}${episode}${timestamp}',
+                          help='Template for generating an output file name when not using -o. The template supports following substitutions: '
+                          '${title} is replaced by the title of the episode, '
+                          '${series} is the series title, '
+                          '${episode} is the season and episode number "S02E12", '
+                          '${timestamp} is stream publish timestamp "2018-12-01T18:30", '
+                          '${date} is the stream publish date "2018-12-01", '
+                          '$$ is an escape and will be replaced by a literal "$". '
+                          'Everything else will appear as-is.')
     io_group.add_argument('--pipe', action='store_true',
                           help='Dump stream to stdout for piping to media '
                           'player. E.g. "yle-dl --pipe URL | vlc -"')
@@ -226,7 +237,8 @@ def encode_url_utf8(url):
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def download(url, action, io, httpclient, stream_filters, postprocess_command):
+def download(url, action, io, httpclient, title_formatter, stream_filters,
+             postprocess_command):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -249,7 +261,7 @@ def download(url, action, io, httpclient, stream_filters, postprocess_command):
         print_lines(extractor.get_playlist(url))
         return RD_SUCCESS
 
-    clips = extractor.extract(url, stream_filters.latest_only)
+    clips = extractor.extract(url, stream_filters.latest_only, title_formatter)
     dl = YleDlDownloader(SubtitleDownloader(httpclient))
 
     if action == StreamAction.PRINT_STREAM_URL:
@@ -365,6 +377,7 @@ def main(argv=sys.argv):
                                    args.hardsubs, maxbitrate, maxheight,
                                    backends)
     httpclient = HttpClient(args.proxy)
+    title_formatter = TitleFormatter(args.output_template)
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):
@@ -373,8 +386,8 @@ def main(argv=sys.argv):
             logger.info('Now downloading from URL {}/{}: {}'.format(
                 i + 1, len(urls), url))
 
-        res = download(url, action, io, httpclient, stream_filters,
-                       args.postprocess)
+        res = download(url, action, io, httpclient, title_formatter,
+                       stream_filters, args.postprocess)
 
         if res != RD_SUCCESS:
             exit_status = res
