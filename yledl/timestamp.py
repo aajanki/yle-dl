@@ -58,6 +58,10 @@ def parse_areena_timestamp_py2(timestamp):
 
 
 def parse_areena_timestamp_py3(timestamp):
+    # Python prior to 3.7 doesn't support a colon in the timezone
+    if re.search(r'\d\d:\d\d$', timestamp):
+        timestamp = timestamp[:-3] + timestamp[-2:]
+
     try:
         return datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
     except ValueError:
