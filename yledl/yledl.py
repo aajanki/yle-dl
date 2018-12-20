@@ -121,7 +121,9 @@ def arg_parser():
                           help='Save stream to the named file')
     io_group.add_argument('--output-template', metavar='TEMPLATE',
                           default='${series}${title}${episode}${timestamp}',
-                          help='Template for generating an output file name when not using -o. The template supports following substitutions: '
+                          help='Template for generating an output file name '
+                          'when not using -o. The template supports following '
+                          'substitutions: '
                           '${title} is replaced by the title of the episode, '
                           '${series} is the series title, '
                           '${episode} is the season and episode number "S02E12", '
