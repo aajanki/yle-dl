@@ -1,0 +1,63 @@
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function, absolute_import, unicode_literals
+import logging
+import re
+import sys
+from datetime import datetime, timedelta, tzinfo
+
+
+logger = logging.getLogger('yledl')
+
+
+class FixedOffset(tzinfo):
+    def __init__(self, offset_hours):
+        self.__offset = timedelta(hours=offset_hours)
+
+    def utcoffset(self, dt):
+        return self.__offset
+
+    def tzname(self, dt):
+        return 'FixedOffset'
+
+    def dst(self, dt):
+        return timedelta(0)
+
+
+
+def parse_areena_timestamp(timestamp):
+    if timestamp is None:
+        return None
+
+    if sys.version_info.major == 3:
+        parsed = parse_areena_timestamp_py3(timestamp)
+    else:
+        parsed = parse_areena_timestamp_py2(timestamp)
+
+    if parsed is None:
+        logger.warn('Failed to parse timestamp: {}'.format(timestamp))
+
+    return parsed
+
+
+def parse_areena_timestamp_py2(timestamp):
+    # The %z timezone parsing is not supported by strptime in Python
+    # 2.7. Perform a naive timezone parsing manually instead.
+    dt = None
+    m = re.search(r'\+(\d\d):00$', timestamp)
+    if m:
+        offset_hours = int(m.group(1))
+        try:
+            dt = datetime.strptime(timestamp[:-6], '%Y-%m-%dT%H:%M:%S')
+            dt = dt.replace(tzinfo=FixedOffset(offset_hours))
+        except ValueError:
+            dt = None
+
+    return dt
+
+
+def parse_areena_timestamp_py3(timestamp):
+    try:
+        return datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
+    except ValueError:
+        return None

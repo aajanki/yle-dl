@@ -21,6 +21,7 @@ from .kaltura import YleKalturaApiClient
 from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
+from .timestamp import parse_areena_timestamp
 from .titleformatter import TitleFormatter
 from .utils import sane_filename
 
@@ -528,7 +529,8 @@ class AreenaPreviewApiParser(object):
         return self.preview_ongoing(data).get('region')
 
     def preview_timestamp(self, data):
-        return self.preview_ongoing(data).get('start_time')
+        dt = self.preview_ongoing(data).get('start_time')
+        return parse_areena_timestamp(dt)
 
     def preview_manifest_url(self, data):
         return self.preview_ongoing(data).get('manifest_url')
@@ -566,7 +568,6 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
-    yle_timestamp_format = '%Y-%m-%dT%H:%M:%S%z'
 
     def extract_clip(self, clip_url):
         pid = self.program_id_from_url(clip_url)
@@ -765,17 +766,11 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
     def publish_timestamp(self, program_info):
         ts = self.publish_event(program_info).get('startTime')
-        if ts:
-            return datetime.strptime(ts, self.yle_timestamp_format)
-        else:
-            return None
+        return parse_areena_timestamp(ts)
 
     def expiration_timestamp(self, program_info):
         ts = self.publish_event(program_info).get('endTime')
-        if ts:
-            return datetime.strptime(ts, self.yle_timestamp_format)
-        else:
-            return None
+        return parse_areena_timestamp(ts)
 
     def force_program_info(self):
         return False

@@ -2,7 +2,8 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import pytest
-from datetime import datetime, date, timedelta, timezone
+from datetime import datetime, date
+from yledl.timestamp import FixedOffset
 from yledl.titleformatter import TitleFormatter
 
 tf = TitleFormatter()
@@ -14,7 +15,7 @@ def pasila():
         'title': 'Vanhempainyhdistys',
         'publish_timestamp': datetime(
             2018, 4, 12, 16, 30, 45,
-            tzinfo=timezone(timedelta(hours=2))),
+            tzinfo=FixedOffset(2)),
         'series_title': 'Pasila',
         'subheading':'tekstitys englanniksi',
         'season': 1,
