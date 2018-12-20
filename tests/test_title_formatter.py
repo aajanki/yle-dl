@@ -137,6 +137,19 @@ def test_template_duplicate_key(pasila):
     assert fmt.format(**pasila) == 'Pasila: Pasila'
 
 
+def test_template_literal_dollar_sign(pasila):
+    fmt = TitleFormatter('${series} 500$$ ABC')
+    assert fmt.format(**pasila) == 'Pasila 500$ ABC'
+
+    fmt = TitleFormatter('${series} 500$$ $$$$ ABC')
+    assert fmt.format(**pasila) == 'Pasila 500$ $$ ABC'
+
+
+def test_template_unbalanced_dollar_literals(pasila):
+    fmt = TitleFormatter('${series} $$$ ABC')
+    assert fmt.format(**pasila) == 'Pasila $$ ABC'
+
+
 def test_unknown_templates_are_not_substituted(pasila):
     fmt = TitleFormatter('${series}${invalid}${timestamp}')
     assert fmt.format(**pasila) == 'Pasila: ${invalid}-2018-04-12T16:30'

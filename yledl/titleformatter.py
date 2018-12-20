@@ -33,12 +33,16 @@ class TitleFormatter(object):
         res = []
 
         last_pos = 0
-        for m in re.finditer(r'\${[a-zA-Z]+?}', template):
+        for m in re.finditer(r'\$(:?{[a-zA-Z]+?}|\$)', template):
             if m.start() != last_pos:
                 res.append(Literal(template[last_pos:m.start()]))
 
-            var_name = m.group()
-            res.append(Substitution(var_name))
+            if m.group() == '$$':
+                res.append(Literal('$'))
+            else:
+                var_name = m.group()
+                res.append(Substitution(var_name))
+
             last_pos = m.end()
 
         if last_pos != len(template):
