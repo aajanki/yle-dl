@@ -5,7 +5,7 @@ import attr
 import logging
 import json
 import base64
-from .backends import HLSBackend, WgetBackend
+from .backends import HLSBackend, HLSAudioBackend, WgetBackend
 from .streamflavor import StreamFlavor, FailedFlavor
 
 
@@ -135,14 +135,16 @@ class YleKalturaApiClient(KalturaApiClient):
             flavor_id = flavor.get('id')
             entry_id = flavor.get('entryId')
             ext = '.' + flavor.get('fileExt', 'mp4')
+            media_type = self.flavor_media_type(flavor)
 
             backends = []
             for profile in delivery_profiles.get(flavor_id, []):
                 backends.extend(profile.backends(
-                    entry_id, ext, self.partner_id, self.client_tag, referrer))
+                    entry_id, media_type, ext, self.partner_id,
+                    self.client_tag, referrer))
 
             res.append(StreamFlavor(
-                media_type=self.flavor_media_type(flavor),
+                media_type=media_type,
                 height=flavor.get('height') or None,
                 width=flavor.get('width') or None,
                 bitrate=flavor.get('bitrate'),
@@ -222,10 +224,17 @@ class DeliveryProfile(object):
                     referrer=b64referrer,
                     client_tag=client_tag))
 
-    def backends(self, entry_id, file_ext, partner_id, client_tag, referrer):
-        manifest_url = self.manifest_url(entry_id, partner_id, client_tag, referrer)
+    def backends(self, entry_id, media_type, file_ext, partner_id,
+                 client_tag, referrer):
+        backends = []
+        manifest_url = self.manifest_url(entry_id, partner_id,
+                                         client_tag, referrer)
 
-        backends = [HLSBackend(manifest_url, file_ext)]
+        if media_type == 'video':
+            backends.append(HLSBackend(manifest_url, file_ext))
+        else:
+            backends.append(HLSAudioBackend(manifest_url))
+
         if self.stream_format == 'url':
             backends.append(WgetBackend(manifest_url, file_ext))
 
