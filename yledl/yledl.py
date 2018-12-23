@@ -273,7 +273,7 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
         print_lines(dl.get_titles(clips, io))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        print_lines(dl.get_metadata(clips))
+        print_lines(dl.get_metadata(clips, io))
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
         return dl.pipe(clips, io, stream_filters)

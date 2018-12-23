@@ -165,13 +165,13 @@ class YleDlDownloader(object):
 
     def get_titles(self, clips, io):
         return [sane_filename(m.get('title', ''), io.excludechars)
-                for m in self.metadata_generator(clips)]
+                for m in self.metadata_generator(clips, io)]
 
-    def metadata_generator(self, clips):
-        return (clip.metadata() for clip in clips)
+    def metadata_generator(self, clips, io):
+        return (clip.metadata(io) for clip in clips)
 
-    def get_metadata(self, clips):
-        return [json.dumps(list(self.metadata_generator(clips)), indent=2)]
+    def get_metadata(self, clips, io):
+        return [json.dumps(list(self.metadata_generator(clips, io)), indent=2)]
 
     def process(self, clips, streamfunc, needs_retry, filters):
         if not clips:

@@ -270,14 +270,14 @@ class Clip(object):
         else:
             return filename + extension.extension
 
-    def metadata(self):
+    def metadata(self, io):
         flavors_meta = sorted(
             [self.flavor_meta(f) for f in self.flavors],
             key=lambda x: x.get('bitrate', 0))
-
         meta = [
             ('webpage', self.webpage),
             ('title', self.title),
+            ('filename', self.meta_file_name(self.flavors, io)),
             ('flavors', flavors_meta),
             ('duration_seconds', self.duration_seconds),
             ('subtitles', [vars(st) for st in self.subtitles]),
@@ -288,6 +288,16 @@ class Clip(object):
              self.format_timestamp(self.expiration_timestamp))
         ]
         return self.ignore_none_values(meta)
+
+    def meta_file_name(self, flavors, io):
+        flavors = sorted(flavors, key=lambda x: x.bitrate or 0)
+        flavors = [fl for fl in flavors if any(s.is_valid() for s in fl.streams)]
+        if flavors:
+            extensions = [s.file_extension for s in flavors[-1].streams if s.is_valid()]
+            if extensions:
+                return self.output_file_name(extensions[0], io)
+
+        return None
 
     def format_timestamp(self, ts):
         return ts.isoformat() if ts else None

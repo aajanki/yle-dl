@@ -319,10 +319,15 @@ def test_print_titles(simple):
 def test_print_metadata(simple):
     state = {}
     clips = [successful_clip(state)]
-    metadata = simple.downloader.get_metadata(clips)
+    metadata = simple.downloader.get_metadata(clips, simple.io)
     parsed_metadata = json.loads(metadata[0])
 
     assert len(metadata) == 1
+
+    # Match filename fuzzily because the exact name depends on the existing
+    # file names
+    assert 'Test clip' in parsed_metadata[0]['filename']
+    del parsed_metadata[0]['filename']
     assert parsed_metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
@@ -380,8 +385,15 @@ def test_print_metadata(simple):
 def test_print_metadata_incomplete(simple):
     state = {}
     clips = [incomplete_flavors_clip(state)]
-    metadata = simple.downloader.get_metadata(clips)
+    metadata = simple.downloader.get_metadata(clips, simple.io)
     parsed_metadata = json.loads(metadata[0])
+
+    assert len(parsed_metadata) == 1
+
+    # Match filename fuzzily because the exact name depends on the existing
+    # file names
+    assert 'Test clip' in parsed_metadata[0]['filename']
+    del parsed_metadata[0]['filename']
 
     assert parsed_metadata == [
         {
@@ -429,7 +441,7 @@ def test_download_failed_stream(simple):
 def test_print_metadata_failed_clip(simple):
     state = {}
     clips = [failed_clip()]
-    metadata = simple.downloader.get_metadata(clips)
+    metadata = simple.downloader.get_metadata(clips, simple.io)
     parsed_metadata = json.loads(metadata[0])
 
     assert parsed_metadata == [

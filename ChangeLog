@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2018 Antti Ajanki
 Distributed under the GPL v3
 
+<unreleased>
+
+- Display the output file name as part of the --showmetadata response
+
 Version 20181221
 
 - Fixed downloading of Areena audio streams
