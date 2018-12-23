@@ -15,9 +15,9 @@ class TitleFormatter(object):
         if title is None:
             return None
 
-        main_title = self._main_title(title, subheading)
+        main_title = self._main_title(title, subheading, series_title)
         values = {
-            'series': self._series_title(series_title, main_title),
+            'series': series_title or '',
             'title': main_title,
             'episode': self._episode_number(season, episode),
             'timestamp': self._timestamp_string(publish_timestamp),
@@ -61,20 +61,17 @@ class TitleFormatter(object):
 
         return ''.join(res)
 
-    def _main_title(self, title, subheading):
+    def _main_title(self, title, subheading, series_title):
         main_title = self._remove_genre_prefix(
             self._remove_repeated_main_title(title))
+        if series_title and main_title.startswith(series_title):
+            main_title = main_title[len(series_title):]
+            main_title = main_title.lstrip(':').lstrip(' ')
 
         if subheading and subheading not in main_title:
             return main_title + ': ' + subheading
         else:
             return main_title
-
-    def _series_title(self, series_title, episode_title):
-        if series_title and not episode_title.startswith(series_title):
-            return series_title
-        else:
-            return ''
 
     def _remove_repeated_main_title(self, title):
         if ':' in title:

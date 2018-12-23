@@ -118,6 +118,22 @@ def test_template_date(pasila):
     assert fmt.format(**pasila) == 'Pasila-2018-04-12-2018-04-12T16:30'
 
 
+def test_template_series_duplicated_in_main_title():
+    data = {
+        'title': 'Jopet-show: Haikeaa joulua',
+        'series_title': 'Jopet-show',
+    }
+
+    fmt = TitleFormatter('${series}')
+    assert fmt.format(**data) == 'Jopet-show'
+
+    fmt = TitleFormatter('${title}')
+    assert fmt.format(**data) == 'Haikeaa joulua'
+
+    fmt = TitleFormatter('${series}${title}')
+    assert fmt.format(**data) == 'Jopet-show: Haikeaa joulua'
+
+
 def test_template_literal(pasila):
     fmt = TitleFormatter('Areena ${series}${episode}')
     assert fmt.format(**pasila) == 'Areena : Pasila: S01E03'
