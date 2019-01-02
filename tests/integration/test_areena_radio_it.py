@@ -23,13 +23,6 @@ def test_radio_title_hls():
         'Ihminen elää ilman vettä vain muutaman päivän')
 
 
-def test_radio_stream_url_rtmp():
-    url = fetch_stream_url('https://areena.yle.fi/1-3361013')
-
-    assert len(url) == 1
-    assert 'rtmp' in url[0]
-
-
 def test_radio_stream_url_hls():
     url = fetch_stream_url('https://areena.yle.fi/1-4551633')
 
@@ -45,15 +38,6 @@ def test_radio_stream_url_media_url():
 
     assert len(url) == 1
     assert '.mp3?primaryToken=' in url[0]
-
-
-def test_radio_metadata_rtmp():
-    metadata = fetch_metadata('https://areena.yle.fi/1-3361013')
-
-    assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) == 2
-    assert all(f.get('media_type') == 'audio' for f in metadata[0]['flavors'])
-    assert metadata[0]['duration_seconds'] == 2884
 
 
 def test_radio_metadata_hls():
