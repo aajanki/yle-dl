@@ -18,6 +18,11 @@ class MockBackend(object):
         return True
 
 
+class MockGeoLocation(object):
+    def located_in_finland(self, referrer):
+        return True
+
+
 flavors = [
     StreamFlavor(streams=[MockBackend('ffmpeg', 1)],
                  bitrate=190, width=224, height=126, media_type=''),
@@ -51,7 +56,8 @@ hard_sub_flavors = [
 
 
 def yle_dl_downloader():
-    return YleDlDownloader(SubtitleDownloader(None))
+    return YleDlDownloader(SubtitleDownloader(None),
+                           MockGeoLocation())
 
 
 def video_flavor(streams):

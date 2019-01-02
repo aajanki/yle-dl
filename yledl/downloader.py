@@ -89,8 +89,9 @@ class SubtitleDownloader(object):
 
 
 class YleDlDownloader(object):
-    def __init__(self, subtitle_downloader):
+    def __init__(self, subtitle_downloader, geolocation):
         self.subtitle_downloader = subtitle_downloader
+        self.geolocation = geolocation
 
     def download_clips(self, clips, io, filters, postprocess_command):
         def download(clip, downloader):
@@ -188,6 +189,8 @@ class YleDlDownloader(object):
             elif all(not stream.is_valid() for stream in streams):
                 logger.error('Unsupported stream: %s' %
                              streams[0].error_message)
+                self.print_geo_warning(clip)
+
                 overall_status = RD_FAILED
             else:
                 res = self.try_all_streams(
@@ -347,6 +350,12 @@ class YleDlDownloader(object):
             return flavor.streams or []
         else:
             return None
+
+    def print_geo_warning(self, clip):
+        if (clip.region in ['Finland', None] and
+            not self.geolocation.located_in_finland(clip.webpage)):
+            logger.error('This clip is only available in Finland '
+                         'and according to Yle you are located abroad')
 
     def output_name_for_clip(self, clip, downloader, io):
         resume_job = (io.resume and

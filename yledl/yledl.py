@@ -35,6 +35,7 @@ from .backends import Backends
 from .downloader import YleDlDownloader, SubtitleDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory
+from .geolocation import AreenaGeoLocation
 from .http import HttpClient
 from .io import IOContext, DownloadLimits
 from .streamfilters import StreamFilters
@@ -264,7 +265,8 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
         return RD_SUCCESS
 
     clips = extractor.extract(url, stream_filters.latest_only, title_formatter)
-    dl = YleDlDownloader(SubtitleDownloader(httpclient))
+    dl = YleDlDownloader(SubtitleDownloader(httpclient),
+                         AreenaGeoLocation(httpclient))
 
     if action == StreamAction.PRINT_STREAM_URL:
         print_lines(dl.get_urls(clips, stream_filters))

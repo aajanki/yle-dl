@@ -64,6 +64,11 @@ class MockSubtitleDownloader(SubtitleDownloader):
         return [os.path.basename(s.url) for s in subtitles]
 
 
+class MockGeoLocation(object):
+    def located_in_finland(self, referrer):
+        return True
+
+
 def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
     return Clip(
         webpage='https://areena.yle.fi/1-1234567',
@@ -209,7 +214,8 @@ def simple():
     return DownloaderParametersFixture(
         io=IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump'),
         filters=StreamFilters(),
-        downloader=YleDlDownloader(MockSubtitleDownloader()))
+        downloader=YleDlDownloader(MockSubtitleDownloader(),
+                                   MockGeoLocation()))
 
 
 def test_download_success(simple):
