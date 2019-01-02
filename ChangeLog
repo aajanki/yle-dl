@@ -5,6 +5,7 @@ Distributed under the GPL v3
 <unreleased>
 
 - Display the output file name as part of the --showmetadata response
+- Show a better error message if a failure might be caused by geo blocking
 
 Version 20181221
 
