@@ -436,8 +436,10 @@ class HLSBackend(ExternalDownloader):
     def build_args(self, output_name, io):
         return self.ffmpeg_command_line(
             io,
-            ['-bsf:a', 'aac_adtstoasc', '-vcodec', 'copy',
-             '-acodec', 'copy', 'file:' + output_name])
+            ['-bsf:a', 'aac_adtstoasc',
+             '-codec', 'copy', '-scodec', 'mov_text',
+             '-map', '0:v', '-map', '0:a', '-map', '0:s?',
+             'file:' + output_name])
 
     def build_pipe_args(self, io):
         return self.ffmpeg_command_line(
