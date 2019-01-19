@@ -18,7 +18,8 @@ def test_arkisto_stream_url():
 
 
 def test_arkisto_regression():
-    # There was a regression (#168) related to invalid downloadUrl
+    # There was a regression (#168) related to an invalid downloadUrl
     meta = fetch_metadata('https://yle.fi/aihe/artikkeli/2013/04/11'
                           '/aanien-illoissa-kuunnellaan-kadonneitakin-aania')
-    assert len(meta) == 12
+    # 12 streams in the article body, possibly more in the footer
+    assert len(meta) >= 12

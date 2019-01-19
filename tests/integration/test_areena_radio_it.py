@@ -37,7 +37,7 @@ def test_radio_stream_url_media_url():
     url = fetch_stream_url('https://areena.yle.fi/1-4561516', filters)
 
     assert len(url) == 1
-    assert '.mp3?primaryToken=' in url[0]
+    assert '.mp3?' in url[0]
 
 
 def test_radio_metadata_hls():
