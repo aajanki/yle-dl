@@ -442,21 +442,12 @@ class HLSBackend(ExternalDownloader):
     def build_pipe_args(self, io):
         return self.ffmpeg_command_line(
             io,
-            ['-vcodec', 'copy', '-acodec', 'copy',
-             '-f', 'mpegts', 'pipe:1'])
-
-    def build_pipe_with_subtitles_args(self, io, subtitle_url):
-        return self.ffmpeg_command_line(
-            io,
-            ['-thread_queue_size', '512', '-i', subtitle_url,
-             '-vcodec', 'copy', '-acodec', 'aac', '-scodec', 'copy',
+            ['-codec', 'copy', '-acodec', 'aac',
+             '-map', '0:v', '-map', '0:a', '-map', '0:s?',
              '-f', 'matroska', 'pipe:1'])
 
     def pipe(self, io, subtitle_url):
-        if subtitle_url:
-            commands = [self.build_pipe_with_subtitles_args(io, subtitle_url)]
-        else:
-            commands = [self.build_pipe_args(io)]
+        commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
 
@@ -465,7 +456,8 @@ class HLSBackend(ExternalDownloader):
         loglevel = 'info' if debug else 'error'
         args = [io.ffmpeg_binary, '-y',
                 '-loglevel', loglevel, '-stats',
-                '-thread_queue_size', '512']
+                '-thread_queue_size', '512',
+                '-strict', 'experimental']  # For decoding webvtt subtitles
         args.extend(self._probe_args())
         args.extend(['-i', self.url])
         args.extend(self._duration_arg(io.download_limits))
