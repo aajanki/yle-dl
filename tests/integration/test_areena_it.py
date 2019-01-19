@@ -61,7 +61,6 @@ def test_areena_html5_metadata():
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2017-07-16T14:00:00+03:00'
     assert 'expired_timestamp' not in metadata[0]
-    assert len(metadata[0]['subtitles']) == 1
 
 
 @pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
