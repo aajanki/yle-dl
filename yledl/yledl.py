@@ -195,7 +195,7 @@ def arg_parser():
     dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument('--backend', metavar='BE',
                           type=to_unicode,
-                          default="wget,ffmpeg,adobehdsphp,youtubedl,rtmpdump",
+                          default="ffmpeg,wget,adobehdsphp,youtubedl,rtmpdump",
                           help='Downloaders that are tried until one of them '
                           ' succeeds (a comma-separated list). '
                           'Possible values: '
