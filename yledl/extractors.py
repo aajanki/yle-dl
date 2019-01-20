@@ -673,6 +673,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     def is_elava_arkisto_media(self, media_id):
         return media_id and media_id.startswith('26-')
 
+    def is_mediakanta_media(self, media_id):
+        return media_id and media_id.startswith('6-')
+
     def kaltura_entry_id(self, mediaid):
         return mediaid.split('-', 1)[-1]
 
@@ -808,7 +811,10 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         download_url = ((info and info.get('downloadUrl')) or
                         self.preview_media_url(preview))
         download_url = self.ignore_invalid_download_url(download_url)
-        medias = self.akamai_medias(pid, media_id, info)
+        if self.is_mediakanta_media(media_id):
+            medias = self.akamai_medias(pid, media_id, info)
+        else:
+            medias = []
         media_type = (self.program_media_type(info) or
                       self.preview_media_type(preview))
         publish_timestamp = (self.publish_timestamp(info) or
