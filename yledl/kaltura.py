@@ -7,6 +7,7 @@ import json
 import base64
 from .backends import HLSBackend, HLSAudioBackend, WgetBackend
 from .streamflavor import StreamFlavor, FailedFlavor
+from .subtitles import EmbeddedSubtitle
 
 
 logger = logging.getLogger('yledl')
@@ -128,6 +129,28 @@ class YleKalturaApiClient(KalturaApiClient):
             logger.debug('Ignored %d non-web flavors' % num_non_web)
 
         return self.create_flavors(filtered_flavors, delivery_profiles, referrer)
+
+    def parse_embedded_subtitles(self, playback_context):
+        language_name_to_code = {
+            'finnish': 'fin',
+            'swedish': 'swe'
+        }
+
+        categories = {
+            'översättning': 'käännöstekstitys',
+            'programtextning': 'ohjelmatekstitys'
+        }
+
+        subtitles = []
+        for caption in playback_context.get('playbackCaptions', []):
+            language_name = caption.get('language').lower()
+            language_code = language_name_to_code.get(language_name)
+            label = caption.get('label')
+            category = categories.get(label, label)
+
+            if language_name and language_code:
+                subtitles.append(EmbeddedSubtitle(language_code, category))
+        return subtitles
 
     def create_flavors(self, flavors, delivery_profiles, referrer):
         res = []
