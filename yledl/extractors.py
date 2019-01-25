@@ -219,7 +219,7 @@ class Clip(object):
     region = attr.ib(default='Finland')
     publish_timestamp = attr.ib(default=None)
     expiration_timestamp = attr.ib(default=None)
-    subtitles = attr.ib(factory=list)
+    embedded_subtitles = attr.ib(factory=list)
 
     def output_file_name(self, extension, io, resume_job=False):
         if io.outputfilename:
@@ -280,7 +280,9 @@ class Clip(object):
             ('filename', self.meta_file_name(self.flavors, io)),
             ('flavors', flavors_meta),
             ('duration_seconds', self.duration_seconds),
-            ('subtitles', [vars(st) for st in self.subtitles]),
+            ('embedded_subtitles',
+             [{'language': x.language, 'category': x.category}
+              for x in (self.embedded_subtitles or [])]),
             ('region', self.region),
             ('publish_timestamp',
              self.format_timestamp(self.publish_timestamp)),
@@ -349,7 +351,7 @@ class FailedClip(Clip):
                       region=None,
                       publish_timestamp=None,
                       expiration_timestamp=None,
-                      subtitles=[])
+                      embedded_subtitles=[])
 
 
 @attr.s
@@ -363,6 +365,7 @@ class AreenaApiProgramInfo(object):
     media_id = attr.ib()
     title = attr.ib()
     flavors = attr.ib()
+    embedded_subtitles = attr.ib()
     duration_seconds = attr.ib()
     available_at_region = attr.ib()
     publish_timestamp = attr.ib()
@@ -612,7 +615,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                 region=program_info.available_at_region,
                 publish_timestamp=program_info.publish_timestamp,
                 expiration_timestamp=program_info.expiration_timestamp,
-                subtitles=[])
+                embedded_subtitles=program_info.embedded_subtitles)
         else:
             return FailedClip(pageurl, 'Media not found')
 
@@ -629,7 +632,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             return None
 
     def media_flavors(self, media_id, program_id, hls_manifest_url,
-                      download_url, akamai_protocol, media_type, pageurl):
+                      download_url, kaltura_flavors, akamai_protocol,
+                      media_type, pageurl):
         flavors = []
 
         if download_url:
@@ -638,8 +642,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         if media_id:
             flavors.extend(
                 self.flavors_by_media_id(
-                    media_id, program_id, hls_manifest_url, akamai_protocol,
-                    media_type, pageurl))
+                    media_id, program_id, hls_manifest_url, kaltura_flavors,
+                    akamai_protocol, media_type, pageurl))
         elif hls_manifest_url:
             flavors.extend(
                 self.hls_flavors(hls_manifest_url, media_type))
@@ -647,16 +651,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         return flavors or None
 
     def flavors_by_media_id(self, media_id, program_id,
-                            hls_manifest_url, akamai_protocol,
-                            media_type, pageurl):
+                            hls_manifest_url, kaltura_flavors,
+                            akamai_protocol, media_type, pageurl):
         if self.is_full_hd_media(media_id):
             logger.debug('Detected a full-HD media')
             return self.full_hd_flavors(hls_manifest_url, media_type)
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
-            entry_id = self.kaltura_entry_id(media_id)
-            kapi_client = YleKalturaApiClient(self.httpclient)
-            return kapi_client.get_flavors(entry_id, pageurl)
+            return kaltura_flavors
         elif self.is_mediakanta_media(media_id):
             parser = AkamaiFlavorParser(self.httpclient)
             medias = self.akamai_medias(program_id, media_id, akamai_protocol)
@@ -816,12 +818,23 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         title = (self.program_title(info, publish_timestamp, title_formatter) or
                  self.preview_title(preview, publish_timestamp, title_formatter))
         akamai_protocol = self.program_protocol(info, 'HDS')
+        if self.is_html5_media(media_id):
+            entry_id = self.kaltura_entry_id(media_id)
+            kapi_client = YleKalturaApiClient(self.httpclient)
+            playback_context = kapi_client.playback_context(entry_id, pageurl)
+            kaltura_flavors = kapi_client.parse_stream_flavors(playback_context, pageurl)
+            kaltura_subtitles = kapi_client.parse_embedded_subtitles(playback_context)
+        else:
+            kaltura_flavors = None
+            kaltura_subtitles = None
+
         return AreenaApiProgramInfo(
             media_id = media_id,
             title = title,
             flavors = self.media_flavors(media_id, pid, manifest_url,
-                                         download_url, akamai_protocol,
-                                         media_type, pageurl),
+                                         download_url, kaltura_flavors,
+                                         akamai_protocol, media_type, pageurl),
+            embedded_subtitles = kaltura_subtitles,
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),
             available_at_region = (self.available_at_region(info) or

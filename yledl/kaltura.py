@@ -96,7 +96,7 @@ class YleKalturaApiClient(KalturaApiClient):
     def __init__(self, requests_session):
         super(YleKalturaApiClient, self).__init__(self.api_url, requests_session)
 
-    def get_flavors(self, entry_id, referrer):
+    def playback_context(self, entry_id, referrer):
         subrequests = [
             self.start_widget_session(self.widget_id),
             self.list_base_entry(entry_id, '{1:result:ks}'),
@@ -114,10 +114,12 @@ class YleKalturaApiClient(KalturaApiClient):
         logger.debug('Kaltura API response:\n' +
                      json.dumps(response, indent=2))
 
-        return (self.maybe_unparseable_response(response) or
-                self.parse_stream_flavors(response[2], referrer))
+        return response[2] if len(response) > 2 else None
 
     def parse_stream_flavors(self, playback_context, referrer):
+        if playback_context is None:
+            return [FailedFlavor('No Kaltura playback context')]
+
         flavor_assets = playback_context.get('flavorAssets', {})
         sources = playback_context.get('sources', {})
         delivery_profiles = self.delivery_profiles_by_flavor_id(sources)
@@ -216,13 +218,6 @@ class YleKalturaApiClient(KalturaApiClient):
             profiles.setdefault(p.flavor_id, []).append(p)
 
         return profiles
-
-    def maybe_unparseable_response(self, response):
-        if (len(response) != 4 or
-            response[2].get('objectType') != 'KalturaPlaybackContext'):
-            return [FailedFlavor('Unexpected response from Kaltura API')]
-        else:
-            return None
 
 
 @attr.s

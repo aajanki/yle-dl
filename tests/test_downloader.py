@@ -8,8 +8,9 @@ import pytest
 from datetime import datetime
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
-from yledl.downloader import YleDlDownloader, SubtitleDownloader
+from yledl.downloader import YleDlDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
+from yledl.subtitles import EmbeddedSubtitle
 from yledl.timestamp import FixedOffset
 
 
@@ -53,15 +54,6 @@ class FailingBackend(StateCollectingBackend):
 
     def pipe(self, io, subtitle_url):
         return RD_FAILED
-
-
-class MockSubtitleDownloader(SubtitleDownloader):
-    def __init__(self):
-        SubtitleDownloader.__init__(self, None)
-
-    def download(self, subtitles, videofilename):
-        # Don't actually download anything
-        return [os.path.basename(s.url) for s in subtitles]
 
 
 class MockGeoLocation(object):
@@ -116,9 +108,9 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
         region='Finland',
         publish_timestamp=datetime(2018, 7, 1, tzinfo=FixedOffset(3)),
         expiration_timestamp=datetime(2019, 1, 1, tzinfo=FixedOffset(3)),
-        subtitles=[
-            Subtitle('https://example.com/subtitle/fin.srt', 'fin'),
-            Subtitle('https://example.com/subtitle/swe.srt', 'swe')
+        embedded_subtitles=[
+            EmbeddedSubtitle('fin', 'käännöstekstitys'),
+            EmbeddedSubtitle('swe', 'käännöstekstitys')
         ]
     )
 
@@ -214,8 +206,7 @@ def simple():
     return DownloaderParametersFixture(
         io=IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump'),
         filters=StreamFilters(),
-        downloader=YleDlDownloader(MockSubtitleDownloader(),
-                                   MockGeoLocation()))
+        downloader=YleDlDownloader(MockGeoLocation()))
 
 
 def test_download_success(simple):
@@ -377,9 +368,9 @@ def test_print_metadata(simple):
                 }
             ],
             'duration_seconds': 950,
-            'subtitles': [
-                {'url': 'https://example.com/subtitle/fin.srt', 'lang': 'fin'},
-                {'url': 'https://example.com/subtitle/swe.srt', 'lang': 'swe'}
+            'embedded_subtitles': [
+                {'language': 'fin', 'category': 'käännöstekstitys'},
+                {'language': 'swe', 'category': 'käännöstekstitys'}
             ],
             'region': 'Finland',
             'publish_timestamp': '2018-07-01T00:00:00+03:00',
@@ -422,7 +413,7 @@ def test_print_metadata_incomplete(simple):
                 }
             ],
             'region': 'Finland',
-            'subtitles': []
+            'embedded_subtitles': []
         }
     ]
 
@@ -458,7 +449,7 @@ def test_print_metadata_failed_clip(simple):
                     'error': failed_clip().flavors[0].streams[0].error_message
                 }
             ],
-            'subtitles': []
+            'embedded_subtitles': []
         }
     ]
 
@@ -471,12 +462,3 @@ def test_download_fallback(simple):
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
     assert state['stream_id'] == '3'
-
-
-def test_download_subtitles(simple):
-    state = {}
-    clips = [successful_clip(state)]
-    subtitles = simple.downloader.download_subtitles(
-        clips, simple.io, simple.filters)
-
-    assert subtitles == [['fin.srt', 'swe.srt']]

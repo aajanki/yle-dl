@@ -18,79 +18,8 @@ from .streamflavor import FailedFlavor
 logger = logging.getLogger('yledl')
 
 
-class SubtitleDownloader(object):
-    def __init__(self, httpclient):
-        self.httpclient = httpclient
-
-    def select_and_download(self, subtitles, videofilename, filters):
-        """Filter subtitles and save them to disk.
-
-        Returns a list of filenames where subtitles were saved.
-        """
-        selected = self.select(subtitles, filters)
-        return self.download(selected, videofilename)
-
-    def select(self, subtitles, filters):
-        """Return a list of subtitles that match the filters."""
-        if filters.hardsubs:
-            return []
-
-        selected = []
-        for sub in subtitles:
-            matching_lang = (filters.sublang_matches(sub.lang, '') or
-                             filters.sublang == 'all')
-            if sub.url and matching_lang:
-                selected.append(sub)
-
-        if selected and filters.sublang != 'all':
-            selected = selected[:1]
-
-        return selected
-
-    def download(self, subtitles, videofilename):
-        """Download each subtitle and save them to disk.
-
-        Returns a list of filenames where the subtitles were saved.
-        """
-        basename = os.path.splitext(videofilename)[0]
-        subtitlefiles = []
-        for sub in subtitles:
-            filename = basename + '.' + sub.lang + '.srt'
-            if os.path.isfile(filename):
-                logger.debug('Subtitle file {} already exists, skipping'
-                             .format(filename))
-            else:
-                try:
-                    self.httpclient.download_to_file(sub.url, filename)
-                    self.add_BOM(filename)
-                    logger.info('Subtitles saved to ' + filename)
-                    subtitlefiles.append(filename)
-                except IOError:
-                    logger.exception('Failed to download subtitles '
-                                     'at %s' % sub.url)
-        return subtitlefiles
-
-    def add_BOM(self, filename):
-        """Add byte-order mark into a file.
-
-        Assumes (but does not check!) that the file is UTF-8 encoded.
-        """
-        enc = sys.getfilesystemencoding()
-        encoded_filename = filename.encode(enc, 'replace')
-
-        with open(encoded_filename, 'rb') as infile:
-            content = infile.read()
-            if content.startswith(codecs.BOM_UTF8):
-                return
-
-        with open(encoded_filename, 'wb') as outfile:
-            outfile.write(codecs.BOM_UTF8)
-            outfile.write(content)
-
-
 class YleDlDownloader(object):
-    def __init__(self, subtitle_downloader, geolocation):
-        self.subtitle_downloader = subtitle_downloader
+    def __init__(self, geolocation):
         self.geolocation = geolocation
 
     def download_clips(self, clips, io, filters, postprocess_command):
@@ -104,16 +33,12 @@ class YleDlDownloader(object):
             downloader.warn_on_unsupported_feature(io)
 
             outputfile = self.output_name_for_clip(clip, downloader, io)
-            subtitlefiles = self.subtitle_downloader.select_and_download(
-                clip.subtitles, outputfile, filters)
-
             self.log_output_file(outputfile)
             dl_result = downloader.save_stream(outputfile, io)
 
             if dl_result == RD_SUCCESS:
                 self.log_output_file(outputfile, True)
-                self.postprocess(postprocess_command, outputfile,
-                                 subtitlefiles)
+                self.postprocess(postprocess_command, outputfile, [])
 
             return (dl_result, outputfile)
 
@@ -129,28 +54,13 @@ class YleDlDownloader(object):
                              'supported.' % clip.webpage)
                 return RD_FAILED
             downloader.warn_on_unsupported_feature(io)
-            subtitles = self.subtitle_downloader.select(clip.subtitles, filters)
-            subtitle_url = subtitles[0].url if subtitles else None
-            res = downloader.pipe(io, subtitle_url)
+            res = downloader.pipe(io, None)
             return (res, None)
 
         def needs_retry(res):
             return res == RD_SUBPROCESS_EXECUTE_FAILED
 
         return self.process(clips, pipe_clip, needs_retry, filters)
-
-    def download_subtitles(self, clips, io, filters):
-        downloaded_subtitle_files = []
-        for clip in clips:
-            # The video file extension will be ignored. The subtitle
-            # file extension will be .srt in any case.
-            ext = PreferredFileExtension('.flv')
-            base_name = clip.output_file_name(ext, io)
-            subtitle_files = self.subtitle_downloader.select_and_download(
-                clip.subtitles, base_name, filters)
-            downloaded_subtitle_files.append(subtitle_files)
-
-        return downloaded_subtitle_files
 
     def get_urls(self, clips, filters):
         urls = []

@@ -7,3 +7,4 @@ import attr
 @attr.s
 class EmbeddedSubtitle(object):
     language = attr.ib()
+    category = attr.ib()

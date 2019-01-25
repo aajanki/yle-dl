@@ -32,7 +32,7 @@ import logging
 import configargparse
 from future.moves.urllib.parse import urlparse, urlunparse, quote
 from .backends import Backends
-from .downloader import YleDlDownloader, SubtitleDownloader
+from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory
 from .geolocation import AreenaGeoLocation
@@ -70,7 +70,6 @@ class StreamAction(object):
     PRINT_STREAM_TITLE = 4
     PRINT_EPISODE_PAGES = 5
     PRINT_METADATA = 6
-    DOWNLOAD_SUBTITLES_ONLY = 7
 
 
 def arg_parser():
@@ -147,8 +146,6 @@ def arg_parser():
                               help='Print web page for each episode')
     action_group.add_argument('--showmetadata', action='store_true',
                               help='Print metadata about available streams')
-    action_group.add_argument('--subtitlesonly', action='store_true',
-                              help='Download only subtitles, not the video')
     io_group.add_argument('--vfat', action='store_true',
                           help='Output Windows-compatible filenames')
     io_group.add_argument('--resume', action='store_true',
@@ -265,8 +262,7 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
         return RD_SUCCESS
 
     clips = extractor.extract(url, stream_filters.latest_only, title_formatter)
-    dl = YleDlDownloader(SubtitleDownloader(httpclient),
-                         AreenaGeoLocation(httpclient))
+    dl = YleDlDownloader(AreenaGeoLocation(httpclient))
 
     if action == StreamAction.PRINT_STREAM_URL:
         print_lines(dl.get_urls(clips, stream_filters))
@@ -279,9 +275,6 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
         return dl.pipe(clips, io, stream_filters)
-    elif action == StreamAction.DOWNLOAD_SUBTITLES_ONLY:
-        dl.download_subtitles(clips, io, stream_filters)
-        return RD_SUCCESS
     else:
         return dl.download_clips(clips, io, stream_filters,
                                  postprocess_command)
@@ -358,8 +351,6 @@ def main(argv=sys.argv):
         action = StreamAction.PRINT_METADATA
     elif args.pipe or (args.outputfile == '-'):
         action = StreamAction.PIPE
-    elif args.subtitlesonly:
-        action = StreamAction.DOWNLOAD_SUBTITLES_ONLY
     else:
         action = StreamAction.DOWNLOAD
 

@@ -36,7 +36,7 @@ def test_areena_akamai_hds_metadata():
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2012-01-19T12:00:00+02:00'
     assert 'expired_timestamp' not in metadata[0]
-    assert len(metadata[0]['subtitles']) == 0
+    assert len(metadata[0]['embedded_subtitles']) == 0
 
 
 def test_areena_html5_stream_url():
@@ -61,6 +61,9 @@ def test_areena_html5_metadata():
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2017-07-16T14:00:00+03:00'
     assert 'expired_timestamp' not in metadata[0]
+    assert metadata[0]['embedded_subtitles'] == [
+        {'language': 'fin', 'category': 'ohjelmatekstitys'}
+    ]
 
 
 @pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
