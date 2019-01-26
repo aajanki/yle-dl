@@ -282,7 +282,7 @@ class Clip(object):
             ('duration_seconds', self.duration_seconds),
             ('embedded_subtitles',
              [{'language': x.language, 'category': x.category}
-              for x in (self.embedded_subtitles or [])]),
+              for x in self.embedded_subtitles]),
             ('region', self.region),
             ('publish_timestamp',
              self.format_timestamp(self.publish_timestamp)),
@@ -826,7 +826,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             kaltura_subtitles = kapi_client.parse_embedded_subtitles(playback_context)
         else:
             kaltura_flavors = None
-            kaltura_subtitles = None
+            kaltura_subtitles = []
 
         return AreenaApiProgramInfo(
             media_id = media_id,
