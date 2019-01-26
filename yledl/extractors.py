@@ -717,12 +717,6 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         backend = WgetBackend(download_url, ext)
         return [StreamFlavor(media_type=media_type, streams=[backend])]
 
-    def parse_subtitles(self, medias):
-        subtitles = []
-        for subtitle_media in medias:
-            subtitles.extend(self.media_subtitles(subtitle_media))
-        return subtitles
-
     def program_protocol(self, program_info, default_video_proto):
         pinfo = program_info or {}
         event = self.publish_event(program_info)
@@ -858,26 +852,6 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
     def publish_event_is_current(self, event):
         return event.get('temporalStatus') == 'currently'
-
-    def media_subtitles(self, media):
-        subtitles = []
-        for s in media.get('subtitles', []):
-            uri = s.get('uri')
-            lang = self.language_code_from_subtitle_uri(uri) or \
-                normalize_language_code(s.get('lang'), s.get('type'))
-            if uri:
-                subtitles.append(Subtitle(uri, lang))
-        return subtitles
-
-    def language_code_from_subtitle_uri(self, uri):
-        if uri.endswith('.srt'):
-            ext = uri[:-4].rsplit('.', 1)[-1]
-            if len(ext) <= 3:
-                return ext
-            else:
-                return None
-        else:
-            return None
 
     def program_info_duration_seconds(self, program_info):
         pt_duration = ((program_info or {})
