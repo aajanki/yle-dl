@@ -145,13 +145,12 @@ class YleKalturaApiClient(KalturaApiClient):
 
         subtitles = []
         for caption in playback_context.get('playbackCaptions', []):
-            language_name = caption.get('language').lower()
-            language_code = language_name_to_code.get(language_name)
+            language_name = caption.get('language', '').lower()
+            language_code = language_name_to_code.get(language_name, 'unk')
             label = caption.get('label')
             category = categories.get(label, label)
+            subtitles.append(EmbeddedSubtitle(language_code, category))
 
-            if language_name and language_code:
-                subtitles.append(EmbeddedSubtitle(language_code, category))
         return subtitles
 
     def create_flavors(self, flavors, delivery_profiles, referrer):
