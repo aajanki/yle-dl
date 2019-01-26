@@ -20,6 +20,7 @@ from .kaltura import YleKalturaApiClient
 from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
+from .subtitles import Subtitle
 from .timestamp import parse_areena_timestamp
 from .utils import sane_filename
 
@@ -352,12 +353,6 @@ class FailedClip(Clip):
                       publish_timestamp=None,
                       expiration_timestamp=None,
                       embedded_subtitles=[])
-
-
-@attr.s
-class Subtitle(object):
-    url = attr.ib()
-    lang = attr.ib()
 
 
 @attr.s
