@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, absolute_import, unicode_literals
-import codecs
 import copy
 import json
 import logging
 import os.path
-import sys
 from .utils import sane_filename
-from .backends import IOCapability, PreferredFileExtension, Subprocess
+from .backends import IOCapability, Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .streamfilters import normalize_language_code
