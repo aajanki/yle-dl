@@ -170,9 +170,10 @@ def arg_parser():
                             '"swe"')
     qual_group.add_argument('--sublang', metavar='LANG',
                             type=to_unicode,
-                            choices=['fin', 'swe', 'smi', 'none', 'all'],
-                            help='Download subtitles. LANG is one of "fin", '
-                            '"swe", "smi", "none", or "all"')
+                            choices=['none', 'all'],
+                            default='all',
+                            help='Download subtitles if LANG is "all" '
+                            '(default) or disable subtitles if LANG is "none".')
     qual_group.add_argument('--hardsubs', action='store_true',
                             help='Download stream with hard subs if available')
     qual_group.add_argument('--latestepisode', action='store_true',
@@ -327,7 +328,8 @@ def main(argv=sys.argv):
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     dl_limits = DownloadLimits(args.duration, args.ratelimit)
     io = IOContext(args.outputfile, args.destdir, args.resume,
-                   dl_limits, excludechars, args.proxy, args.rtmpdump,
+                   dl_limits, excludechars, args.proxy,
+                   args.sublang == 'all', args.rtmpdump,
                    args.adobehds, args.ffmpeg, args.ffprobe, args.wget)
 
     urls = []

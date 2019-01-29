@@ -78,6 +78,7 @@ class IOContext(object):
     download_limits = attr.ib(default=None, converter=convert_download_limits)
     excludechars = attr.ib(default='*/|')
     proxy = attr.ib(default=None)
+    embed_subtitles = attr.ib(default=True)
     rtmpdump_binary = attr.ib(default=None, converter=find_rtmpdump)
     hds_binary = attr.ib(default=None, converter=convert_hds_argument)
     ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)

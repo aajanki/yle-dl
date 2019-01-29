@@ -434,19 +434,29 @@ class HLSBackend(ExternalDownloader):
             return []
 
     def build_args(self, output_name, io):
-        return self.ffmpeg_command_line(
-            io,
-            ['-bsf:a', 'aac_adtstoasc',
-             '-codec', 'copy', '-scodec', 'mov_text',
-             '-map', '0:v', '-map', '0:a', '-map', '0:s?',
-             'file:' + output_name])
+        if io.embed_subtitles:
+            subtitles_args = ['-scodec', 'mov_text', '-map', '0:s?']
+        else:
+            subtitles_args = []
+
+        args = (['-bsf:a', 'aac_adtstoasc',
+                 '-codec', 'copy',
+                 '-map', '0:v', '-map', '0:a'] + subtitles_args +
+                ['file:' + output_name])
+
+        return self.ffmpeg_command_line(io, args)
 
     def build_pipe_args(self, io):
-        return self.ffmpeg_command_line(
-            io,
-            ['-codec', 'copy', '-acodec', 'aac',
-             '-map', '0:v', '-map', '0:a', '-map', '0:s?',
-             '-f', 'matroska', 'pipe:1'])
+        if io.embed_subtitles:
+            subtitle_args = ['-map', '0:s?']
+        else:
+            subtitle_args = []
+
+        args = (['-codec', 'copy', '-acodec', 'aac',
+                 '-map', '0:v', '-map', '0:a'] + subtitle_args +
+                 ['-f', 'matroska', 'pipe:1'])
+
+        return self.ffmpeg_command_line(io, args)
 
     def pipe(self, io, subtitle_url):
         commands = [self.build_pipe_args(io)]

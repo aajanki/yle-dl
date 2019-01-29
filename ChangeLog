@@ -6,6 +6,9 @@ Distributed under the GPL v3
 
 - Use ffmpeg instead of wget by default
 - Embed subtitles to the downloaded video file when possible
+- Download either all subtitles (--sublang="all") or none (--sublang="none").
+  It's no longer possible to download subtitles only for one language.
+- Removed the --subtitlesonly option
 - Display the output file name as part of the --showmetadata response
 - Show a better error message if a failure might be caused by geo blocking
 
