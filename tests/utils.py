@@ -2,8 +2,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import json
 from io import BytesIO
-from yledl import download, StreamFilters, IOContext, \
-    DownloadLimits, StreamAction, RD_SUCCESS
+from yledl import download, StreamFilters, IOContext, StreamAction, RD_SUCCESS
 from yledl.http import HttpClient
 from yledl.titleformatter import TitleFormatter
 
