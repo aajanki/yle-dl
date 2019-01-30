@@ -3,7 +3,6 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
 import json
-import os.path
 import pytest
 from datetime import datetime
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
@@ -28,7 +27,7 @@ class StateCollectingBackend(BaseDownloader):
 
         return RD_SUCCESS
 
-    def pipe(self, io, subtitle_url):
+    def pipe(self, io):
         self.state_dict['command'] = 'pipe'
         self.state_dict['stream_id'] = self.id
         self.state_dict['backend'] = self.name
@@ -52,7 +51,7 @@ class FailingBackend(StateCollectingBackend):
     def save_stream(self, clip_title, io):
         return RD_FAILED
 
-    def pipe(self, io, subtitle_url):
+    def pipe(self, io):
         return RD_FAILED
 
 
@@ -436,7 +435,6 @@ def test_download_failed_stream(simple):
 
 
 def test_print_metadata_failed_clip(simple):
-    state = {}
     clips = [failed_clip()]
     metadata = simple.downloader.get_metadata(clips, simple.io)
     parsed_metadata = json.loads(metadata[0])

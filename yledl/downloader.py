@@ -52,7 +52,7 @@ class YleDlDownloader(object):
                              'supported.' % clip.webpage)
                 return RD_FAILED
             downloader.warn_on_unsupported_feature(io)
-            res = downloader.pipe(io, None)
+            res = downloader.pipe(io)
             return (res, None)
 
         def needs_retry(res):

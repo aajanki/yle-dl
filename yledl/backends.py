@@ -15,7 +15,6 @@ from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import yledl_user_agent
-from .io import which
 from .rtmp import rtmp_parameters_to_url, rtmp_parameters_to_rtmpdump_args
 
 
@@ -71,7 +70,7 @@ class BaseDownloader(object):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
-    def pipe(self, io, subtitle_url):
+    def pipe(self, io):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
@@ -80,7 +79,7 @@ class BaseDownloader(object):
         return None
 
 
-### Download a stream to a file using an external program ###
+### Base class for downloading a stream to a file using an external program ###
 
 
 class ExternalDownloader(BaseDownloader):
@@ -89,39 +88,22 @@ class ExternalDownloader(BaseDownloader):
         args = self.build_args(output_name, io)
         return self.external_downloader([args], env)
 
-    def pipe(self, io, subtitle_url):
+    def pipe(self, io):
         commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
-        subtitle_command = self._mux_subtitles_command(io.ffmpeg_binary,
-                                                       subtitle_url)
-        if subtitle_command:
-            commands.append(subtitle_command)
         return self.external_downloader(commands, env)
 
     def build_args(self, output_name, io):
-        return []
+        raise NotImplementedError('build_args must be overridden')
 
     def build_pipe_args(self, io):
-        return []
+        raise NotImplementedError('build_pipe_args must be overridden')
 
     def extra_environment(self, io):
         return None
 
     def external_downloader(self, commands, env=None):
         return Subprocess().execute(commands, env)
-
-    def _mux_subtitles_command(self, ffmpeg_binary, subtitle_url):
-        if not ffmpeg_binary or not subtitle_url:
-            return None
-
-        if which(ffmpeg_binary):
-            return [ffmpeg_binary, '-y', '-i', 'pipe:0', '-i', subtitle_url,
-                    '-c', 'copy', '-c:s', 'srt', '-f', 'matroska', 'pipe:1']
-        else:
-            logger.warning('{} not found. Subtitles disabled.'
-                           .format(ffmpeg_binary))
-            logger.warning('Set the path to ffmpeg using --ffmpeg')
-            return None
 
 
 class Subprocess(object):
@@ -311,8 +293,8 @@ class HDSBackend(ExternalDownloader):
         files = os.listdir('.')
         return any(re.match(pattern, x) is not None for x in files)
 
-    def pipe(self, io, subtitle_url):
-        res = super(HDSBackend, self).pipe(io, subtitle_url)
+    def pipe(self, io):
+        res = super(HDSBackend, self).pipe(io)
         self.cleanup_cookies()
         return res
 
@@ -363,8 +345,7 @@ class YoutubeDLHDSBackend(BaseDownloader):
     def save_stream(self, output_name, io):
         return self._execute_youtube_dl(output_name, io)
 
-    def pipe(self, io, subtitle_url):
-        # TODO: subtitles
+    def pipe(self, io):
         return self._execute_youtube_dl('-', io)
 
     def stream_url(self):
@@ -458,7 +439,7 @@ class HLSBackend(ExternalDownloader):
 
         return self.ffmpeg_command_line(io, args)
 
-    def pipe(self, io, subtitle_url):
+    def pipe(self, io):
         commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
@@ -566,7 +547,7 @@ class FailingBackend(BaseDownloader):
         logger.error(self.error_message)
         return RD_FAILED
 
-    def pipe(self, io, subtitle_url):
+    def pipe(self, io):
         logger.error(self.error_message)
         return RD_FAILED
 
