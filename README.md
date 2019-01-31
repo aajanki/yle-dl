@@ -31,14 +31,14 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 * Python 2.7 or 3.5+
 * pip
 * pycryptodome
-* wget
 * ffmpeg
 * setuptools (when installing from the sources)
 
-Optionally for certain types of streams:
+Optionally for few rare streams:
 
-* PHP interpreter with bcmath, curl, openssl and SimpleXML extensions: live TV and certain news broadcasts
-* rtmpdump: Areena audio streams. Version 2.4 or newer, preferably the latest development version from the [project homepage](https://rtmpdump.mplayerhq.hu/)
+* PHP interpreter with bcmath, curl, openssl and SimpleXML extensions: some news broadcasts
+* rtmpdump: some Elävä Arkisto streams. Version 2.4 or newer, preferably the latest development version from the [project homepage](https://rtmpdump.mplayerhq.hu/)
+* wget
 
 Enable the PHP extensions by appending the following lines with the
 correct paths in the [php.ini]:
@@ -60,6 +60,17 @@ Installation from sources. Download the sources and run the following
 on the source directory:
 ```
 python3 setup.py install --user
+```
+
+### 3. Fix the search path if necessary ###
+
+If the command line shell complains that it can't find yle-dl when you try to execute it, add the installation location onto your $PATH:
+```
+# Set the path for the current terminal session
+export PATH=$PATH:$HOME/.local/bin
+
+# Make the change permanent. Adjust as needed if you are not using bash
+echo export PATH=\$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
 
 Installation with youtube-dl as an alternative downloader backend

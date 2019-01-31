@@ -16,26 +16,27 @@ Alla on yleiset asennusohjeet. Yksityiskohtaisemmat asennusohjeet
 Debianille, Ubuntulle, Mac OS X:lle, Windowsille ja Androidille
 löytyvät tiedostosta OS-install-instructions.md.
 
-Asenna riippuvuudet:
+### 1. Asenna riippuvuudet:
 
 * Python 2.7 tai 3.5+
 * pip
 * pycryptodome
-* wget
 * ffmpeg
 * setuptools (jos asennat lähdekoodeista)
 
-Joidenkin ohjelmien lataamiseen tarvitaan lisäksi:
+Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
 
-* PHP-tulkki ja bcmath-, curl-, openssl- ja SimpleXML-laajennukset: suorat
-  TV-lähetykset ja jotkin uutis- ja ajankohtaisohjelmat
-* rtmpdump (versio 2.4 tai uudempi): Areenan radio-ohjelmat
+* PHP-tulkki ja bcmath-, curl-, openssl- ja SimpleXML-laajennukset: muutamat uutis- ja ajankohtaisohjelmat
+* rtmpdump (versio 2.4 tai uudempi): muutamat Elävän Arkiston ohjelmat
+* wget
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
 polkuineen php.ini-tiedostoon
 (https://secure.php.net/manual/en/configuration.file.php):
 
 extension=/polku/curl.so
+
+### 2. Asenna yle-dl
 
 Asenna seuraavaksi yle-dl joko asentamalla esikäännetty paketti (ei
 vaadi lähdekoodien lataamista):
@@ -47,6 +48,17 @@ lähdekoodihakemistossa:
 
 python3 setup.py install --user
 
+### 3. Lisää tarvittaessa hakemisto hakupolulle
+
+Jos komentotulkki valittaa, ettei se löydä yle-dl:ää yrittäessäsi suorittaa ohjelmaa, lisää asennushakemisto hakupolulle näille komennoilla:
+```
+# Lisää polun komentotulkkin tämänhetkiseen sessioon
+export PATH=$PATH:$HOME/.local/bin
+
+# Teekee muutoksesta pysyvän. Tämä vaatii muokkaamista, jos käytät
+# jotain muuta komentotulkkia kuin bash.
+echo export PATH=\$PATH:\$HOME/.local/bin >> ~/.bashrc
+```
 
 Asennus, kun lataukseen käytetään youtube-dl:ää
 -----------------------------------------------
