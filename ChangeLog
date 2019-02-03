@@ -2,9 +2,9 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2019 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20190203
 
-- Use ffmpeg instead of wget by default
+- Switch to using ffmpeg instead of wget by default
 - Embed subtitles to the downloaded video file when possible
 - Download either all subtitles (--sublang="all") or none (--sublang="none").
   It's no longer possible to download subtitles only for one language.
