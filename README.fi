@@ -202,7 +202,7 @@ Esimerkkejä
 
 * Toistaminen suoraan videotoistimessa:
 
-  yle-dl --pipe https://areena.yle.fi/1-2409251 | vlc --file-caching=10000 --sub-track=0 -
+  yle-dl --pipe https://areena.yle.fi/1-2409251 | mpv --cache=1000 --slang=fi -
 
 * Ladatun tiedoston jatkokäsitteleminen skriptillä (katso esimerkki
   scripts/muxmp4-tiedostossa):
