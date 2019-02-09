@@ -415,8 +415,13 @@ class HLSBackend(ExternalDownloader):
             return []
 
     def build_args(self, output_name, io):
+        if io.outputfilename and io.outputfilename.endswith('.mkv'):
+            scodec = 'copy'
+        else:
+            scodec = 'mov_text'
+
         if io.embed_subtitles:
-            subtitles_args = ['-scodec', 'mov_text', '-map', '0:s?']
+            subtitles_args = ['-scodec', scodec, '-map', '0:s?']
         else:
             subtitles_args = []
 
