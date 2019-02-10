@@ -21,7 +21,7 @@ löytyvät tiedostosta OS-install-instructions.md.
 * Python 2.7 tai 3.5+
 * pip
 * pycryptodome
-* ffmpeg
+* ffmpeg (tekstitys toimii vain ffmpegin versiolla 4.1 tai sitä uudemmilla)
 * setuptools (jos asennat lähdekoodeista)
 
 Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:

@@ -31,7 +31,7 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 * Python 2.7 or 3.5+
 * pip
 * pycryptodome
-* ffmpeg
+* ffmpeg (subtitles fully supported only on ffmpeg 4.1 or later)
 * setuptools (when installing from the sources)
 
 Optionally for few rare streams:
