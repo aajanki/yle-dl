@@ -427,7 +427,7 @@ class HLSBackend(ExternalDownloader):
 
         args = (['-bsf:a', 'aac_adtstoasc',
                  '-codec', 'copy',
-                 '-map', '0:v', '-map', '0:a'] + subtitles_args +
+                 '-map', '0:v:0', '-map', '0:a:0'] + subtitles_args +
                 ['file:' + output_name])
 
         return self.ffmpeg_command_line(io, args)
@@ -439,7 +439,7 @@ class HLSBackend(ExternalDownloader):
             subtitle_args = []
 
         args = (['-codec', 'copy', '-acodec', 'aac',
-                 '-map', '0:v', '-map', '0:a'] + subtitle_args +
+                 '-map', '0:v:0', '-map', '0:a:0'] + subtitle_args +
                  ['-f', 'matroska', 'pipe:1'])
 
         return self.ffmpeg_command_line(io, args)
