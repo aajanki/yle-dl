@@ -89,7 +89,7 @@ class KalturaApiClient(object):
 class YleKalturaApiClient(KalturaApiClient):
     partner_id = '1955031'
     widget_id = '_1955031'
-    client_tag = 'html5:v0.36.5'
+    client_tag = 'html5:v0.39.4'
     api_url = 'https://cdnapisec.kaltura.com'
     http_origin = 'https://areena.yle.fi'
 
