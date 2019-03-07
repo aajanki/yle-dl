@@ -783,7 +783,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         if self.is_elava_arkisto_media(pid):
             preview = None
         else:
-            preview = JSONP.load_json(self.preview_url(pid), self.httpclient)
+            preview_headers = {
+                'Referer': pageurl,
+                'Origin': 'https://areena.yle.fi'
+            }
+            preview = JSONP.load_json(self.preview_url(pid),
+                                      self.httpclient,
+                                      headers=preview_headers)
+
             logger.debug('preview data:')
             logger.debug(json.dumps(preview))
 
@@ -841,7 +848,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
     def preview_url(self, program_id):
         return 'https://player.api.yle.fi/v1/preview/{}.json?' \
-            'language=fin&ssl=true&countryCode=FI' \
+            'language=fin&ssl=true&countryCode=FI&host=areenaylefi' \
             '&app_id=player_static_prod' \
             '&app_key=8930d72170e48303cf5f3867780d549b'.format(program_id)
 

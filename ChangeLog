@@ -2,6 +2,11 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2019 Antti Ajanki
 Distributed under the GPL v3
 
+
+<unreleased>
+
+- Some sports streams were not downloaded at all
+
 Version 20190203
 
 - Switch to using ffmpeg instead of wget by default
