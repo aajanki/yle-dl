@@ -46,7 +46,6 @@ class MandatoryFileExtension(object):
 
 class BaseDownloader(object):
     def __init__(self):
-        self.file_extension = MandatoryFileExtension('.flv')
         self.io_capabilities = frozenset()
         self.error_message = None
 
@@ -65,6 +64,9 @@ class BaseDownloader(object):
         if io.download_limits.duration and \
            IOCapability.DURATION not in self.io_capabilities:
             logger.warning('--duration will be ignored on this stream')
+
+    def file_extension(self, preferred):
+        return PreferredFileExtension('.mp4')
 
     def save_stream(self, output_name, io):
         """Deriving classes override this to perform the download"""
@@ -203,6 +205,9 @@ class RTMPBackend(ExternalDownloader):
     def is_valid(self):
         return bool(self.rtmp_params)
 
+    def file_extension(self, preferred):
+        return MandatoryFileExtension('.flv')
+
     def save_stream(self, output_name, io):
         # rtmpdump fails to resume if the file doesn't contain at
         # least one audio frame. Remove small files to force a restart
@@ -260,6 +265,9 @@ class HDSBackend(ExternalDownloader):
             IOCapability.RATELIMIT
         ])
         self.name = Backends.ADOBEHDSPHP
+
+    def file_extension(self, preferred):
+        return MandatoryFileExtension('.flv')
 
     def _bitrate_option(self, bitrate):
         return ['--quality', str(bitrate)] if bitrate else []
@@ -342,6 +350,9 @@ class YoutubeDLHDSBackend(BaseDownloader):
         ])
         self.name = Backends.YOUTUBEDL
 
+    def file_extension(self, preferred):
+        return MandatoryFileExtension('.flv')
+
     def save_stream(self, output_name, io):
         return self._execute_youtube_dl(output_name, io)
 
@@ -394,13 +405,16 @@ class YoutubeDLHDSBackend(BaseDownloader):
 
 
 class HLSBackend(ExternalDownloader):
-    def __init__(self, url, extension, long_probe=False):
+    def __init__(self, url, long_probe=False):
         ExternalDownloader.__init__(self)
         self.url = url
-        self.file_extension = PreferredFileExtension(extension)
         self.long_probe = long_probe
         self.io_capabilities = frozenset([IOCapability.DURATION])
         self.name = Backends.FFMPEG
+
+    def file_extension(self, preferred):
+        ext = preferred if preferred.startswith('.') else '.' + preferred
+        return PreferredFileExtension(ext)
 
     def _duration_arg(self, download_limits):
         if download_limits.duration:
@@ -415,10 +429,11 @@ class HLSBackend(ExternalDownloader):
             return []
 
     def build_args(self, output_name, io):
-        if io.outputfilename and io.outputfilename.endswith('.mkv'):
-            scodec = 'copy'
-        else:
+        if ((io.outputfilename and io.outputfilename.endswith('.mp4')) or
+            io.preferred_format in ('mp4', '.mp4')):
             scodec = 'mov_text'
+        else:
+            scodec = 'copy'
 
         if io.embed_subtitles:
             subtitles_args = ['-scodec', scodec, '-map', '0:s?']
@@ -468,7 +483,10 @@ class HLSBackend(ExternalDownloader):
 
 class HLSAudioBackend(HLSBackend):
     def __init__(self, url):
-        HLSBackend.__init__(self, url, '.mp3', False)
+        HLSBackend.__init__(self, url, False)
+
+    def file_extension(self, preferred):
+        return MandatoryFileExtension('.mp3')
 
     def build_args(self, output_name, io):
         return self.ffmpeg_command_line(
@@ -489,13 +507,16 @@ class WgetBackend(ExternalDownloader):
 
         if not file_extension:
             logger.warn('Mandatory file extension is missing for URL {}'.format(url))
-        self.file_extension = MandatoryFileExtension(file_extension or '')
+        self._file_extension = MandatoryFileExtension(file_extension or '')
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
             IOCapability.RATELIMIT,
             IOCapability.PROXY
         ])
         self.name = Backends.WGET
+
+    def file_extension(self, preferred):
+        return self._file_extension
 
     def build_args(self, output_name, io):
         args = self.shared_wget_args(io.wget_binary, output_name)

@@ -248,7 +248,7 @@ class DeliveryProfile(object):
                                          client_tag, referrer)
 
         if media_type == 'video':
-            backends.append(HLSBackend(manifest_url, file_ext))
+            backends.append(HLSBackend(manifest_url))
         else:
             backends.append(HLSAudioBackend(manifest_url))
 

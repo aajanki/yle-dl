@@ -294,9 +294,11 @@ class Clip(object):
 
     def meta_file_name(self, flavors, io):
         flavors = sorted(flavors, key=lambda x: x.bitrate or 0)
-        flavors = [fl for fl in flavors if any(s.is_valid() for s in fl.streams)]
+        flavors = [fl for fl in flavors
+                   if any(s.is_valid() for s in fl.streams)]
         if flavors:
-            extensions = [s.file_extension for s in flavors[-1].streams if s.is_valid()]
+            extensions = [s.file_extension('mkv') for s in flavors[-1].streams
+                          if s.is_valid()]
             if extensions:
                 return self.output_file_name(extensions[0], io)
 
@@ -692,7 +694,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             return [
                 StreamFlavor(
                     media_type=media_type,
-                    streams=[HLSBackend(hls_manifest_url, '.mp4', long_probe=True)]
+                    streams=[HLSBackend(hls_manifest_url, long_probe=True)]
                 )
             ]
         else:
@@ -700,7 +702,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
     def hls_flavors(self, hls_manifest_url, media_type):
         if media_type == 'video':
-            backend = HLSBackend(hls_manifest_url, '.mp4')
+            backend = HLSBackend(hls_manifest_url)
         else:
             backend = HLSAudioBackend(hls_manifest_url)
 
@@ -818,7 +820,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             entry_id = self.kaltura_entry_id(media_id)
             kapi_client = YleKalturaApiClient(self.httpclient)
             playback_context = kapi_client.playback_context(entry_id, pageurl)
-            kaltura_flavors = kapi_client.parse_stream_flavors(playback_context, pageurl)
+            kaltura_flavors = kapi_client.parse_stream_flavors(
+                playback_context, pageurl)
             kaltura_subtitles = kapi_client.parse_embedded_subtitles(playback_context)
         else:
             kaltura_flavors = None

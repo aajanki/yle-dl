@@ -189,6 +189,11 @@ def arg_parser():
     qual_group.add_argument('--duration', metavar='S', type=int,
                             help='Record only the first S seconds of '
                             'the stream')
+    qual_group.add_argument('--preferformat', metavar='F', type=to_unicode,
+                            default='mkv',
+                            help='Preferred video output format: '
+                            'mkv (default) or mp4. Applies only when '
+                            'downloading with ffmpeg')
 
     dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument('--backend', metavar='BE',
@@ -327,8 +332,8 @@ def main(argv=sys.argv):
 
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     dl_limits = DownloadLimits(args.duration, args.ratelimit)
-    io = IOContext(args.outputfile, args.destdir, args.resume,
-                   dl_limits, excludechars, args.proxy,
+    io = IOContext(args.outputfile, args.preferformat, args.destdir,
+                   args.resume, dl_limits, excludechars, args.proxy,
                    args.sublang == 'all', args.rtmpdump,
                    args.adobehds, args.ffmpeg, args.ffprobe, args.wget)
 

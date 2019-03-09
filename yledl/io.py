@@ -73,6 +73,7 @@ class DownloadLimits(object):
 @attr.s
 class IOContext(object):
     outputfilename = attr.ib(default=None)
+    preferred_format = attr.ib(default=None)
     destdir = attr.ib(default=None)
     resume = attr.ib(default=False)
     download_limits = attr.ib(default=None, converter=convert_download_limits)

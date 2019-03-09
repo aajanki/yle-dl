@@ -268,7 +268,7 @@ class YleDlDownloader(object):
     def output_name_for_clip(self, clip, downloader, io):
         resume_job = (io.resume and
                       IOCapability.RESUME in downloader.io_capabilities)
-        extension = downloader.file_extension
+        extension = downloader.file_extension(io.preferred_format)
         return clip.output_file_name(extension, io, resume_job)
 
     def log_output_file(self, outputfile, done=False):
