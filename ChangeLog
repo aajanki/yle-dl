@@ -8,7 +8,8 @@ Distributed under the GPL v3
 - Most video streams are now saved in Matroska format by default.
   To revert to the earlier behavior, use --preferformat mp4
 - Subtitle languages are correctly labeled (only in the Matroska format)
-- Some sports streams were not downloaded at all
+- Some streams were not downloaded at all
+- Tabs and other odd whitespaces are replaces by space in generated filenames
 
 Version 20190203
 

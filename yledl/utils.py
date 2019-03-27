@@ -1,4 +1,5 @@
 from __future__ import print_function, absolute_import, unicode_literals
+import re
 import sys
 
 
@@ -24,5 +25,5 @@ def print_enc(msg, out=None, linefeed_and_flush=True):
 
 def sane_filename(name, excludechars):
     tr = dict((ord(c), ord('_')) for c in excludechars)
-    x = name.strip(' .').translate(tr)
+    x = re.sub(r'\s+', ' ', name).strip(' .').translate(tr)
     return x or 'ylevideo'

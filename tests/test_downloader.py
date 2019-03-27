@@ -312,6 +312,14 @@ def test_print_titles(simple):
     assert simple.downloader.get_titles(clips, simple.io) == titles
 
 
+def test_print_titles_replaces_whitespace(simple):
+    titles = ['   Title with\tall\vkinds\u00a0of\u2003whitespace \t \u00a0 characters']
+    expected_titles = ['Title with all kinds of whitespace characters']
+    clips = [successful_clip({}, t) for t in titles]
+
+    assert simple.downloader.get_titles(clips, simple.io) == expected_titles
+
+
 def test_print_metadata(simple):
     state = {}
     clips = [successful_clip(state)]
