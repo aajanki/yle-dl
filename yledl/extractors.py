@@ -505,8 +505,8 @@ class AreenaPlaylist(object):
 
         return ('https://areena.yle.fi/api/programs/v1/items.json?'
                 'series={series_id}&type=program&availability=ondemand&'
-                'order=episode.hash%3Aasc%2C'
-                'publication.starttime%3Aasc%2Ctitle.fi%3Aasc&'
+                'order=publication.starttime%3Adesc%2C'
+                'episode.hash%3Aasc%2Ctitle.fi%3Aasc&'
                 'app_id=areena_web_frontend_prod&'
                 'app_key=4622a8f8505bb056c956832a70c105d4&'
                 'limit={limit}{offset_param}'.format(
