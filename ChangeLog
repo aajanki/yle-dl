@@ -3,7 +3,7 @@ Copyright 2009-2019 Antti Ajanki
 Distributed under the GPL v3
 
 
-<unreleased>
+Version 20190331
 
 - Most video streams are now saved in Matroska format by default.
   To revert to the earlier behavior, use --preferformat mp4
