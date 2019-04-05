@@ -794,7 +794,7 @@
               while ($this->quality >= 0)
                 {
                   $key = KeyName($this->media, $this->quality);
-                  if ($key !== NULL)
+                  if ($key !== null)
                     {
                       $this->media = $this->media[$key];
                       break;
