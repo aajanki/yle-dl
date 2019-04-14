@@ -490,11 +490,13 @@ class HLSAudioBackend(HLSBackend):
 
     def build_args(self, output_name, io):
         return self.ffmpeg_command_line(
-            io, ['-map', '0:4?', '-f', 'mp3', 'file:' + output_name])
+            io, ['-map', '0:4?', '-acodec', 'copy',
+                 '-f', 'mp3', 'file:' + output_name])
 
     def build_pipe_args(self, io):
         return self.ffmpeg_command_line(
-            io, ['-map', '0:4?', '-f', 'mp3', 'pipe:1'])
+            io, ['-map', '0:4?', '-acodec', 'copy',
+                 '-f', 'mp3', 'pipe:1'])
 
 
 ### Download a plain HTTP file ###
