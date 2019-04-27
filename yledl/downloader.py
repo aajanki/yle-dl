@@ -211,15 +211,15 @@ class YleDlDownloader(object):
         if filtered:
             acceptable_flavors = filtered
             reverse = False
-            if filters.maxheight is not None and filters.maxbitrate is not None:
-                keyfunc = sort_max_resolution_max_bitrate
-            elif filters.maxheight is not None:
-                keyfunc = sort_max_resolution_min_bitrate
-            else:
-                keyfunc = sort_max_bitrate
         else:
             acceptable_flavors = flavors
             reverse = filters.maxheight is not None or filters.maxbitrate is not None
+
+        if filters.maxheight is not None and filters.maxbitrate is not None:
+            keyfunc = sort_max_resolution_max_bitrate
+        elif filters.maxheight is not None:
+            keyfunc = sort_max_resolution_min_bitrate
+        else:
             keyfunc = sort_max_bitrate
 
         return sorted(acceptable_flavors, key=keyfunc, reverse=reverse)

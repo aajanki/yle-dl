@@ -405,10 +405,11 @@ class YoutubeDLHDSBackend(BaseDownloader):
 
 
 class HLSBackend(ExternalDownloader):
-    def __init__(self, url, long_probe=False):
+    def __init__(self, url, long_probe=False, program_id=0):
         ExternalDownloader.__init__(self)
         self.url = url
         self.long_probe = long_probe
+        self.program_id = program_id
         self.io_capabilities = frozenset([IOCapability.DURATION])
         self.name = Backends.FFMPEG
 
@@ -436,26 +437,31 @@ class HLSBackend(ExternalDownloader):
             scodec = 'copy'
 
         if io.embed_subtitles:
-            subtitles_args = ['-scodec', scodec, '-map', '0:s?']
+            subtitles_args = ['-scodec', scodec,
+                              '-map', '0:p:{}:s?'.format(self.program_id)]
         else:
             subtitles_args = []
 
         args = (['-bsf:a', 'aac_adtstoasc',
                  '-codec', 'copy',
-                 '-map', '0:v:0', '-map', '0:a:0'] + subtitles_args +
+                 '-map', '0:p:{}:v'.format(self.program_id),
+                 '-map', '0:p:{}:a'.format(self.program_id)] +
+                subtitles_args +
                 ['file:' + output_name])
 
         return self.ffmpeg_command_line(io, args)
 
     def build_pipe_args(self, io):
         if io.embed_subtitles:
-            subtitle_args = ['-map', '0:s?']
+            subtitles_args = ['-map', '0:p:{}:s?'.format(self.program_id)]
         else:
-            subtitle_args = []
+            subtitles_args = []
 
         args = (['-codec', 'copy', '-acodec', 'aac',
-                 '-map', '0:v:0', '-map', '0:a:0'] + subtitle_args +
-                 ['-f', 'matroska', 'pipe:1'])
+                 '-map', '0:p:{}:v'.format(self.program_id),
+                 '-map', '0:p:{}:a'.format(self.program_id)] +
+                subtitles_args +
+                ['-f', 'matroska', 'pipe:1'])
 
         return self.ffmpeg_command_line(io, args)
 

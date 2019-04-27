@@ -8,6 +8,7 @@ import json
 import logging
 import os.path
 import re
+import subprocess
 import sys
 from datetime import datetime
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
@@ -208,6 +209,48 @@ class AkamaiFlavorParser(object):
         ]
 
 
+class FullHDFlavorProber(object):
+    def probe_flavors(self, manifest_url, ffprobe_binary):
+        try:
+            programs = self.ffprobe_programs(manifest_url, ffprobe_binary)
+        except ValueError:
+            return [FailedFlavor('Failed to parse ffprobe output')]
+        except subprocess.CalledProcessError as ex:
+            return [FailedFlavor('Stream probing failed with status {}: {}'
+                                 .format(ex.returncode, ex.output))]
+
+        return self.programs_to_stream_flavors(programs, manifest_url)
+
+    def ffprobe_programs(self, url, ffprobe_binary):
+        logger.debug('Probing for streams')
+        debug = logger.isEnabledFor(logging.DEBUG)
+        loglevel = 'info' if debug else 'error'
+        args = [ffprobe_binary, '-v', loglevel, '-show_programs',
+                '-print_format', 'json=c=1', '-strict', 'experimental',
+                '-probesize', '80000000', '-i', url]
+
+        return json.loads(subprocess.check_output(args))
+
+    def programs_to_stream_flavors(self, programs, manifest_url):
+        res = []
+        for program in programs.get('programs', []):
+            streams = program.get('streams', [])
+            any_stream_is_video = any(x['codec_type'] == 'video'
+                                      for x in streams if 'codec_type' in x)
+            widths = [x['width'] for x in streams if 'width' in x]
+            heights = [x['height'] for x in streams if 'height' in x]
+
+            pid = program.get('program_id')
+            res.append(StreamFlavor(
+                media_type='video' if any_stream_is_video else 'audio',
+                height=heights[0] if heights else None,
+                width=widths[0] if widths else None,
+                streams=[HLSBackend(manifest_url, long_probe=True, program_id=pid)]
+            ))
+
+        return res
+
+
 ## Clip
 
 
@@ -374,18 +417,18 @@ class ClipExtractor(object):
     def __init__(self, httpclient):
         self.httpclient = httpclient
 
-    def extract(self, url, latest_only, title_formatter):
+    def extract(self, url, latest_only, title_formatter, ffprobe):
         playlist = self.get_playlist(url)
         if latest_only:
             playlist = playlist[:1]
 
-        return [self.extract_clip(clipurl, title_formatter)
+        return [self.extract_clip(clipurl, title_formatter, ffprobe)
                 for clipurl in playlist]
 
     def get_playlist(self, url):
         raise NotImplementedError("get_playlist must be overridden")
 
-    def extract_clip(self, url, title_formatter):
+    def extract_clip(self, url, title_formatter, ffprobe):
         raise NotImplementedError("extract_clip must be overridden")
 
 
@@ -403,8 +446,9 @@ class MergingExtractor(ClipExtractor):
                     playlist.append(clip_url)
         return playlist
 
-    def extract_clip(self, url, titlerformatter):
-        clips = [x.extract_clip(url, titlerformatter) for x in self.extractors]
+    def extract_clip(self, url, titlerformatter, ffprobe):
+        clips = [x.extract_clip(url, titlerformatter, ffprobe)
+                 for x in self.extractors]
         valid_clips = [c for c in clips if not isinstance(c, FailedClip)]
         failed_clips = [c for c in clips if isinstance(c, FailedClip)]
         if valid_clips:
@@ -578,9 +622,10 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
 
-    def extract_clip(self, clip_url, title_formatter):
+    def extract_clip(self, clip_url, title_formatter, ffprobe):
         pid = self.program_id_from_url(clip_url)
-        program_info = self.program_info_for_pid(pid, clip_url, title_formatter)
+        program_info = self.program_info_for_pid(pid, clip_url,
+                                                 title_formatter, ffprobe)
         return self.create_clip_or_failure(pid, program_info, clip_url)
 
     def create_clip_or_failure(self, pid, program_info, url):
@@ -631,7 +676,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
     def media_flavors(self, media_id, program_id, hls_manifest_url,
                       download_url, kaltura_flavors, akamai_protocol,
-                      media_type, pageurl):
+                      media_type, pageurl, ffprobe_binary):
         flavors = []
 
         if download_url:
@@ -641,7 +686,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             flavors.extend(
                 self.flavors_by_media_id(
                     media_id, program_id, hls_manifest_url, kaltura_flavors,
-                    akamai_protocol, media_type, pageurl))
+                    akamai_protocol, media_type, pageurl, ffprobe_binary))
         elif hls_manifest_url:
             flavors.extend(
                 self.hls_flavors(hls_manifest_url, media_type))
@@ -650,10 +695,12 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
     def flavors_by_media_id(self, media_id, program_id,
                             hls_manifest_url, kaltura_flavors,
-                            akamai_protocol, media_type, pageurl):
+                            akamai_protocol, media_type, pageurl,
+                            ffprobe_binary):
         if self.is_full_hd_media(media_id):
             logger.debug('Detected a full-HD media')
-            return self.full_hd_flavors(hls_manifest_url, media_type)
+            return self.full_hd_flavors(hls_manifest_url, media_type,
+                                        ffprobe_binary)
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
             return kaltura_flavors
@@ -690,14 +737,10 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                          .get('media', {}) \
                          .get(descriptor_proto, [])
 
-    def full_hd_flavors(self, hls_manifest_url, media_type):
+    def full_hd_flavors(self, hls_manifest_url, media_type, ffprobe_binary):
         if hls_manifest_url:
-            return [
-                StreamFlavor(
-                    media_type=media_type,
-                    streams=[HLSBackend(hls_manifest_url, long_probe=True)]
-                )
-            ]
+            return FullHDFlavorProber().probe_flavors(
+                hls_manifest_url, ffprobe_binary)
         else:
             return [FailedFlavor('Manifest URL is missing')]
 
@@ -779,7 +822,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     def force_program_info(self):
         return False
 
-    def program_info_for_pid(self, pid, pageurl, title_formatter):
+    def program_info_for_pid(self, pid, pageurl, title_formatter, ffprobe):
         if not pid:
             return None
 
@@ -833,7 +876,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             title = title,
             flavors = self.media_flavors(media_id, pid, manifest_url,
                                          download_url, kaltura_flavors,
-                                         akamai_protocol, media_type, pageurl),
+                                         akamai_protocol, media_type,
+                                         pageurl, ffprobe),
             embedded_subtitles = kaltura_subtitles,
             duration_seconds = (self.program_info_duration_seconds(info) or
                                 self.preview_duration_seconds(preview)),

@@ -7,6 +7,7 @@ Version <unreleased>
 
 - Download audio streams with the original 192 kb/s bitrate
 - Fixed a bug that caused yle-dl to randomly download a stream without subtitles
+- Enabled higher resolutions on some (mainly sports) streams
 
 Version 20190331
 
