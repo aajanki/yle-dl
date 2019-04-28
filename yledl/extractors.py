@@ -248,7 +248,7 @@ class FullHDFlavorProber(object):
                 streams=[HLSBackend(manifest_url, long_probe=True, program_id=pid)]
             ))
 
-        return res
+        return sorted(res, key=lambda x: x.height)
 
 
 ## Clip
