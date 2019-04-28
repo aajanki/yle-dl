@@ -699,11 +699,15 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                             ffprobe_binary):
         if self.is_full_hd_media(media_id):
             logger.debug('Detected a full-HD media')
-            return self.full_hd_flavors(hls_manifest_url, media_type,
-                                        ffprobe_binary)
+            flavors = self.hls_probe_flavors(hls_manifest_url, media_type,
+                                             ffprobe_binary)
+            error = [FailedFlavor('Manifest URL is missing')]
+            return flavors or error
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
-            return kaltura_flavors
+            return (kaltura_flavors or
+                    self.hls_probe_flavors(hls_manifest_url, media_type,
+                                           ffprobe_binary))
         elif self.is_mediakanta_media(media_id):
             parser = AkamaiFlavorParser(self.httpclient)
             medias = self.akamai_medias(program_id, media_id, akamai_protocol)
@@ -737,20 +741,23 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                          .get('media', {}) \
                          .get(descriptor_proto, [])
 
-    def full_hd_flavors(self, hls_manifest_url, media_type, ffprobe_binary):
-        if hls_manifest_url:
-            return FullHDFlavorProber().probe_flavors(
-                hls_manifest_url, ffprobe_binary)
-        else:
-            return [FailedFlavor('Manifest URL is missing')]
-
     def hls_flavors(self, hls_manifest_url, media_type):
+        if not hls_manifest_url:
+            return []
+
         if media_type == 'video':
             backend = HLSBackend(hls_manifest_url)
         else:
             backend = HLSAudioBackend(hls_manifest_url)
 
         return [StreamFlavor(media_type=media_type, streams=[backend])]
+
+    def hls_probe_flavors(self, hls_manifest_url, media_type, ffprobe_binary):
+        if not hls_manifest_url:
+            return []
+
+        return FullHDFlavorProber().probe_flavors(
+            hls_manifest_url, ffprobe_binary)
 
     def download_flavors(self, download_url, media_type):
         path = urlparse(download_url)[2]
