@@ -222,7 +222,6 @@ class FullHDFlavorProber(object):
         return self.programs_to_stream_flavors(programs, manifest_url)
 
     def ffprobe_programs(self, url, ffprobe_binary):
-        logger.debug('Probing for streams')
         debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
         args = [ffprobe_binary, '-v', loglevel, '-show_programs',
@@ -756,6 +755,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         if not hls_manifest_url:
             return []
 
+        logger.debug('Probing for stream flavors')
         return FullHDFlavorProber().probe_flavors(
             hls_manifest_url, ffprobe_binary)
 
@@ -785,8 +785,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         media = JSONP.load_jsonp(media_jsonp_url, self.httpclient)
 
         if media:
-            logger.debug('media:')
-            logger.debug(json.dumps(media))
+            logger.debug('media:\n' + json.dumps(media, indent=2))
 
         return media
 
@@ -844,15 +843,13 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                                       self.httpclient,
                                       headers=preview_headers)
 
-            logger.debug('preview data:')
-            logger.debug(json.dumps(preview))
+            logger.debug('preview data:\n' + json.dumps(preview, indent=2))
 
         if self.preview_is_live(preview) and not self.force_program_info():
             info = None
         else:
             info = JSONP.load_jsonp(self.program_info_url(pid), self.httpclient)
-            logger.debug('program data:')
-            logger.debug(json.dumps(info))
+            logger.debug('program data:\n' + json.dumps(info, indent=2))
 
         media_id = (self.program_media_id(info) or
                     self.preview_media_id(preview))
