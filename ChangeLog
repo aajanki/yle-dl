@@ -9,6 +9,7 @@ Version <unreleased>
 - Fixed a bug that caused yle-dl to randomly download a stream without subtitles
 - Enabled higher resolutions on some (mainly sports) streams
 - Programs are now downloadable right after a live broadcast
+- Fixed support for https://yle.fi/uutiset
 
 Version 20190331
 

@@ -1142,15 +1142,15 @@ class ArkivetExtractor(AreenaExtractor):
 
 class YleUutisetExtractor(AreenaExtractor):
     def get_playlist(self, url):
-        html = self.httpclient.download_html_tree(url)
+        html = self.httpclient.download_page(url)
         if html is None:
             return None
 
-        state_tag = html.xpath('//div[@id="initialState"]')
-        if not state_tag:
+        m = re.search(r'window.__INITIAL_STATE__=(.+)', html)
+        if not m:
             return []
 
-        state = json.loads(html_unescape(state_tag[0].get('data-state', '{}')))
+        state = json.loads(html_unescape(m.group(1)))
         medias = state.get('article', {}).get('mainMedia', [])
         data_ids = [m.get('id') for m in medias]
 
