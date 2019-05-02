@@ -1146,11 +1146,11 @@ class YleUutisetExtractor(AreenaExtractor):
         if html is None:
             return None
 
-        m = re.search(r'window.__INITIAL_STATE__=(.+)', html)
-        if not m:
+        javascript_re = re.search(r'window.__INITIAL_STATE__=(.+)', html)
+        if not javascript_re:
             return []
 
-        state = json.loads(html_unescape(m.group(1)))
+        state = json.loads(html_unescape(javascript_re.group(1)))
         medias = state.get('article', {}).get('mainMedia', [])
         data_ids = [m.get('id') for m in medias]
 
