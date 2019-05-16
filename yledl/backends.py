@@ -437,15 +437,14 @@ class HLSBackend(ExternalDownloader):
             scodec = 'copy'
 
         if io.embed_subtitles:
-            subtitles_args = ['-scodec', scodec,
-                              '-map', '0:p:{}:s?'.format(self.program_id)]
+            subtitles_args = ['-scodec', scodec]
         else:
-            subtitles_args = []
+            subtitles_args = ['-sn']
 
         args = (['-bsf:a', 'aac_adtstoasc',
                  '-codec', 'copy',
-                 '-map', '0:p:{}:v'.format(self.program_id),
-                 '-map', '0:p:{}:a'.format(self.program_id)] +
+                 '-map', '0:p:{}'.format(self.program_id),
+                 '-dn'] +
                 subtitles_args +
                 ['file:' + output_name])
 
@@ -453,13 +452,13 @@ class HLSBackend(ExternalDownloader):
 
     def build_pipe_args(self, io):
         if io.embed_subtitles:
-            subtitles_args = ['-map', '0:p:{}:s?'.format(self.program_id)]
-        else:
             subtitles_args = []
+        else:
+            subtitles_args = ['-sn']
 
         args = (['-codec', 'copy', '-acodec', 'aac',
-                 '-map', '0:p:{}:v'.format(self.program_id),
-                 '-map', '0:p:{}:a'.format(self.program_id)] +
+                 '-map', '0:p:{}'.format(self.program_id),
+                 '-dn'] +
                 subtitles_args +
                 ['-f', 'matroska', 'pipe:1'])
 
