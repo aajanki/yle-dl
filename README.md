@@ -70,7 +70,7 @@ If the command line shell complains that it can't find yle-dl when you try to ex
 export PATH=$PATH:$HOME/.local/bin
 
 # Make the change permanent. Adjust as needed if you are not using bash
-echo export PATH=\$PATH:\$HOME/.local/bin >> ~/.bashrc
+echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
 
 Installation with youtube-dl as an alternative downloader backend
