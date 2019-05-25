@@ -57,7 +57,7 @@ export PATH=$PATH:$HOME/.local/bin
 
 # Teekee muutoksesta pysyvän. Tämä vaatii muokkaamista, jos käytät
 # jotain muuta komentotulkkia kuin bash.
-echo export PATH=\$PATH:\$HOME/.local/bin >> ~/.bashrc
+echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
 
 Asennus, kun lataukseen käytetään youtube-dl:ää
