@@ -434,7 +434,7 @@ class HLSBackend(ExternalDownloader):
             io.preferred_format in ('mp4', '.mp4')):
             scodec = 'mov_text'
         else:
-            scodec = 'copy'
+            scodec = 'srt'
 
         if io.embed_subtitles:
             subtitles_args = ['-scodec', scodec]
@@ -452,7 +452,7 @@ class HLSBackend(ExternalDownloader):
 
     def build_pipe_args(self, io):
         if io.embed_subtitles:
-            subtitles_args = []
+            subtitles_args = ['-scodec', 'srt']
         else:
             subtitles_args = ['-sn']
 
