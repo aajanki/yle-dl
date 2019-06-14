@@ -3,9 +3,9 @@ Copyright 2009-2019 Antti Ajanki
 Distributed under the GPL v3
 
 
-<unreleased>
+Version 20190614 - Ten year anniversary edition
 
-- Improved compability with an older ffmpeg
+- Improved compability with older ffmpeg versions
 - Save subtitles in a format supported by mplayer
 
 Version 20190502
