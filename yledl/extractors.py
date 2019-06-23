@@ -266,7 +266,8 @@ class Clip(object):
 
     def output_file_name(self, extension, io, resume_job=False):
         if io.outputfilename:
-            return self.filename_from_template(io.outputfilename, extension)
+            return self.filename_from_template(io.outputfilename, io.destdir,
+                                               extension)
         else:
             return self.filename_from_title(extension, io, resume_job)
 
@@ -291,11 +292,15 @@ class Clip(object):
             i += 1
         return filename
 
-    def filename_from_template(self, basename, extension):
+    def filename_from_template(self, basename, destdir, extension):
+        extended_path = basename
+        if not os.path.isabs(basename) and destdir:
+            extended_path = os.path.join(destdir, basename)
+
         if extension.is_mandatory:
-            return self.replace_extension(basename, extension)
+            return self.replace_extension(extended_path, extension)
         else:
-            return self.append_ext_if_missing(basename, extension)
+            return self.append_ext_if_missing(extended_path, extension)
 
     def replace_extension(self, filename, extension):
         ext = extension.extension
