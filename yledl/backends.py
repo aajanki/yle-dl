@@ -14,7 +14,6 @@ from builtins import str
 from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
-from .http import yledl_user_agent
 from .rtmp import rtmp_parameters_to_url, rtmp_parameters_to_rtmpdump_args
 
 
@@ -543,11 +542,15 @@ class WgetBackend(ExternalDownloader):
         return self.shared_wget_args(io.wget_binary, '-') + [self.url]
 
     def shared_wget_args(self, wget_binary, output_filename):
+        spoofed_user_agent = (
+            'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) '
+            'Gecko/20100101 Firefox/67.0')
+
         return [
             wget_binary,
             '-O', output_filename,
             '--no-use-server-timestamps',
-            '--user-agent=' + yledl_user_agent(),
+            '--user-agent=' + spoofed_user_agent,
             '--timeout=20'
         ]
 
