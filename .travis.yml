@@ -1,5 +1,4 @@
 language: python
-sudo: required
 dist: xenial
 
 python:
@@ -7,6 +6,7 @@ python:
  - 3.5
  - 3.6
  - 3.7
+ - 3.8-dev
 
 addons:
   apt:
