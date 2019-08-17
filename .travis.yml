@@ -8,15 +8,6 @@ python:
  - 3.7
  - 3.8-dev
 
-addons:
-  apt:
-    packages:
-    - rtmpdump
-    - php-cli
-    - php-curl
-    - php-xml
-    - php-bcmath
-
 install:
  # Install from wheel instead of from source in setup.py to speed up CI
  - pip install lxml
