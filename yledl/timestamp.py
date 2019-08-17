@@ -30,7 +30,7 @@ def parse_areena_timestamp(timestamp):
         return None
 
     timestamp = timestamp.strip()
-    if sys.version_info.major == 3:
+    if sys.version_info.major >= 3:
         parsed = parse_areena_timestamp_py3(timestamp)
     else:
         parsed = parse_areena_timestamp_py2(timestamp)
