@@ -7,38 +7,6 @@ from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata
 
 
-def test_areena_akamai_hds_title():
-    title = fetch_title('https://areena.yle.fi/1-1418526')
-
-    assert len(title) == 1
-    assert 'The Deputy Mayor' in title[0]
-
-
-def test_areena_akamai_hds_stream_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/1-1418526')
-
-    assert len(streamurl) == 1
-    assert 'manifest.f4m' in streamurl[0]
-
-
-def test_areena_akamai_hds_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/1-1418526')
-
-    assert len(metadata) == 1
-    flavors = metadata[0]['flavors']
-    assert len(flavors) == 1
-    assert all(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f and
-               'height' in f and
-               'width' in f
-               for f in flavors)
-    assert metadata[0]['duration_seconds'] == 1601
-    assert metadata[0]['region'] == 'World'
-    assert metadata[0]['publish_timestamp'] == '2012-01-19T12:00:00+02:00'
-    assert 'expired_timestamp' not in metadata[0]
-    assert len(metadata[0]['embedded_subtitles']) == 0
-
-
 def test_areena_html5_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-403848')
 
