@@ -47,6 +47,7 @@ def test_radio_metadata_hls():
     assert len(metadata[0]['flavors']) == 1
     assert metadata[0]['flavors'][0]['media_type'] == 'audio'
     assert metadata[0]['duration_seconds'] == 2954
+    assert len(metadata[0]['description']) > 150
 
 
 def test_radio_live_url():

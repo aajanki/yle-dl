@@ -258,6 +258,7 @@ class Clip(object):
     webpage = attr.ib()
     flavors = attr.ib()
     title = attr.ib(default='')
+    description = attr.ib(default=None)
     duration_seconds = attr.ib(default=None, converter=attr.converters.optional(int))
     region = attr.ib(default='Finland')
     publish_timestamp = attr.ib(default=None)
@@ -325,6 +326,7 @@ class Clip(object):
         meta = [
             ('webpage', self.webpage),
             ('title', self.title),
+            ('description', self.description),
             ('filename', self.meta_file_name(self.flavors, io)),
             ('flavors', flavors_meta),
             ('duration_seconds', self.duration_seconds),
@@ -408,6 +410,7 @@ class FailedClip(Clip):
 class AreenaApiProgramInfo(object):
     media_id = attr.ib()
     title = attr.ib()
+    description = attr.ib()
     flavors = attr.ib()
     embedded_subtitles = attr.ib()
     duration_seconds = attr.ib()
@@ -582,6 +585,13 @@ class AreenaPreviewApiParser(object):
         raw_title = localization.fin_or_swe_text(title_object).strip()
         return title_formatter.format(raw_title, publish_timestamp)
 
+    def preview_description(self, data):
+        description_object = self.preview_ongoing(data).get('description', {})
+        if not description_object:
+            return None
+
+        return localization.fin_or_swe_text(description_object).strip()
+
     def preview_available_at_region(self, data):
         return self.preview_ongoing(data).get('region')
 
@@ -658,6 +668,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                 webpage=pageurl,
                 flavors=program_info.flavors,
                 title=program_info.title,
+                description=program_info.description,
                 duration_seconds=program_info.duration_seconds,
                 region=program_info.available_at_region,
                 publish_timestamp=program_info.publish_timestamp,
@@ -868,6 +879,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                              self.preview_timestamp(preview))
         title = (self.program_title(info, publish_timestamp, title_formatter) or
                  self.preview_title(preview, publish_timestamp, title_formatter))
+        description = (self.program_description(info) or
+                       self.preview_description(preview))
         akamai_protocol = self.program_protocol(info, 'HDS')
         if self.is_html5_media(media_id):
             entry_id = self.kaltura_entry_id(media_id)
@@ -883,6 +896,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         return AreenaApiProgramInfo(
             media_id = media_id,
             title = title,
+            description = description,
             flavors = self.media_flavors(media_id, pid, manifest_url,
                                          download_url, kaltura_flavors,
                                          akamai_protocol, media_type,
@@ -961,6 +975,19 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             season=season,
             episode=program.get('episodeNumber')
         )
+
+    def program_description(self, program_info):
+        if not program_info:
+            return None
+
+        description = (program_info
+                       .get('data', {})
+                       .get('program', {})
+                       .get('description', ''))
+        if not description:
+            return None
+
+        return localization.fi_or_sv_text(description).strip()
 
     def ignore_invalid_download_url(self, url):
         # Sometimes download url is missing the file name

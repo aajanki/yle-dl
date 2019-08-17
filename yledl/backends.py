@@ -542,6 +542,8 @@ class WgetBackend(ExternalDownloader):
         return self.shared_wget_args(io.wget_binary, '-') + [self.url]
 
     def shared_wget_args(self, wget_binary, output_filename):
+        # Sometimes it seems to be necessary to spoof the user-agent,
+        # see the issue #206
         spoofed_user_agent = (
             'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) '
             'Gecko/20100101 Firefox/67.0')

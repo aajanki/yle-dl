@@ -29,6 +29,7 @@ def test_areena_html5_metadata():
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2017-07-16T14:00:00+03:00'
     assert 'expired_timestamp' not in metadata[0]
+    assert len(metadata[0]['description']) > 150
     assert metadata[0]['embedded_subtitles'] == [
         {'language': 'fin', 'category': 'ohjelmatekstitys'}
     ]
@@ -58,6 +59,7 @@ def test_areena_iphone_metadata():
                for f in flavors)
     assert metadata[0]['duration_seconds'] == 234
     assert metadata[0]['region'] == 'Finland'
+    assert len(metadata[0]['description']) > 40
     assert metadata[0]['publish_timestamp'] == '2017-11-08T01:15:00+02:00'
 
 
