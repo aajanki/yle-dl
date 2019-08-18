@@ -442,7 +442,7 @@ class HLSBackend(ExternalDownloader):
 
         return metadata
 
-    def build_args(self, output_name, clip, io):
+    def _subtitle_args(self, io):
         if ((io.outputfilename and io.outputfilename.endswith('.mp4')) or
             io.preferred_format in ('mp4', '.mp4')):
             scodec = 'mov_text'
@@ -450,29 +450,31 @@ class HLSBackend(ExternalDownloader):
             scodec = 'srt'
 
         if io.embed_subtitles:
-            subtitles_args = ['-scodec', scodec]
+            return ['-scodec', scodec]
         else:
-            subtitles_args = ['-sn']
+            return ['-sn']
 
+    def _pipe_subtitle_args(self, io):
+        if io.embed_subtitles:
+            return ['-scodec', 'srt']
+        else:
+            return ['-sn']
+
+    def build_args(self, output_name, clip, io):
         args = (['-bsf:a', 'aac_adtstoasc',
                  '-codec', 'copy',
                  '-map', '0:p:{}'.format(self.program_id),
                  '-dn'] +
-                subtitles_args +
+                self._subtitle_args(io) +
                 ['file:' + output_name])
 
         return self.ffmpeg_command_line(clip, io, args)
 
     def build_pipe_args(self, io):
-        if io.embed_subtitles:
-            subtitles_args = ['-scodec', 'srt']
-        else:
-            subtitles_args = ['-sn']
-
         args = (['-codec', 'copy', '-acodec', 'aac',
                  '-map', '0:p:{}'.format(self.program_id),
                  '-dn'] +
-                subtitles_args +
+                self._pipe_subtitle_args(io) +
                 ['-f', 'matroska', 'pipe:1'])
 
         return self.ffmpeg_command_line(None, io, args)
