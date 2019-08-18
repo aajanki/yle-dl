@@ -6,6 +6,7 @@ Distributed under the GPL v3
 <unreleased>
 
 - Make --destdir and -o work together
+- Embed the program description in the output file (only Matroska files)
 
 Version 20190614 - Ten year anniversary edition
 

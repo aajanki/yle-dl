@@ -20,7 +20,7 @@ class StateCollectingBackend(BaseDownloader):
         self.state_dict = state_dict
         self.name = name
 
-    def save_stream(self, clip_title, io):
+    def save_stream(self, clip_title, clip, io):
         self.state_dict['command'] = 'download'
         self.state_dict['stream_id'] = self.id
         self.state_dict['backend'] = self.name
@@ -48,7 +48,7 @@ class FailingBackend(StateCollectingBackend):
     def is_valid(self):
         return False
 
-    def save_stream(self, clip_title, io):
+    def save_stream(self, clip_title, clip, io):
         return RD_FAILED
 
     def pipe(self, io):

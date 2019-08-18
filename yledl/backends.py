@@ -67,7 +67,7 @@ class BaseDownloader(object):
     def file_extension(self, preferred):
         return PreferredFileExtension('.mp4')
 
-    def save_stream(self, output_name, io):
+    def save_stream(self, output_name, clip, io):
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
@@ -84,9 +84,9 @@ class BaseDownloader(object):
 
 
 class ExternalDownloader(BaseDownloader):
-    def save_stream(self, output_name, io):
+    def save_stream(self, output_name, clip, io):
         env = self.extra_environment(io)
-        args = self.build_args(output_name, io)
+        args = self.build_args(output_name, clip, io)
         return self.external_downloader([args], env)
 
     def pipe(self, io):
@@ -94,7 +94,7 @@ class ExternalDownloader(BaseDownloader):
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
 
-    def build_args(self, output_name, io):
+    def build_args(self, output_name, clip, io):
         raise NotImplementedError('build_args must be overridden')
 
     def build_pipe_args(self, io):
@@ -207,16 +207,16 @@ class RTMPBackend(ExternalDownloader):
     def file_extension(self, preferred):
         return MandatoryFileExtension('.flv')
 
-    def save_stream(self, output_name, io):
+    def save_stream(self, output_name, clip, io):
         # rtmpdump fails to resume if the file doesn't contain at
         # least one audio frame. Remove small files to force a restart
         # from the beginning.
         if io.resume and self.is_small_file(output_name):
             self.remove(output_name)
 
-        return super(RTMPBackend, self).save_stream(output_name, io)
+        return super(RTMPBackend, self).save_stream(output_name, clip, io)
 
-    def build_args(self, output_name, io):
+    def build_args(self, output_name, clip, io):
         args = [io.rtmpdump_binary]
         args += rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
         args += ['-o', output_name]
@@ -282,18 +282,18 @@ class HDSBackend(ExternalDownloader):
 
         return options
 
-    def build_args(self, output_name, io):
+    def build_args(self, output_name, clip, io):
         args = ['--delete', '--outfile', output_name]
         return self.adobehds_command_line(io, args)
 
-    def save_stream(self, output_name, io):
+    def save_stream(self, output_name, clip, io):
         if (io.resume and output_name != '-' and
             os.path.isfile(output_name) and
             not self.fragments_exist(self.flavor_id)):
             logger.info('{} has already been downloaded.'.format(output_name))
             return RD_SUCCESS
         else:
-            return super(HDSBackend, self).save_stream(output_name, io)
+            return super(HDSBackend, self).save_stream(output_name, clip, io)
 
     def fragments_exist(self, flavor_id):
         pattern = r'.*_{}_Seg[0-9]+-Frag[0-9]+$'.format(re.escape(flavor_id))
@@ -352,7 +352,7 @@ class YoutubeDLHDSBackend(BaseDownloader):
     def file_extension(self, preferred):
         return MandatoryFileExtension('.flv')
 
-    def save_stream(self, output_name, io):
+    def save_stream(self, output_name, clip, io):
         return self._execute_youtube_dl(output_name, io)
 
     def pipe(self, io):
@@ -428,7 +428,21 @@ class HLSBackend(ExternalDownloader):
         else:
             return []
 
-    def build_args(self, output_name, io):
+    def _metadata_args(self, clip):
+        if not clip:
+            return []
+
+        metadata = []
+        if clip.description:
+            metadata += ['-metadata', 'description=' + clip.description]
+
+        if clip.publish_timestamp:
+            metadata += ['-metadata',
+                         'creation_time=' + clip.publish_timestamp.isoformat()]
+
+        return metadata
+
+    def build_args(self, output_name, clip, io):
         if ((io.outputfilename and io.outputfilename.endswith('.mp4')) or
             io.preferred_format in ('mp4', '.mp4')):
             scodec = 'mov_text'
@@ -447,7 +461,7 @@ class HLSBackend(ExternalDownloader):
                 subtitles_args +
                 ['file:' + output_name])
 
-        return self.ffmpeg_command_line(io, args)
+        return self.ffmpeg_command_line(clip, io, args)
 
     def build_pipe_args(self, io):
         if io.embed_subtitles:
@@ -461,14 +475,14 @@ class HLSBackend(ExternalDownloader):
                 subtitles_args +
                 ['-f', 'matroska', 'pipe:1'])
 
-        return self.ffmpeg_command_line(io, args)
+        return self.ffmpeg_command_line(None, io, args)
 
     def pipe(self, io):
         commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
 
-    def ffmpeg_command_line(self, io, output_options):
+    def ffmpeg_command_line(self, clip, io, output_options):
         debug = logger.isEnabledFor(logging.DEBUG)
         loglevel = 'info' if debug else 'error'
         args = [io.ffmpeg_binary, '-y',
@@ -478,6 +492,7 @@ class HLSBackend(ExternalDownloader):
         args.extend(self._probe_args())
         args.extend(['-i', self.url])
         args.extend(self._duration_arg(io.download_limits))
+        args.extend(self._metadata_args(clip))
         args.extend(output_options)
         return args
 
@@ -492,15 +507,17 @@ class HLSAudioBackend(HLSBackend):
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
 
-    def build_args(self, output_name, io):
+    def build_args(self, output_name, clip, io):
         return self.ffmpeg_command_line(
-            io, ['-map', '0:4?', '-acodec', 'copy',
-                 '-f', 'mp3', 'file:' + output_name])
+            clip, io,
+            ['-map', '0:4?', '-acodec', 'copy',
+             '-f', 'mp3', 'file:' + output_name])
 
     def build_pipe_args(self, io):
         return self.ffmpeg_command_line(
-            io, ['-map', '0:4?', '-acodec', 'copy',
-                 '-f', 'mp3', 'pipe:1'])
+            None, io,
+            ['-map', '0:4?', '-acodec', 'copy',
+             '-f', 'mp3', 'pipe:1'])
 
 
 ### Download a plain HTTP file ###
@@ -524,7 +541,7 @@ class WgetBackend(ExternalDownloader):
     def file_extension(self, preferred):
         return self._file_extension
 
-    def build_args(self, output_name, io):
+    def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io.wget_binary, output_name)
         args.extend([
             '--progress=bar',
@@ -581,7 +598,7 @@ class FailingBackend(BaseDownloader):
     def is_valid(self):
         return False
 
-    def save_stream(self, output_name, io):
+    def save_stream(self, output_name, clip, io):
         logger.error(self.error_message)
         return RD_FAILED
 
