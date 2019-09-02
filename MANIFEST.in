@@ -2,3 +2,4 @@ include README*
 include COPYING
 include ChangeLog
 include yledl/AdobeHDS.php
+recursive-include tests
