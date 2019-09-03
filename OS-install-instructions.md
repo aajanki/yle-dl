@@ -103,31 +103,21 @@ python setup.py install --user
 ```
 
 
+## Gentoo
+
+```
+emerge -av yle-dl
+```
+
+
 ## Mac OS X
 
-[Install the PHP interpreter](https://secure.php.net/manual/en/install.macosx.php).
-
-Install other dependencies:
 ```
 brew install python
 brew install wget
 brew install --HEAD rtmpdump
 brew install ffmpeg
-```
-
-Enable the PHP extensions by appending the following lines with the
-correct paths in the [php.ini]:
-
-[php.ini]:https://secure.php.net/manual/en/configuration.file.php
-
-```
-extension=/path/to/curl.so
-```
-
-Install yle-dl:
-
-```
-sudo pip install --upgrade yle-dl
+brew install yle-dl
 ```
 
 
@@ -171,7 +161,8 @@ Append `C:\somepath\rtmpdump` to the PATH environment variable.
 
 ### PHP
 
-PHP is needed only for live TV and a small subset of streams.
+PHP is needed only for few rare streams. Most likely you can skip
+installing PHP.
 
 Download the latest PHP 7.x.y binary (VC15 x64 Non Thread Safe) from
 https://windows.php.net/download/ and install it in `C:\somepath\php`.
