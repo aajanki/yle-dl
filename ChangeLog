@@ -7,6 +7,7 @@ Distributed under the GPL v3
 
 - Make --destdir and -o work together
 - Embed the program description in the output file (only Matroska files)
+- Include the tests in the source tarball
 
 Version 20190614 - Ten year anniversary edition
 
