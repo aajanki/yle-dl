@@ -32,19 +32,21 @@ def test_arkivet_metadata():
 
 
 def test_arkivet_audio_stream_url():
-    streamurl = fetch_stream_url('https://svenska.yle.fi/artikel/2014/04/03'
-                                 '/tove-jansson-laser-smatrollen-och-'
-                                 'den-stora-oversvamningen')
-    assert streamurl
-    assert streamurl[0].startswith('rtmpe://')
+    streamurl = fetch_stream_url(
+        'https://svenska.yle.fi/artikel/2014/01/28'
+        '/tove-jansson-laser-noveller-ur-dockskapet')
+
+    assert len(streamurl) == 11
+    for url in streamurl:
+        assert url.startswith('rtmpe://')
 
 
 def test_arkivet_audio_metadata():
-    metadata = fetch_metadata('https://svenska.yle.fi/artikel/2014/04/03'
-                              '/tove-jansson-laser-smatrollen-och-'
-                              'den-stora-oversvamningen')
+    metadata = fetch_metadata(
+        'https://svenska.yle.fi/artikel/2014/01/28'
+        '/tove-jansson-laser-noveller-ur-dockskapet')
 
-    assert len(metadata) == 2
+    assert len(metadata) == 11
+    assert metadata[0].get('title') == 'Apan ur Dockskåpet'
     for m in metadata:
-        assert m.get('title').startswith('Småtrollen')
         assert all(f.get('media_type') == 'audio' for f in m.get('flavors'))
