@@ -18,11 +18,8 @@ class FullHDFlavorProber(object):
     def probe_flavors(self, manifest_url):
         try:
             programs = self.probe.show_programs_for_url(manifest_url)
-        except ValueError:
-            return [FailedFlavor('Failed to parse ffprobe output')]
-        except subprocess.CalledProcessError as ex:
-            return [FailedFlavor('Stream probing failed with status {}: {}'
-                                 .format(ex.returncode, ex.output))]
+        except ValueError as ex:
+            return [FailedFlavor(f'Failed to probe stream: {str(ex)}')]
 
         return self.programs_to_stream_flavors(programs, manifest_url)
 
@@ -56,5 +53,19 @@ class Ffprobe(object):
         args = [self.ffprobe_binary, '-v', loglevel, '-show_programs',
                 '-print_format', 'json=c=1', '-strict', 'experimental',
                 '-probesize', '80000000', '-i', url]
+        try:
+            return json.loads(subprocess.check_output(args))
+        except subprocess.CalledProcessError as ex:
+            raise ValueError(
+                f'Stream probing failed with status {ex.returncode}')
 
-        return json.loads(subprocess.check_output(args))
+    def duration_seconds_file(self, filename):
+        args = [self.ffprobe_binary, '-v', 'error', '-show_entries',
+                'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1',
+                filename]
+
+        try:
+            return float(subprocess.check_output(args))
+        except subprocess.CalledProcessError as ex:
+            raise ValueError(
+                f'Stream probing failed with status {ex.returncode}')
