@@ -8,7 +8,6 @@ import json
 import logging
 import os.path
 import re
-import subprocess
 import sys
 from datetime import datetime
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
@@ -21,6 +20,7 @@ from .kaltura import YleKalturaApiClient
 from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
+from .streamprobe import FullHDFlavorProber
 from .subtitles import Subtitle
 from .timestamp import parse_areena_timestamp
 from .utils import sane_filename
@@ -207,47 +207,6 @@ class AkamaiFlavorParser(object):
                 bitrate=bitrate,
                 streams=streams)
         ]
-
-
-class FullHDFlavorProber(object):
-    def probe_flavors(self, manifest_url, ffprobe_binary):
-        try:
-            programs = self.ffprobe_programs(manifest_url, ffprobe_binary)
-        except ValueError:
-            return [FailedFlavor('Failed to parse ffprobe output')]
-        except subprocess.CalledProcessError as ex:
-            return [FailedFlavor('Stream probing failed with status {}: {}'
-                                 .format(ex.returncode, ex.output))]
-
-        return self.programs_to_stream_flavors(programs, manifest_url)
-
-    def ffprobe_programs(self, url, ffprobe_binary):
-        debug = logger.isEnabledFor(logging.DEBUG)
-        loglevel = 'info' if debug else 'error'
-        args = [ffprobe_binary, '-v', loglevel, '-show_programs',
-                '-print_format', 'json=c=1', '-strict', 'experimental',
-                '-probesize', '80000000', '-i', url]
-
-        return json.loads(subprocess.check_output(args))
-
-    def programs_to_stream_flavors(self, programs, manifest_url):
-        res = []
-        for program in programs.get('programs', []):
-            streams = program.get('streams', [])
-            any_stream_is_video = any(x['codec_type'] == 'video'
-                                      for x in streams if 'codec_type' in x)
-            widths = [x['width'] for x in streams if 'width' in x]
-            heights = [x['height'] for x in streams if 'height' in x]
-
-            pid = program.get('program_id')
-            res.append(StreamFlavor(
-                media_type='video' if any_stream_is_video else 'audio',
-                height=heights[0] if heights else None,
-                width=widths[0] if widths else None,
-                streams=[HLSBackend(manifest_url, long_probe=True, program_id=pid)]
-            ))
-
-        return sorted(res, key=lambda x: x.height)
 
 
 ## Clip
@@ -772,8 +731,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             return []
 
         logger.debug('Probing for stream flavors')
-        return FullHDFlavorProber().probe_flavors(
-            hls_manifest_url, ffprobe_binary)
+        hd_probe = FullHDFlavorProber(ffprobe_binary)
+        return hd_probe.probe_flavors(hls_manifest_url)
 
     def download_flavors(self, download_url, media_type):
         path = urlparse(download_url)[2]
