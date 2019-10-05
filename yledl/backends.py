@@ -430,8 +430,8 @@ class HLSBackend(ExternalDownloader):
         try:
             downloaded_duration = ffprobe.duration_seconds_file(filename)
         except ValueError as ex:
-            logger.warning(f'Failed to get duration for file {filename}: '
-                           f'{str(ex)}')
+            logger.warning('Failed to get duration for file'
+                           '{}: {}'.format(filename, str(ex)))
             return False
 
         return (expected_duration and expected_duration > 0 and

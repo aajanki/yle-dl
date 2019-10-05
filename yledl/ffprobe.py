@@ -23,7 +23,7 @@ class Ffprobe(object):
             return json.loads(subprocess.check_output(args))
         except subprocess.CalledProcessError as ex:
             raise ValueError(
-                f'Stream probing failed with status {ex.returncode}')
+                'Stream probing failed with status {}'.format(ex.returncode))
 
     def duration_seconds_file(self, filename):
         args = [self.ffprobe_binary, '-v', 'error', '-show_entries',
@@ -34,4 +34,4 @@ class Ffprobe(object):
             return float(subprocess.check_output(args))
         except subprocess.CalledProcessError as ex:
             raise ValueError(
-                f'Stream probing failed with status {ex.returncode}')
+                'Stream probing failed with status {}'.format(ex.returncode))

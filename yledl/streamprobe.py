@@ -18,7 +18,7 @@ class FullHDFlavorProber(object):
         try:
             programs = self.probe.show_programs_for_url(manifest_url)
         except ValueError as ex:
-            return [FailedFlavor(f'Failed to probe stream: {str(ex)}')]
+            return [FailedFlavor('Failed to probe stream: {}'.format(str(ex)))]
 
         return self.programs_to_stream_flavors(programs, manifest_url)
 
