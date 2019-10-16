@@ -9,6 +9,7 @@ from .utils import sane_filename
 from .backends import IOCapability, Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
+from .io import OutputFileNameGenerator
 from .streamfilters import normalize_language_code
 from .streamflavor import FailedFlavor
 
@@ -30,7 +31,11 @@ class YleDlDownloader(object):
 
             downloader.warn_on_unsupported_feature(io)
 
-            outputfile = self.output_name_for_clip(clip, downloader, io)
+            resume_job = (io.resume and
+                          IOCapability.RESUME in downloader.io_capabilities)
+            extension = downloader.file_extension(io.preferred_format)
+            outputfile = (OutputFileNameGenerator()
+                          .filename(clip.title, extension, io, not resume_job))
             self.log_output_file(outputfile)
             dl_result = downloader.save_stream(outputfile, clip, io)
 
@@ -264,12 +269,6 @@ class YleDlDownloader(object):
             not self.geolocation.located_in_finland(clip.webpage)):
             logger.error('This clip is only available in Finland '
                          'and according to Yle you are located abroad')
-
-    def output_name_for_clip(self, clip, downloader, io):
-        resume_job = (io.resume and
-                      IOCapability.RESUME in downloader.io_capabilities)
-        extension = downloader.file_extension(io.preferred_format)
-        return clip.output_file_name(extension, io, resume_job)
 
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':

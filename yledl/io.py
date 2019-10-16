@@ -2,10 +2,14 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
+import logging
 import os
 import os.path
 import sys
 from pkg_resources import resource_filename
+from .utils import sane_filename
+
+logger = logging.getLogger('yledl')
 
 
 def which(program):
@@ -85,3 +89,65 @@ class IOContext(object):
     ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
     ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
     wget_binary = attr.ib(default='wget', converter=wget_default)
+
+
+class OutputFileNameGenerator(object):
+    def filename(self, title, extension, io, next_available=False):
+        """Select a filename for the output."""
+
+        sanitized_title = sane_filename(title, io.excludechars)
+        forced_name = io.outputfilename
+        destdir = io.destdir
+
+        if forced_name:
+            return self._filename_from_template(
+                forced_name, destdir, extension)
+        else:
+            return self._filename_from_title(
+                sanitized_title, destdir, extension, not next_available)
+
+    def _filename_from_template(self, basename, destdir, extension):
+        extended_path = basename
+        if not os.path.isabs(basename) and destdir:
+            extended_path = os.path.join(destdir, basename)
+
+        if extension.is_mandatory:
+            return self._replace_extension(extended_path, extension)
+        else:
+            return self._append_ext_if_missing(extended_path, extension)
+
+    def _replace_extension(self, filename, extension):
+        ext = extension.extension
+        basename, old_ext = os.path.splitext(filename)
+        if not old_ext or old_ext != ext:
+            if old_ext:
+                logger.warn('Unsupported extension {}. Replacing it with {}'
+                            .format(old_ext, ext))
+            return basename + ext
+        else:
+            return filename
+
+    def _append_ext_if_missing(self, filename, extension):
+        if '.' in filename:
+            return filename
+        else:
+            return filename + extension.extension
+
+    def _filename_from_title(self, title, destdir, extension, resume_job):
+        filename = (title or 'ylestream') + extension.extension
+        if destdir:
+            filename = os.path.join(destdir, filename)
+        if not resume_job:
+            filename = self._next_available_filename(filename)
+        return filename
+
+    def _next_available_filename(self, proposed):
+        i = 1
+        enc = sys.getfilesystemencoding()
+        filename = proposed
+        basename, ext = os.path.splitext(filename)
+        while os.path.exists(filename.encode(enc, 'replace')):
+            logger.info('%s exists, trying an alternative name' % filename)
+            filename = basename + '-' + str(i) + ext
+            i += 1
+        return filename

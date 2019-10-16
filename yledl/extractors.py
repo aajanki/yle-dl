@@ -8,7 +8,6 @@ import json
 import logging
 import os.path
 import re
-import sys
 from datetime import datetime
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
 from . import localization
@@ -16,6 +15,7 @@ from . import hds
 from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
     WgetBackend, YoutubeDLHDSBackend
 from .http import html_unescape
+from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
 from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
@@ -23,7 +23,6 @@ from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
 from .subtitles import Subtitle
 from .timestamp import parse_areena_timestamp
-from .utils import sane_filename
 
 
 try:
@@ -224,60 +223,6 @@ class Clip(object):
     expiration_timestamp = attr.ib(default=None)
     embedded_subtitles = attr.ib(factory=list)
 
-    def output_file_name(self, extension, io, resume_job=False):
-        if io.outputfilename:
-            return self.filename_from_template(io.outputfilename, io.destdir,
-                                               extension)
-        else:
-            return self.filename_from_title(extension, io, resume_job)
-
-    def filename_from_title(self, extension, io, resume_job):
-        title = self.title or 'ylestream'
-        ext = extension.extension
-        filename = sane_filename(title, io.excludechars) + ext
-        if io.destdir:
-            filename = os.path.join(io.destdir, filename)
-        if not resume_job:
-            filename = self.next_available_filename(filename)
-        return filename
-
-    def next_available_filename(self, proposed):
-        i = 1
-        enc = sys.getfilesystemencoding()
-        filename = proposed
-        basename, ext = os.path.splitext(filename)
-        while os.path.exists(filename.encode(enc, 'replace')):
-            logger.info('%s exists, trying an alternative name' % filename)
-            filename = basename + '-' + str(i) + ext
-            i += 1
-        return filename
-
-    def filename_from_template(self, basename, destdir, extension):
-        extended_path = basename
-        if not os.path.isabs(basename) and destdir:
-            extended_path = os.path.join(destdir, basename)
-
-        if extension.is_mandatory:
-            return self.replace_extension(extended_path, extension)
-        else:
-            return self.append_ext_if_missing(extended_path, extension)
-
-    def replace_extension(self, filename, extension):
-        ext = extension.extension
-        basename, old_ext = os.path.splitext(filename)
-        if not old_ext or old_ext != ext:
-            if old_ext:
-                logger.warn('Unsupported extension {}. Replacing it with {}'.format(old_ext, ext))
-            return basename + ext
-        else:
-            return filename
-
-    def append_ext_if_missing(self, filename, extension):
-        if '.' in filename:
-            return filename
-        else:
-            return filename + extension.extension
-
     def metadata(self, io):
         flavors_meta = sorted(
             [self.flavor_meta(f) for f in self.flavors],
@@ -308,7 +253,8 @@ class Clip(object):
             extensions = [s.file_extension('mkv') for s in flavors[-1].streams
                           if s.is_valid()]
             if extensions:
-                return self.output_file_name(extensions[0], io)
+                return (OutputFileNameGenerator()
+                        .filename(self.title, extensions[0], io))
 
         return None
 
