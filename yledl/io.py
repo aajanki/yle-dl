@@ -7,6 +7,7 @@ import os
 import os.path
 import sys
 from pkg_resources import resource_filename
+from .ffprobe import Ffprobe
 from .utils import sane_filename
 
 logger = logging.getLogger('yledl')
@@ -89,6 +90,12 @@ class IOContext(object):
     ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
     ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
     wget_binary = attr.ib(default='wget', converter=wget_default)
+
+    def ffprobe(self):
+        if self.ffprobe_binary is None:
+            return None
+
+        return Ffprobe(self.ffprobe_binary)
 
 
 class OutputFileNameGenerator(object):

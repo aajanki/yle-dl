@@ -149,7 +149,8 @@ def arg_parser():
     io_group.add_argument('--vfat', action='store_true',
                           help='Output Windows-compatible filenames')
     io_group.add_argument('--resume', action='store_true',
-                          help='Resume a partial download')
+                          help='Resume a partial download and '
+                          'avoid re-downloading files.')
     io_group.add_argument('--ratelimit', metavar='BR', type=int,
                           help='Maximum bandwidth consumption, '
                           'interger in kB/s')

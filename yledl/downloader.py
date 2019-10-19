@@ -31,11 +31,17 @@ class YleDlDownloader(object):
 
             downloader.warn_on_unsupported_feature(io)
 
+            name_generator = self.output_name_generator(
+                clip.title, downloader, io)
+            basename = name_generator(False)
+            if (io.resume and
+                self.full_stream_already_downloaded(basename, clip, io)):
+                logger.info('{} has already been downloaded.'.format(basename))
+                return (RD_SUCCESS, basename)
+
             resume_job = (io.resume and
                           IOCapability.RESUME in downloader.io_capabilities)
-            extension = downloader.file_extension(io.preferred_format)
-            outputfile = (OutputFileNameGenerator()
-                          .filename(clip.title, extension, io, not resume_job))
+            outputfile = name_generator(not resume_job)
             self.log_output_file(outputfile)
             dl_result = downloader.save_stream(outputfile, clip, io)
 
@@ -49,6 +55,15 @@ class YleDlDownloader(object):
             return res not in [RD_SUCCESS, RD_INCOMPLETE]
 
         return self.process(clips, download, needs_retry, filters)
+
+    def output_name_generator(self, title, downloader, io):
+        generator = OutputFileNameGenerator()
+        extension = downloader.file_extension(io.preferred_format)
+
+        def wrapped(next_available):
+            return generator.filename(title, extension, io, next_available)
+
+        return wrapped
 
     def pipe(self, clips, io, filters):
         def pipe_clip(clip, downloader):
@@ -112,6 +127,24 @@ class YleDlDownloader(object):
                     overall_status = res
 
         return to_external_rd_code(overall_status)
+
+    def full_stream_already_downloaded(self, filename, clip, io):
+        ffprobe = io.ffprobe()
+        if not ffprobe or not os.path.exists(filename):
+            return False
+
+        expected_duration = clip.duration_seconds
+        if expected_duration is None and expected_duration <= 0:
+            return False
+
+        try:
+            downloaded_duration = ffprobe.duration_seconds_file(filename)
+        except ValueError as ex:
+            logger.warning('Failed to get duration for file'
+                           '{}: {}'.format(filename, str(ex)))
+            return False
+
+        return downloaded_duration >= 0.98*expected_duration
 
     def try_all_streams(self, streamfunc, clip, streams, needs_retry):
         latest_result = RD_FAILED

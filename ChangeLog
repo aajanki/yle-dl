@@ -6,6 +6,7 @@ Distributed under the GPL v3
 <unreleased>
 
 - Make --destdir and -o work together
+- Avoid re-downloading a file when --resume is enabled
 - Embed the program description in the output file (only Matroska files)
 - Include the tests in the source tarball
 

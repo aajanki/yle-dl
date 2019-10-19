@@ -15,7 +15,6 @@ from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .rtmp import rtmp_parameters_to_url, rtmp_parameters_to_rtmpdump_args
-from .ffprobe import Ffprobe
 
 
 logger = logging.getLogger('yledl')
@@ -412,30 +411,6 @@ class HLSBackend(ExternalDownloader):
         self.program_id = program_id
         self.io_capabilities = frozenset([IOCapability.DURATION])
         self.name = Backends.FFMPEG
-
-    def save_stream(self, output_name, clip, io):
-        ffprobe = Ffprobe(io.ffprobe_binary)
-        if (io.resume and io.ffprobe_binary and
-            self.full_stream_already_downloaded(output_name, clip, ffprobe)):
-            logger.info('{} has already been downloaded.'.format(output_name))
-            return RD_SUCCESS
-
-        return super(HLSBackend, self).save_stream(output_name, clip, io)
-
-    def full_stream_already_downloaded(self, filename, clip, ffprobe):
-        if not os.path.exists(filename):
-            return False
-
-        expected_duration = clip.duration_seconds
-        try:
-            downloaded_duration = ffprobe.duration_seconds_file(filename)
-        except ValueError as ex:
-            logger.warning('Failed to get duration for file'
-                           '{}: {}'.format(filename, str(ex)))
-            return False
-
-        return (expected_duration and expected_duration > 0 and
-                downloaded_duration >= 0.98*expected_duration)
 
     def file_extension(self, preferred):
         ext = preferred if preferred.startswith('.') else '.' + preferred
