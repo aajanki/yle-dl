@@ -806,8 +806,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                                          akamai_protocol, media_type,
                                          pageurl, ffprobe),
             embedded_subtitles = kaltura_subtitles,
-            duration_seconds = (self.program_info_duration_seconds(info) or
-                                self.preview_duration_seconds(preview)),
+            duration_seconds = (self.preview_duration_seconds(preview) or
+                                self.program_info_duration_seconds(info)),
             available_at_region = (self.available_at_region(info) or
                                    self.preview_available_at_region(preview) or
                                    'Finland'),
