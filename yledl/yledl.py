@@ -269,7 +269,7 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
         return RD_SUCCESS
 
     clips = extractor.extract(url, stream_filters.latest_only,
-                              title_formatter, io.ffprobe_binary)
+                              title_formatter, io.ffprobe())
     dl = YleDlDownloader(AreenaGeoLocation(httpclient))
 
     if action == StreamAction.PRINT_STREAM_URL:

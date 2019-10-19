@@ -596,7 +596,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
     def media_flavors(self, media_id, program_id, hls_manifest_url,
                       download_url, kaltura_flavors, akamai_protocol,
-                      media_type, pageurl, ffprobe_binary):
+                      media_type, pageurl, ffprobe):
         flavors = []
 
         if download_url:
@@ -606,7 +606,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
             flavors.extend(
                 self.flavors_by_media_id(
                     media_id, program_id, hls_manifest_url, kaltura_flavors,
-                    akamai_protocol, media_type, pageurl, ffprobe_binary))
+                    akamai_protocol, media_type, pageurl, ffprobe))
         elif hls_manifest_url:
             flavors.extend(
                 self.hls_flavors(hls_manifest_url, media_type))
@@ -616,18 +616,18 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     def flavors_by_media_id(self, media_id, program_id,
                             hls_manifest_url, kaltura_flavors,
                             akamai_protocol, media_type, pageurl,
-                            ffprobe_binary):
+                            ffprobe):
         if self.is_full_hd_media(media_id):
             logger.debug('Detected a full-HD media')
             flavors = self.hls_probe_flavors(hls_manifest_url, media_type,
-                                             ffprobe_binary)
+                                             ffprobe)
             error = [FailedFlavor('Manifest URL is missing')]
             return flavors or error
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
             return (kaltura_flavors or
                     self.hls_probe_flavors(hls_manifest_url, media_type,
-                                           ffprobe_binary))
+                                           ffprobe))
         elif self.is_mediakanta_media(media_id):
             parser = AkamaiFlavorParser(self.httpclient)
             medias = self.akamai_medias(program_id, media_id, akamai_protocol)
@@ -672,13 +672,12 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
         return [StreamFlavor(media_type=media_type, streams=[backend])]
 
-    def hls_probe_flavors(self, hls_manifest_url, media_type, ffprobe_binary):
+    def hls_probe_flavors(self, hls_manifest_url, media_type, ffprobe):
         if not hls_manifest_url:
             return []
 
         logger.debug('Probing for stream flavors')
-        hd_probe = FullHDFlavorProber(ffprobe_binary)
-        return hd_probe.probe_flavors(hls_manifest_url)
+        return FullHDFlavorProber().probe_flavors(hls_manifest_url, ffprobe)
 
     def download_flavors(self, download_url, media_type):
         path = urlparse(download_url)[2]
