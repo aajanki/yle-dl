@@ -73,6 +73,8 @@ class TitleFormatter(object):
             main_title = ageless_title[len(series_title):]
             main_title = main_title.lstrip(':').lstrip(' ')
 
+        if subheading and not main_title:
+            return subheading
         if subheading and subheading not in main_title:
             return main_title + ': ' + subheading
         else:

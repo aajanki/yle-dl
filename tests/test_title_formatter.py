@@ -80,6 +80,12 @@ def test_no_repeated_series_title():
     assert title == 'Doctor Who'
 
 
+def test_no_repeated_series_title_with_subheading():
+    title = tf.format('Solsidan', series_title='Solsidan',
+                      subheading='Nya avsnitt från Solsidan')
+    assert title == 'Solsidan: Nya avsnitt från Solsidan'
+
+
 def test_no_repeated_series_title_with_episode_title():
     title = tf.format('Doctor Who: Kerblam!', series_title='Doctor Who')
     assert title == 'Doctor Who: Kerblam!'
