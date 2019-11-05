@@ -96,6 +96,17 @@ def test_main_title_equals_series_title_plus_age_limit():
     assert title == 'Rantahotelli'
 
 
+def test_strip_whitespace():
+    title = tf.format(' Rantahotelli ')
+    assert title == 'Rantahotelli'
+
+    title = tf.format('Uutiset klo 18', series_title='Uutiset ')
+    assert title == 'Uutiset: klo 18'
+
+    title = tf.format('Uutiset klo 18', series_title=' Uutiset ')
+    assert title == 'Uutiset: klo 18'
+
+
 def test_all_components(pasila):
     assert tf.format(**pasila) == 'Pasila: Vanhempainyhdistys: '\
         'tekstitys englanniksi: S01E03-2018-04-12T16:30'

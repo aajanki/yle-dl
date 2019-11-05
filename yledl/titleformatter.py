@@ -15,6 +15,11 @@ class TitleFormatter(object):
         if title is None:
             return None
 
+        title = title.strip()
+        series_title = \
+            series_title.strip() if series_title is not None else None
+        subheading = subheading.strip() if subheading is not None else None
+
         main_title = self._main_title(title, subheading, series_title)
         if not main_title and series_title:
             main_title = series_title
