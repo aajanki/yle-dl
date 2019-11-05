@@ -85,6 +85,11 @@ def test_no_repeated_series_title_with_episode_title():
     assert title == 'Doctor Who: Kerblam!'
 
 
+def test_main_title_equals_series_title_plus_age_limit():
+    title = tf.format('Rantahotelli (S)', series_title='Rantahotelli')
+    assert title == 'Rantahotelli'
+
+
 def test_all_components(pasila):
     assert tf.format(**pasila) == 'Pasila: Vanhempainyhdistys: '\
         'tekstitys englanniksi: S01E03-2018-04-12T16:30'
@@ -132,6 +137,22 @@ def test_template_series_duplicated_in_main_title():
 
     fmt = TitleFormatter('${series}${title}')
     assert fmt.format(**data) == 'Jopet-show: Haikeaa joulua'
+
+
+def test_template_series_equals_main_title():
+    data = {
+        'title': 'Rantahotelli',
+        'series_title': 'Rantahotelli',
+    }
+
+    fmt = TitleFormatter('${series}')
+    assert fmt.format(**data) == ''
+
+    fmt = TitleFormatter('${title}')
+    assert fmt.format(**data) == 'Rantahotelli'
+
+    fmt = TitleFormatter('${series}${title}')
+    assert fmt.format(**data) == 'Rantahotelli'
 
 
 def test_template_literal(pasila):

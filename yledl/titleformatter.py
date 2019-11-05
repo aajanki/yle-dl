@@ -16,6 +16,10 @@ class TitleFormatter(object):
             return None
 
         main_title = self._main_title(title, subheading, series_title)
+        if not main_title and series_title:
+            main_title = series_title
+            series_title = None
+
         values = {
             'series': series_title or '',
             'title': main_title,
@@ -64,14 +68,20 @@ class TitleFormatter(object):
     def _main_title(self, title, subheading, series_title):
         main_title = self._remove_genre_prefix(
             self._remove_repeated_main_title(title))
-        if series_title and main_title.startswith(series_title):
-            main_title = main_title[len(series_title):]
+        ageless_title = self._remove_age_limit(main_title)
+        if series_title and ageless_title.startswith(series_title):
+            main_title = ageless_title[len(series_title):]
             main_title = main_title.lstrip(':').lstrip(' ')
 
         if subheading and subheading not in main_title:
             return main_title + ': ' + subheading
         else:
             return main_title
+
+    def _remove_age_limit(self, title):
+        """Strip (S) or (12) postfix from the title."""
+        m = re.match(r'(.+?)\s+\(([A-Z]|[0-9]{1,2})\)$', title)
+        return m.group(1) if m else title
 
     def _remove_repeated_main_title(self, title):
         if ':' in title:
