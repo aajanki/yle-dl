@@ -780,9 +780,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         title_params = {
             'program_id': pid,
             'publish_timestamp': publish_timestamp,
-            **titles,
-            **episode_number
         }
+        title_params.update(titles)
+        title_params.update(episode_number)
         title = title_formatter.format(**title_params)
         media_id = (self.program_media_id(info) or
                     self.preview_media_id(preview))
