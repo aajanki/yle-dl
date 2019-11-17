@@ -18,6 +18,7 @@ def pasila():
             tzinfo=FixedOffset(2)),
         'series_title': 'Pasila',
         'subheading':'tekstitys englanniksi',
+        'program_id': '1-86743',
         'season': 1,
         'episode': 3,
     }
@@ -127,6 +128,12 @@ def test_template(pasila):
     fmt = TitleFormatter('${timestamp}${title}')
     assert fmt.format(**pasila) == '2018-04-12T16:30: '\
         'Vanhempainyhdistys: tekstitys englanniksi'
+
+    fmt = TitleFormatter('${program_id}${series}')
+    assert fmt.format(**pasila) == '1-86743: Pasila'
+
+    fmt = TitleFormatter('${series}${program_id}')
+    assert fmt.format(**pasila) == 'Pasila-1-86743'
 
 
 def test_template_date(pasila):

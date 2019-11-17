@@ -11,7 +11,7 @@ class TitleFormatter(object):
         self.tokens = self._parse_template(template)
     
     def format(self, title, publish_timestamp=None, series_title=None,
-               subheading=None, season=None, episode=None):
+               subheading=None, season=None, episode=None, program_id=None):
         if title is None:
             return None
 
@@ -31,10 +31,12 @@ class TitleFormatter(object):
             'episode': self._episode_number(season, episode),
             'timestamp': self._timestamp_string(publish_timestamp),
             'date': self._date_string(publish_timestamp),
+            'program_id': program_id,
         }
         separators = defaultdict(lambda: ': ',
                                  timestamp='-',
-                                 date='-')
+                                 date='-',
+                                 program_id='-')
 
         return self._substitute(self.tokens, values, separators)
 
@@ -42,7 +44,7 @@ class TitleFormatter(object):
         res = []
 
         last_pos = 0
-        for m in re.finditer(r'\$(:?{[a-zA-Z]+?}|\$)', template):
+        for m in re.finditer(r'\$(:?{[a-zA-Z_]+?}|\$)', template):
             if m.start() != last_pos:
                 res.append(Literal(template[last_pos:m.start()]))
 
