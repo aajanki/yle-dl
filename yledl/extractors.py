@@ -775,7 +775,9 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
-        titles = self.program_title(info) or self.preview_title(preview)
+        titles = (self.program_title(info) or
+                  self.preview_title(preview) or
+                  {'title': 'areena'})
         episode_number = self.program_episode_number(info)
         title_params = {
             'program_id': pid,
