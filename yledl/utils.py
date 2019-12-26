@@ -1,4 +1,5 @@
 from __future__ import print_function, absolute_import, unicode_literals
+import logging
 import re
 import sys
 
@@ -27,3 +28,15 @@ def sane_filename(name, excludechars):
     tr = dict((ord(c), ord('_')) for c in excludechars)
     x = re.sub(r'\s+', ' ', name, flags=re.UNICODE).strip(' .').translate(tr)
     return x or 'ylevideo'
+
+
+def ffmpeg_loglevel(py_loglevel):
+    """Convert a Python log level to the corresponding ffmpeg log level."""
+    if py_loglevel >= logging.CRITICAL:
+        return 'fatal'
+    elif py_loglevel >= logging.ERROR:
+        return 'error'
+    elif py_loglevel >= logging.DEBUG:
+        return 'warning'
+    else:
+        return 'info'

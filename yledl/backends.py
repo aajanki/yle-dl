@@ -15,6 +15,7 @@ from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .rtmp import rtmp_parameters_to_url, rtmp_parameters_to_rtmpdump_args
+from .utils import ffmpeg_loglevel
 
 
 logger = logging.getLogger('yledl')
@@ -224,6 +225,8 @@ class RTMPBackend(ExternalDownloader):
             args.append('-e')
         if io.download_limits.duration:
             args.extend(['--stop', str(io.download_limits.duration)])
+        if logger.getEffectiveLevel() > logging.INFO:
+            args.append('--quiet')
         return args
 
     def build_pipe_args(self, io):
@@ -318,7 +321,7 @@ class HDSBackend(ExternalDownloader):
             args.append('--proxy')
             args.append(io.proxy)
             args.append('--fproxy')
-        if logger.isEnabledFor(logging.DEBUG):
+        if logger.getEffectiveLevel() < logging.DEBUG:
             args.append('--debug')
         if extra_args:
             args.extend(extra_args)
@@ -371,7 +374,7 @@ class YoutubeDLHDSBackend(BaseDownloader):
         ydlopts = {
             'logtostderr': True,
             'proxy': io.proxy,
-            'verbose': logger.isEnabledFor(logging.DEBUG)
+            'verbose': logger.getEffectiveLevel() < logging.DEBUG
         }
 
         dlopts = {
@@ -485,12 +488,12 @@ class HLSBackend(ExternalDownloader):
         return self.external_downloader(commands, env)
 
     def ffmpeg_command_line(self, clip, io, output_options):
-        debug = logger.isEnabledFor(logging.DEBUG)
-        loglevel = 'info' if debug else 'error'
         args = [io.ffmpeg_binary, '-y',
-                '-loglevel', loglevel, '-stats',
+                '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
                 '-thread_queue_size', '512',
                 '-strict', 'experimental']  # For decoding webvtt subtitles
+        if logger.getEffectiveLevel() <= logging.WARNING:
+            args.append('-stats')
         args.extend(self._probe_args())
         args.extend(['-i', self.url])
         args.extend(self._duration_arg(io.download_limits))
@@ -550,6 +553,10 @@ class WgetBackend(ExternalDownloader):
             '--tries=5',
             '--random-wait'
         ])
+        if logger.getEffectiveLevel() > logging.INFO:
+            args.append('--no-verbose')
+        if logger.getEffectiveLevel() <= logging.WARNING:
+            args.append('--show-progress')
         if io.resume:
             args.append('-c')
         if io.download_limits.ratelimit:

@@ -6,6 +6,7 @@ Distributed under the GPL v3
 
 - Handle various corner cases better in the title extraction
 - Include an unique ID in the output file name with --output-template '${program_id}'
+- More options for controlling the output verbosity: -qq, -q, -V, -VV
 
 Version 20191022
 

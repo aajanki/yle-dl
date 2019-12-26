@@ -102,9 +102,14 @@ def arg_parser():
         default_config_files=['~/.yledl.conf'],
         description=description,
         formatter_class=configargparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-V', '--verbose', '--debug',
-                        action='store_true', dest='debug',
-                        help='Show verbose debug output')
+    parser.add_argument('-V', '--verbose',
+                        action='count', dest='verbosity', default=0,
+                        help='Increase output verbosity. -VV is really verbose.')
+    parser.add_argument('--debug', action='store_const', const=2,
+                        dest='verbosity',
+                        help='Really verbose output, same as -VV')
+    parser.add_argument('-q', action='count', dest='quietness', default=0,
+                        help='Reduce output verbosity. -qq prints only errors.')
     parser.add_argument('-c', '--config', metavar='FILENAME',
                         is_config_file=True, help='config file path')
 
@@ -323,15 +328,30 @@ def resolution_from_arg(arg):
         return None
 
 
+def set_log_level(args):
+    verbosity = args.verbosity - args.quietness
+
+    if verbosity <= -2:
+        logger.setLevel(logging.ERROR)
+    elif verbosity == -1:
+        logger.setLevel(logging.WARNING)
+    elif verbosity == 0:
+        logger.setLevel(logging.INFO)
+    elif verbosity == 1:
+        logger.setLevel(logging.DEBUG)
+    elif verbosity >= 2:
+        logger.setLevel(5)
+
+
 ### main program ###
 
 
 def main(argv=sys.argv):
+    logging.addLevelName(5, 'TRACE')
+
     parser = arg_parser()
     args = parser.parse_args(argv[1:])
-
-    loglevel = logging.DEBUG if args.debug else logging.INFO
-    logger.setLevel(loglevel)
+    set_log_level(args)
 
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     dl_limits = DownloadLimits(args.duration, args.ratelimit)
@@ -364,11 +384,12 @@ def main(argv=sys.argv):
     else:
         action = StreamAction.DOWNLOAD
 
-    if (action != StreamAction.PIPE and
-        (args.debug or not (action in [StreamAction.PRINT_STREAM_URL,
-                                       StreamAction.PRINT_STREAM_TITLE,
-                                       StreamAction.PRINT_EPISODE_PAGES,
-                                       StreamAction.PRINT_METADATA]))):
+    if (logger.isEnabledFor(logging.INFO) and
+         action not in [StreamAction.PIPE,
+                        StreamAction.PRINT_STREAM_URL,
+                        StreamAction.PRINT_STREAM_TITLE,
+                        StreamAction.PRINT_EPISODE_PAGES,
+                        StreamAction.PRINT_METADATA]):
         print_enc(parser.description)
 
     backends = Backends.parse_backends(args.backend.split(','))

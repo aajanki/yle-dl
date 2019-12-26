@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import json
 import logging
 import subprocess
+from .utils import ffmpeg_loglevel
 
 
 logger = logging.getLogger('yledl')
@@ -14,9 +15,9 @@ class Ffprobe(object):
         self.ffprobe_binary = ffprobe_binary
 
     def show_programs_for_url(self, url):
-        debug = logger.isEnabledFor(logging.DEBUG)
-        loglevel = 'info' if debug else 'error'
-        args = [self.ffprobe_binary, '-v', loglevel, '-show_programs',
+        args = [self.ffprobe_binary,
+                '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+                '-show_programs',
                 '-print_format', 'json=c=1', '-strict', 'experimental',
                 '-probesize', '80000000', '-i', url]
         try:
