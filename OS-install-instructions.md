@@ -206,6 +206,6 @@ Install [Termux](https://termux.com/).
 
 Run on the Termux terminal:
 ```
-pkg install python python-dev make clang libgmp-dev wget ffmpeg libxml2-dev libxml2-utils libxslt-dev
+pkg install python make clang libgmp wget ffmpeg libxml2 libxml2-utils libxslt
 pip install pycryptodome lxml yle-dl
 ```
