@@ -385,10 +385,7 @@ class MergingExtractor(ClipExtractor):
             return FailedClip(url, 'No clips to merge')
 
 
-class AreenaPlaylist(object):
-    def __init__(self, httpclient):
-        self.httpclient = httpclient
-
+class AreenaPlaylist(ClipExtractor):
     def get_playlist(self, url):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
@@ -486,56 +483,61 @@ class AreenaPlaylist(object):
 
 
 class AreenaPreviewApiParser(object):
-    def preview_media_id(self, data):
-        return self.preview_ongoing(data).get('media_id')
+    def __init__(self, data):
+        self.preview = data
 
-    def preview_duration_seconds(self, data):
-        return self.preview_ongoing(data).get('duration', {}).get('duration_in_seconds')
+    def media_id(self):
+        return self.ongoing().get('media_id')
 
-    def preview_title(self, data, language_chooser):
-        title_object = self.preview_ongoing(data).get('title', {})
+    def duration_seconds(self):
+        return self.ongoing().get('duration', {}).get('duration_in_seconds')
+
+    def title(self, language_chooser):
+        title_object = self.ongoing().get('title', {})
         if not title_object:
             return {}
 
         title = language_chooser.choose_long_form(title_object).strip()
         return {'title': title}
 
-    def preview_description(self, data, language_chooser):
-        description_object = self.preview_ongoing(data).get('description', {})
+    def description(self, language_chooser):
+        description_object = self.ongoing().get('description', {})
         if not description_object:
             return None
 
         return language_chooser.choose_long_form(description_object).strip()
 
-    def preview_available_at_region(self, data):
-        return self.preview_ongoing(data).get('region')
+    def available_at_region(self):
+        return self.ongoing().get('region')
 
-    def preview_timestamp(self, data):
-        dt = self.preview_ongoing(data).get('start_time')
+    def timestamp(self):
+        dt = self.ongoing().get('start_time')
         return parse_areena_timestamp(dt)
 
-    def preview_manifest_url(self, data):
-        return self.preview_ongoing(data).get('manifest_url')
+    def manifest_url(self):
+        return self.ongoing().get('manifest_url')
 
-    def preview_media_url(self, data):
-        return self.preview_ongoing(data).get('media_url')
+    def media_url(self):
+        return self.ongoing().get('media_url')
 
-    def preview_media_type(self, data):
-        if not data:
+    def media_type(self):
+        if not self.preview:
             return None
-        elif self.preview_ongoing(data).get('content_type') == 'AudioObject':
+        elif self.ongoing().get('content_type') == 'AudioObject':
             return 'audio'
         else:
             return 'video'
 
-    def preview_is_live(self, data):
-        return (data or {}).get('data', {}).get('ongoing_channel') is not None
+    def is_live(self):
+        data = (self.preview or {}).get('data', {})
+        return data.get('ongoing_channel') is not None
 
-    def preview_is_pending(self, data):
-        return (data or {}).get('data', {}).get('pending_event') is not None
+    def is_pending(self):
+        data = (self.preview or {}).get('data', {})
+        return data.get('pending_event') is not None
 
-    def preview_ongoing(self, preview):
-        data = (preview or {}).get('data', {})
+    def ongoing(self):
+        data = (self.preview or {}).get('data', {})
         return (data.get('ongoing_ondemand') or
                 data.get('ongoing_event', {}) or
                 data.get('ongoing_channel', {}) or
@@ -546,7 +548,7 @@ class AreenaPreviewApiParser(object):
 ### Extract streams from an Areena webpage ###
 
 
-class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
+class AreenaExtractor(AreenaPlaylist):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
@@ -767,29 +769,18 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         if not pid:
             return None
 
-        if self.is_elava_arkisto_media(pid):
-            preview = None
-        else:
-            preview_headers = {
-                'Referer': pageurl,
-                'Origin': 'https://areena.yle.fi'
-            }
-            preview = JSONP.load_json(self.preview_url(pid),
-                                      self.httpclient,
-                                      headers=preview_headers)
+        preview = self.preview_parser(pid, pageurl)
 
-            logger.debug('preview data:\n' + json.dumps(preview, indent=2))
-
-        if self.preview_is_live(preview) and not self.force_program_info():
+        if preview.is_live() and not self.force_program_info():
             info = None
         else:
             info = JSONP.load_jsonp(self.program_info_url(pid), self.httpclient)
             logger.debug('program data:\n' + json.dumps(info, indent=2))
 
         publish_timestamp = (self.publish_timestamp(info) or
-                             self.preview_timestamp(preview))
+                             preview.timestamp())
         titles = (self.program_title(info) or
-                  self.preview_title(preview, self.language_chooser) or
+                  preview.title(self.language_chooser) or
                   {'title': 'areena'})
         episode_number = self.program_episode_number(info)
         title_params = {
@@ -799,16 +790,14 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         title_params.update(titles)
         title_params.update(episode_number)
         title = title_formatter.format(**title_params)
-        media_id = (self.program_media_id(info) or
-                    self.preview_media_id(preview))
-        manifest_url = self.preview_manifest_url(preview)
+        media_id = self.program_media_id(info) or preview.media_id()
+        manifest_url = preview.manifest_url()
         download_url = ((info and info.get('downloadUrl')) or
-                        self.preview_media_url(preview))
+                        preview.media_url())
         download_url = self.ignore_invalid_download_url(download_url)
-        media_type = (self.program_media_type(info) or
-                      self.preview_media_type(preview))
+        media_type = self.program_media_type(info) or preview.media_type()
         description = (self.program_description(info) or
-                       self.preview_description(preview, self.language_chooser))
+                       preview.description(self.language_chooser))
         akamai_protocol = self.program_protocol(info, 'HDS')
         if self.is_html5_media(media_id):
             entry_id = self.kaltura_entry_id(media_id)
@@ -830,20 +819,35 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
                                          akamai_protocol, media_type,
                                          pageurl, ffprobe),
             embedded_subtitles = kaltura_subtitles,
-            duration_seconds = (self.preview_duration_seconds(preview) or
+            duration_seconds = (preview.duration_seconds() or
                                 self.program_info_duration_seconds(info)),
             available_at_region = (self.available_at_region(info) or
-                                   self.preview_available_at_region(preview) or
+                                   preview.available_at_region() or
                                    'Finland'),
             publish_timestamp = publish_timestamp,
             expiration_timestamp = self.expiration_timestamp(info),
-            pending = self.preview_is_pending(preview)
+            pending = preview.is_pending()
         )
 
     def program_info_url(self, program_id):
         return 'https://player.yle.fi/api/v1/programs.jsonp?' \
             'id=%s&callback=yleEmbed.programJsonpCallback' % \
             (quote_plus(program_id))
+
+    def preview_parser(self, pid, pageurl):
+        if self.is_elava_arkisto_media(pid):
+            return AreenaPreviewApiParser({})
+        else:
+            preview_headers = {
+                'Referer': pageurl,
+                'Origin': 'https://areena.yle.fi'
+            }
+            preview_json = JSONP.load_json(self.preview_url(pid),
+                                           self.httpclient,
+                                           headers=preview_headers)
+            logger.debug('preview data:\n' + json.dumps(preview_json, indent=2))
+
+            return AreenaPreviewApiParser(preview_json)
 
     def preview_url(self, program_id):
         return 'https://player.api.yle.fi/v1/preview/{}.json?' \
@@ -1129,14 +1133,6 @@ class YleUutisetExtractor(AreenaExtractor):
         logger.debug('Found Areena data IDs: {}'.format(','.join(data_ids)))
 
         return [self.id_to_areena_url(id) for id in data_ids]
-
-    def extract_video_id(self, img):
-        src = str(img.get('src'))
-        m = re.search(r'/13-([-0-9]+)-\d+\.jpg$', src)
-        if m:
-            return m.group(1)
-        else:
-            return None
 
     def id_to_areena_url(self, data_id):
         if '-' in data_id:
