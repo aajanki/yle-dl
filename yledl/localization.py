@@ -3,16 +3,40 @@
 from __future__ import print_function, absolute_import, unicode_literals
 
 
-def localized_text(alternatives, language='fi'):
-    if alternatives:
-        return alternatives.get(language) or alternatives.get('fi')
-    else:
-        return None
+default_languages = ['fin', 'swe']
 
-def fi_or_sv_text(alternatives):
-    return localized_text(alternatives, 'fi') or \
-        localized_text(alternatives, 'sv')
 
-def fin_or_swe_text(alternatives):
-    return localized_text(alternatives, 'fin') or \
-        localized_text(alternatives, 'swe')
+class TranslationChooser(object):
+    def __init__(self, preferred_three_letter_codes):
+        if preferred_three_letter_codes:
+            self.languages = preferred_three_letter_codes + \
+                             [x for x in default_languages
+                              if x not in preferred_three_letter_codes]
+        else:
+            self.languages = list(default_languages)
+
+    def choose_long_form(self, alternatives):
+        return self._choose(alternatives, self.languages)
+
+    def choose_short_form(self, alternatives):
+        return self._choose(alternatives, self.two_letter_codes(self.languages))
+
+    def _choose(self, alternatives, language_codes):
+        if alternatives is None:
+            return None
+
+        for lang in language_codes:
+            text = alternatives.get(lang)
+            if text is not None:
+                return text
+
+        if alternatives:
+            # fallback to the first available language if none of the
+            # preferred languages are available
+            return alternatives[0]
+        else:
+            return None
+
+    def two_letter_codes(self, long_codes):
+        code_map = {'fin': 'fi', 'swe': 'sv'}
+        return [code_map.get(x, x) for x in long_codes]

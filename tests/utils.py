@@ -5,6 +5,7 @@ from io import BytesIO
 from yledl import download, StreamFilters, IOContext, StreamAction, RD_SUCCESS
 from yledl.http import HttpClient
 from yledl.titleformatter import TitleFormatter
+from yledl.localization import TranslationChooser
 
 
 # Context manager for capturing stdout output. See
@@ -33,16 +34,17 @@ def fetch_episode_pages(url, filters=StreamFilters()):
     return fetch(url, StreamAction.PRINT_EPISODE_PAGES, filters)
 
 
-def fetch_metadata(url, filters=StreamFilters()):
+def fetch_metadata(url, filters=StreamFilters(), meta_languages=None):
     return json.loads('\n'.join(
-        fetch(url, StreamAction.PRINT_METADATA, filters)))
+        fetch(url, StreamAction.PRINT_METADATA, filters, meta_languages)))
 
 
-def fetch(url, action, filters):
+def fetch(url, action, filters, meta_languages=None):
     # Initialize rtmpdump_binary to avoid a file system lookup in tests
     io = IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump')
     httpclient = HttpClient()
     title_formatter = TitleFormatter()
+    language_chooser = TranslationChooser(meta_languages)
 
     with Capturing() as output:
         res = download(url,
@@ -51,7 +53,8 @@ def fetch(url, action, filters):
                        httpclient,
                        title_formatter,
                        stream_filters = filters,
-                       postprocess_command = None)
+                       postprocess_command = None,
+                       language_chooser = language_chooser)
         assert res == RD_SUCCESS
 
     return output

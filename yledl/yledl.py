@@ -38,6 +38,7 @@ from .extractors import extractor_factory
 from .geolocation import AreenaGeoLocation
 from .http import HttpClient
 from .io import IOContext, DownloadLimits
+from .localization import TranslationChooser
 from .streamfilters import StreamFilters
 from .titleformatter import TitleFormatter
 from .utils import print_enc
@@ -181,6 +182,10 @@ def arg_parser():
                             default='all',
                             help='Download subtitles if LANG is "all" '
                             '(default) or disable subtitles if LANG is "none".')
+    qual_group.add_argument('--metadatalang', metavar='LANG', type=to_unicode,
+                            choices=['fin', 'swe', 'smi'], default='fin',
+                            help='Preferred metadata language, "fin", "swe" '
+                            'or "smi"')
     qual_group.add_argument('--hardsubs', action='store_true',
                             help='Download stream with hard subs if available')
     qual_group.add_argument('--latestepisode', action='store_true',
@@ -251,7 +256,7 @@ def encode_url_utf8(url):
 
 
 def download(url, action, io, httpclient, title_formatter, stream_filters,
-             postprocess_command):
+             postprocess_command, language_chooser):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -264,7 +269,8 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
     RD_INCOMPLETE if a stream was downloaded partially but the
     download was interrupted.
     """
-    extractor = extractor_factory(url, stream_filters, httpclient)
+    extractor = extractor_factory(
+        url, stream_filters, language_chooser, httpclient)
     if not extractor:
         logger.error('Unsupported URL %s.' % url)
         logger.error('Is this really a Yle video page?')
@@ -359,6 +365,8 @@ def main(argv=sys.argv):
                    args.resume, dl_limits, excludechars, args.proxy,
                    args.sublang == 'all', args.rtmpdump,
                    args.adobehds, args.ffmpeg, args.ffprobe, args.wget)
+    preferred_meta_langs = [args.metadatalang] if args.metadatalang else []
+    language_chooser = TranslationChooser(preferred_meta_langs)
 
     urls = []
     if args.url:
@@ -413,7 +421,7 @@ def main(argv=sys.argv):
                 i + 1, len(urls), url))
 
         res = download(url, action, io, httpclient, title_formatter,
-                       stream_filters, args.postprocess)
+                       stream_filters, args.postprocess, language_chooser)
 
         if res != RD_SUCCESS:
             exit_status = res

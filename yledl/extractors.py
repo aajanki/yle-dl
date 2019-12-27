@@ -10,7 +10,6 @@ import os.path
 import re
 from datetime import datetime
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
-from . import localization
 from . import hds
 from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
     WgetBackend, YoutubeDLHDSBackend
@@ -36,25 +35,25 @@ except ImportError:
 logger = logging.getLogger('yledl')
 
 
-def extractor_factory(url, filters, httpclient):
+def extractor_factory(url, filters, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url):
-        return ElavaArkistoExtractor(httpclient)
+        return ElavaArkistoExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
-        return ArkivetExtractor(httpclient)
+        return ArkivetExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
-        return AreenaLiveRadioExtractor(httpclient)
+        return AreenaLiveRadioExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return MergingExtractor([
-            AreenaLiveTVHLSExtractor(httpclient),
-            AreenaLiveTVHDSExtractor(filters, httpclient)
+            AreenaLiveTVHLSExtractor(language_chooser, httpclient),
+            AreenaLiveTVHDSExtractor(filters, language_chooser, httpclient)
         ])
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
-        return YleUutisetExtractor(httpclient)
+        return YleUutisetExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
             re.match(r'^https?://yle\.fi/', url):
-        return AreenaExtractor(httpclient)
+        return AreenaExtractor(language_chooser, httpclient)
     else:
         return None
 
@@ -484,19 +483,20 @@ class AreenaPreviewApiParser(object):
     def preview_duration_seconds(self, data):
         return self.preview_ongoing(data).get('duration', {}).get('duration_in_seconds')
 
-    def preview_title(self, data):
+    def preview_title(self, data, language_chooser):
         title_object = self.preview_ongoing(data).get('title', {})
         if not title_object:
             return {}
 
-        return {'title': localization.fin_or_swe_text(title_object).strip()}
+        title = language_chooser.choose_long_form(title_object).strip()
+        return {'title': title}
 
-    def preview_description(self, data):
+    def preview_description(self, data, language_chooser):
         description_object = self.preview_ongoing(data).get('description', {})
         if not description_object:
             return None
 
-        return localization.fin_or_swe_text(description_object).strip()
+        return language_chooser.choose_long_form(description_object).strip()
 
     def preview_available_at_region(self, data):
         return self.preview_ongoing(data).get('region')
@@ -541,6 +541,10 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
     # Extracted from
     # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
     AES_KEY = b'yjuap4n5ok9wzg43'
+
+    def __init__(self, language_chooser, httpclient):
+        super(AreenaExtractor, self).__init__(httpclient)
+        self.language_chooser = language_chooser
 
     def extract_clip(self, clip_url, title_formatter, ffprobe):
         pid = self.program_id_from_url(clip_url)
@@ -776,7 +780,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         publish_timestamp = (self.publish_timestamp(info) or
                              self.preview_timestamp(preview))
         titles = (self.program_title(info) or
-                  self.preview_title(preview) or
+                  self.preview_title(preview, self.language_chooser) or
                   {'title': 'areena'})
         episode_number = self.program_episode_number(info)
         title_params = {
@@ -795,7 +799,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         media_type = (self.program_media_type(info) or
                       self.preview_media_type(preview))
         description = (self.program_description(info) or
-                       self.preview_description(preview))
+                       self.preview_description(preview, self.language_chooser))
         akamai_protocol = self.program_protocol(info, 'HDS')
         if self.is_html5_media(media_id):
             entry_id = self.kaltura_entry_id(media_id)
@@ -868,14 +872,16 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
         program = program_info.get('data', {}).get('program', {})
         title_object = program.get('title')
-        title = localization.fi_or_sv_text(title_object) or 'areena'
+        title = (self.language_chooser.choose_short_form(title_object) or
+                 'areena')
 
-        series_title_object = program.get('partOfSeries', {}).get('title')
-        series_title = localization.fi_or_sv_text(series_title_object)
+        stitle_object = program.get('partOfSeries', {}).get('title')
+        series_title = self.language_chooser.choose_short_form(stitle_object)
 
-        item_title = localization.fi_or_sv_text(program.get('itemTitle'))
-        promotion_title_loc = program.get('promotionTitle')
-        promotion_title = localization.fi_or_sv_text(promotion_title_loc)
+        item_title_object = program.get('itemTitle')
+        item_title = self.language_chooser.choose_short_form(item_title_object)
+        promo_object = program.get('promotionTitle')
+        promotion_title = self.language_chooser.choose_short_form(promo_object)
 
         return {
             'title': title,
@@ -910,7 +916,7 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
         if not description:
             return None
 
-        return localization.fi_or_sv_text(description).strip()
+        return self.language_chooser.choose_short_form(description).strip()
 
     def ignore_invalid_download_url(self, url):
         # Sometimes download url is missing the file name
@@ -923,8 +929,8 @@ class AreenaExtractor(AreenaPlaylist, AreenaPreviewApiParser, ClipExtractor):
 
 class AreenaLiveTVHDSExtractor(AreenaExtractor):
     # TODO: get rid of the constructor and the filters argument
-    def __init__(self, filters, httpclient):
-        super(AreenaLiveTVHDSExtractor, self).__init__(httpclient)
+    def __init__(self, filters, language_chooser, httpclient):
+        super(AreenaLiveTVHDSExtractor, self).__init__(language_chooser, httpclient)
         self.outlet_sort_key = self.create_outlet_sort_key(filters)
 
     def force_program_info(self):
@@ -965,7 +971,8 @@ class AreenaLiveTVHDSExtractor(AreenaExtractor):
 
     def program_title(self, program_info):
         service = self._service_info(program_info)
-        title = localization.fi_or_sv_text(service.get('title')) or 'areena'
+        title = (self.language_chooser.choose_short_form(service.get('title')) or
+                 'areena')
         return {'title': title}
 
     def available_at_region(self, program_info):
