@@ -9,9 +9,10 @@ default_languages = ['fin', 'swe']
 class TranslationChooser(object):
     def __init__(self, preferred_three_letter_codes):
         if preferred_three_letter_codes:
-            self.languages = preferred_three_letter_codes + \
+            preferred = [x.lower() for x in preferred_three_letter_codes]
+            self.languages = preferred + \
                              [x for x in default_languages
-                              if x not in preferred_three_letter_codes]
+                              if x not in preferred]
         else:
             self.languages = list(default_languages)
 

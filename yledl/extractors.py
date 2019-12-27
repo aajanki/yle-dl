@@ -58,6 +58,15 @@ def extractor_factory(url, filters, language_chooser, httpclient):
         return None
 
 
+def url_language(url):
+    arenan = re.match(r'^https?://arenan\.yle\.fi/', url) is not None
+    arkivet = re.match(r'^https?://svenska\.yle\.fi/artikel/', url) is not None
+    if arenan or arkivet:
+        return 'swe'
+    else:
+        return 'fin'
+
+
 class JSONP(object):
     @staticmethod
     def load_jsonp(url, httpclient, headers=None):

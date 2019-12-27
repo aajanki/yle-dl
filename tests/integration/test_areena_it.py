@@ -37,12 +37,12 @@ def test_areena_html5_metadata():
 
 def test_metadata_language():
     meta_fin = fetch_metadata(
-        'https://areena.yle.fi/1-403848', meta_languages=['fin', 'swe'])
+        'https://areena.yle.fi/1-403848', meta_language='fin')
     title_fin = meta_fin[0].get('title')
     assert title_fin.startswith('Suomen tie jatkosotaan')
 
     meta_swe = fetch_metadata(
-        'https://areena.yle.fi/1-403848', meta_languages=['swe', 'fin'])
+        'https://areena.yle.fi/1-403848', meta_language='swe')
     title_swe = meta_swe[0].get('title')
     assert title_swe.startswith('Finlands väg till fortsättningskriget')
 
