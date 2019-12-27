@@ -135,8 +135,8 @@ Valitsimet:
 --rtmpdump path Polku rtmpdump-ohjelmaan
 --adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
 --postprocess c Suorita ohjelma c onnistuneen latauksen jälkeen.
-                Ohjelmalle c annetaan parametriksi ladatun FLV tiedoston nimi
-		ja mahdollisten tekstitystiedostojen nimet.
+                Ohjelmalle c annetaan parametriksi ladatun videotiedoston nimi
+                ja mahdollisten tekstitystiedostojen nimet.
 --proxy uri     Käytä HTTP(S)-proxyä. Esimerkki: --proxy localhost:8118
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 --pipe          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
@@ -188,13 +188,9 @@ Esimerkkejä
 
   yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 
-* Ohjelman lataaminen tiedostoon uutiset.flv:
+* Ohjelman lataaminen tiedostoon uutiset.mkv:
 
-  yle-dl https://areena.yle.fi/1-1544491 -o uutiset.flv
-
-* Keskeytyneen latauksen jatkaminen tiedostoon uutiset.flv:
-
-  yle-dl https://areena.yle.fi/1-1544491 -o uutiset.flv --resume
+  yle-dl https://areena.yle.fi/1-1544491 -o uutiset.mkv
 
 * Lataa uusimmat uutiset
 

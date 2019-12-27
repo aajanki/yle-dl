@@ -155,9 +155,15 @@ def arg_parser():
                               help='Print metadata about available streams')
     io_group.add_argument('--vfat', action='store_true',
                           help='Output Windows-compatible filenames')
-    io_group.add_argument('--resume', action='store_true',
-                          help='Resume a partial download and '
-                          'avoid re-downloading files.')
+    resume_group = io_group.add_mutually_exclusive_group()
+    # --resume is the new default, the option is still accepted but
+    # doesn't do anything
+    resume_group.add_argument('--resume', action='store_true',
+                              dest='resume', default=True,
+                              help=configargparse.SUPPRESS)
+    resume_group.add_argument('--no-resume', action='store_false',
+                              dest='resume',
+                              help='Re-download even if a file already exists.')
     io_group.add_argument('--ratelimit', metavar='BR', type=int,
                           help='Maximum bandwidth consumption, '
                           'interger in kB/s')

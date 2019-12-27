@@ -169,7 +169,7 @@ yle-dl options:
 
 * `--adobehds cmd`    Set command for executing AdobeHDS.php script
 
-* `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded FLV file as the first parameter and subtitle files (if any) as the following parameters.
+* `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded video file as the first parameter and subtitle files (if any) as the following parameters.
 
 * `--proxy uri`       HTTP(S) proxy to use. Example: `--proxy localhost:8118`
 
@@ -208,11 +208,11 @@ Examples
 --------
 
 ```
-yle-dl https://areena.yle.fi/1-1544491 -o video.flv
+yle-dl https://areena.yle.fi/1-1544491 -o video.mkv
 ```
 
 ```
-yle-dl --backend youtubedl https://areena.yle.fi/1-1544491 -o video.flv
+yle-dl --backend youtubedl https://areena.yle.fi/1-1544491 -o video.mkv
 ```
 
 ```
