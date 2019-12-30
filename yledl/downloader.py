@@ -6,7 +6,7 @@ import json
 import logging
 import os.path
 from .utils import sane_filename
-from .backends import IOCapability, Subprocess
+from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .io import OutputFileNameGenerator
@@ -35,13 +35,11 @@ class YleDlDownloader(object):
                 clip.title, downloader, io)
             basename = name_generator(False)
             if (io.resume and
-                self.full_stream_already_downloaded(basename, clip, io)):
+                downloader.full_stream_already_downloaded(basename, clip, io)):
                 logger.info('{} has already been downloaded.'.format(basename))
                 return (RD_SUCCESS, basename)
 
-            resume_job = (io.resume and
-                          IOCapability.RESUME in downloader.io_capabilities)
-            outputfile = name_generator(not resume_job)
+            outputfile = name_generator(not io.resume)
             self.log_output_file(outputfile)
             dl_result = downloader.save_stream(outputfile, clip, io)
 
@@ -127,24 +125,6 @@ class YleDlDownloader(object):
                     overall_status = res
 
         return to_external_rd_code(overall_status)
-
-    def full_stream_already_downloaded(self, filename, clip, io):
-        ffprobe = io.ffprobe()
-        if not ffprobe or not os.path.exists(filename):
-            return False
-
-        expected_duration = clip.duration_seconds
-        if expected_duration is None and expected_duration <= 0:
-            return False
-
-        try:
-            downloaded_duration = ffprobe.duration_seconds_file(filename)
-        except ValueError as ex:
-            logger.warning('Failed to get duration for file'
-                           '{}: {}'.format(filename, str(ex)))
-            return False
-
-        return downloaded_duration >= 0.98*expected_duration
 
     def try_all_streams(self, streamfunc, clip, streams, needs_retry):
         latest_result = RD_FAILED

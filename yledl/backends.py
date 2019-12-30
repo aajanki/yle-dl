@@ -53,17 +53,29 @@ class BaseDownloader(object):
         return True
 
     def warn_on_unsupported_feature(self, io):
-        if io.resume and IOCapability.RESUME not in self.io_capabilities:
-            logger.warn('Resume not supported on this stream')
         if io.proxy and IOCapability.PROXY not in self.io_capabilities:
-            logger.warn('Proxy not supported on this stream. '
-                        'Trying to continue anyway')
+            logger.warning('Proxy not supported on this stream. '
+                           'Trying to continue anyway')
+
         if io.download_limits.ratelimit and \
            IOCapability.RATELIMIT not in self.io_capabilities:
-            logger.warn('Rate limiting not supported on this stream')
+            logger.warning('Rate limiting not supported on this stream')
+
         if io.download_limits.duration and \
            IOCapability.DURATION not in self.io_capabilities:
             logger.warning('--duration will be ignored on this stream')
+
+        # IOCapability.RESUME will be checked later when we know if we
+        # are trying to resume a partial download
+
+    def warn_on_unsupported_resume(self, filename, clip, io):
+        if (io.resume and
+            IOCapability.RESUME not in self.io_capabilities and
+            filename != '-' and
+            os.path.isfile(filename) and
+            not self.full_stream_already_downloaded(filename, clip, io)):
+            logger.warning('Partial file exists but '
+                           'resume not supported on this stream')
 
     def file_extension(self, preferred):
         return PreferredFileExtension('.mp4')
@@ -80,12 +92,32 @@ class BaseDownloader(object):
         """Derived classes can override this to return the URL of the stream"""
         return None
 
+    def full_stream_already_downloaded(self, filename, clip, io):
+        ffprobe = io.ffprobe()
+        if not ffprobe or not os.path.exists(filename):
+            return False
+
+        expected_duration = clip.duration_seconds
+        if expected_duration is None and expected_duration <= 0:
+            return False
+
+        try:
+            downloaded_duration = ffprobe.duration_seconds_file(filename)
+        except ValueError as ex:
+            logger.warning('Failed to get duration for file'
+                           '{}: {}'.format(filename, str(ex)))
+            return False
+
+        return downloaded_duration >= 0.98*expected_duration
+
 
 ### Base class for downloading a stream to a file using an external program ###
 
 
 class ExternalDownloader(BaseDownloader):
     def save_stream(self, output_name, clip, io):
+        self.warn_on_unsupported_resume(output_name, clip, io)
+
         env = self.extra_environment(io)
         args = self.build_args(output_name, clip, io)
         return self.external_downloader([args], env)
