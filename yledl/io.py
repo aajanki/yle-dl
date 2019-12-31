@@ -99,7 +99,7 @@ class IOContext(object):
 
 
 class OutputFileNameGenerator(object):
-    def filename(self, title, extension, io, next_available=False):
+    def filename(self, title, extension, io):
         """Select a filename for the output."""
 
         sanitized_title = sane_filename(title, io.excludechars)
@@ -111,7 +111,7 @@ class OutputFileNameGenerator(object):
                 forced_name, destdir, extension)
         else:
             return self._filename_from_title(
-                sanitized_title, destdir, extension, not next_available)
+                sanitized_title, destdir, extension)
 
     def _filename_from_template(self, basename, destdir, extension):
         extended_path = basename
@@ -140,21 +140,8 @@ class OutputFileNameGenerator(object):
         else:
             return filename + extension.extension
 
-    def _filename_from_title(self, title, destdir, extension, resume_job):
+    def _filename_from_title(self, title, destdir, extension):
         filename = (title or 'ylestream') + extension.extension
         if destdir:
             filename = os.path.join(destdir, filename)
-        if not resume_job:
-            filename = self._next_available_filename(filename)
-        return filename
-
-    def _next_available_filename(self, proposed):
-        i = 1
-        enc = sys.getfilesystemencoding()
-        filename = proposed
-        basename, ext = os.path.splitext(filename)
-        while os.path.exists(filename.encode(enc, 'replace')):
-            logger.info('%s exists, trying an alternative name' % filename)
-            filename = basename + '-' + str(i) + ext
-            i += 1
         return filename

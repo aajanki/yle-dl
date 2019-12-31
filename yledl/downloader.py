@@ -31,15 +31,12 @@ class YleDlDownloader(object):
 
             downloader.warn_on_unsupported_feature(io)
 
-            name_generator = self.output_name_generator(
-                clip.title, downloader, io)
-            basename = name_generator(False)
+            outputfile = self.generate_output_name(clip.title, downloader, io)
             if (io.resume and
-                downloader.full_stream_already_downloaded(basename, clip, io)):
-                logger.info('{} has already been downloaded.'.format(basename))
-                return (RD_SUCCESS, basename)
+                downloader.full_stream_already_downloaded(outputfile, clip, io)):
+                logger.info('{} has already been downloaded.'.format(outputfile))
+                return (RD_SUCCESS, outputfile)
 
-            outputfile = name_generator(not io.resume)
             self.log_output_file(outputfile)
             dl_result = downloader.save_stream(outputfile, clip, io)
 
@@ -54,14 +51,10 @@ class YleDlDownloader(object):
 
         return self.process(clips, download, needs_retry, filters)
 
-    def output_name_generator(self, title, downloader, io):
+    def generate_output_name(self, title, downloader, io):
         generator = OutputFileNameGenerator()
         extension = downloader.file_extension(io.preferred_format)
-
-        def wrapped(next_available):
-            return generator.filename(title, extension, io, next_available)
-
-        return wrapped
+        return generator.filename(title, extension, io)
 
     def pipe(self, clips, io, filters):
         def pipe_clip(clip, downloader):
