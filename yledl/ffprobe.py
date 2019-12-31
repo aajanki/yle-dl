@@ -40,7 +40,7 @@ class Ffprobe(object):
         except subprocess.CalledProcessError as ex:
             raise ValueError(
                 'Stream probing failed with status {}'.format(ex.returncode))
-        except UnicodeDecodeError as ex:
+        except UnicodeDecodeError:
             raise ValueError('Unexpected encoding on stream probing response')
 
         m = re.search(r'time=(\d\d):(\d\d):(\d\d)\.(\d\d) ', decoding_result)
