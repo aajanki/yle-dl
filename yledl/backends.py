@@ -72,10 +72,8 @@ class BaseDownloader(object):
         if (io.resume and
             IOCapability.RESUME not in self.io_capabilities and
             filename != '-' and
-            os.path.isfile(filename) and
-            not self.full_stream_already_downloaded(filename, clip, io)):
-            logger.warning('Partial file exists but '
-                           'resume not supported on this stream')
+            os.path.isfile(filename)):
+            logger.warning('Resume not supported on this stream')
 
     def file_extension(self, preferred):
         return PreferredFileExtension('.mp4')
