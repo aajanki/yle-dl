@@ -5,12 +5,15 @@ Distributed under the GPL v3
 <unreleased>
 
 - Don't download a copy if a file already exists
-- Use --no-resume to force re-downloading even if file already exists
+- New option --no-overwite avoids downloading if a file (even partial)
+  already exists
+- The default was changed to resume a partially downloaded file (on
+  supported streams). Use --no-resume download the whole stream again
 - Handle various corner cases better in the title extraction
 - Include an unique ID in the output file name with --output-template '${program_id}'
 - More options for controlling the output verbosity: -qq, -q, -V, -VV
 - File name and metadata in Swedish (if available): --metadatalang swe
-- Use the Swedish title by default with a Svenska Arenan or Arkivet URL
+- Use the Swedish title by default on a Svenska Arenan or Arkivet URL
 
 Version 20191022
 

@@ -32,8 +32,7 @@ class YleDlDownloader(object):
             downloader.warn_on_unsupported_feature(io)
 
             outputfile = self.generate_output_name(clip.title, downloader, io)
-            if (io.resume and
-                downloader.full_stream_already_downloaded(outputfile, clip, io)):
+            if self.should_skip_downloading(outputfile, downloader, clip, io):
                 logger.info('{} has already been downloaded.'.format(outputfile))
                 return (RD_SUCCESS, outputfile)
 
@@ -50,6 +49,10 @@ class YleDlDownloader(object):
             return res not in [RD_SUCCESS, RD_INCOMPLETE]
 
         return self.process(clips, download, needs_retry, filters)
+
+    def should_skip_downloading(self, outputfile, downloader, clip, io):
+        return ((not io.overwrite and os.path.exists(outputfile)) or
+                downloader.full_stream_already_downloaded(outputfile, clip, io))
 
     def generate_output_name(self, title, downloader, io):
         generator = OutputFileNameGenerator()

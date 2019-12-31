@@ -163,7 +163,11 @@ def arg_parser():
                               help=configargparse.SUPPRESS)
     resume_group.add_argument('--no-resume', action='store_false',
                               dest='resume',
-                              help='Re-download even if a file already exists.')
+                              help='Don\'t resume partial files, '
+                              'download the whole stream again')
+    io_group.add_argument('--no-overwrite', action='store_false',
+                          dest='overwrite',
+                          help='Quit if a file already exists')
     io_group.add_argument('--ratelimit', metavar='BR', type=int,
                           help='Maximum bandwidth consumption, '
                           'interger in kB/s')
@@ -374,8 +378,8 @@ def main(argv=sys.argv):
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     dl_limits = DownloadLimits(args.duration, args.ratelimit)
     io = IOContext(args.outputfile, args.preferformat, args.destdir,
-                   args.resume, dl_limits, excludechars, args.proxy,
-                   args.sublang == 'all', args.rtmpdump,
+                   args.resume, args.overwrite, dl_limits, excludechars,
+                   args.proxy, args.sublang == 'all', args.rtmpdump,
                    args.adobehds, args.ffmpeg, args.ffprobe, args.wget)
 
     urls = []

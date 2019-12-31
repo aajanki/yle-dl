@@ -81,6 +81,7 @@ class IOContext(object):
     preferred_format = attr.ib(default=None)
     destdir = attr.ib(default=None)
     resume = attr.ib(default=False)
+    overwrite = attr.ib(default=True)
     download_limits = attr.ib(default=None, converter=convert_download_limits)
     excludechars = attr.ib(default='*/|')
     proxy = attr.ib(default=None)

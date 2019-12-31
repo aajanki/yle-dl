@@ -29,9 +29,6 @@ class Ffprobe(object):
                 'Stream probing failed with status {}'.format(ex.returncode))
 
     def duration_seconds_file(self, filename):
-        logger.debug('Extracting duration from {}. This may take a while'
-                     .format(filename))
-
         args = [self.ffmpeg_binary, '-stats', '-loglevel', 'fatal',
                 '-i', 'file:' + filename, '-f', 'null', '-']
 
@@ -43,6 +40,8 @@ class Ffprobe(object):
         except subprocess.CalledProcessError as ex:
             raise ValueError(
                 'Stream probing failed with status {}'.format(ex.returncode))
+        except UnicodeDecodeError as ex:
+            raise ValueError('Unexpected encoding on stream probing response')
 
         m = re.search(r'time=(\d\d):(\d\d):(\d\d)\.(\d\d) ', decoding_result)
         if not m:
