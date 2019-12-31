@@ -100,7 +100,7 @@ class BaseDownloader(object):
                     .format(filename))
 
         expected_duration = clip.duration_seconds
-        if expected_duration is None and expected_duration <= 0:
+        if expected_duration is None or expected_duration <= 0:
             return False
 
         try:
