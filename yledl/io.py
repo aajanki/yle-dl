@@ -95,7 +95,7 @@ class IOContext(object):
         if self.ffprobe_binary is None:
             return None
 
-        return Ffprobe(self.ffprobe_binary)
+        return Ffprobe(self.ffprobe_binary, self.ffmpeg_binary)
 
 
 class OutputFileNameGenerator(object):

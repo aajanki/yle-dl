@@ -3,6 +3,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import json
 import logging
+import re
 import subprocess
 from .utils import ffmpeg_loglevel
 
@@ -11,8 +12,9 @@ logger = logging.getLogger('yledl')
 
 
 class Ffprobe(object):
-    def __init__(self, ffprobe_binary):
+    def __init__(self, ffprobe_binary, ffmpeg_binary):
         self.ffprobe_binary = ffprobe_binary
+        self.ffmpeg_binary = ffmpeg_binary
 
     def show_programs_for_url(self, url):
         args = [self.ffprobe_binary,
@@ -27,12 +29,24 @@ class Ffprobe(object):
                 'Stream probing failed with status {}'.format(ex.returncode))
 
     def duration_seconds_file(self, filename):
-        args = [self.ffprobe_binary, '-v', 'error', '-show_entries',
-                'format=duration', '-of', 'default=noprint_wrappers=1:nokey=1',
-                filename]
+        logger.debug('Extracting duration from {}. This may take a while'
+                     .format(filename))
+
+        args = [self.ffmpeg_binary, '-stats', '-loglevel', 'fatal',
+                '-i', 'file:' + filename, '-f', 'null', '-']
 
         try:
-            return float(subprocess.check_output(args))
+            decoding_result = (
+                subprocess.check_output(args, stderr=subprocess.STDOUT)
+                .decode('utf-8')
+                .rsplit('\r', 1)[-1])
         except subprocess.CalledProcessError as ex:
             raise ValueError(
                 'Stream probing failed with status {}'.format(ex.returncode))
+
+        m = re.search(r'time=(\d\d):(\d\d):(\d\d)\.(\d\d) ', decoding_result)
+        if not m:
+            raise ValueError('Failed to parse duration in the ffmpeg output')
+
+        return (float(m.group(1))*60*60 + float(m.group(2))*60 +
+                float(m.group(3)) + float(m.group(4))/100)
