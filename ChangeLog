@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2019 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20191231
 
 - Don't download a copy if a file already exists
 - New option --no-overwite avoids downloading if a file (even partial)
