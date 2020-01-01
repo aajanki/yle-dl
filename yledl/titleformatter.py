@@ -76,9 +76,12 @@ class TitleFormatter(object):
         main_title = self._remove_genre_prefix(
             self._remove_repeated_main_title(title))
         ageless_title = self._remove_age_limit(main_title)
-        if series_title and ageless_title.startswith(series_title):
-            main_title = ageless_title[len(series_title):]
-            main_title = main_title.lstrip(':').lstrip(' ')
+
+        if series_title:
+            series_prefix = re.escape(series_title) + r'\b'
+            if re.match(series_prefix, ageless_title, re.IGNORECASE):
+                main_title = ageless_title[len(series_title):]
+                main_title = main_title.lstrip(':').lstrip(' ')
 
         if subheading and not main_title:
             return subheading

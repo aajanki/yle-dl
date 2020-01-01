@@ -81,6 +81,12 @@ def test_no_repeated_series_title():
     assert title == 'Doctor Who'
 
 
+def test_no_repeated_series_title_whole_words():
+    title = tf.format('Noin viikon studion uusi vuosi',
+                      series_title='Noin viikon studio')
+    assert title == 'Noin viikon studio: Noin viikon studion uusi vuosi'
+
+
 def test_no_repeated_series_title_with_subheading():
     title = tf.format('Solsidan', series_title='Solsidan',
                       subheading='Nya avsnitt från Solsidan')
