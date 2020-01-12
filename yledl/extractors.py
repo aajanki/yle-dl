@@ -333,6 +333,7 @@ class AreenaApiProgramInfo(object):
     publish_timestamp = attr.ib()
     expiration_timestamp = attr.ib()
     pending = attr.ib()
+    expired = attr.ib()
 
 
 class ClipExtractor(object):
@@ -484,7 +485,7 @@ class AreenaPlaylist(ClipExtractor):
 
 class AreenaPreviewApiParser(object):
     def __init__(self, data):
-        self.preview = data
+        self.preview = data or {}
 
     def media_id(self):
         return self.ongoing().get('media_id')
@@ -529,15 +530,19 @@ class AreenaPreviewApiParser(object):
             return 'video'
 
     def is_live(self):
-        data = (self.preview or {}).get('data', {})
+        data = self.preview.get('data', {})
         return data.get('ongoing_channel') is not None
 
     def is_pending(self):
-        data = (self.preview or {}).get('data', {})
+        data = self.preview.get('data', {})
         return data.get('pending_event') is not None
 
+    def is_expired(self):
+        data = self.preview.get('data', {})
+        return data.get('gone') is not None
+
     def ongoing(self):
-        data = (self.preview or {}).get('data', {})
+        data = self.preview.get('data', {})
         return (data.get('ongoing_ondemand') or
                 data.get('ongoing_event', {}) or
                 data.get('ongoing_channel', {}) or
@@ -582,6 +587,8 @@ class AreenaExtractor(AreenaPlaylist):
                 msg = ('{} Becomes available on {}'.format(
                     msg, program_info.publish_timestamp.isoformat()))
             return FailedClip(pageurl, msg)
+        elif program_info.expired:
+            return FailedClip(pageurl, 'This stream has expired')
         elif failed:
             return failed
         elif program_info.flavors:
@@ -826,7 +833,8 @@ class AreenaExtractor(AreenaPlaylist):
                                    'Finland'),
             publish_timestamp = publish_timestamp,
             expiration_timestamp = self.expiration_timestamp(info),
-            pending = preview.is_pending()
+            pending = preview.is_pending(),
+            expired = preview.is_expired(),
         )
 
     def program_info_url(self, program_id):
