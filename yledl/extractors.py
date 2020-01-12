@@ -309,16 +309,20 @@ class Clip(object):
 
 
 class FailedClip(Clip):
-    def __init__(self, webpage, error_message):
-        Clip.__init__(self,
-                      webpage=webpage,
-                      flavors=[FailedFlavor(error_message)],
-                      title=None,
-                      duration_seconds=None,
-                      region=None,
-                      publish_timestamp=None,
-                      expiration_timestamp=None,
-                      embedded_subtitles=[])
+    def __init__(self, webpage, error_message, title=None, description=None,
+                 duration_seconds=None, region=None, publish_timestamp=None,
+                 expiration_timestamp=None, program_id=None):
+        Clip.__init__(
+            self,
+            webpage=webpage,
+            flavors=[FailedFlavor(error_message)],
+            title=title,
+            description=description,
+            duration_seconds=duration_seconds,
+            region=region,
+            publish_timestamp=publish_timestamp,
+            expiration_timestamp=expiration_timestamp,
+            program_id=program_id)
 
 
 @attr.s
@@ -581,14 +585,25 @@ class AreenaExtractor(AreenaPlaylist):
         failed = self.failed_clip_if_only_invalid_streams(
             program_info.flavors, pageurl)
 
-        if program_info.pending:
-            msg = 'Stream not yet available.'
-            if program_info.publish_timestamp:
-                msg = ('{} Becomes available on {}'.format(
-                    msg, program_info.publish_timestamp.isoformat()))
-            return FailedClip(pageurl, msg)
-        elif program_info.expired:
-            return FailedClip(pageurl, 'This stream has expired')
+        if program_info.pending or program_info.expired:
+            if program_info.pending:
+                msg = 'Stream not yet available.'
+                if program_info.publish_timestamp:
+                    msg = ('{} Becomes available on {}'.format(
+                        msg, program_info.publish_timestamp.isoformat()))
+            else:
+                msg = 'This stream has expired'
+
+            return FailedClip(
+                pageurl,
+                error_message=msg,
+                title=program_info.title,
+                description=program_info.description,
+                duration_seconds=program_info.duration_seconds,
+                region=program_info.available_at_region,
+                publish_timestamp=program_info.publish_timestamp,
+                expiration_timestamp=program_info.expiration_timestamp,
+                program_id=program_id)
         elif failed:
             return failed
         elif program_info.flavors:
