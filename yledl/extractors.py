@@ -577,7 +577,7 @@ class AreenaExtractor(AreenaPlaylist):
             return FailedClip(url, 'Failed to parse a program ID')
 
         if not program_info:
-            return FailedClip(url, 'Failed to download program data')
+            return FailedClip(url, 'Failed to download program data', program_id=pid)
 
         return self.create_clip(pid, program_info, url)
 
@@ -619,7 +619,16 @@ class AreenaExtractor(AreenaPlaylist):
                 embedded_subtitles=program_info.embedded_subtitles,
                 program_id=program_id)
         else:
-            return FailedClip(pageurl, 'Media not found')
+            return FailedClip(
+                pageurl,
+                error_message='Media not found',
+                title=program_info.title,
+                description=program_info.description,
+                duration_seconds=program_info.duration_seconds,
+                region=program_info.available_at_region,
+                publish_timestamp=program_info.publish_timestamp,
+                expiration_timestamp=program_info.expiration_timestamp,
+                program_id=program_id)
 
     def failed_clip_if_only_invalid_streams(self, flavors, pageurl):
         if flavors:
