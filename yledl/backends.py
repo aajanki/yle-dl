@@ -110,6 +110,9 @@ class BaseDownloader(object):
                            '{}: {}'.format(filename, str(ex)))
             return False
 
+        logger.debug(f'Downloaded duration {downloaded_duration} s, '
+                     f'expected {expected_duration} s')
+
         return downloaded_duration >= 0.98*expected_duration
 
 
