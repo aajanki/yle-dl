@@ -108,11 +108,14 @@ class OutputFileNameGenerator(object):
         destdir = io.destdir
 
         if forced_name:
-            return self._filename_from_template(
+            path = self._filename_from_template(
                 forced_name, destdir, extension)
         else:
-            return self._filename_from_title(
+            path = self._filename_from_title(
                 sanitized_title, destdir, extension)
+            path = self._impose_maximum_filename_length(path)
+
+        return path
 
     def _filename_from_template(self, basename, destdir, extension):
         extended_path = basename
@@ -146,3 +149,12 @@ class OutputFileNameGenerator(object):
         if destdir:
             filename = os.path.join(destdir, filename)
         return filename
+
+    def _impose_maximum_filename_length(self, path):
+        """If the last component of the path is longer than 255, shorten it."""
+        head, filename = os.path.split(path)
+        if len(filename) > 255:
+            filename = filename[:225] +'-' + filename[-20:]
+            return os.path.join(head, filename)
+        else:
+            return path

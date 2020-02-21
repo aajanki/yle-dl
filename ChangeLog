@@ -5,6 +5,7 @@ Distributed under the GPL v3
 
 Unpublished
 
+- Try to avoid generating too long filenames
 - Fixed a crash on Sámi language titles
 - Better error message if a stream has expired
 
