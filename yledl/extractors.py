@@ -927,6 +927,10 @@ class AreenaExtractor(AreenaPlaylist):
         item_title = self.language_chooser.choose_short_form(item_title_object)
         promo_object = program.get('promotionTitle')
         promotion_title = self.language_chooser.choose_short_form(promo_object)
+        if promotion_title and len(promotion_title) > 40:
+            # Promotion title is sometimes used as an extended
+            # description. Don't include these in the title.
+            promotion_title = None
 
         return {
             'title': title,
