@@ -32,12 +32,12 @@ class TranslationChooser(object):
                 return text
 
         if alternatives:
-            # fallback to the first available language if none of the
-            # preferred languages are available
-            return alternatives[0]
+            # An arbitrary language if none of the preferred languages
+            # are available
+            return list(alternatives.values())[0]
         else:
             return None
 
     def two_letter_codes(self, long_codes):
-        code_map = {'fin': 'fi', 'swe': 'sv'}
+        code_map = {'fin': 'fi', 'swe': 'sv', 'sme': 'se'}
         return [code_map.get(x, x) for x in long_codes]

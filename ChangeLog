@@ -2,6 +2,12 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2019 Antti Ajanki
 Distributed under the GPL v3
 
+
+Unpublished
+
+- Fixed a crash on Sámi language titles
+- Better error message if a stream has expired
+
 Version 20191231
 
 - Don't download a copy if a file already exists
