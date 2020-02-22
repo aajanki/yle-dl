@@ -8,6 +8,7 @@ Unpublished
 - Try to avoid generating too long filenames
 - Fixed a crash on Sámi language titles
 - Better error message if a stream has expired
+- Show an error when source has multiple clips but only one output given
 
 Version 20191231
 

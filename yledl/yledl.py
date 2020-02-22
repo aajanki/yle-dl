@@ -311,9 +311,18 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
         return dl.pipe(clips, io, stream_filters)
-    else:
+    elif (action == StreamAction.DOWNLOAD and
+          len(clips) > 1 and
+          io.outputfilename is not None):
+        logger.error('Source contains multiple clips, '
+                     'but only one output file specified')
+        return RD_FAILED
+    elif action == StreamAction.DOWNLOAD:
         return dl.download_clips(clips, io, stream_filters,
                                  postprocess_command)
+    else:
+        logger.error('Internal error: Unknown action')
+        return RD_FAILED
 
 
 def print_lines(lines):
