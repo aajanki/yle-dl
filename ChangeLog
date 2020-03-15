@@ -3,6 +3,10 @@ Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
 
+<unreleased>
+
+- Fixed --maxbitrate best when used together with --resolution
+
 Version 20200222
 
 - Try to avoid generating too long filenames
