@@ -44,6 +44,8 @@ def extractor_factory(url, filters, language_chooser, httpclient):
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioExtractor(language_chooser, httpclient)
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/audio/[-0-9]+', url):
+        return AreenaAudio2020Extractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
         return MergingExtractor([
             AreenaLiveTVHLSExtractor(language_chooser, httpclient),
@@ -394,8 +396,8 @@ class AreenaPlaylist(ClipExtractor):
     def get_playlist(self, url):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
-        series_id = self.program_id_from_url(url)
         if not self.is_tv_ohjelmat_url(url):
+            series_id = self.program_id_from_url(url)
             playlist = self.get_playlist_old_style_url(
                 url, series_id)
 
@@ -1051,6 +1053,49 @@ class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
             return query_dict.get('_c')[0]
         else:
             return parsed.path.split('/')[-1]
+
+
+### Extract streams from an Areena audio webpage ###
+
+
+class AreenaAudio2020Extractor(AreenaExtractor):
+    def get_playlist(self, url):
+        store_state = self.extract_state_state(url)
+        if not store_state:
+            logger.error('No STORE_STATE_FROM_SERVER found at {}'.format(url))
+            return []
+
+        pids = self.parse_episode_ids_from_store_state(store_state)
+        return ['https://areena.yle.fi/audio/' + pid for pid in pids]
+
+    def extract_state_state(self, url):
+        html_tree = self.httpclient.download_html_tree(url)
+        script_nodes = html_tree.xpath("/html/head/script[contains(text(), 'STORE_STATE_FROM_SERVER')]")
+        if not script_nodes:
+            return None
+
+        m = re.search(r'window.STORE_STATE_FROM_SERVER *= *(.*)', script_nodes[0].text)
+        if not m:
+            return None
+
+        return json.loads(m.group(1))
+
+    def parse_episode_ids_from_store_state(self, store_state):
+        tabs = store_state.get('viewStore', {}).get('viewPageView', {}).get('tabs', [])
+        episodes_tab = [x for x in tabs if x['title'] == 'Jaksot']
+        if not episodes_tab:
+            return []
+
+        all_content = episodes_tab[0].get('allContent', [])
+        if not all_content:
+            return []
+
+        card_content = [x for x in all_content if 'cards' in x]
+        if not card_content:
+            return []
+
+        cards = card_content[0].get('cards', [])
+        return [x['itemId'] for x in cards]
 
 
 ### Elava Arkisto ###
