@@ -5,6 +5,7 @@ Distributed under the GPL v3
 
 <unreleased>
 
+- Support for new Areena audio series pages
 - Fixed --maxbitrate best when used together with --resolution
 
 Version 20200222

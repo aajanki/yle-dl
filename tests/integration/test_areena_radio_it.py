@@ -71,3 +71,9 @@ def test_radio_live_metadata():
     assert len(metadata[0]['flavors']) >= 1
     assert all(f.get('media_type') == 'audio' for f in metadata[0]['flavors'])
     assert metadata[0]['title'].startswith('Yle Puhe')
+
+
+def test_radio_series_2020():
+    urls = fetch_stream_url('https://areena.yle.fi/audio/1-50198109')
+
+    assert len(urls) >= 6

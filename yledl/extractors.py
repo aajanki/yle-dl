@@ -441,7 +441,8 @@ class AreenaPlaylist(ClipExtractor):
         while has_next_page:
             page = self.playlist_page(series_id, page_size, offset)
             if page is None:
-                return None
+                logger.warn('Playlist failed at offset {}. Some episodes may be missing!')
+                return playlist
 
             playlist.extend(page)
             offset += page_size
@@ -1060,42 +1061,52 @@ class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
 
 class AreenaAudio2020Extractor(AreenaExtractor):
     def get_playlist(self, url):
-        store_state = self.extract_state_state(url)
-        if not store_state:
-            logger.error('No STORE_STATE_FROM_SERVER found at {}'.format(url))
-            return []
+        series_id = self.program_id_from_url(url)
+        return self.playlist_episode_urls(series_id)
 
-        pids = self.parse_episode_ids_from_store_state(store_state)
-        return ['https://areena.yle.fi/audio/' + pid for pid in pids]
+    def playlist_page(self, series_id, page_size, offset):
+        logger.debug('Getting a playlist page {series_id}, '
+                     'size = {size}, offset = {offset}'.format(
+                         series_id=series_id, size=page_size, offset=offset))
 
-    def extract_state_state(self, url):
-        html_tree = self.httpclient.download_html_tree(url)
-        script_nodes = html_tree.xpath("/html/head/script[contains(text(), 'STORE_STATE_FROM_SERVER')]")
-        if not script_nodes:
+        playlist_json = self.httpclient.download_page(
+            self.playlist_url(series_id, page_size, offset))
+        if not playlist_json:
             return None
 
-        m = re.search(r'window.STORE_STATE_FROM_SERVER *= *(.*)', script_nodes[0].text)
-        if not m:
+        try:
+            playlist = json.loads(playlist_json)
+        except ValueError:
             return None
 
-        return json.loads(m.group(1))
+        playlist_data = playlist.get('data', [])
+        pids = [self.item_id_from_episode_data(x) for x in playlist_data]
+        pids = [x for x in pids if x is not None]
+        return ['https://areena.yle.fi/audio/{}'.format(x) for x in pids]
 
-    def parse_episode_ids_from_store_state(self, store_state):
-        tabs = store_state.get('viewStore', {}).get('viewPageView', {}).get('tabs', [])
-        episodes_tab = [x for x in tabs if x['title'] == 'Jaksot']
-        if not episodes_tab:
-            return []
+    def item_id_from_episode_data(self, episode):
+        labels = episode.get('labels', [])
+        item_id_list = [x for x in labels if x['type'] == 'itemId']
+        if not item_id_list:
+            return None
 
-        all_content = episodes_tab[0].get('allContent', [])
-        if not all_content:
-            return []
+        return item_id_list[0].get('raw')
 
-        card_content = [x for x in all_content if 'cards' in x]
-        if not card_content:
-            return []
+    def playlist_url(self, series_id, page_size=100, offset=0):
+        if offset:
+            offset_param = '&offset={offset}'.format(offset=str(offset))
+        else:
+            offset_param = ''
 
-        cards = card_content[0].get('cards', [])
-        return [x['itemId'] for x in cards]
+        return ('https://areena.api.yle.fi/v1/ui/series/{series_id}/episodes?'
+                'availability=ondemand&episodeDisplayOrder=latestFirst&'
+                'language=fi&v=edge&client=yle-areena-web&'
+                'app_id=areena_web_radio_prod&'
+                'app_key=b3a0dc973c0aab997f1021bc7a0e3157&'
+                'limit={limit}{offset_param}'.format(
+                    series_id=quote_plus(series_id),
+                    limit=str(page_size),
+                    offset_param=offset_param))
 
 
 ### Elava Arkisto ###
