@@ -1061,8 +1061,19 @@ class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
 
 class AreenaAudio2020Extractor(AreenaExtractor):
     def get_playlist(self, url):
-        series_id = self.program_id_from_url(url)
-        return self.playlist_episode_urls(series_id)
+        if self.is_playlist(url):
+            series_id = self.program_id_from_url(url)
+            return self.playlist_episode_urls(series_id)
+        else:
+            return [url]
+
+    def is_playlist(self, url):
+        html_tree = self.httpclient.download_html_tree(url)
+        if html_tree is None:
+            return []
+
+        divs = html_tree.xpath('//div[starts-with(@class, "EpisodeModal")]')
+        return len(divs) == 0
 
     def playlist_page(self, series_id, page_size, offset):
         logger.debug('Getting a playlist page {series_id}, '

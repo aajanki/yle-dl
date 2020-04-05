@@ -77,3 +77,13 @@ def test_radio_series_2020():
     urls = fetch_stream_url('https://areena.yle.fi/audio/1-50198109')
 
     assert len(urls) >= 6
+
+
+def test_radio_metadata_2020():
+    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50198110')
+
+    assert len(metadata) == 1
+    assert len(metadata[0]['flavors']) == 1
+    assert metadata[0]['flavors'][0]['media_type'] == 'audio'
+    assert metadata[0]['duration_seconds'] == 1451
+    assert len(metadata[0]['description']) > 150
