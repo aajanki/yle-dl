@@ -6,6 +6,7 @@ Distributed under the GPL v3
 <unreleased>
 
 - Support for new Areena audio series pages
+- Live TV at 720p resolution by default (use --resolution for lower quality)
 - Fixed --maxbitrate best when used together with --resolution
 
 Version 20200222

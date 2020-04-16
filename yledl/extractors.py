@@ -668,7 +668,7 @@ class AreenaExtractor(AreenaPlaylist):
                             hls_manifest_url, kaltura_flavors,
                             akamai_protocol, media_type, pageurl,
                             ffprobe):
-        if self.is_full_hd_media(media_id):
+        if self.is_full_hd_media(media_id) or self.is_live_media(media_id):
             logger.debug('Detected a full-HD media')
             flavors = self.hls_probe_flavors(hls_manifest_url, media_type,
                                              ffprobe)
@@ -697,6 +697,9 @@ class AreenaExtractor(AreenaPlaylist):
 
     def is_mediakanta_media(self, media_id):
         return media_id and media_id.startswith('6-')
+
+    def is_live_media(self, media_id):
+        return media_id and media_id.startswith('10-')
 
     def kaltura_entry_id(self, mediaid):
         return mediaid.split('-', 1)[-1]
