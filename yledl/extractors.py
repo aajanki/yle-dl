@@ -585,21 +585,30 @@ class AreenaExtractor(AreenaPlaylist):
         return self.create_clip(pid, program_info, url)
 
     def create_clip(self, program_id, program_info, pageurl):
-        failed = self.failed_clip_if_only_invalid_streams(
-            program_info.flavors, pageurl)
+        if program_info.flavors:
+            all_streams = list(itertools.chain.from_iterable(
+                fl.streams for fl in program_info.flavors))
+        else:
+            all_streams = []
 
-        if program_info.pending or program_info.expired:
-            if program_info.pending:
-                msg = 'Stream not yet available.'
-                if program_info.publish_timestamp:
-                    msg = ('{} Becomes available on {}'.format(
-                        msg, program_info.publish_timestamp.isoformat()))
-            else:
-                msg = 'This stream has expired'
+        if program_info.pending:
+            error_message = 'Stream not yet available.'
+            if program_info.publish_timestamp:
+                error_message = ('{} Becomes available on {}'.format(
+                    error_message, program_info.publish_timestamp.isoformat()))
+        elif program_info.expired:
+            error_message = 'This stream has expired'
+        elif all_streams and all(not s.is_valid() for s in all_streams):
+            error_message = all_streams[0].error_message
+        elif not program_info.flavors:
+            error_message = 'Media not found'
+        else:
+            error_message = None
 
+        if error_message:
             return FailedClip(
-                pageurl,
-                error_message=msg,
+                webpage=pageurl,
+                error_message=error_message,
                 title=program_info.title,
                 description=program_info.description,
                 duration_seconds=program_info.duration_seconds,
@@ -607,9 +616,7 @@ class AreenaExtractor(AreenaPlaylist):
                 publish_timestamp=program_info.publish_timestamp,
                 expiration_timestamp=program_info.expiration_timestamp,
                 program_id=program_id)
-        elif failed:
-            return failed
-        elif program_info.flavors:
+        else:
             return Clip(
                 webpage=pageurl,
                 flavors=program_info.flavors,
@@ -621,29 +628,6 @@ class AreenaExtractor(AreenaPlaylist):
                 expiration_timestamp=program_info.expiration_timestamp,
                 embedded_subtitles=program_info.embedded_subtitles,
                 program_id=program_id)
-        else:
-            return FailedClip(
-                pageurl,
-                error_message='Media not found',
-                title=program_info.title,
-                description=program_info.description,
-                duration_seconds=program_info.duration_seconds,
-                region=program_info.available_at_region,
-                publish_timestamp=program_info.publish_timestamp,
-                expiration_timestamp=program_info.expiration_timestamp,
-                program_id=program_id)
-
-    def failed_clip_if_only_invalid_streams(self, flavors, pageurl):
-        if flavors:
-            all_streams = list(itertools.chain.from_iterable(
-                fl.streams for fl in flavors))
-        else:
-            all_streams = []
-
-        if all_streams and all(not s.is_valid() for s in all_streams):
-            return FailedClip(pageurl, all_streams[0].error_message)
-        else:
-            return None
 
     def media_flavors(self, media_id, program_id, hls_manifest_url,
                       download_url, kaltura_flavors, akamai_protocol,
