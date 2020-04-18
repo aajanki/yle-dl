@@ -26,13 +26,17 @@ class FullHDFlavorProber(object):
                                       for x in streams if 'codec_type' in x)
             widths = [x['width'] for x in streams if 'width' in x]
             heights = [x['height'] for x in streams if 'height' in x]
+            bitrate = program.get('tags', {}).get('variant_bitrate')
+            if bitrate:
+                bitrate = int(bitrate)/1000
 
             pid = program.get('program_id')
             res.append(StreamFlavor(
                 media_type='video' if any_stream_is_video else 'audio',
                 height=heights[0] if heights else None,
                 width=widths[0] if widths else None,
+                bitrate=bitrate,
                 streams=[HLSBackend(manifest_url, long_probe=True, program_id=pid)]
             ))
 
-        return sorted(res, key=lambda x: x.height)
+        return sorted(res, key=lambda x: x.height or 0)
