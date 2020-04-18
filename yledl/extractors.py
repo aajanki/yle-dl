@@ -46,11 +46,6 @@ def extractor_factory(url, filters, language_chooser, httpclient):
         return AreenaLiveRadioExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/audio/[-0-9]+', url):
         return AreenaAudio2020Extractor(language_chooser, httpclient)
-    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/tv/suorat/', url):
-        return MergingExtractor([
-            AreenaLiveTVHLSExtractor(language_chooser, httpclient),
-            AreenaLiveTVHDSExtractor(filters, language_chooser, httpclient)
-        ])
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
         return YleUutisetExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
@@ -495,7 +490,10 @@ class AreenaPreviewApiParser(object):
         self.preview = data or {}
 
     def media_id(self):
-        return self.ongoing().get('media_id')
+        if self.is_live():
+            return self.ongoing().get('adobe', {}).get('yle_media_id')
+        else:
+            return self.ongoing().get('media_id')
 
     def duration_seconds(self):
         return self.ongoing().get('duration', {}).get('duration_in_seconds')
@@ -967,78 +965,13 @@ class AreenaExtractor(AreenaPlaylist):
         return None if (url and url.endswith('/')) else url
 
 
-
-### Areena Live TV ###
-
-
-class AreenaLiveTVHDSExtractor(AreenaExtractor):
-    # TODO: get rid of the constructor and the filters argument
-    def __init__(self, filters, language_chooser, httpclient):
-        super(AreenaLiveTVHDSExtractor, self).__init__(language_chooser, httpclient)
-        self.outlet_sort_key = self.create_outlet_sort_key(filters)
-
-    def force_program_info(self):
-        return True
-
-    def program_info_url(self, program_id):
-        quoted_pid = quote_plus(program_id)
-        return 'https://player.yle.fi/api/v1/services.jsonp?' \
-            'id=%s&callback=yleEmbed.simulcastJsonpCallback&' \
-            'region=fi&instance=1&dataId=%s' % \
-            (quoted_pid, quoted_pid)
-
-    def program_media_id(self, program_info):
-        if program_info:
-            outlets = program_info.get('data', {}).get('outlets', [{}])
-            sorted_outlets = sorted(outlets, key=self.outlet_sort_key)
-            selected_outlet = sorted_outlets[0]
-            return selected_outlet.get('outlet', {}).get('media', {}).get('id')
-        else:
-            return None
-
-    def create_outlet_sort_key(self, filters):
-        preferred_ordering = {"fi": 1, None: 2, "sv": 3}
-
-        def key_func(outlet):
-            language = outlet.get("outlet", {}).get("language", [None])[0]
-            if filters.audiolang_matches(language):
-                return 0  # Prefer the language selected by the user
-            else:
-                return preferred_ordering.get(language) or 99
-
-        return key_func
-    
-    def publish_timestamp(self, program_info):
-        ts = (super(AreenaLiveTVHDSExtractor, self)
-              .publish_timestamp(program_info))
-        return ts or datetime.now()
-
-    def program_title(self, program_info):
-        service = self._service_info(program_info)
-        title = (self.language_chooser.choose_short_form(service.get('title')) or
-                 'areena')
-        return {'title': title}
-
-    def available_at_region(self, program_info):
-        return self._service_info(program_info).get('region')
-
-    def _service_info(self, program_info):
-        return (program_info or {}).get('data', {}).get('service', {})
-
-
-class AreenaLiveTVHLSExtractor(AreenaExtractor):
-    def get_playlist(self, url):
-        return [url]
-
-    def program_id_from_url(self, url):
-        parsed = urlparse(url)
-        return parsed.path.split('/')[-1]
-
-
 ### Areena live radio ###
 
 
-class AreenaLiveRadioExtractor(AreenaLiveTVHLSExtractor):
+class AreenaLiveRadioExtractor(AreenaExtractor):
+    def get_playlist(self, url):
+        return [url]
+
     def program_id_from_url(self, url):
         parsed = urlparse(url)
         query_dict = parse_qs(parsed.query)
