@@ -506,6 +506,11 @@ class AreenaPreviewApiParser(object):
             return {}
 
         title = language_chooser.choose_long_form(title_object).strip()
+
+        if self.is_live():
+            ts = datetime.now().replace(microsecond=0)
+            title = title + '-' + ts.isoformat()
+        
         return {'title': title}
 
     def description(self, language_chooser):
