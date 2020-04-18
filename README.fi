@@ -160,6 +160,16 @@ Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
 ulospäin menevä liikenne porteissa 80 ja 1935.
 
 
+Suorien TV-lähetysten tallentaminen
+-----------------------------------
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+
+
 Asetustiedosto
 --------------
 

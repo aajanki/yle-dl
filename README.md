@@ -191,6 +191,18 @@ To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/)
 Firewall must allow outgoing traffic on ports 80 and 1935.
 
 
+Addresses for live TV broadcasts
+--------------------------------
+
+```
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+```
+
+
 Config file
 -----------
 
