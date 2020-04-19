@@ -1,5 +1,10 @@
 language: python
-dist: xenial
+dist: bionic
+
+addons:
+  apt:
+    packages:
+    - ffmpeg
 
 python:
  - 2.7
