@@ -19,7 +19,7 @@ class HttpClient(object):
 
     def _create_session(self, proxy):
         session = requests.Session()
-        session.timeout=20
+        session.timeout = 20
 
         if proxy:
             session.proxies = {

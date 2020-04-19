@@ -24,7 +24,6 @@ class FixedOffset(tzinfo):
         return timedelta(0)
 
 
-
 def parse_areena_timestamp(timestamp):
     if timestamp is None:
         return None

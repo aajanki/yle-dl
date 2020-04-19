@@ -11,8 +11,7 @@ class TranslationChooser(object):
         if preferred_three_letter_codes:
             preferred = [x.lower() for x in preferred_three_letter_codes]
             self.languages = preferred + \
-                             [x for x in default_languages
-                              if x not in preferred]
+                [x for x in default_languages if x not in preferred]
         else:
             self.languages = list(default_languages)
 

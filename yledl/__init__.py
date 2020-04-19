@@ -3,7 +3,7 @@ from .backends import Backends
 from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .io import IOContext, DownloadLimits
-from .streamfilters import StreamFilters 
+from .streamfilters import StreamFilters
 from .version import version
 from .yledl import download, StreamAction
 

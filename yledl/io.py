@@ -154,7 +154,7 @@ class OutputFileNameGenerator(object):
         """If the last component of the path is longer than 255, shorten it."""
         head, filename = os.path.split(path)
         if len(filename) > 255:
-            filename = filename[:225] +'-' + filename[-20:]
+            filename = filename[:225] + '-' + filename[-20:]
             return os.path.join(head, filename)
         else:
             return path

@@ -508,7 +508,7 @@ class AreenaPreviewApiParser(object):
         if self.is_live():
             ts = datetime.now().replace(microsecond=0)
             title = title + '-' + ts.isoformat()
-        
+
         return {'title': title}
 
     def description(self, language_chooser):
@@ -835,23 +835,23 @@ class AreenaExtractor(AreenaPlaylist):
             kaltura_subtitles = []
 
         return AreenaApiProgramInfo(
-            media_id = media_id,
-            title = title,
-            description = description,
-            flavors = self.media_flavors(media_id, pid, manifest_url,
-                                         download_url, kaltura_flavors,
-                                         akamai_protocol, media_type,
-                                         pageurl, ffprobe),
-            embedded_subtitles = kaltura_subtitles,
-            duration_seconds = (preview.duration_seconds() or
-                                self.program_info_duration_seconds(info)),
-            available_at_region = (self.available_at_region(info) or
-                                   preview.available_at_region() or
-                                   'Finland'),
-            publish_timestamp = publish_timestamp,
-            expiration_timestamp = self.expiration_timestamp(info),
-            pending = preview.is_pending(),
-            expired = preview.is_expired(),
+            media_id=media_id,
+            title=title,
+            description=description,
+            flavors=self.media_flavors(media_id, pid, manifest_url,
+                                       download_url, kaltura_flavors,
+                                       akamai_protocol, media_type,
+                                       pageurl, ffprobe),
+            embedded_subtitles=kaltura_subtitles,
+            duration_seconds=(preview.duration_seconds() or
+                              self.program_info_duration_seconds(info)),
+            available_at_region=(self.available_at_region(info) or
+                                 preview.available_at_region() or
+                                 'Finland'),
+            publish_timestamp=publish_timestamp,
+            expiration_timestamp=self.expiration_timestamp(info),
+            pending=preview.is_pending(),
+            expired=preview.is_expired(),
         )
 
     def program_info_url(self, program_id):

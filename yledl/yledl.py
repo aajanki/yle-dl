@@ -117,7 +117,8 @@ def arg_parser():
     io_group = parser.add_argument_group('Input and output')
     url_group = io_group.add_mutually_exclusive_group()
     url_group.add_argument('url', nargs='?', type=to_unicode,
-        help='Address of an Areena, Elävä Arkisto, or Yle news web page')
+                           help='Address of an Areena, Elävä Arkisto, '
+                           'or Yle news web page')
     url_group.add_argument('-i', metavar='FILENAME', dest='inputfile',
                            type=to_unicode,
                            help='Read input URLs to process from the named '
@@ -416,11 +417,11 @@ def main(argv=sys.argv):
         action = StreamAction.DOWNLOAD
 
     if (logger.isEnabledFor(logging.INFO) and
-         action not in [StreamAction.PIPE,
-                        StreamAction.PRINT_STREAM_URL,
-                        StreamAction.PRINT_STREAM_TITLE,
-                        StreamAction.PRINT_EPISODE_PAGES,
-                        StreamAction.PRINT_METADATA]):
+        action not in [StreamAction.PIPE,
+                       StreamAction.PRINT_STREAM_URL,
+                       StreamAction.PRINT_STREAM_TITLE,
+                       StreamAction.PRINT_EPISODE_PAGES,
+                       StreamAction.PRINT_METADATA]):
         print_enc(parser.description)
 
     backends = Backends.parse_backends(args.backend.split(','))

@@ -4,6 +4,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import attr
 from .backends import FailingBackend
 
+
 @attr.s
 class StreamFlavor(object):
     media_type = attr.ib()

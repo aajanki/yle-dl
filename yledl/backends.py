@@ -20,6 +20,7 @@ from .utils import ffmpeg_loglevel
 
 logger = logging.getLogger('yledl')
 
+
 class IOCapability(object):
     RESUME = 'resume'
     PROXY = 'proxy'

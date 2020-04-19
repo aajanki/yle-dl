@@ -34,8 +34,9 @@ class KalturaApiClient(object):
                 'redirectFromEntryId': entry_id
             },
             'responseProfile': {
-                'fields': 'id,name,description,thumbnailUrl,dataUrl,duration,'\
-                    'msDuration,flavorParamsIds,mediaType,type,tags,dvrStatus',
+                'fields': ('id,name,description,thumbnailUrl,dataUrl,duration,'
+                           'msDuration,flavorParamsIds,mediaType,type,tags,'
+                           'dvrStatus'),
                 'type': 1
             }
         }

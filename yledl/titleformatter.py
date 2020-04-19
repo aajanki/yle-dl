@@ -9,7 +9,7 @@ from collections import defaultdict
 class TitleFormatter(object):
     def __init__(self, template='${series}${title}${episode}${timestamp}'):
         self.tokens = self._parse_template(template)
-    
+
     def format(self, title, publish_timestamp=None, series_title=None,
                subheading=None, season=None, episode=None, program_id=None):
         if title is None:

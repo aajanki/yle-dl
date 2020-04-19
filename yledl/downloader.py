@@ -132,7 +132,7 @@ class YleDlDownloader(object):
                 if output_file:
                     self.remove_retry_file(output_file)
                     output_file = None
-                
+
                 logger.debug('Now trying downloader {}'.format(stream.name))
 
                 (latest_result, output_file) = streamfunc(clip, stream)
