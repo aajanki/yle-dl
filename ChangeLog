@@ -3,7 +3,7 @@ Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
 
-<unreleased>
+Version 20200419
 
 - Support for new Areena audio series pages
 - Live TV at 720p resolution by default (use --resolution for lower quality)
