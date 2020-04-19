@@ -23,7 +23,7 @@ class Ffprobe(object):
                 '-print_format', 'json=c=1', '-strict', 'experimental',
                 '-probesize', '80000000', '-i', url]
         try:
-            return json.loads(subprocess.check_output(args))
+            return json.loads(subprocess.check_output(args).decode('utf-8'))
         except subprocess.CalledProcessError as ex:
             raise ValueError(
                 'Stream probing failed with status {}'.format(ex.returncode))
