@@ -48,9 +48,6 @@ class HttpClient(object):
     def download_html_tree(self, url, extra_headers=None):
         """Downloads a HTML document and returns it parsed as an lxml tree."""
         response = self.get(url, extra_headers)
-        if response is None:
-            return None
-
         metacharset = html_meta_charset(response.content)
         if metacharset:
             response.encoding = metacharset
@@ -81,12 +78,8 @@ class HttpClient(object):
         if extra_headers:
             headers.update(extra_headers)
 
-        try:
-            r = self._session.get(url, headers=headers)
-            r.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Can't read {}".format(url))
-            return None
+        r = self._session.get(url, headers=headers)
+        r.raise_for_status()
 
         return r
 
@@ -95,12 +88,8 @@ class HttpClient(object):
         if extra_headers:
             headers.update(extra_headers)
 
-        try:
-            r = self._session.post(url, json=json_data, headers=headers)
-            r.raise_for_status()
-        except requests.exceptions.RequestException:
-            logger.exception("Can't read from POST {}".format(url))
-            return None
+        r = self._session.post(url, json=json_data, headers=headers)
+        r.raise_for_status()
 
         return r
 

@@ -3,6 +3,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 import json
 import logging
+import requests
 
 
 logger = logging.getLogger('yledl')
@@ -20,12 +21,16 @@ class AreenaGeoLocation(object):
             'Referer': referrer,
             'TE': 'Trailers',
         }
-        r = self.httpclient.get(endpoint, extra_headers)
-        if r is None:
+        try:
+            r = self.httpclient.get(endpoint, extra_headers)
+        except requests.RequestException:
+            logger.warning('Failed to check geo restrictions.')
+            logger.warning('Continuing as if no restrictions apply. '
+                           'This may fail later.')
             return True
-        else:
-            response = r.json()
-            logger.debug('Geo query response:')
-            logger.debug(json.dumps(response))
 
-            return response.get('country_code') == 'FI'
+        response = r.json()
+        logger.debug('Geo query response:')
+        logger.debug(json.dumps(response))
+
+        return response.get('country_code') == 'FI'
