@@ -14,7 +14,7 @@ def test_arkisto_stream_url():
                                  '/studio-julmahuvi-roudasta-rospuuttoon')
 
     assert streamurl
-    assert 'manifest.f4m' in streamurl[0]
+    assert '/a.mp4' in streamurl[0]
 
 
 def test_arkisto_regression():

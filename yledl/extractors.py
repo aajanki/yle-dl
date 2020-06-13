@@ -37,10 +37,9 @@ logger = logging.getLogger('yledl')
 
 def extractor_factory(url, filters, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
-       re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url):
+       re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url) or \
+       re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
         return ElavaArkistoExtractor(language_chooser, httpclient)
-    elif re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
-        return ArkivetExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioExtractor(language_chooser, httpclient)
@@ -860,19 +859,16 @@ class AreenaExtractor(AreenaPlaylist):
             (quote_plus(program_id))
 
     def preview_parser(self, pid, pageurl):
-        if self.is_elava_arkisto_media(pid):
-            return AreenaPreviewApiParser({})
-        else:
-            preview_headers = {
-                'Referer': pageurl,
-                'Origin': 'https://areena.yle.fi'
-            }
-            preview_json = JSONP.load_json(self.preview_url(pid),
-                                           self.httpclient,
-                                           headers=preview_headers)
-            logger.debug('preview data:\n' + json.dumps(preview_json, indent=2))
+        preview_headers = {
+            'Referer': pageurl,
+            'Origin': 'https://areena.yle.fi'
+        }
+        preview_json = JSONP.load_json(self.preview_url(pid),
+                                       self.httpclient,
+                                       headers=preview_headers)
+        logger.debug('preview data:\n' + json.dumps(preview_json, indent=2))
 
-            return AreenaPreviewApiParser(preview_json)
+        return AreenaPreviewApiParser(preview_json)
 
     def preview_url(self, program_id):
         return 'https://player.api.yle.fi/v1/preview/{}.json?' \
@@ -1050,86 +1046,10 @@ class AreenaAudio2020Extractor(AreenaExtractor):
 
 class ElavaArkistoExtractor(AreenaExtractor):
     def get_playlist(self, url):
-        tree = self.httpclient.download_html_tree(url)
-        if tree is None:
-            return []
-
-        ids = tree.xpath("//article[@id='main-content']//div/@data-id")
-
-        # TODO: The 26- IDs will point to non-existing pages. This
-        # only shows up on --showepisodepage, everything else works.
-        return ['https://areena.yle.fi/' + x for x in ids]
-
-    def program_info_url(self, program_id):
-        if self.is_elava_arkisto_media(program_id):
-            did = program_id.split('-')[-1]
-            return ('https://yle.fi/elavaarkisto/embed/%s.jsonp'
-                    '?callback=yleEmbed.eaJsonpCallback'
-                    '&instance=1&id=%s&lang=fi' %
-                    (quote_plus(did), quote_plus(did)))
-        else:
-            return (super(ElavaArkistoExtractor, self)
-                    .program_info_url(program_id))
-
-    def program_media_id(self, program_info):
-        mediakanta_id = program_info.get('mediakantaId')
-        if mediakanta_id:
-            return '6-' + mediakanta_id
-        else:
-            return (super(ElavaArkistoExtractor, self)
-                    .program_media_id(program_info))
-
-    def program_media_type(self, program_info):
-        return program_info.get('mediaFormat')
-
-    def program_title(self, program_info):
-        title = (
-            program_info.get('otsikko') or
-            program_info.get('title') or
-            program_info.get('originalTitle') or
-            (super(ElavaArkistoExtractor, self)
-             .program_title(program_info).get('title')) or
-            'elavaarkisto')
-        return {'title': title}
-
-
-### Svenska Arkivet ###
-
-
-class ArkivetExtractor(AreenaExtractor):
-    def get_playlist(self, url):
         # The note about '26-' in ElavaArkistoDownloader applies here
         # as well
         ids = self.get_dataids(url)
         return ['https://areena.yle.fi/' + x for x in ids]
-
-    def program_info_url(self, program_id):
-        if self.is_elava_arkisto_media(program_id):
-            plain_id = program_id.split('-')[-1]
-            return 'https://player.yle.fi/api/v1/arkivet.jsonp?' \
-                'id=%s&callback=yleEmbed.eaJsonpCallback&instance=1&lang=sv' % \
-                (quote_plus(plain_id))
-        else:
-            return super(ArkivetExtractor, self).program_info_url(program_id)
-
-    def program_media_id(self, program_info):
-        mediakanta_id = program_info.get('data', {}) \
-                                    .get('ea', {}) \
-                                    .get('mediakantaId')
-        if mediakanta_id:
-            return "6-" + mediakanta_id
-        else:
-            return super(ArkivetExtractor, self).program_media_id(program_info)
-
-    def program_title(self, program_info):
-        ea = program_info.get('data', {}).get('ea', {})
-        title = (ea.get('otsikko') or
-                 ea.get('title') or
-                 ea.get('originalTitle') or
-                 (super(ArkivetExtractor, self)
-                  .program_title(program_info).get('title')) or
-                 'yle-arkivet')
-        return {'title': title}
 
     def get_dataids(self, url):
         tree = self.httpclient.download_html_tree(url)

@@ -8,14 +8,14 @@ def test_arkivet_title():
                         '/halla-det-ar-naturvaktarna')
 
     assert title
-    assert title[0] == 'Seportage om Naturväktarna'
+    assert title[0].startswith('Seportage om Naturväktarna')
 
 
 def test_arkivet_stream_url():
     streamurl = fetch_stream_url('https://svenska.yle.fi/artikel/2014/06/13'
                                  '/halla-det-ar-naturvaktarna')
     assert streamurl
-    assert 'manifest.f4m' in streamurl[0]
+    assert '/a.mp4' in streamurl[0]
 
 
 def test_arkivet_metadata():
@@ -23,7 +23,7 @@ def test_arkivet_metadata():
                               '/halla-det-ar-naturvaktarna')
 
     assert len(metadata) == 1
-    assert metadata[0].get('title') == 'Seportage om Naturväktarna'
+    assert metadata[0].get('title').startswith('Seportage om Naturväktarna')
     flavors = metadata[0]['flavors']
     assert all(f.get('media_type') == 'video' for f in flavors)
     assert all('bitrate' in f for f in flavors)
@@ -38,7 +38,7 @@ def test_arkivet_audio_stream_url():
 
     assert len(streamurl) == 11
     for url in streamurl:
-        assert url.startswith('rtmpe://')
+        assert '/a.mp3' in url
 
 
 def test_arkivet_audio_metadata():
@@ -47,6 +47,6 @@ def test_arkivet_audio_metadata():
         '/tove-jansson-laser-noveller-ur-dockskapet')
 
     assert len(metadata) == 11
-    assert metadata[0].get('title') == 'Apan ur Dockskåpet'
+    assert metadata[0].get('title').startswith('Apan ur Dockskåpet')
     for m in metadata:
         assert all(f.get('media_type') == 'audio' for f in m.get('flavors'))
