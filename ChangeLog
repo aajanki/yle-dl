@@ -5,6 +5,7 @@ Distributed under the GPL v3
 
 <unreleased>
 
+- Fixed yle-dl after recent Areena API changed
 - Fixed Elävä Arkisto support
 
 Version 20200419

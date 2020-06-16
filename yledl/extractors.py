@@ -797,7 +797,7 @@ class AreenaExtractor(AreenaPlaylist):
         if preview.is_live() and not self.force_program_info():
             info = None
         else:
-            info = JSONP.load_jsonp(self.program_info_url(pid), self.httpclient)
+            info = JSONP.load_json(self.program_info_url(pid), self.httpclient)
             logger.debug('program data:\n' + json.dumps(info, indent=2))
 
         publish_timestamp = (self.publish_timestamp(info) or
@@ -854,9 +854,9 @@ class AreenaExtractor(AreenaPlaylist):
         )
 
     def program_info_url(self, program_id):
-        return 'https://player.yle.fi/api/v1/programs.jsonp?' \
-            'id=%s&callback=yleEmbed.programJsonpCallback' % \
-            (quote_plus(program_id))
+        return 'https://areena.yle.fi/api/programs/v1/id/{}.json?' \
+            'app_id=areena_web_frontend_prod&' \
+            'app_key=4622a8f8505bb056c956832a70c105d4'.format(quote_plus(program_id))
 
     def preview_parser(self, pid, pageurl):
         preview_headers = {
@@ -904,7 +904,7 @@ class AreenaExtractor(AreenaPlaylist):
         if not program_info:
             return {}
 
-        program = program_info.get('data', {}).get('program', {})
+        program = program_info.get('data', {})
         title_object = program.get('title')
         title = (self.language_chooser.choose_short_form(title_object) or
                  'areena')
