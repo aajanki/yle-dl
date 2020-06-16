@@ -47,11 +47,10 @@ def parse_areena_timestamp_py2(timestamp):
     m = re.search(r'\+(\d\d):00$', timestamp)
     if m:
         offset_hours = int(m.group(1))
-        try:
-            dt = datetime.strptime(timestamp[:-6], '%Y-%m-%dT%H:%M:%S')
+        dt = (strptime_or_none(timestamp[:-6], '%Y-%m-%dT%H:%M:%S.%f') or
+              strptime_or_none(timestamp[:-6], '%Y-%m-%dT%H:%M:%S'))
+        if dt is not None:
             dt = dt.replace(tzinfo=FixedOffset(offset_hours))
-        except ValueError:
-            dt = None
 
     return dt
 
@@ -61,7 +60,12 @@ def parse_areena_timestamp_py3(timestamp):
     if re.search(r'\d\d:\d\d$', timestamp):
         timestamp = timestamp[:-3] + timestamp[-2:]
 
+    return (strptime_or_none(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z') or
+            strptime_or_none(timestamp, '%Y-%m-%dT%H:%M:%S%z'))
+
+
+def strptime_or_none(timestamp, format):
     try:
-        return datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S%z')
+        return datetime.strptime(timestamp, format)
     except ValueError:
         return None
