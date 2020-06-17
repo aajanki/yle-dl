@@ -40,7 +40,7 @@ def extractor_factory(url, filters, language_chooser, httpclient):
        re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
         return ElavaArkistoExtractor(language_chooser, httpclient)
-    elif (re.match(r'^https?://areena\.yle\.fi/radio/ohjelmat/[-a-zA-Z0-9]+', url) or
+    elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         return AreenaLiveRadioExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/audio/[-0-9]+', url):
@@ -969,12 +969,22 @@ class AreenaLiveRadioExtractor(AreenaExtractor):
         return [url]
 
     def program_id_from_url(self, url):
+        known_channels = {
+            '57-p89RepWE0': 'yle-radio-1',
+            '57-JAprnp7W2': 'ylex',
+            '57-kpDBBz8Pz': 'yle-puhe',
+            '57-md5vJP6a2': 'yle-x3m',
+            '57-llL6Y4blL': 'yle-klassinen',
+            '30-698': 'yle-sami-radio',
+        }
+
         parsed = urlparse(url)
         query_dict = parse_qs(parsed.query)
         if query_dict.get('_c'):
             return query_dict.get('_c')[0]
         else:
-            return parsed.path.split('/')[-1]
+            key = parsed.path.split('/')[-1]
+            return known_channels.get(key, key)
 
 
 ### Extract streams from an Areena audio webpage ###
