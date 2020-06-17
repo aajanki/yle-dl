@@ -51,21 +51,22 @@ def test_radio_metadata_hls():
 
 
 def test_radio_live_url():
-    url = fetch_stream_url('https://areena.yle.fi/radio/ohjelmat/yle-puhe')
+    url = fetch_stream_url('https://areena.yle.fi/audio/ohjelmat/57-kpDBBz8Pz')
 
     assert len(url) == 1
     assert '.m3u8' in url[0]
 
 
 def test_radio_live_url2():
-    url = fetch_stream_url('https://areena.yle.fi/radio/ohjelmat/'
-                           'yle-radio-suomi?_c=yle-radio-suomi-oulu')
+    url = fetch_stream_url(
+        'https://areena.yle.fi/audio/ohjelmat/57-3gO4bl7J6?'
+        '_c=yle-radio-suomi-oulu')
 
     assert len(url) == 1
     assert '.m3u8' in url[0]
 
 def test_radio_live_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/radio/ohjelmat/yle-puhe')
+    metadata = fetch_metadata('https://areena.yle.fi/audio/ohjelmat/57-kpDBBz8Pz')
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
