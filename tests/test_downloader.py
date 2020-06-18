@@ -8,8 +8,8 @@ from datetime import datetime
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader
-from yledl.extractors import Clip, FailedClip, StreamFlavor, Subtitle
-from yledl.subtitles import EmbeddedSubtitle
+from yledl.extractors import Clip, FailedClip, StreamFlavor
+from yledl.subtitles import EmbeddedSubtitle, Subtitle
 from yledl.timestamp import FixedOffset
 
 

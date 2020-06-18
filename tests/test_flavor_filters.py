@@ -3,7 +3,7 @@
 from __future__ import print_function, absolute_import, unicode_literals
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import Backends, FailingBackend
-from yledl.extractors import Subtitle
+from yledl.subtitles import Subtitle
 from yledl.streamflavor import StreamFlavor, FailedFlavor
 
 
