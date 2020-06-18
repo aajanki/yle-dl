@@ -9,7 +9,7 @@
 sudo pip uninstall yle-dl
 
 sudo apt-get install rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-pycryptodome python3-requests python3-lxml \
+    python3-pip python3-requests python3-lxml \
     php-cli php-curl php-xml php-bcmath
 pip3 install --user --upgrade yle-dl
 ```
@@ -24,7 +24,7 @@ pip3 install --user --upgrade yle-dl
 sudo pip uninstall yle-dl
 
 sudo apt-get install git rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-pycryptodome python3-requests python3-lxml \
+    python3-requests python3-lxml \
     php-cli php-curl php-xml php-bcmath
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
@@ -41,7 +41,7 @@ python3 setup.py install --user
 sudo pip uninstall yle-dl
 
 sudo apt-get install rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-crypto python3-requests python3-lxml \
+    python3-pip python3-requests python3-lxml \
     php-cli php-curl php-xml php-bcmath
 pip3 install --user --upgrade yle-dl
 ```
@@ -58,7 +58,7 @@ upgrade pip for installing yle-dl.)
 sudo pip uninstall yle-dl
 
 sudo apt-get install git rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-crypto python3-requests python3-lxml \
+    python3-requests python3-lxml \
     php-cli php-curl php-xml php-bcmath
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
@@ -75,7 +75,7 @@ python3 setup.py install --user
 sudo pip uninstall yle-dl
 
 sudo apt-get install rtmpdump wget libav-tools python-dev python-setuptools \
-     python-pip python-crypto python-requests python-lxml \
+     python-pip python-requests python-lxml \
      php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 pip install --user pyOpenSSL ndg-httpsclient pyasn1
@@ -94,7 +94,7 @@ upgrade pip for installing yle-dl.)
 sudo pip uninstall yle-dl
 
 sudo apt-get install git rtmpdump wget libav-tools python-dev \
-    python-setuptools python-crypto python-requests python-lxml \
+    python-setuptools python-requests python-lxml \
     php5-cli php5-curl php5-mcrypt
 sudo php5enmod mcrypt
 git clone https://github.com/aajanki/yle-dl.git
@@ -207,5 +207,5 @@ Install [Termux](https://termux.com/).
 Run on the Termux terminal:
 ```
 pkg install python make clang libgmp wget ffmpeg libxml2 libxml2-utils libxslt
-pip install pycryptodome lxml yle-dl
+pip install lxml yle-dl
 ```

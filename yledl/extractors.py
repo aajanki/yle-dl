@@ -2,7 +2,6 @@
 
 from __future__ import print_function, absolute_import, unicode_literals
 import attr
-import base64
 import itertools
 import json
 import logging
@@ -10,26 +9,14 @@ import os.path
 import re
 from datetime import datetime
 from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
-from . import hds
-from .backends import HDSBackend, HLSAudioBackend, HLSBackend, RTMPBackend, \
-    WgetBackend, YoutubeDLHDSBackend
+from .backends import HLSAudioBackend, HLSBackend, WgetBackend
 from .http import html_unescape
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
-from .rtmp import create_rtmp_params
 from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
-from .subtitles import Subtitle
 from .timestamp import parse_areena_timestamp
-
-
-try:
-    # pycryptodome
-    from Cryptodome.Cipher import AES
-except ImportError:
-    # fallback on the obsolete pycrypto
-    from Crypto.Cipher import AES
 
 
 logger = logging.getLogger('yledl')
@@ -103,23 +90,6 @@ class JSONP(object):
         return without_padding
 
 
-class AreenaDecrypt(object):
-    @staticmethod
-    def areena_decrypt(data, aes_key):
-        try:
-            bytestring = base64.b64decode(str(data))
-        except (UnicodeEncodeError, TypeError):
-            return None
-
-        iv = bytestring[:16]
-        ciphertext = bytestring[16:]
-        padlen = 16 - (len(ciphertext) % 16)
-        ciphertext = ciphertext + b'\0'*padlen
-
-        decrypter = AES.new(aes_key, AES.MODE_CFB, iv, segment_size=16*8)
-        return decrypter.decrypt(ciphertext)[:-padlen].decode('latin-1')
-
-
 ## Flavors
 
 
@@ -132,84 +102,6 @@ class Flavors(object):
             return 'audio'
         else:
             return 'video'
-
-
-class AkamaiFlavorParser(object):
-    def __init__(self, httpclient):
-        self.httpclient = httpclient
-
-    def parse(self, medias, pageurl, aes_key):
-        flavors = []
-        for media in medias:
-            flavors.extend(self.parse_media(media, pageurl, aes_key))
-        return flavors
-
-    def parse_media(self, media, pageurl, aes_key):
-        is_hds = media.get('protocol') == 'HDS'
-        crypted_url = media.get('url')
-        media_url = self.decrypt_url(crypted_url, is_hds, aes_key)
-        logger.debug('Media URL: {}'.format(media_url))
-        if is_hds:
-            if media_url:
-                manifest = hds.parse_manifest(self.httpclient.download_page(media_url))
-            else:
-                manifest = None
-            return self.hds_flavors(media, media_url, manifest or [])
-        else:
-            return self.rtmp_flavors(media, media_url, pageurl)
-
-    def decrypt_url(self, crypted_url, is_hds, aes_key):
-        if crypted_url:
-            baseurl = AreenaDecrypt.areena_decrypt(crypted_url, aes_key)
-            if is_hds:
-                sep = '&' if '?' in baseurl else '?'
-                return baseurl + sep + \
-                    'g=ABCDEFGHIJKL&hdcore=3.8.0&plugin=flowplayer-3.8.0.0'
-            else:
-                return baseurl
-        else:
-            return None
-
-    def hds_flavors(self, media, media_url, manifest):
-        flavors = []
-
-        hard_subtitle = None
-        hard_subtitle_lang = media.get('hardsubtitle', {}).get('lang')
-        if hard_subtitle_lang:
-            hard_subtitle = Subtitle(url=None, lang=hard_subtitle_lang)
-
-        for mf in manifest:
-            bitrate = mf.get('bitrate')
-            flavor_id = mf.get('mediaurl')
-            streams = [
-                HDSBackend(media_url, bitrate, flavor_id),
-                YoutubeDLHDSBackend(media_url, bitrate, flavor_id)
-            ]
-            flavors.append(StreamFlavor(
-                media_type=Flavors.media_type(media),
-                height=mf.get('height'),
-                width=mf.get('width'),
-                bitrate=bitrate,
-                streams=streams,
-                hard_subtitle=hard_subtitle))
-
-        return flavors
-
-    def rtmp_flavors(self, media, media_url, pageurl):
-        rtmp_params = create_rtmp_params(media_url, pageurl, self.httpclient)
-        if rtmp_params:
-            streams = [RTMPBackend(rtmp_params)]
-        else:
-            streams = []
-        bitrate = media.get('bitrate', 0) + media.get('audioBitrateKbps', 0)
-        return [
-            StreamFlavor(
-                media_type=Flavors.media_type(media),
-                height=media.get('height'),
-                width=media.get('width'),
-                bitrate=bitrate,
-                streams=streams)
-        ]
 
 
 ## Clip
@@ -563,10 +455,6 @@ class AreenaPreviewApiParser(object):
 
 
 class AreenaExtractor(AreenaPlaylist):
-    # Extracted from
-    # http://player.yle.fi/assets/flowplayer-1.4.0.3/flowplayer/flowplayer.commercial-3.2.16-encrypted.swf
-    AES_KEY = b'yjuap4n5ok9wzg43'
-
     def __init__(self, language_chooser, httpclient):
         super(AreenaExtractor, self).__init__(httpclient)
         self.language_chooser = language_chooser
@@ -631,9 +519,9 @@ class AreenaExtractor(AreenaPlaylist):
                 embedded_subtitles=program_info.embedded_subtitles,
                 program_id=program_id)
 
-    def media_flavors(self, media_id, program_id, hls_manifest_url,
-                      download_url, kaltura_flavors, akamai_protocol,
-                      media_type, pageurl, ffprobe):
+    def media_flavors(self, media_id, hls_manifest_url,
+                      download_url, kaltura_flavors,
+                      media_type, ffprobe):
         flavors = []
 
         if download_url:
@@ -642,18 +530,16 @@ class AreenaExtractor(AreenaPlaylist):
         if media_id:
             flavors.extend(
                 self.flavors_by_media_id(
-                    media_id, program_id, hls_manifest_url, kaltura_flavors,
-                    akamai_protocol, media_type, pageurl, ffprobe))
+                    media_id, hls_manifest_url, kaltura_flavors,
+                    media_type, ffprobe))
         elif hls_manifest_url:
             flavors.extend(
                 self.hls_flavors(hls_manifest_url, media_type))
 
         return flavors or None
 
-    def flavors_by_media_id(self, media_id, program_id,
-                            hls_manifest_url, kaltura_flavors,
-                            akamai_protocol, media_type, pageurl,
-                            ffprobe):
+    def flavors_by_media_id(self, media_id, hls_manifest_url, kaltura_flavors,
+                            media_type, ffprobe):
         if self.is_full_hd_media(media_id) or self.is_live_media(media_id):
             logger.debug('Detected a full-HD media')
             flavors = self.hls_probe_flavors(hls_manifest_url, media_type,
@@ -665,10 +551,6 @@ class AreenaExtractor(AreenaPlaylist):
             return (kaltura_flavors or
                     self.hls_probe_flavors(hls_manifest_url, media_type,
                                            ffprobe))
-        elif self.is_mediakanta_media(media_id):
-            parser = AkamaiFlavorParser(self.httpclient)
-            medias = self.akamai_medias(program_id, media_id, akamai_protocol)
-            return parser.parse(medias, pageurl, self.AES_KEY)
         else:
             return [FailedFlavor('Unknown stream flavor')]
 
@@ -678,9 +560,6 @@ class AreenaExtractor(AreenaPlaylist):
     def is_full_hd_media(self, media_id):
         return media_id and media_id.startswith('55-')
 
-    def is_elava_arkisto_media(self, media_id):
-        return media_id and media_id.startswith('26-')
-
     def is_mediakanta_media(self, media_id):
         return media_id and media_id.startswith('6-')
 
@@ -689,17 +568,6 @@ class AreenaExtractor(AreenaPlaylist):
 
     def kaltura_entry_id(self, mediaid):
         return mediaid.split('-', 1)[-1]
-
-    def akamai_medias(self, program_id, media_id, media_protocol):
-        if not media_id:
-            return []
-
-        descriptor = self.yle_media_descriptor(program_id, media_id,
-                                               media_protocol)
-        descriptor_proto = descriptor.get('meta', {}).get('protocol') or 'HDS'
-        return descriptor.get('data', {}) \
-                         .get('media', {}) \
-                         .get(descriptor_proto, [])
 
     def hls_flavors(self, hls_manifest_url, media_type):
         if not hls_manifest_url:
@@ -724,30 +592,6 @@ class AreenaExtractor(AreenaPlaylist):
         ext = os.path.splitext(path)[1] or None
         backend = WgetBackend(download_url, ext)
         return [StreamFlavor(media_type=media_type, streams=[backend])]
-
-    def program_protocol(self, program_info, default_video_proto):
-        pinfo = program_info or {}
-        event = self.publish_event(program_info)
-        if (event.get('media', {}).get('type') == 'AudioObject' or
-            pinfo.get('mediaFormat') == 'audio' or
-            pinfo.get('data', {}).get('ea', {}).get('mediaFormat') == 'audio'):
-            return 'RTMPE'
-        else:
-            return default_video_proto
-
-    def yle_media_descriptor(self, program_id, media_id, protocol):
-        media_jsonp_url = 'https://player.yle.fi/api/v1/media.jsonp?' \
-                          'id=%s&callback=yleEmbed.startPlayerCallback&' \
-                          'mediaId=%s&protocol=%s&client=areena-flash-player' \
-                          '&instance=1' % \
-            (quote_plus(media_id), quote_plus(program_id),
-             quote_plus(protocol))
-        media = JSONP.load_jsonp(media_jsonp_url, self.httpclient)
-
-        if media:
-            logger.debug('media:\n' + json.dumps(media, indent=2))
-
-        return media
 
     def program_media_id(self, program_info):
         event = self.publish_event(program_info)
@@ -821,7 +665,6 @@ class AreenaExtractor(AreenaPlaylist):
         media_type = self.program_media_type(info) or preview.media_type()
         description = (self.program_description(info) or
                        preview.description(self.language_chooser))
-        akamai_protocol = self.program_protocol(info, 'HDS')
         if self.is_html5_media(media_id):
             entry_id = self.kaltura_entry_id(media_id)
             kapi_client = YleKalturaApiClient(self.httpclient)
@@ -837,10 +680,9 @@ class AreenaExtractor(AreenaPlaylist):
             media_id=media_id,
             title=title,
             description=description,
-            flavors=self.media_flavors(media_id, pid, manifest_url,
+            flavors=self.media_flavors(media_id, manifest_url,
                                        download_url, kaltura_flavors,
-                                       akamai_protocol, media_type,
-                                       pageurl, ffprobe),
+                                       media_type, ffprobe),
             embedded_subtitles=kaltura_subtitles,
             duration_seconds=(preview.duration_seconds() or
                               self.program_info_duration_seconds(info)),
@@ -1056,8 +898,6 @@ class AreenaAudio2020Extractor(AreenaExtractor):
 
 class ElavaArkistoExtractor(AreenaExtractor):
     def get_playlist(self, url):
-        # The note about '26-' in ElavaArkistoDownloader applies here
-        # as well
         ids = self.get_dataids(url)
         return ['https://areena.yle.fi/' + x for x in ids]
 
