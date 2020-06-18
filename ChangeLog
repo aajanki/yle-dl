@@ -3,9 +3,9 @@ Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
 
-<unreleased>
+Version 20200618
 
-- Fixed yle-dl after recent Areena API changed
+- Fixed downloading from Areena after the recent API changes
 - Fixed Elävä Arkisto support
 
 Version 20200419
