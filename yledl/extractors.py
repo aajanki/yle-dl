@@ -602,7 +602,6 @@ class AreenaExtractor(AreenaPlaylist):
 
     def publish_event(self, program_info):
         events = (program_info or {}).get('data', {}) \
-                                     .get('program', {}) \
                                      .get('publicationEvent', [])
         areena_events = [e for e in events
                          if e.get('service', {}).get('id') == 'yle-areena']
@@ -724,7 +723,6 @@ class AreenaExtractor(AreenaPlaylist):
     def program_info_duration_seconds(self, program_info):
         pt_duration = ((program_info or {})
                        .get('data', {})
-                       .get('program', {})
                        .get('duration'))
         return self.pt_duration_as_seconds(pt_duration) if pt_duration else None
 
@@ -773,7 +771,7 @@ class AreenaExtractor(AreenaPlaylist):
         if not program_info:
             return {}
 
-        program = program_info.get('data', {}).get('program', {})
+        program = program_info.get('data', {})
         part_of_season_object = program.get('partOfSeason')
         if part_of_season_object:
             season = part_of_season_object.get('seasonNumber')
@@ -791,7 +789,6 @@ class AreenaExtractor(AreenaPlaylist):
 
         description = (program_info
                        .get('data', {})
-                       .get('program', {})
                        .get('description', ''))
         if not description:
             return None
