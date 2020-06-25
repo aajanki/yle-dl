@@ -35,18 +35,7 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 
 Optionally for few rare streams:
 
-* PHP interpreter with bcmath, curl, openssl and SimpleXML extensions: some news broadcasts
-* rtmpdump: some Elävä Arkisto streams. Version 2.4 or newer, preferably the latest development version from the [project homepage](https://rtmpdump.mplayerhq.hu/)
 * wget
-
-Enable the PHP extensions by appending the following lines with the
-correct paths in the [php.ini]:
-
-[php.ini]:https://secure.php.net/manual/en/configuration.file.php
-
-```
-extension=/path/to/curl.so
-```
 
 ### 2. Install yle-dl ###
 
@@ -71,21 +60,6 @@ export PATH=$PATH:$HOME/.local/bin
 # Make the change permanent. Adjust as needed if you are not using bash
 echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
-
-Installation with youtube-dl as an alternative downloader backend
------------------------------------------------------------------
-
-By default, yle-dl downloads streams from Yle Areena using the
-included copy of AdobeHDS.php. If the default downloader does not work
-for some reason, it is possible to use youtube-dl instead. yle-dl will
-automatically fall back to youtube-dl if it is installed and
-downloading with AdobeHDS.php fails.
-
-Follow the above installation instructions (except for the PHP and the
-PHP libraries) and additionally install youtube-dl:
-
-* Mac OS X: `brew install youtube-dl`
-* Debian/Ubuntu/other operating systems: `pip3 install --user --upgrade youtube_dl`
 
 Using with libav instead of ffmpeg
 ----------------------------------
@@ -164,10 +138,6 @@ yle-dl options:
 
 * `--maxbitrate br`   Maximum bitrate stream to download, integer in kB/s or "best" or "worst". Not all streams support limited bitrates.
 
-* `--rtmpdump path`   Set path to rtmpdump binary
-
-* `--adobehds cmd`    Set command for executing AdobeHDS.php script
-
 * `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded video file as the first parameter and subtitle files (if any) as the following parameters.
 
 * `--proxy uri`       HTTP(S) proxy to use. Example: `--proxy localhost:8118`
@@ -176,14 +146,9 @@ yle-dl options:
 
 * `--pipe`            Dump stream to stdout for piping to media player. E.g. `yle-dl --pipe URL | vlc -`.
 
-* `--backend vals`    Downloaders that are tried until one of them succeeds (a comma-separated list). Possible values: `adobehdsphp` (download HDS streams using AdobeHDS.php), `youtubedl` (download HDS streams using youtube-dl).
-
 * `-V, --verbose`     Show verbose debug output
 
 Type `yle-dl --help` to see the full list of options.
-
-Any unrecognized options will be relayed to rtmpdump process (when
-downloading RTMP streams).
 
 To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/) or a similar wrapper.
 

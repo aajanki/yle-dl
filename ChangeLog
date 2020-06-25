@@ -3,6 +3,11 @@ Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
 
+<unreleased>
+
+- Fixed metadata extraction
+- PHP and rtmpdump are not needed anymore
+
 Version 20200618
 
 - Fixed downloading from Areena after the recent API changes

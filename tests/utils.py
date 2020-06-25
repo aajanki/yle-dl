@@ -39,8 +39,7 @@ def fetch_metadata(url, filters=StreamFilters(), meta_language=None):
 
 
 def fetch(url, action, filters, meta_language=None):
-    # Initialize rtmpdump_binary to avoid a file system lookup in tests
-    io = IOContext(destdir='/tmp/', rtmpdump_binary='rtmpdump')
+    io = IOContext(destdir='/tmp/')
     httpclient = HttpClient()
     title_formatter = TitleFormatter()
 

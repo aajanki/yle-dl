@@ -14,7 +14,6 @@ from builtins import str
 from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
-from .rtmp import rtmp_parameters_to_url, rtmp_parameters_to_rtmpdump_args
 from .utils import ffmpeg_loglevel
 
 
@@ -225,220 +224,6 @@ class Subprocess(object):
         except AttributeError:
             # libc is None or libc does not contain prctl
             pass
-
-
-### Download stream by delegating to rtmpdump ###
-
-
-class RTMPBackend(ExternalDownloader):
-    def __init__(self, rtmp_params):
-        ExternalDownloader.__init__(self)
-        self.rtmp_params = rtmp_params
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.DURATION
-        ])
-        self.name = Backends.RTMPDUMP
-
-    def is_valid(self):
-        return bool(self.rtmp_params)
-
-    def file_extension(self, preferred):
-        return MandatoryFileExtension('.flv')
-
-    def save_stream(self, output_name, clip, io):
-        # rtmpdump fails to resume if the file doesn't contain at
-        # least one audio frame. Remove small files to force a restart
-        # from the beginning.
-        if io.resume and self.is_small_file(output_name):
-            self.remove(output_name)
-
-        return super(RTMPBackend, self).save_stream(output_name, clip, io)
-
-    def build_args(self, output_name, clip, io):
-        args = [io.rtmpdump_binary]
-        args += rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
-        args += ['-o', output_name]
-        if io.resume:
-            args.append('-e')
-        if io.download_limits.duration:
-            args.extend(['--stop', str(io.download_limits.duration)])
-        if logger.getEffectiveLevel() > logging.INFO:
-            args.append('--quiet')
-        return args
-
-    def build_pipe_args(self, io):
-        args = [io.rtmpdump_binary]
-        args += rtmp_parameters_to_rtmpdump_args(self.rtmp_params)
-        args += ['-o', '-']
-        return args
-
-    def stream_url(self):
-        return rtmp_parameters_to_url(self.rtmp_params)
-
-    def is_small_file(self, filename):
-        try:
-            return os.path.getsize(filename) < 1024
-        except OSError:
-            return False
-
-    def remove(self, filename):
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
-
-
-### Download a stream by delegating to AdobeHDS.php ###
-
-
-class HDSBackend(ExternalDownloader):
-    def __init__(self, url, bitrate, flavor_id):
-        ExternalDownloader.__init__(self)
-        self.url = url
-        self.bitrate = bitrate
-        self.flavor_id = flavor_id
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.PROXY,
-            IOCapability.DURATION,
-            IOCapability.RATELIMIT
-        ])
-        self.name = Backends.ADOBEHDSPHP
-
-    def file_extension(self, preferred):
-        return MandatoryFileExtension('.flv')
-
-    def _bitrate_option(self, bitrate):
-        return ['--quality', str(bitrate)] if bitrate else []
-
-    def _limit_options(self, download_limits):
-        options = []
-
-        if download_limits.ratelimit:
-            options.extend(['--maxspeed', str(download_limits.ratelimit)])
-
-        if download_limits.duration:
-            options.extend(['--duration', str(download_limits.duration)])
-
-        return options
-
-    def build_args(self, output_name, clip, io):
-        args = ['--delete', '--outfile', output_name]
-        return self.adobehds_command_line(io, args)
-
-    def save_stream(self, output_name, clip, io):
-        if (io.resume and output_name != '-' and
-            os.path.isfile(output_name) and
-            not self.fragments_exist(self.flavor_id)):
-            logger.info('{} has already been downloaded.'.format(output_name))
-            return RD_SUCCESS
-        else:
-            return super(HDSBackend, self).save_stream(output_name, clip, io)
-
-    def fragments_exist(self, flavor_id):
-        pattern = r'.*_{}_Seg[0-9]+-Frag[0-9]+$'.format(re.escape(flavor_id))
-        files = os.listdir('.')
-        return any(re.match(pattern, x) is not None for x in files)
-
-    def pipe(self, io):
-        res = super(HDSBackend, self).pipe(io)
-        self.cleanup_cookies()
-        return res
-
-    def build_pipe_args(self, io):
-        return self.adobehds_command_line(io, ['--play'])
-
-    def adobehds_command_line(self, io, extra_args):
-        args = list(io.hds_binary)
-        args.append('--manifest')
-        args.append(self.url)
-        args.extend(self._bitrate_option(self.bitrate))
-        args.extend(self._limit_options(io.download_limits))
-        if io.proxy:
-            args.append('--proxy')
-            args.append(io.proxy)
-            args.append('--fproxy')
-        if logger.getEffectiveLevel() < logging.DEBUG:
-            args.append('--debug')
-        if extra_args:
-            args.extend(extra_args)
-        return args
-
-    def stream_url(self):
-        return self.url
-
-    def cleanup_cookies(self):
-        try:
-            os.remove('Cookies.txt')
-        except OSError:
-            pass
-
-
-### Download a stream delegating to the youtube_dl HDS downloader ###
-
-
-class YoutubeDLHDSBackend(BaseDownloader):
-    def __init__(self, url, bitrate, flavor_id):
-        BaseDownloader.__init__(self)
-        self.url = url
-        self.bitrate = bitrate
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.PROXY,
-            IOCapability.RATELIMIT
-        ])
-        self.name = Backends.YOUTUBEDL
-
-    def file_extension(self, preferred):
-        return MandatoryFileExtension('.flv')
-
-    def save_stream(self, output_name, clip, io):
-        return self._execute_youtube_dl(output_name, io)
-
-    def pipe(self, io):
-        return self._execute_youtube_dl('-', io)
-
-    def stream_url(self):
-        return self.url
-
-    def _execute_youtube_dl(self, outputfile, io):
-        try:
-            import youtube_dl
-        except ImportError:
-            logger.error('Failed to import youtube_dl')
-            return RD_FAILED
-
-        ydlopts = {
-            'logtostderr': True,
-            'proxy': io.proxy,
-            'verbose': logger.getEffectiveLevel() < logging.DEBUG
-        }
-
-        dlopts = {
-            'nopart': True,
-            'continuedl': outputfile != '-' and io.resume
-        }
-        dlopts.update(self._ratelimit_parameter(io.download_limits.ratelimit))
-
-        ydl = youtube_dl.YoutubeDL(ydlopts)
-        f4mdl = youtube_dl.downloader.F4mFD(ydl, dlopts)
-        info = {'url': self.url}
-        info.update(self._bitrate_parameter(self.bitrate))
-        try:
-            if not f4mdl.download(outputfile, info):
-                return RD_FAILED
-        except HTTPError:
-            logger.exception('HTTP request failed')
-            return RD_FAILED
-
-        return RD_SUCCESS
-
-    def _bitrate_parameter(self, bitrate):
-        return {'tbr': bitrate} if bitrate else {}
-
-    def _ratelimit_parameter(self, ratelimit):
-        return {'ratelimit': ratelimit*1024} if ratelimit else {}
 
 
 ### Download a HLS stream by delegating to ffmpeg ###
@@ -655,18 +440,12 @@ class FailingBackend(BaseDownloader):
 
 
 class Backends(object):
-    ADOBEHDSPHP = 'adobehdsphp'
-    YOUTUBEDL = 'youtubedl'
-    RTMPDUMP = 'rtmpdump'
     FFMPEG = 'ffmpeg'
     WGET = 'wget'
 
     default_order = [
         WGET,
         FFMPEG,
-        ADOBEHDSPHP,
-        YOUTUBEDL,
-        RTMPDUMP
     ]
 
     @staticmethod

@@ -8,9 +8,8 @@
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt-get install rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml \
-    php-cli php-curl php-xml php-bcmath
+sudo apt-get install wget ffmpeg python3-dev python3-setuptools \
+    python3-pip python3-requests python3-lxml
 pip3 install --user --upgrade yle-dl
 ```
 
@@ -23,9 +22,8 @@ pip3 install --user --upgrade yle-dl
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt-get install git rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-requests python3-lxml \
-    php-cli php-curl php-xml php-bcmath
+sudo apt-get install git wget ffmpeg python3-dev python3-setuptools \
+    python3-requests python3-lxml
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
 python3 setup.py install --user
@@ -40,9 +38,8 @@ python3 setup.py install --user
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt-get install rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml \
-    php-cli php-curl php-xml php-bcmath
+sudo apt-get install wget ffmpeg python3-dev python3-setuptools \
+    python3-pip python3-requests python3-lxml
 pip3 install --user --upgrade yle-dl
 ```
 
@@ -57,9 +54,8 @@ upgrade pip for installing yle-dl.)
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt-get install git rtmpdump wget ffmpeg python3-dev python3-setuptools \
-    python3-requests python3-lxml \
-    php-cli php-curl php-xml php-bcmath
+sudo apt-get install git wget ffmpeg python3-dev python3-setuptools \
+    python3-requests python3-lxml
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
 python3 setup.py install --user
@@ -74,10 +70,8 @@ python3 setup.py install --user
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt-get install rtmpdump wget libav-tools python-dev python-setuptools \
-     python-pip python-requests python-lxml \
-     php5-cli php5-curl php5-mcrypt
-sudo php5enmod mcrypt
+sudo apt-get install wget libav-tools python-dev python-setuptools \
+     python-pip python-requests python-lxml
 pip install --user pyOpenSSL ndg-httpsclient pyasn1
 pip install --user --upgrade yle-dl
 ```
@@ -93,10 +87,8 @@ upgrade pip for installing yle-dl.)
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt-get install git rtmpdump wget libav-tools python-dev \
-    python-setuptools python-requests python-lxml \
-    php5-cli php5-curl php5-mcrypt
-sudo php5enmod mcrypt
+sudo apt-get install git wget libav-tools python-dev \
+    python-setuptools python-requests python-lxml
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
 python setup.py install --user
@@ -115,7 +107,6 @@ emerge -av yle-dl
 ```
 brew install python
 brew install wget
-brew install --HEAD rtmpdump
 brew install ffmpeg
 brew install yle-dl
 ```
@@ -148,37 +139,6 @@ release build (not a nightly git build), Windows 64-bit, Static.
 Extract the zip in `C:\somepath\ffmpeg`.
 
 Append `C:\somepath\ffmpeg\bin` to the PATH environment variable.
-
-### rtmpdump
-
-rtmpdump is needed only for radio streams.
-
-Download the latest Windows build from
-https://rtmpdump.mplayerhq.hu/download/ and extract it to
-`C:\somepath\rtmpdump`.
-
-Append `C:\somepath\rtmpdump` to the PATH environment variable.
-
-### PHP
-
-PHP is needed only for few rare streams. Most likely you can skip
-installing PHP.
-
-Download the latest PHP 7.x.y binary (VC15 x64 Non Thread Safe) from
-https://windows.php.net/download/ and install it in `C:\somepath\php`.
-
-Create a file `C:\somepath\php\php.ini` with the following content:
-```
-extension_dir=C:\somepath\php\ext
-extension=php_curl.dll
-extension=php_openssl.dll
-```
-
-Create a new environment variable called PHPRC with the value
-`C:\somepath\php\php.ini` in Control Panel > System and security > System >
-Advanced system settings > Environment Variables...
-
-Append `C:\somepath\php` to the PATH environment variable.
 
 ### wget
 

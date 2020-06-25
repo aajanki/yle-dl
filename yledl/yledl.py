@@ -221,27 +221,18 @@ def arg_parser():
     dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument('--backend', metavar='BE',
                           type=to_unicode,
-                          default="ffmpeg,wget,adobehdsphp,youtubedl,rtmpdump",
+                          default="ffmpeg,wget",
                           help='Downloaders that are tried until one of them '
                           ' succeeds (a comma-separated list). '
                           'Possible values: '
                           '"wget", '
-                          '"ffmpeg", '
-                          '"adobehdsphp" = AdobeHDS.php, '
-                          '"youtubedl" = youtube-dl, '
-                          '"rtmpdump"')
-    dl_group.add_argument('--rtmpdump', metavar='PATH',
-                          type=to_unicode,
-                          help='Set path to the rtmpdump binary')
+                          '"ffmpeg"')
     dl_group.add_argument('--ffmpeg', metavar='PATH',
                           type=to_unicode,
                           help='Set path to the ffmpeg binary')
     dl_group.add_argument('--ffprobe', metavar='PATH',
                           type=to_unicode,
                           help='Set path to the ffprobe binary')
-    dl_group.add_argument('--adobehds', metavar='CMD',
-                          type=to_unicode, default='',
-                          help='Set command for executing AdobeHDS.php')
     dl_group.add_argument('--wget', metavar='PATH',
                           type=to_unicode, default='',
                           help='Set path to wget binary')
@@ -389,8 +380,8 @@ def main(argv=sys.argv):
     dl_limits = DownloadLimits(args.duration, args.ratelimit)
     io = IOContext(args.outputfile, args.preferformat, args.destdir,
                    args.resume, args.overwrite, dl_limits, excludechars,
-                   args.proxy, args.sublang == 'all', args.rtmpdump,
-                   args.adobehds, args.ffmpeg, args.ffprobe, args.wget)
+                   args.proxy, args.sublang == 'all',
+                   args.ffmpeg, args.ffprobe, args.wget)
 
     urls = []
     if args.url:

@@ -25,8 +25,6 @@ löytyvät tiedostosta OS-install-instructions.md.
 
 Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
 
-* PHP-tulkki ja bcmath-, curl-, openssl- ja SimpleXML-laajennukset: muutamat uutis- ja ajankohtaisohjelmat
-* rtmpdump (versio 2.4 tai uudempi): muutamat Elävän Arkiston ohjelmat
 * wget
 
 Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
@@ -58,22 +56,6 @@ export PATH=$PATH:$HOME/.local/bin
 # jotain muuta komentotulkkia kuin bash.
 echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
-
-Asennus, kun lataukseen käytetään youtube-dl:ää
------------------------------------------------
-
-Oletuksena Areenan ohjelmien lataamiseen käytetään paketin mukana
-tulevaa AdobeHDS.php-skriptiä. Jos AdobeHDS.php ei jostain syystä
-toimi, on mahdollista ladata videoita youtube-dl:llä. yle-dl siirtyy
-automaattisesti käyttämään youtube-dl:ää, jos se on asennettu eikä
-AdobeHDS.php toimi.
-
-Suorita asennus kuten yllä, mutta jätä PHP-tulkki ja PHP-kirjastot
-pois. Asenna lisäksi youtube-dl:
-
-* Mac OS X: `brew install youtube-dl`
-* Debian/Ubuntu/muut käyttöjärjestelmät: `pip3 install --user --upgrade youtube_dl`
-
 
 libav:n käyttö ffmpegin sijaan
 ------------------------------
@@ -131,23 +113,15 @@ Valitsimet:
                 lan = fin, swe, smi, none or all (oletus)
 --resolution r  Rajoita ladattavan striimin pystyresoluutiota
 --maxbitrate br Rajoita ladattavan striimin bittinopeutta (kB/s)
---rtmpdump path Polku rtmpdump-ohjelmaan
---adobehds cmd  Aseta komento AdobeHDS.php-skriptin kutsumiseen
 --postprocess c Suorita ohjelma c onnistuneen latauksen jälkeen.
                 Ohjelmalle c annetaan parametriksi ladatun videotiedoston nimi
                 ja mahdollisten tekstitystiedostojen nimet.
 --proxy uri     Käytä HTTP(S)-proxyä. Esimerkki: --proxy localhost:8118
 --destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
 --pipe          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
---backend vals  Järjestys, jossa lataajia kokeillaan kunnes jokin niistä
-                onnistuu lataamaan ohjelman. Voi sisältää useita arvoja
-                pilkuilla eroteltuina. Mahdolliset arvot:
-                  adobehdsphp - lataa käyttäen AdobeHDS.php:ta
-                  youtubedl - lataa HDS-striimi käyttäen youtube-dl:ää
 -V, --verbose   Tulosta enemmän tietoja latauksen etenemisestä
 
-Muut valitsimet välitetään rtmpdump:lle, jos ladataan RTMP-tyyppistä
-striimiä. Luettelon mahdollisista valitsimista (englanniksi) näkee
+Luettelon mahdollisista valitsimista (englanniksi) näkee
 komentamalla
 
 yle-dl --help
@@ -188,10 +162,6 @@ Esimerkkejä
 * Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
 
   yle-dl https://areena.yle.fi/1-1544491
-
-* Käytä youtube-dl-lataajaa (AdobeHDS.php:n sijaan):
-
-  yle-dl --backend youtubedl https://areena.yle.fi/1-1544491
 
 * Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 

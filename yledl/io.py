@@ -32,27 +32,6 @@ def which(program):
     return None
 
 
-def find_rtmpdump(rtmpdump_arg):
-    binary = rtmpdump_arg
-
-    if not binary:
-        if sys.platform == 'win32':
-            binary = which('rtmpdump.exe')
-        else:
-            binary = which('rtmpdump')
-    if not binary:
-        binary = 'rtmpdump'
-
-    return binary
-
-
-def convert_hds_argument(arg):
-    if arg:
-        return arg.split(' ')
-    else:
-        return ['php', resource_filename(__name__, 'AdobeHDS.php')]
-
-
 def convert_download_limits(arg):
     return arg or DownloadLimits()
 
@@ -86,8 +65,6 @@ class IOContext(object):
     excludechars = attr.ib(default='*/|')
     proxy = attr.ib(default=None)
     embed_subtitles = attr.ib(default=True)
-    rtmpdump_binary = attr.ib(default=None, converter=find_rtmpdump)
-    hds_binary = attr.ib(default=None, converter=convert_hds_argument)
     ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
     ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
     wget_binary = attr.ib(default='wget', converter=wget_default)
