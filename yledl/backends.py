@@ -7,11 +7,9 @@ import logging
 import os
 import os.path
 import platform
-import re
 import signal
 import subprocess
 from builtins import str
-from future.moves.urllib.error import HTTPError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .utils import ffmpeg_loglevel

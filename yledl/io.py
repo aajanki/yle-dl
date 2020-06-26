@@ -5,8 +5,6 @@ import attr
 import logging
 import os
 import os.path
-import sys
-from pkg_resources import resource_filename
 from .ffprobe import Ffprobe
 from .utils import sane_filename
 
