@@ -115,8 +115,7 @@ Type `yle-dl --help` to see the full list of options.
 
 To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/) or a similar wrapper.
 
-Addresses for live TV broadcasts
---------------------------------
+### Addresses for live TV broadcasts
 
 ```
 yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
@@ -126,8 +125,7 @@ yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
 yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
 ```
 
-Using with libav instead of ffmpeg
-----------------------------------
+### Using with libav instead of ffmpeg
 
 ```
 yle-dl --ffmpeg avconv --ffprobe avprobe ...
@@ -203,6 +201,6 @@ yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
 Known problems
 --------------
 
-*Subtitles are visible only for the first 5 minutes.*
+### Subtitles are visible only for the first 5 minutes.
 
 Update your ffmpeg to version 4.1 or later.
