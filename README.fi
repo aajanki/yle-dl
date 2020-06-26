@@ -27,12 +27,6 @@ Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
 
 * wget
 
-Ota PHP-laajennukset käyttöön lisäämällä seuraavanlaiset rivit oikeine
-polkuineen php.ini-tiedostoon
-(https://secure.php.net/manual/en/configuration.file.php):
-
-extension=/polku/curl.so
-
 ### 2. Asenna yle-dl
 
 Asenna seuraavaksi yle-dl joko asentamalla esikäännetty paketti (ei
