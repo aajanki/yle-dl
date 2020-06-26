@@ -61,43 +61,6 @@ export PATH=$PATH:$HOME/.local/bin
 echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
 
-Using with libav instead of ffmpeg
-----------------------------------
-
-```
-yle-dl --ffmpeg avconv --ffprobe avprobe ...
-```
-
-Integration tests
------------------
-
-```
-python3 setup.py pytest
-```
-
-Some tests succeed only when run on a Finnish IP address because some
-Areena streams are available only in Finland. By default these tests
-are skipped. The run all tests, set the environment variable
-`ENABLE_FINLAND_TESTS` to 1:
-
-```
-export ENABLE_FINLAND_TESTS=1
-python3 setup.py pytest
-```
-
-Running only a single test file:
-
-```
-python3 setup.py pytest --addopts "-k tests/integration/test_areena_radio_it.py"
-```
-
-Packages for various distros
-----------------------------
-
-[A list of available
-packages](https://aajanki.github.com/yle-dl/index-en.html)
-
-
 Usage
 -----
 
@@ -152,9 +115,6 @@ Type `yle-dl --help` to see the full list of options.
 
 To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/) or a similar wrapper.
 
-Firewall must allow outgoing traffic on ports 80 and 1935.
-
-
 Addresses for live TV broadcasts
 --------------------------------
 
@@ -166,6 +126,12 @@ yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
 yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
 ```
 
+Using with libav instead of ffmpeg
+----------------------------------
+
+```
+yle-dl --ffmpeg avconv --ffprobe avprobe ...
+```
 
 Config file
 -----------
@@ -179,6 +145,33 @@ Config file syntax allows: key=value, flag=true. If an arg is
 specified in more than one place, then command line values override
 config file values which override defaults.
 
+Contributed packages for various distros
+----------------------------------------
+
+[A list of contributed packages](https://aajanki.github.com/yle-dl/index-en.html)
+
+Integration tests
+-----------------
+
+```
+python3 setup.py pytest
+```
+
+Some tests succeed only when run on a Finnish IP address because some
+Areena streams are available only in Finland. By default these tests
+are skipped. The run all tests, set the environment variable
+`ENABLE_FINLAND_TESTS` to 1:
+
+```
+export ENABLE_FINLAND_TESTS=1
+python3 setup.py pytest
+```
+
+Running only a single test file:
+
+```
+python3 setup.py pytest --addopts "-k tests/integration/test_areena_radio_it.py"
+```
 
 Examples
 --------
@@ -195,7 +188,7 @@ yle-dl --backend youtubedl https://areena.yle.fi/1-1544491 -o video.mkv
 yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
-Playing in vlc (or any other video player) without downloading first:
+Playing in mpv (or in vlc or in any other video player) without downloading first:
 
 ```
 yle-dl --pipe https://areena.yle.fi/1-2409251 | mpv --cache=1000 --slang=fi -
@@ -206,3 +199,10 @@ Executing a script to postprocess a downloaded video (see the example postproces
 ```
 yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
 ```
+
+Known problems
+--------------
+
+*Subtitles are visible only for the first 5 minutes.*
+
+Update your ffmpeg to version 4.1 or later.

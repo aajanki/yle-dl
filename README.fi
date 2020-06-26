@@ -57,32 +57,6 @@ export PATH=$PATH:$HOME/.local/bin
 echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
 
-libav:n käyttö ffmpegin sijaan
-------------------------------
-
-yle-dl --ffmpeg avconv --ffprobe avprobe ...
-
-
-Valmiit asennuspaketit
-----------------------
-
-Katso lista saatavilla olevista asennuspaketeista osoitteesta
-https://aajanki.github.io/yle-dl/
-
-
-Integraatiotestien ajaminen
----------------------------
-
-python3 setup.py pytest
-
-Jotkin testit onnistuvat vain suomalaisesta IP-osoitteesta, koska osa
-Areenan videoista on saatavilla vain Suomessa. Oletuksena nämä testit
-hypätään yli. Ajaaksesi myös nämä testit määrittele ympäristömuuttujan
-ENABLE_FINLAND_TESTS arvoksi 1:
-
-export ENABLE_FINLAND_TESTS=1
-python3 setup.py pytest
-
 
 Käyttö
 ------
@@ -129,9 +103,6 @@ yle-dl --help
 Lataaminen SOCKS5-proxyn kautta on mahdollista käyttämällä
 tsocks-ohjelmaa.
 
-Jotta yhteyden muodostaminen onnistuisi, palomuurin täytyy sallia
-ulospäin menevä liikenne porteissa 80 ja 1935.
-
 
 Suorien TV-lähetysten tallentaminen
 -----------------------------------
@@ -141,6 +112,12 @@ yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
 yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
 
 yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+
+
+libav:n käyttö ffmpegin sijaan
+------------------------------
+
+yle-dl --ffmpeg avconv --ffprobe avprobe ...
 
 
 Asetustiedosto
@@ -154,6 +131,27 @@ mukana tulee esimerkkitiedosto yledl.conf.sample.
 Asetustiedoston syntaksi: avain=arvo, avain=true.
 Komentorivivalitsimet ohittavat asetustiedostossa annetut arvot, jos
 sama valitsin on määritelty kummallakin tavalla.
+
+
+Valmiit asennuspaketit
+----------------------
+
+Katso lista saatavilla olevista asennuspaketeista osoitteesta
+https://aajanki.github.io/yle-dl/
+
+
+Integraatiotestien ajaminen
+---------------------------
+
+python3 setup.py pytest
+
+Jotkin testit onnistuvat vain suomalaisesta IP-osoitteesta, koska osa
+Areenan videoista on saatavilla vain Suomessa. Oletuksena nämä testit
+hypätään yli. Ajaaksesi myös nämä testit määrittele ympäristömuuttujan
+ENABLE_FINLAND_TESTS arvoksi 1:
+
+export ENABLE_FINLAND_TESTS=1
+python3 setup.py pytest
 
 
 Esimerkkejä
