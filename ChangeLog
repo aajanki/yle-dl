@@ -5,8 +5,9 @@ Distributed under the GPL v3
 
 <unreleased>
 
-- Fixed metadata extraction
+- Fixed metadata and episode numbers in the output filenames
 - PHP and rtmpdump are not needed anymore
+- Removed unused options --hardsubs and --audiolang
 
 Version 20200618
 

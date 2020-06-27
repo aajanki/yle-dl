@@ -93,9 +93,7 @@ yle-dl options:
 
 * `--vfat`            Create Windows-compatible filenames
 
-* `--audiolang lang`  Select stream's audio language if available, lang = fin (default) or swe
-
-* `--sublang lang`    Download stream's subtitle language, lang = fin, swe, smi, none or all (default)
+* `--sublang lang`    Disable subtitles if lang is "none"
 
 * `--resolution res`  Maximum vertical resolution in pixels
 

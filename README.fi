@@ -75,10 +75,7 @@ Valitsimet:
 --showtitle     Tulostaa ohjelman nimen, ei lataa tiedostoa
 --showmetadata  Tulostaa metatietoja ohjelmasta. Katso docs/metadata.md
 --vfat          Tuota Windows-yhteensopivia tiedoston nimiä
---audiolang lan Lataa ääniraita tietyllä kielellä jos saatavilla
-                lan = fin (oletus) tai swe
---sublang lan   Lataa tekstitykset annetulla kielellä (Yle Areena)
-                lan = fin, swe, smi, none or all (oletus)
+--sublang lan   Jätä tekstitykset lataamatta, jos lang on "none"
 --resolution r  Rajoita ladattavan striimin pystyresoluutiota
 --maxbitrate br Rajoita ladattavan striimin bittinopeutta (kB/s)
 --postprocess c Suorita ohjelma c onnistuneen latauksen jälkeen.

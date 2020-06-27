@@ -11,7 +11,6 @@ class StreamFilters(object):
     versions to download.
     """
     latest_only = attr.ib(default=False)
-    audiolang = attr.ib(default='')
     sublang = attr.ib(default='all')
     maxbitrate = attr.ib(default=None)
     maxheight = attr.ib(default=None)

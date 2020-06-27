@@ -182,11 +182,6 @@ def arg_parser():
                           'video, subtitle')
 
     qual_group = parser.add_argument_group('Stream type and quality')
-    qual_group.add_argument('--audiolang', metavar='LANG',
-                            type=to_unicode,
-                            choices=['fin', 'swe'], default='',
-                            help='Select stream\'s audio language, "fin" or '
-                            '"swe"')
     qual_group.add_argument('--sublang', metavar='LANG',
                             type=to_unicode,
                             choices=['none', 'all'],
@@ -420,7 +415,7 @@ def main(argv=sys.argv):
     sublang = args.sublang or 'all'
     maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
-    stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
+    stream_filters = StreamFilters(args.latestepisode, sublang,
                                    maxbitrate, maxheight, backends)
     httpclient = HttpClient(args.proxy)
     title_formatter = TitleFormatter(args.output_template)
