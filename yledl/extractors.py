@@ -13,7 +13,6 @@ from .backends import HLSAudioBackend, HLSBackend, WgetBackend
 from .http import html_unescape
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
-from .streamfilters import normalize_language_code
 from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp
@@ -166,10 +165,6 @@ class Clip(object):
             return self.valid_flavor_meta(flavor)
 
     def valid_flavor_meta(self, flavor):
-        hard_sub_lang = flavor.hard_subtitle and flavor.hard_subtitle.lang
-        if hard_sub_lang:
-            hard_sub_lang = normalize_language_code(hard_sub_lang, None)
-
         backends = [s.name for s in flavor.streams if s.is_valid()]
 
         meta = [
@@ -177,7 +172,6 @@ class Clip(object):
             ('height', flavor.height),
             ('width', flavor.width),
             ('bitrate', flavor.bitrate),
-            ('hard_subtitle_language', hard_sub_lang),
             ('backends', backends)
         ]
         return self.ignore_none_values(meta)

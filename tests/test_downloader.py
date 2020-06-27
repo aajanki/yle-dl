@@ -81,11 +81,10 @@ def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
             ),
             StreamFlavor(
                 media_type='video',
-                height=360,
+                height=480,
                 width=640,
-                bitrate=864,
-                streams=[StateCollectingBackend(state_dict, 'low_quality_finnish_subs')],
-                hard_subtitle=Subtitle(url=None, lang='fi')
+                bitrate=964,
+                streams=[StateCollectingBackend(state_dict, 'low_quality_2')],
             ),
             StreamFlavor(
                 media_type='video',
@@ -149,7 +148,7 @@ def multistream_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
                 media_type='video',
                 height=360,
                 width=640,
-                bitrate=864,
+                bitrate=964,
                 streams=[
                     FailingBackend(state_dict, '1', 'wget'),
                     FailingBackend(state_dict, '2', 'Invalid stream'),
@@ -178,7 +177,7 @@ def failed_stream_clip(state_dict):
                 media_type='video',
                 height=360,
                 width=640,
-                bitrate=864,
+                bitrate=964,
                 streams=[
                     FailingBackend(state_dict, '1', 'wget'),
                     FailingBackend(state_dict, '2', 'ffmpeg')
@@ -232,7 +231,7 @@ def test_download_incomplete_metadata(simple):
 
 def test_download_filter_resolution(simple):
     state = {}
-    filters = StreamFilters(maxheight=700)
+    filters = StreamFilters(maxheight=400)
     clips = [successful_clip(state)]
     res = simple.downloader.download_clips(clips, simple.io, filters, None)
 
@@ -276,7 +275,7 @@ def test_download_filter_bitrate2(simple):
 
 def test_download_multiple_filters(simple):
     state = {}
-    filters = StreamFilters(maxheight=720, maxbitrate=1000)
+    filters = StreamFilters(maxheight=700, maxbitrate=900)
     clips = [successful_clip(state)]
     res = simple.downloader.download_clips(clips, simple.io, filters, None)
 
@@ -341,15 +340,14 @@ def test_print_metadata(simple):
                     'media_type': 'video',
                     'height': 360,
                     'width': 640,
-                    'bitrate': 864,
-                    'hard_subtitle_language': 'fin',
+                    'bitrate': 880,
                     'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
-                    'height': 360,
+                    'height': 480,
                     'width': 640,
-                    'bitrate': 880,
+                    'bitrate': 964,
                     'backends': ['ffmpeg']
                 },
                 {

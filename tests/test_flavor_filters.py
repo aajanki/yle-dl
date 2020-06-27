@@ -3,7 +3,6 @@
 from __future__ import print_function, absolute_import, unicode_literals
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import Backends, FailingBackend
-from yledl.subtitles import Subtitle
 from yledl.streamflavor import StreamFlavor, FailedFlavor
 
 
@@ -41,18 +40,6 @@ flavors = [
 ]
 
 
-hard_sub_flavors = [
-    StreamFlavor(streams=[MockBackend('ffmpeg', 'fi')],
-                 bitrate=510, width=640, height=360,
-                 hard_subtitle=Subtitle(url=None, lang='fi'), media_type=''),
-    StreamFlavor(streams=[MockBackend('ffmpeg', 'sv')],
-                 bitrate=469, width=640, height=360,
-                 hard_subtitle=Subtitle(url=None, lang='sv'), media_type=''),
-    StreamFlavor(streams=[MockBackend('ffmpeg', 'none')],
-                 bitrate=489, width=640, height=360, media_type='')
-]
-
-
 def yle_dl_downloader():
     return YleDlDownloader(MockGeoLocation())
 
@@ -62,13 +49,12 @@ def video_flavor(streams):
 
 
 def filter_flavors(flavors, max_height=None, max_bitrate=None,
-                   hard_sub=None, enabled_backends=None):
+                   enabled_backends=None):
     if enabled_backends is None:
         enabled_backends = list(Backends.default_order)
 
     filters = StreamFilters(maxheight=max_height,
                             maxbitrate=max_bitrate,
-                            hardsubs=hard_sub,
                             enabled_backends=enabled_backends)
     return yle_dl_downloader().select_flavor(flavors, filters)
 
@@ -164,16 +150,6 @@ def test_combined_filter_bitrate_only_and_some_failures():
     assert backend_data(filter_flavors(test_flavors, max_bitrate=200)) == [1]
     assert backend_data(filter_flavors(
         test_flavors, max_height=720, max_bitrate=200)) == [1]
-
-
-def test_hard_subtitle_filters():
-    assert backend_data(filter_flavors(hard_sub_flavors)) == ['none']
-    assert backend_data(filter_flavors(hard_sub_flavors, hard_sub='fin')) == ['fi']
-    assert backend_data(filter_flavors(hard_sub_flavors, hard_sub='swe')) == ['sv']
-
-
-def test_hard_subtitle_filters_no_match():
-    assert filter_flavors(flavors, hard_sub='fin') is None
 
 
 def test_backend_filter_first_preferred():

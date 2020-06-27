@@ -12,7 +12,6 @@ class StreamFlavor(object):
     width = attr.ib(default=None, converter=attr.converters.optional(int))
     bitrate = attr.ib(default=None, converter=attr.converters.optional(int))
     streams = attr.ib(factory=list)
-    hard_subtitle = attr.ib(default=None)
 
 
 class FailedFlavor(StreamFlavor):

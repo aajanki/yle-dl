@@ -197,8 +197,6 @@ def arg_parser():
                             choices=['fin', 'swe', 'smi'],
                             help='Preferred metadata language, "fin", "swe" '
                             'or "smi"')
-    qual_group.add_argument('--hardsubs', action='store_true',
-                            help='Download stream with hard subs if available')
     qual_group.add_argument('--latestepisode', action='store_true',
                             help='Download the latest episode of a series')
     qual_group.add_argument('--maxbitrate', metavar='RATE',
@@ -423,8 +421,7 @@ def main(argv=sys.argv):
     maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
     stream_filters = StreamFilters(args.latestepisode, args.audiolang, sublang,
-                                   args.hardsubs, maxbitrate, maxheight,
-                                   backends)
+                                   maxbitrate, maxheight, backends)
     httpclient = HttpClient(args.proxy)
     title_formatter = TitleFormatter(args.output_template)
     exit_status = RD_SUCCESS

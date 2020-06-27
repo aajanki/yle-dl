@@ -10,7 +10,6 @@ from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
     RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .io import OutputFileNameGenerator
-from .streamfilters import normalize_language_code
 from .streamflavor import FailedFlavor
 
 
@@ -150,14 +149,12 @@ class YleDlDownloader(object):
         logger.debug('Available flavors:')
         for fl in flavors:
             logger.debug('bitrate: {bitrate}, height: {height}, '
-                         'width: {width}, '
-                         'hard_subtitle: {hard_subtitle}'
+                         'width: {width}'
                          .format(**vars(fl)))
         logger.debug('max_height: {maxheight}, max_bitrate: {maxbitrate}'
                      .format(**vars(filters)))
 
-        filtered = self.apply_hard_subtitle_filter(flavors, filters)
-        filtered = self.apply_backend_filter(filtered, filters)
+        filtered = self.apply_backend_filter(flavors, filters)
         filtered = self.apply_resolution_filters(filtered, filters)
 
         if filtered:
@@ -167,17 +164,6 @@ class YleDlDownloader(object):
             selected = None
 
         return selected
-
-    def apply_hard_subtitle_filter(self, flavors, filters):
-        if filters.hardsubs:
-            return [
-                fl for fl in flavors
-                if (fl.hard_subtitle and
-                    normalize_language_code(fl.hard_subtitle.lang, None)
-                    == filters.hardsubs)
-            ]
-        else:
-            return [fl for fl in flavors if not fl.hard_subtitle]
 
     def apply_backend_filter(self, flavors, filters):
         def filter_streams_by_backend(flavor):
