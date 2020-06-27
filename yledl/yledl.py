@@ -412,10 +412,9 @@ def main(argv=sys.argv):
     if len(backends) == 0:
         sys.exit(RD_FAILED)
 
-    sublang = args.sublang or 'all'
     maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
-    stream_filters = StreamFilters(args.latestepisode, sublang,
+    stream_filters = StreamFilters(args.latestepisode,
                                    maxbitrate, maxheight, backends)
     httpclient = HttpClient(args.proxy)
     title_formatter = TitleFormatter(args.output_template)
