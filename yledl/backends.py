@@ -355,7 +355,7 @@ class WgetBackend(ExternalDownloader):
         self.url = url
 
         if not file_extension:
-            logger.warn('Mandatory file extension is missing for URL {}'.format(url))
+            logger.warning('Mandatory file extension is missing for URL {}'.format(url))
         self._file_extension = MandatoryFileExtension(file_extension or '')
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
@@ -366,6 +366,13 @@ class WgetBackend(ExternalDownloader):
 
     def file_extension(self, preferred):
         return self._file_extension
+
+    def save_stream(self, output_name, clip, io):
+        if clip.embedded_subtitles and io.embed_subtitles:
+            logger.warning('The wget backend might not be able to download '
+                           'subtitles, try --backend=ffmpeg')
+
+        return super(WgetBackend, self).save_stream(output_name, clip, io)
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io.wget_binary, output_name)
@@ -407,7 +414,7 @@ class WgetBackend(ExternalDownloader):
         env = None
         if io.proxy:
             if 'https_proxy' in os.environ:
-                logger.warn('--proxy ignored because https_proxy environment variable exists')
+                logger.warning('--proxy ignored because https_proxy environment variable exists')
             else:
                 env = {'https_proxy': io.proxy}
         return env
