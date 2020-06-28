@@ -46,7 +46,7 @@ Jos komentotulkki valittaa, ettei se löydä yle-dl:ää yrittäessäsi suoritta
 # Lisää polun komentotulkkin tämänhetkiseen sessioon
 export PATH=$PATH:$HOME/.local/bin
 
-# Teekee muutoksesta pysyvän. Tämä vaatii muokkaamista, jos käytät
+# Tekee muutoksesta pysyvän. Tämä vaatii muokkaamista, jos käytät
 # jotain muuta komentotulkkia kuin bash.
 echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
@@ -128,7 +128,7 @@ Valmiit asennuspaketit
 ----------------------
 
 Katso lista saatavilla olevista asennuspaketeista osoitteesta
-https://aajanki.github.io/yle-dl/
+https://aajanki.github.io/yle-dl/#packages
 
 
 Integraatiotestien ajaminen

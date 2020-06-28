@@ -144,7 +144,7 @@ config file values which override defaults.
 Contributed packages for various distros
 ----------------------------------------
 
-[A list of contributed packages](https://aajanki.github.com/yle-dl/index-en.html)
+[A list of contributed packages](https://aajanki.github.com/yle-dl/index-en.html#packages)
 
 Integration tests
 -----------------
@@ -199,6 +199,6 @@ yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
 Known problems
 --------------
 
-### Subtitles are visible only for the first 5 minutes.
+#### Problem: Subtitles are visible only for the first five minutes.
 
-Update your ffmpeg to version 4.1 or later.
+Solution: Update your ffmpeg to version 4.1 or later.

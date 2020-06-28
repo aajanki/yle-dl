@@ -3,7 +3,7 @@ Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
 
-<unreleased>
+Version 20200628
 
 - Fixed metadata and episode numbers in the output filenames
 - PHP and rtmpdump are not needed anymore
@@ -47,7 +47,7 @@ Version 20191022
 - Embed the program description in the output file (only Matroska files)
 - Include the tests in the source tarball
 
-Version 20190614 - Ten year anniversary edition
+Version 20190614 - Ten years anniversary edition
 
 - Improved compability with older ffmpeg versions
 - Save subtitles in a format supported by mplayer
