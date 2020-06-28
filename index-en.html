@@ -31,7 +31,7 @@
 
         <p>yle-dl is a command-line program for downloading media files from the two video streaming services of the Finnish national broadcasting company Yle: <a href="http://areena.yle.fi">Yle Areena</a>,  <a href="http://yle.fi/elavaarkisto/">Elävä arkisto</a>, and <a href="http://yle.fi/uutiset/">Yle news</a>.</p>
 
-<p>The videos are saved in Matroska (.mkv), Flash video (FLV) or MP4 format. At
+<p>The videos are saved in Matroska (.mkv) or MP4 format. At
 least <a href="http://www.videolan.org/vlc/">VLC</a> player is able to
 play them back. </p>
 
@@ -41,12 +41,7 @@ play them back. </p>
 
 <p>Required packages: Python 2.7 or 3.5+, ffmpeg 4.1+
 
-<p>Optional dependencies for certain types of streams: PHP interpreter
-and the following PHP extensions: bcmath, curl, mcrypt and SimpleXML;
-rtmpdump for downloading some Elävä Arkisto audio streams (version 2.4
-or newer, the latest development version from
-the <a href="http://rtmpdump.mplayerhq.hu/">project homepage</a> is
-recommended); wget; youtube-dl.</p>
+<p>Optionally, some streams require wget.</p>
 
 <h2>Usage</h2>
 
@@ -83,16 +78,16 @@ socks5://localhost:7777</code></dd>
 <h2>Source codes</h2>
 
 <p>
-  <a href="https://files.pythonhosted.org/packages/4d/ad/6a8eefe107269f56beeb501e7065fa20a7099dbe5ee5b7647e52d0d5955a/yle-dl-20200618.tar.gz">Stable: yle-dl 20200618</a><br>
+  <a href="https://files.pythonhosted.org/packages/0a/8c/d9934209be7621fd5b89bba5b40e2872f1bc69707541706048482197b751/yle-dl-20200628.tar.gz">Stable: yle-dl 20200628</a><br>
   <a href="https://raw.githubusercontent.com/aajanki/yle-dl/master/ChangeLog">Changelog</a><br>
-  SHA256 digest: 1df90a2ebe3e75e25d70f2862e8cb455fda3c48af17a4d374f432641e1d5ef4f
+  SHA256 digest: 034db2735b2b603b4a9050919bdf7217adf68491506d6f555a54995be365e93b
 </p>
 
 <p><a href="https://github.com/aajanki/yle-dl/tarball/master">Development version</a></p>
 
 <p>The source code is available under <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU GPLv3 license</a>.</p>
 
-<h2>Installer and frontend packages created by others</h2>
+<h2 id="packages">Installer and frontend packages created by others</h2>
 
 <h3>Gentoo</h3>
 
