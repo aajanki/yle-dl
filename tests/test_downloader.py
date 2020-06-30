@@ -153,7 +153,7 @@ def multistream_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
                     FailingBackend(state_dict, '1', 'wget'),
                     FailingBackend(state_dict, '2', 'Invalid stream'),
                     StateCollectingBackend(state_dict, '3', 'wget'),
-                    StateCollectingBackend(state_dict, '4', 'youtubedl')
+                    StateCollectingBackend(state_dict, '4', 'ffmpeg')
                 ]
             )
         ],

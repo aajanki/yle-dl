@@ -177,10 +177,6 @@ yle-dl https://areena.yle.fi/1-1544491 -o video.mkv
 ```
 
 ```
-yle-dl --backend youtubedl https://areena.yle.fi/1-1544491 -o video.mkv
-```
-
-```
 yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 

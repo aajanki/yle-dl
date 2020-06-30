@@ -30,16 +30,6 @@ def test_radio_stream_url_hls():
     assert 'a.mp3' in url[0]
 
 
-def test_radio_stream_url_media_url():
-    # The default stream is RTMP. This test is about the secondary
-    # "media_url" stream. Therefore the rtmpdump backend is disabled.
-    filters = StreamFilters(enabled_backends=['wget', 'ffmpeg'])
-    url = fetch_stream_url('https://areena.yle.fi/1-4561516', filters)
-
-    assert len(url) == 1
-    assert '.mp3?' in url[0]
-
-
 def test_radio_metadata_hls():
     metadata = fetch_metadata('https://areena.yle.fi/1-4551633')
 

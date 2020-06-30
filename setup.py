@@ -13,9 +13,7 @@ yle-dl is a tool for downloading media files from the video streaming
 services of the Finnish national broadcasting company Yle: Yle
 Areena, Elävä Arkisto and Yle news.
 
-External dependencies: ffmpeg. Certain streams also require:
-rtmpdump, wget, or a PHP interpreter with the following PHP extensions:
-bcmath, curl, openssl and SimpleXML."""
+External dependencies: ffmpeg and wget."""
 
 version = re.\
   search(r"^version *= *'(.+)'$", open('yledl/version.py').read(), re.MULTILINE).\
@@ -41,9 +39,6 @@ setup(
         'requests', 'lxml', 'future', 'mini-amf',
         'attrs >= 18.1.0', 'ConfigArgParse >= 0.13.0'
     ] + ssl_sni_requires,
-    extras_require = {
-        'youtubedl-backend': ['youtube_dl']
-    },
     setup_requires = maybe_pytest_runner,
     tests_require = [
         'pytest',
