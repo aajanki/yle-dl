@@ -836,8 +836,9 @@ class AreenaAudio2020Extractor(AreenaExtractor):
         if html_tree is None:
             return []
 
-        divs = html_tree.xpath('//div[starts-with(@class, "EpisodeModal")]')
-        return len(divs) == 0
+        episode_modal = html_tree.xpath('//div[starts-with(@class, "EpisodeModal")]')
+        play_button = html_tree.xpath('//main//button[starts-with(@class, "PlayButton")]')
+        return not episode_modal and not play_button
 
     def playlist_page(self, series_id, page_size, offset):
         logger.debug('Getting a playlist page {series_id}, '
