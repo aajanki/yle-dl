@@ -167,12 +167,20 @@ class Clip(object):
     def valid_flavor_meta(self, flavor):
         backends = [s.name for s in flavor.streams if s.is_valid()]
 
+        streams = flavor.streams
+        if streams and any(s.is_valid() for s in streams):
+            valid_stream = next(s for s in streams if s.is_valid())
+            url = valid_stream.stream_url()
+        else:
+            url = None
+
         meta = [
             ('media_type', flavor.media_type),
             ('height', flavor.height),
             ('width', flavor.width),
             ('bitrate', flavor.bitrate),
-            ('backends', backends)
+            ('backends', backends),
+            ('url', url)
         ]
         return self.ignore_none_values(meta)
 
