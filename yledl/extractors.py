@@ -137,7 +137,7 @@ class Clip(object):
              [{'language': x.language, 'category': x.category}
               for x in self.embedded_subtitles]),
             ('subtitles',
-             [{'lang': x.lang, 'url': x.url}
+             [{'language': x.lang, 'url': x.url}
               for x in self.subtitles]),
             ('region', self.region),
             ('publish_timestamp',
