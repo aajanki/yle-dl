@@ -137,7 +137,7 @@ class Clip(object):
              [{'language': x.language, 'category': x.category}
               for x in self.embedded_subtitles]),
             ('subtitles',
-             [{'language': x.lang, 'url': x.url}
+             [{'language': x.lang, 'url': x.url, 'category': x.category}
               for x in self.subtitles]),
             ('region', self.region),
             ('publish_timestamp',
@@ -459,13 +459,28 @@ class AreenaPreviewApiParser(object):
                 {})
 
     def subtitles(self):
+        langname2to3 = {
+            'fi': 'fin',
+            'sv': 'swe',
+            'se': 'smi',
+            'en': 'eng',
+        }
         sobj = self.ongoing().get('subtitles', [])
         subtitles = []
         for s in sobj:
-            lang = s.get('lang', None)
+            lcode = s.get('lang', None)
+            if lcode and lcode == 'fih':
+                lang = 'fin'
+                category = 'ohjelmatekstitys'
+            elif lcode:
+                lang = langname2to3.get(lcode, lcode)
+                category = 'käännöstekstitys'
+            else:
+                lang = 'unk'
+                category = 'käännöstekstitys'
             url = s.get('uri', None)
             if lang and url:
-                subtitles.append(Subtitle(url, lang))
+                subtitles.append(Subtitle(url, lang, category))
         return subtitles
 
 
