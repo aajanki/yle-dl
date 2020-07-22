@@ -16,6 +16,7 @@ from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp
+from .subtitles import Subtitle
 
 
 logger = logging.getLogger('yledl')
@@ -117,6 +118,7 @@ class Clip(object):
     publish_timestamp = attr.ib(default=None)
     expiration_timestamp = attr.ib(default=None)
     embedded_subtitles = attr.ib(factory=list)
+    subtitles = attr.ib(factory=list)
     program_id = attr.ib(default=None)
 
     def metadata(self, io):
@@ -134,6 +136,9 @@ class Clip(object):
             ('embedded_subtitles',
              [{'language': x.language, 'category': x.category}
               for x in self.embedded_subtitles]),
+            ('subtitles',
+             [{'language': x.lang, 'url': x.url, 'category': x.category}
+              for x in self.subtitles]),
             ('region', self.region),
             ('publish_timestamp',
              self.format_timestamp(self.publish_timestamp)),
@@ -167,12 +172,20 @@ class Clip(object):
     def valid_flavor_meta(self, flavor):
         backends = [s.name for s in flavor.streams if s.is_valid()]
 
+        streams = flavor.streams
+        if streams and any(s.is_valid() for s in streams):
+            valid_stream = next(s for s in streams if s.is_valid())
+            url = valid_stream.stream_url()
+        else:
+            url = None
+
         meta = [
             ('media_type', flavor.media_type),
             ('height', flavor.height),
             ('width', flavor.width),
             ('bitrate', flavor.bitrate),
-            ('backends', backends)
+            ('backends', backends),
+            ('url', url)
         ]
         return self.ignore_none_values(meta)
 
@@ -214,6 +227,7 @@ class AreenaApiProgramInfo(object):
     description = attr.ib()
     flavors = attr.ib()
     embedded_subtitles = attr.ib()
+    subtitles = attr.ib()
     duration_seconds = attr.ib()
     available_at_region = attr.ib()
     publish_timestamp = attr.ib()
@@ -444,6 +458,31 @@ class AreenaPreviewApiParser(object):
                 data.get('pending_event') or
                 {})
 
+    def subtitles(self):
+        langname2to3 = {
+            'fi': 'fin',
+            'sv': 'swe',
+            'se': 'smi',
+            'en': 'eng',
+        }
+        sobj = self.ongoing().get('subtitles', [])
+        subtitles = []
+        for s in sobj:
+            lcode = s.get('lang', None)
+            if lcode and lcode == 'fih':
+                lang = 'fin'
+                category = 'ohjelmatekstitys'
+            elif lcode:
+                lang = langname2to3.get(lcode, lcode)
+                category = 'käännöstekstitys'
+            else:
+                lang = 'unk'
+                category = 'käännöstekstitys'
+            url = s.get('uri', None)
+            if lang and url:
+                subtitles.append(Subtitle(url, lang, category))
+        return subtitles
+
 
 ### Extract streams from an Areena webpage ###
 
@@ -511,6 +550,7 @@ class AreenaExtractor(AreenaPlaylist):
                 publish_timestamp=program_info.publish_timestamp,
                 expiration_timestamp=program_info.expiration_timestamp,
                 embedded_subtitles=program_info.embedded_subtitles,
+                subtitles=program_info.subtitles,
                 program_id=program_id)
 
     def media_flavors(self, media_id, hls_manifest_url,
@@ -664,10 +704,12 @@ class AreenaExtractor(AreenaPlaylist):
             playback_context = kapi_client.playback_context(entry_id, pageurl)
             kaltura_flavors = kapi_client.parse_stream_flavors(
                 playback_context, pageurl)
-            kaltura_subtitles = kapi_client.parse_embedded_subtitles(playback_context)
+            kaltura_embedded_subtitles = kapi_client.parse_embedded_subtitles(playback_context)
+            preview_subtitles = preview.subtitles()
         else:
             kaltura_flavors = None
-            kaltura_subtitles = []
+            kaltura_embedded_subtitles = []
+            preview_subtitles = []
 
         return AreenaApiProgramInfo(
             media_id=media_id,
@@ -676,7 +718,8 @@ class AreenaExtractor(AreenaPlaylist):
             flavors=self.media_flavors(media_id, manifest_url,
                                        download_url, kaltura_flavors,
                                        media_type, ffprobe),
-            embedded_subtitles=kaltura_subtitles,
+            embedded_subtitles=kaltura_embedded_subtitles,
+            subtitles=preview_subtitles,
             duration_seconds=(preview.duration_seconds() or
                               self.program_info_duration_seconds(info)),
             available_at_region=(self.available_at_region(info) or

@@ -8,6 +8,7 @@ import attr
 class Subtitle(object):
     url = attr.ib()
     lang = attr.ib()
+    category = attr.ib()
 
 
 @attr.s

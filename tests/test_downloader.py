@@ -341,6 +341,7 @@ def test_print_metadata(simple):
                     'height': 360,
                     'width': 640,
                     'bitrate': 880,
+                    'url': 'https://example.com/video/low_quality.mp4',
                     'backends': ['ffmpeg']
                 },
                 {
@@ -348,6 +349,7 @@ def test_print_metadata(simple):
                     'height': 480,
                     'width': 640,
                     'bitrate': 964,
+                    'url': 'https://example.com/video/low_quality_2.mp4',
                     'backends': ['ffmpeg']
                 },
                 {
@@ -355,6 +357,7 @@ def test_print_metadata(simple):
                     'height': 720,
                     'width': 1280,
                     'bitrate': 1412,
+                    'url': 'https://example.com/video/medium_quality.mp4',
                     'backends': ['ffmpeg']
                 },
                 {
@@ -362,6 +365,7 @@ def test_print_metadata(simple):
                     'height': 720,
                     'width': 1280,
                     'bitrate': 1872,
+                    'url': 'https://example.com/video/medium_quality_high_bitrate.mp4',
                     'backends': ['ffmpeg']
                 },
                 {
@@ -369,6 +373,7 @@ def test_print_metadata(simple):
                     'height': 1080,
                     'width': 1920,
                     'bitrate': 2808,
+                    'url': 'https://example.com/video/high_quality.mp4',
                     'backends': ['ffmpeg']
                 }
             ],
@@ -377,6 +382,7 @@ def test_print_metadata(simple):
                 {'language': 'fin', 'category': 'käännöstekstitys'},
                 {'language': 'swe', 'category': 'käännöstekstitys'}
             ],
+            'subtitles': [],
             'region': 'Finland',
             'publish_timestamp': '2018-07-01T00:00:00+03:00',
             'expiration_timestamp': '2019-01-01T00:00:00+03:00'
@@ -404,21 +410,25 @@ def test_print_metadata_incomplete(simple):
             'flavors': [
                 {
                     'media_type': 'video',
+                    'url': 'https://example.com/video/1.mp4',
                     'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
                     'height': 360,
                     'width': 640,
+                    'url': 'https://example.com/video/2.mp4',
                     'backends': ['ffmpeg']
                 },
                 {
                     'media_type': 'video',
+                    'url': 'https://example.com/video/3.mp4',
                     'backends': ['ffmpeg']
                 }
             ],
             'region': 'Finland',
-            'embedded_subtitles': []
+            'embedded_subtitles': [],
+            'subtitles': []
         }
     ]
 
@@ -453,7 +463,8 @@ def test_print_metadata_failed_clip(simple):
                     'error': failed_clip().flavors[0].streams[0].error_message
                 }
             ],
-            'embedded_subtitles': []
+            'embedded_subtitles': [],
+            'subtitles': []
         }
     ]
 
