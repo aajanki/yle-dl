@@ -461,20 +461,24 @@ class AreenaPreviewApiParser(object):
     def subtitles(self):
         langname2to3 = {
             'fi': 'fin',
+            'fih': 'fin',
             'sv': 'swe',
+            'svh': 'swe',
             'se': 'smi',
             'en': 'eng',
         }
+        hearing_impaired_langs = ['fih', 'svh']
+
         sobj = self.ongoing().get('subtitles', [])
         subtitles = []
         for s in sobj:
             lcode = s.get('lang', None)
-            if lcode and lcode == 'fih':
-                lang = 'fin'
-                category = 'ohjelmatekstitys'
-            elif lcode:
+            if lcode:
                 lang = langname2to3.get(lcode, lcode)
-                category = 'käännöstekstitys'
+                if lcode in hearing_impaired_langs:
+                    category = 'ohjelmatekstitys'
+                else:
+                    category = 'käännöstekstitys'
             else:
                 lang = 'unk'
                 category = 'käännöstekstitys'
