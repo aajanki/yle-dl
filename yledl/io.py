@@ -63,6 +63,8 @@ class IOContext(object):
     excludechars = attr.ib(default='*/|')
     proxy = attr.ib(default=None)
     embed_subtitles = attr.ib(default=True)
+    metadata_language = attr.ib(default=None)
+    postprocess_command = attr.ib(default=None)
     ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
     ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
     wget_binary = attr.ib(default='wget', converter=wget_default)

@@ -20,7 +20,7 @@ class YleDlDownloader(object):
     def __init__(self, geolocation):
         self.geolocation = geolocation
 
-    def download_clips(self, clips, io, filters, postprocess_command):
+    def download_clips(self, clips, io, filters):
         def download(clip, downloader):
             if not downloader:
                 logger.error('Downloading the stream at %s is not yet '
@@ -40,7 +40,7 @@ class YleDlDownloader(object):
 
             if dl_result == RD_SUCCESS:
                 self.log_output_file(outputfile, True)
-                self.postprocess(postprocess_command, outputfile, [])
+                self.postprocess(io.postprocess_command, outputfile, [])
 
             return (dl_result, outputfile)
 

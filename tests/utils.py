@@ -39,7 +39,7 @@ def fetch_metadata(url, filters=StreamFilters(), meta_language=None):
 
 
 def fetch(url, action, filters, meta_language=None):
-    io = IOContext(destdir='/tmp/')
+    io = IOContext(destdir='/tmp/', metadata_language=meta_language)
     httpclient = HttpClient()
     title_formatter = TitleFormatter()
 
@@ -49,9 +49,7 @@ def fetch(url, action, filters, meta_language=None):
                              io,
                              httpclient,
                              title_formatter,
-                             stream_filters = filters,
-                             postprocess_command = None,
-                             metadatalang = meta_language)
+                             stream_filters = filters)
         assert res == RD_SUCCESS
 
     return output

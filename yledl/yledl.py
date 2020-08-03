@@ -250,8 +250,7 @@ def encode_url_utf8(url):
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def execute_action(url, action, io, httpclient, title_formatter, stream_filters,
-                   postprocess_command, metadatalang):
+def execute_action(url, action, io, httpclient, title_formatter, stream_filters):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -264,14 +263,8 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters,
     RD_INCOMPLETE if a stream was downloaded partially but the
     download was interrupted.
     """
-    if metadatalang:
-        preferred_meta_langs = [metadatalang]
-    else:
-        preferred_meta_langs = [url_language(url)]
-    language_chooser = TranslationChooser(preferred_meta_langs)
-
     extractor = extractor_factory(
-        url, stream_filters, language_chooser, httpclient)
+        url, stream_filters, language_chooser(url, io), httpclient)
     if not extractor:
         logger.error('Unsupported URL %s.' % url)
         logger.error('Is this really a Yle video page?')
@@ -298,20 +291,27 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters,
     elif action == StreamAction.PIPE:
         return dl.pipe(clips(), io, stream_filters)
     elif action == StreamAction.DOWNLOAD:
-        return download_clips(clips(), dl, io, stream_filters, postprocess_command)
+        return download_clips(clips(), dl, io, stream_filters)
     else:
         logger.error('Internal error: Unknown action')
         return RD_FAILED
 
 
-def download_clips(clips, dl, io, stream_filters, postprocess_command):
+def download_clips(clips, dl, io, stream_filters):
     if (len(clips) > 1 and io.outputfilename is not None):
         logger.error('Source contains multiple clips, '
                      'but only one output file specified')
         return RD_FAILED
     else:
-        return dl.download_clips(clips, io, stream_filters,
-                                 postprocess_command)
+        return dl.download_clips(clips, io, stream_filters)
+
+
+def language_chooser(url, io):
+    if io.metadata_language:
+        preferred_lang = io.metadata_language
+    else:
+        preferred_lang = url_language(url)
+    return TranslationChooser([preferred_lang])
 
 
 def print_lines(lines):
@@ -378,6 +378,7 @@ def main(argv=sys.argv):
     io = IOContext(args.outputfile, args.preferformat, args.destdir,
                    args.resume, args.overwrite, dl_limits, excludechars,
                    args.proxy, args.sublang == 'all',
+                   args.metadatalang, args.postprocess,
                    args.ffmpeg, args.ffprobe, args.wget)
 
     urls = []
@@ -431,7 +432,7 @@ def main(argv=sys.argv):
                 i + 1, len(urls), url))
 
         res = execute_action(url, action, io, httpclient, title_formatter,
-                             stream_filters, args.postprocess, args.metadatalang)
+                             stream_filters)
 
         if res != RD_SUCCESS:
             exit_status = res

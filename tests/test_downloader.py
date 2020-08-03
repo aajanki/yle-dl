@@ -210,8 +210,7 @@ def simple():
 def test_download_success(simple):
     state = {}
     clips = [successful_clip(state)]
-    res = simple.downloader.download_clips(
-        clips, simple.io, simple.filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, simple.filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -221,8 +220,7 @@ def test_download_success(simple):
 def test_download_incomplete_metadata(simple):
     state = {}
     clips = [incomplete_flavors_clip(state)]
-    res = simple.downloader.download_clips(
-        clips, simple.io, simple.filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, simple.filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -233,7 +231,7 @@ def test_download_filter_resolution(simple):
     state = {}
     filters = StreamFilters(maxheight=400)
     clips = [successful_clip(state)]
-    res = simple.downloader.download_clips(clips, simple.io, filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -244,7 +242,7 @@ def test_download_filter_exact_resolution(simple):
     state = {}
     filters = StreamFilters(maxheight=720)
     clips = [successful_clip(state)]
-    res = simple.downloader.download_clips(clips, simple.io, filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -255,7 +253,7 @@ def test_download_filter_bitrate1(simple):
     state = {}
     filters = StreamFilters(maxbitrate=1500)
     clips = [successful_clip(state)]
-    res = simple.downloader.download_clips(clips, simple.io, filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -266,7 +264,7 @@ def test_download_filter_bitrate2(simple):
     state = {}
     filters = StreamFilters(maxbitrate=2000)
     clips = [successful_clip(state)]
-    res = simple.downloader.download_clips(clips, simple.io, filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -277,7 +275,7 @@ def test_download_multiple_filters(simple):
     state = {}
     filters = StreamFilters(maxheight=700, maxbitrate=900)
     clips = [successful_clip(state)]
-    res = simple.downloader.download_clips(clips, simple.io, filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -435,8 +433,7 @@ def test_print_metadata_incomplete(simple):
 
 def test_download_failed_clip(simple):
     clips = [failed_clip()]
-    res = simple.downloader.download_clips(
-        clips, simple.io, simple.filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, simple.filters)
 
     assert res == RD_FAILED
 
@@ -444,8 +441,7 @@ def test_download_failed_clip(simple):
 def test_download_failed_stream(simple):
     state = {}
     clips = [failed_stream_clip(state)]
-    res = simple.downloader.download_clips(
-        clips, simple.io, simple.filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, simple.filters)
 
     assert res == RD_FAILED
 
@@ -471,8 +467,7 @@ def test_print_metadata_failed_clip(simple):
 def test_download_fallback(simple):
     state = {}
     clips = [multistream_clip(state)]
-    res = simple.downloader.download_clips(
-        clips, simple.io, simple.filters, None)
+    res = simple.downloader.download_clips(clips, simple.io, simple.filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
