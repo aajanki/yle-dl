@@ -250,8 +250,8 @@ def encode_url_utf8(url):
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def download(url, action, io, httpclient, title_formatter, stream_filters,
-             postprocess_command, metadatalang):
+def execute_action(url, action, io, httpclient, title_formatter, stream_filters,
+                   postprocess_command, metadatalang):
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -277,37 +277,41 @@ def download(url, action, io, httpclient, title_formatter, stream_filters,
         logger.error('Is this really a Yle video page?')
         return RD_FAILED
 
+    dl = YleDlDownloader(AreenaGeoLocation(httpclient))
+
+    def clips():
+        return extractor.extract(url, stream_filters.latest_only,
+                                 title_formatter, io.ffprobe())
+
     if action == StreamAction.PRINT_EPISODE_PAGES:
         print_lines(extractor.get_playlist(url))
         return RD_SUCCESS
-
-    clips = extractor.extract(url, stream_filters.latest_only,
-                              title_formatter, io.ffprobe())
-    dl = YleDlDownloader(AreenaGeoLocation(httpclient))
-
-    if action == StreamAction.PRINT_STREAM_URL:
-        print_lines(dl.get_urls(clips, stream_filters))
+    elif action == StreamAction.PRINT_STREAM_URL:
+        print_lines(dl.get_urls(clips(), stream_filters))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_TITLE:
-        print_lines(dl.get_titles(clips, io))
+        print_lines(dl.get_titles(clips(), io))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        print_lines(dl.get_metadata(clips, io))
+        print_lines(dl.get_metadata(clips(), io))
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
-        return dl.pipe(clips, io, stream_filters)
-    elif (action == StreamAction.DOWNLOAD and
-          len(clips) > 1 and
-          io.outputfilename is not None):
-        logger.error('Source contains multiple clips, '
-                     'but only one output file specified')
-        return RD_FAILED
+        return dl.pipe(clips(), io, stream_filters)
     elif action == StreamAction.DOWNLOAD:
-        return dl.download_clips(clips, io, stream_filters,
-                                 postprocess_command)
+        return download_clips(clips(), dl, io, stream_filters, postprocess_command)
     else:
         logger.error('Internal error: Unknown action')
         return RD_FAILED
+
+
+def download_clips(clips, dl, io, stream_filters, postprocess_command):
+    if (len(clips) > 1 and io.outputfilename is not None):
+        logger.error('Source contains multiple clips, '
+                     'but only one output file specified')
+        return RD_FAILED
+    else:
+        return dl.download_clips(clips, io, stream_filters,
+                                 postprocess_command)
 
 
 def print_lines(lines):
@@ -426,8 +430,8 @@ def main(argv=sys.argv):
             logger.info('Now downloading from URL {}/{}: {}'.format(
                 i + 1, len(urls), url))
 
-        res = download(url, action, io, httpclient, title_formatter,
-                       stream_filters, args.postprocess, args.metadatalang)
+        res = execute_action(url, action, io, httpclient, title_formatter,
+                             stream_filters, args.postprocess, args.metadatalang)
 
         if res != RD_SUCCESS:
             exit_status = res

@@ -5,10 +5,10 @@ from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .io import IOContext, DownloadLimits
 from .streamfilters import StreamFilters
 from .version import version
-from .yledl import download, StreamAction
+from .yledl import execute_action, StreamAction
 
 __all__ = [
-    'download',
+    'execute_action',
     'YleDlDownloader',
     'StreamFilters',
     'DownloadLimits',

@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import json
 from io import BytesIO
-from yledl import download, StreamFilters, IOContext, StreamAction, RD_SUCCESS
+from yledl import execute_action, StreamFilters, IOContext, StreamAction, RD_SUCCESS
 from yledl.http import HttpClient
 from yledl.titleformatter import TitleFormatter
 
@@ -44,14 +44,14 @@ def fetch(url, action, filters, meta_language=None):
     title_formatter = TitleFormatter()
 
     with Capturing() as output:
-        res = download(url,
-                       action,
-                       io,
-                       httpclient,
-                       title_formatter,
-                       stream_filters = filters,
-                       postprocess_command = None,
-                       metadatalang = meta_language)
+        res = execute_action(url,
+                             action,
+                             io,
+                             httpclient,
+                             title_formatter,
+                             stream_filters = filters,
+                             postprocess_command = None,
+                             metadatalang = meta_language)
         assert res == RD_SUCCESS
 
     return output
