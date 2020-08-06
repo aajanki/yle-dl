@@ -303,7 +303,8 @@ class HLSBackend(ExternalDownloader):
 
     def build_args(self, output_name, clip, io):
         args = (['-bsf:a', 'aac_adtstoasc',
-                 '-codec', 'copy',
+                 '-vcodec', 'copy',
+                 '-acodec', 'copy',
                  '-map', '0:p:{}'.format(self.program_id),
                  '-dn'] +
                 self._subtitle_args(io) +
@@ -312,7 +313,8 @@ class HLSBackend(ExternalDownloader):
         return self.ffmpeg_command_line(clip, io, args)
 
     def build_pipe_args(self, io):
-        args = (['-codec', 'copy', '-acodec', 'aac',
+        args = (['-vcodec', 'copy',
+                 '-acodec', 'aac',
                  '-map', '0:p:{}'.format(self.program_id),
                  '-dn'] +
                 self._pipe_subtitle_args(io) +
