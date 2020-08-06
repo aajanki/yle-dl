@@ -6,6 +6,8 @@ Distributed under the GPL v3
 <unreleased>
 
 - Fixed failing audio episodes caused by a page not being recognizing correctly
+- Start recording a stream from a given offset with --startposition
+- Support links with a start offset: https://areena.yle.fi/1-4292525?seek=986
 
 Version 20200628
 

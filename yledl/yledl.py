@@ -30,7 +30,7 @@ import re
 import codecs
 import logging
 import configargparse
-from future.moves.urllib.parse import urlparse, urlunparse, quote
+from future.moves.urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
@@ -202,6 +202,9 @@ def arg_parser():
                             type=to_unicode,
                             help='Maximum vertical resolution in pixels, '
                             'default: highest available resolution')
+    qual_group.add_argument('--startposition', metavar='S', type=int,
+                            help='Start recording at S seconds from the start '
+                            'of the stream')
     qual_group.add_argument('--duration', metavar='S', type=int,
                             help='Record only the first S seconds of '
                             'the stream')
@@ -363,6 +366,24 @@ def set_log_level(args):
         logger.setLevel(5)
 
 
+def get_urls(args):
+    urls = []
+
+    if args.url:
+        urls = [encode_url_utf8(args.url)]
+
+    if args.inputfile:
+        urls = read_urls_from_file(args.inputfile)
+
+    return urls
+
+
+def start_position_from_url(url):
+    p = urlparse(url)
+    seeks = parse_qs(p.query).get('seek')
+    return int(seeks[0]) if seeks else None
+
+
 ### main program ###
 
 
@@ -373,24 +394,18 @@ def main(argv=sys.argv):
     args = parser.parse_args(argv[1:])
     set_log_level(args)
 
+    urls = get_urls(args)
+    if not urls:
+        parser.print_help()
+        sys.exit(RD_SUCCESS)
+
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
-    dl_limits = DownloadLimits(args.duration, args.ratelimit)
+    dl_limits = DownloadLimits(args.startposition, args.duration, args.ratelimit)
     io = IOContext(args.outputfile, args.preferformat, args.destdir,
                    args.resume, args.overwrite, dl_limits, excludechars,
                    args.proxy, args.sublang == 'all',
                    args.metadatalang, args.postprocess,
                    args.ffmpeg, args.ffprobe, args.wget)
-
-    urls = []
-    if args.url:
-        urls = [encode_url_utf8(args.url)]
-
-    if args.inputfile:
-        urls = read_urls_from_file(args.inputfile)
-
-    if not urls:
-        parser.print_help()
-        sys.exit(RD_SUCCESS)
 
     if args.showurl:
         action = StreamAction.PRINT_STREAM_URL
@@ -426,11 +441,13 @@ def main(argv=sys.argv):
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):
-        if args.inputfile:
+        if len(urls) > 1:
             logger.info('')
             logger.info('Now downloading from URL {}/{}: {}'.format(
                 i + 1, len(urls), url))
 
+        io.download_limits.start_position = \
+            args.startposition or start_position_from_url(url)
         res = execute_action(url, action, io, httpclient, title_formatter,
                              stream_filters)
 

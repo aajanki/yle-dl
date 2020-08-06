@@ -22,7 +22,7 @@ class IOCapability(object):
     RESUME = 'resume'
     PROXY = 'proxy'
     RATELIMIT = 'ratelimit'
-    DURATION = 'duration'
+    SLICE = 'slice'
 
 
 class PreferredFileExtension(object):
@@ -60,8 +60,12 @@ class BaseDownloader(object):
             logger.warning('Rate limiting not supported on this stream')
 
         if io.download_limits.duration and \
-           IOCapability.DURATION not in self.io_capabilities:
+           IOCapability.SLICE not in self.io_capabilities:
             logger.warning('--duration will be ignored on this stream')
+
+        if io.download_limits.start_position and \
+           IOCapability.SLICE not in self.io_capabilities:
+            logger.warning('--startpos will be ignored on this stream')
 
         # IOCapability.RESUME will be checked later when we know if we
         # are trying to resume a partial download
@@ -233,7 +237,7 @@ class HLSBackend(ExternalDownloader):
         self.url = url
         self.long_probe = long_probe
         self.program_id = program_id
-        self.io_capabilities = frozenset([IOCapability.DURATION])
+        self.io_capabilities = frozenset([IOCapability.SLICE])
         self.name = Backends.FFMPEG
 
     def file_extension(self, preferred):
@@ -243,6 +247,12 @@ class HLSBackend(ExternalDownloader):
     def _duration_arg(self, download_limits):
         if download_limits.duration:
             return ['-t', str(download_limits.duration)]
+        else:
+            return []
+
+    def _seek_position_arg(self, download_limits):
+        if download_limits.start_position:
+            return ['-ss', str(download_limits.start_position)]
         else:
             return []
 
@@ -310,12 +320,13 @@ class HLSBackend(ExternalDownloader):
 
     def ffmpeg_command_line(self, clip, io, output_options):
         args = [io.ffmpeg_binary, '-y',
-                '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+               '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
                 '-thread_queue_size', '512',
                 '-strict', 'experimental']  # For decoding webvtt subtitles
         if logger.getEffectiveLevel() <= logging.WARNING:
             args.append('-stats')
         args.extend(self._probe_args())
+        args.extend(self._seek_position_arg(io.download_limits))
         args.extend(['-i', self.url])
         args.extend(self._duration_arg(io.download_limits))
         args.extend(self._metadata_args(clip))

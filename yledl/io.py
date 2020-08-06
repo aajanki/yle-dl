@@ -48,7 +48,13 @@ def wget_default(arg):
 
 @attr.s
 class DownloadLimits(object):
-    duration = attr.ib(default=None)
+    # Seek to this position (seconds) before starting the recording
+    start_position = attr.ib(default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(int)))
+    # Limit the duration of the recorded stream (seconds)
+    duration = attr.ib(default=None,
+        validator=attr.validators.optional(attr.validators.instance_of(int)))
+    # Maximum download rate (int in kb/s or "best" or "worst")
     ratelimit = attr.ib(default=None)
 
 
