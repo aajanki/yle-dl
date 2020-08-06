@@ -6,7 +6,8 @@ Distributed under the GPL v3
 <unreleased>
 
 - Fixed failing audio episodes caused by a page not being recognizing correctly
-- Start recording a stream from a given offset with --startposition
+- Start recording 500 seconds from the beginning of a stream: --startposition 500
+- Start recording "live" TV 3600 seconds in the past: --startposition -3600
 - Support links with a start offset: https://areena.yle.fi/1-4292525?seek=986
 
 Version 20200628

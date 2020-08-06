@@ -123,6 +123,12 @@ yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
 yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
 ```
 
+Record the broadcast shown an hour (3600 seconds) ago:
+
+```
+yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
+```
+
 ### Using with libav instead of ffmpeg
 
 ```

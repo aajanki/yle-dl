@@ -578,17 +578,18 @@ class AreenaExtractor(AreenaPlaylist):
 
     def flavors_by_media_id(self, media_id, hls_manifest_url, kaltura_flavors,
                             media_type, ffprobe):
-        if self.is_full_hd_media(media_id) or self.is_live_media(media_id):
+        is_live = self.is_live_media(media_id)
+        if self.is_full_hd_media(media_id) or is_live:
             logger.debug('Detected a full-HD media')
             flavors = self.hls_probe_flavors(hls_manifest_url, media_type,
-                                             ffprobe)
+                                             is_live, ffprobe)
             error = [FailedFlavor('Manifest URL is missing')]
             return flavors or error
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
             return (kaltura_flavors or
                     self.hls_probe_flavors(hls_manifest_url, media_type,
-                                           ffprobe))
+                                           False, ffprobe))
         else:
             return [FailedFlavor('Unknown stream flavor')]
 
@@ -618,12 +619,13 @@ class AreenaExtractor(AreenaPlaylist):
 
         return [StreamFlavor(media_type=media_type, streams=[backend])]
 
-    def hls_probe_flavors(self, hls_manifest_url, media_type, ffprobe):
+    def hls_probe_flavors(self, hls_manifest_url, media_type, is_live, ffprobe):
         if not hls_manifest_url:
             return []
 
         logger.debug('Probing for stream flavors')
-        return FullHDFlavorProber().probe_flavors(hls_manifest_url, ffprobe)
+        return FullHDFlavorProber().probe_flavors(
+            hls_manifest_url, is_live, ffprobe)
 
     def download_flavors(self, download_url, media_type):
         path = urlparse(download_url)[2]

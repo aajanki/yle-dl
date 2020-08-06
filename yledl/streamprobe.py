@@ -10,15 +10,15 @@ logger = logging.getLogger('yledl')
 
 
 class FullHDFlavorProber(object):
-    def probe_flavors(self, manifest_url, ffprobe):
+    def probe_flavors(self, manifest_url, is_live, ffprobe):
         try:
             programs = ffprobe.show_programs_for_url(manifest_url)
         except ValueError as ex:
             return [FailedFlavor('Failed to probe stream: {}'.format(str(ex)))]
 
-        return self.programs_to_stream_flavors(programs, manifest_url)
+        return self.programs_to_stream_flavors(programs, manifest_url, is_live)
 
-    def programs_to_stream_flavors(self, programs, manifest_url):
+    def programs_to_stream_flavors(self, programs, manifest_url, is_live):
         res = []
         for program in programs.get('programs', []):
             streams = program.get('streams', [])
@@ -36,7 +36,10 @@ class FullHDFlavorProber(object):
                 height=heights[0] if heights else None,
                 width=widths[0] if widths else None,
                 bitrate=bitrate,
-                streams=[HLSBackend(manifest_url, long_probe=True, program_id=pid)]
+                streams=[
+                    HLSBackend(manifest_url, long_probe=True,
+                               program_id=pid, is_live=is_live)
+                ]
             ))
 
         return sorted(res, key=lambda x: x.height or 0)

@@ -65,7 +65,7 @@ class BaseDownloader(object):
 
         if io.download_limits.start_position and \
            IOCapability.SLICE not in self.io_capabilities:
-            logger.warning('--startpos will be ignored on this stream')
+            logger.warning('--startposition will be ignored on this stream')
 
         # IOCapability.RESUME will be checked later when we know if we
         # are trying to resume a partial download
@@ -232,11 +232,12 @@ class Subprocess(object):
 
 
 class HLSBackend(ExternalDownloader):
-    def __init__(self, url, long_probe=False, program_id=0):
+    def __init__(self, url, long_probe=False, program_id=0, is_live=False):
         ExternalDownloader.__init__(self)
         self.url = url
         self.long_probe = long_probe
         self.program_id = program_id
+        self.live = is_live
         self.io_capabilities = frozenset([IOCapability.SLICE])
         self.name = Backends.FFMPEG
 
@@ -251,8 +252,14 @@ class HLSBackend(ExternalDownloader):
             return []
 
     def _seek_position_arg(self, download_limits):
-        if download_limits.start_position:
-            return ['-ss', str(download_limits.start_position)]
+        seekpos = download_limits.start_position
+        if seekpos:
+            if self.live:
+                # Areena seem to have 6 secs/fragment. Can we trust
+                # that this is a constant?
+                return ['-live_start_index', str(seekpos//6)]
+            else:
+                return ['-ss', str(seekpos)]
         else:
             return []
 
