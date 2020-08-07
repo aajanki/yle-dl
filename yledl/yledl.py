@@ -270,7 +270,8 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
         url, stream_filters, language_chooser(url, io), httpclient)
     if not extractor:
         logger.error('Unsupported URL %s.' % url)
-        logger.error('Is this really a Yle video page?')
+        logger.error('If you think yle-dl should support this page, open a '
+                     'bug report at https://github.com/aajanki/yle-dl/issues')
         return RD_FAILED
 
     dl = YleDlDownloader(AreenaGeoLocation(httpclient))

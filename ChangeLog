@@ -3,12 +3,13 @@ Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
 
-<unreleased>
+Version 20200807
 
 - Fixed failing audio episodes caused by a page not being recognizing correctly
 - Start recording 500 seconds from the beginning of a stream: --startposition 500
 - Start recording "live" TV 3600 seconds in the past: --startposition -3600
 - Support links with a start offset: https://areena.yle.fi/1-4292525?seek=986
+- Metadata includes download links for subtitles
 
 Version 20200628
 
