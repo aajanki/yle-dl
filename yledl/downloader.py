@@ -50,8 +50,12 @@ class YleDlDownloader(object):
         return self.process(clips, download, needs_retry, filters)
 
     def should_skip_downloading(self, outputfile, downloader, clip, io):
+        limits = io.download_limits
+        slicing_active = limits.start_position or 0 > 0 or limits.duration
+
         return ((not io.overwrite and os.path.exists(outputfile)) or
-                downloader.full_stream_already_downloaded(outputfile, clip, io))
+                (not slicing_active and
+                 downloader.full_stream_already_downloaded(outputfile, clip, io)))
 
     def generate_output_name(self, title, downloader, io):
         generator = OutputFileNameGenerator()
