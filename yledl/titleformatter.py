@@ -8,6 +8,7 @@ from collections import defaultdict
 
 class TitleFormatter(object):
     def __init__(self, template='${series}${title}${episode}${timestamp}'):
+        self.template = template
         self.tokens = self._parse_template(template)
 
     def format(self, title, publish_timestamp=None, series_title=None,
@@ -39,6 +40,9 @@ class TitleFormatter(object):
                                  program_id='-')
 
         return self._substitute(self.tokens, values, separators)
+
+    def is_constant_pattern(self):
+        return all(t.is_constant() for t in self.tokens)
 
     def _parse_template(self, template):
         res = []
@@ -139,6 +143,9 @@ class Substitution(object):
     def __init__(self, variable_name):
         self.variable_name = variable_name
 
+    def is_constant(self):
+        return False
+
     def substitute(self, values, separators):
         key = self.variable_name[2:-1]
         val = values.get(key, self.variable_name)
@@ -148,6 +155,9 @@ class Substitution(object):
 class Literal(object):
     def __init__(self, text):
         self.text = text
+
+    def is_constant(self):
+        return True
 
     def substitute(self, values, separators):
         return self.text

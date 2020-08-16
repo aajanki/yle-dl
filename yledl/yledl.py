@@ -295,16 +295,21 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
     elif action == StreamAction.PIPE:
         return dl.pipe(clips(), io, stream_filters)
     elif action == StreamAction.DOWNLOAD:
-        return download_clips(clips(), dl, io, stream_filters)
+        return download_clips(clips(), dl, io, title_formatter, stream_filters)
     else:
         logger.error('Internal error: Unknown action')
         return RD_FAILED
 
 
-def download_clips(clips, dl, io, stream_filters):
+def download_clips(clips, dl, io, title_formatter, stream_filters):
     if (len(clips) > 1 and io.outputfilename is not None):
-        logger.error('Source contains multiple clips, '
+        logger.error('The source is a playlist with multiple clips, '
                      'but only one output file specified')
+        return RD_FAILED
+    elif (len(clips) > 1 and title_formatter.is_constant_pattern()):
+        logger.error('The source is a playlist with multiple clips, '
+                     'but --output-template is a literal: {}'
+                     .format(title_formatter.template))
         return RD_FAILED
     else:
         return dl.download_clips(clips, io, stream_filters)
