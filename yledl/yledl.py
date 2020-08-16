@@ -29,6 +29,7 @@ import sys
 import re
 import codecs
 import logging
+import os.path
 import configargparse
 from future.moves.urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
@@ -407,7 +408,10 @@ def main(argv=sys.argv):
 
     excludechars = '\"*/:<>?|' if args.vfat else '*/|'
     dl_limits = DownloadLimits(args.startposition, args.duration, args.ratelimit)
-    io = IOContext(args.outputfile, args.preferformat, args.destdir,
+    output_template, template_ext = os.path.splitext(args.output_template)
+    preferformat = template_ext.strip('.') or args.preferformat
+    title_formatter = TitleFormatter(output_template)
+    io = IOContext(args.outputfile, preferformat, args.destdir,
                    args.resume, args.overwrite, dl_limits, excludechars,
                    args.proxy, args.sublang == 'all',
                    args.metadatalang, args.postprocess,
@@ -443,7 +447,6 @@ def main(argv=sys.argv):
     stream_filters = StreamFilters(args.latestepisode,
                                    maxbitrate, maxheight, backends)
     httpclient = HttpClient(args.proxy)
-    title_formatter = TitleFormatter(args.output_template)
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):

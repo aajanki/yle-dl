@@ -122,7 +122,7 @@ class OutputFileNameGenerator(object):
             return filename
 
     def _append_ext_if_missing(self, filename, extension):
-        if '.' in filename:
+        if os.path.splitext(filename)[1]:
             return filename
         else:
             return filename + extension.extension
