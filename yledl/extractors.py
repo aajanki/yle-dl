@@ -255,37 +255,6 @@ class ClipExtractor(object):
         raise NotImplementedError("extract_clip must be overridden")
 
 
-class MergingExtractor(ClipExtractor):
-    """Executes several ClipExtractors and combines stream flavors from all of them."""
-
-    def __init__(self, extractors):
-        self.extractors = extractors
-
-    def get_playlist(self, url):
-        playlist = []
-        for extractor in self.extractors:
-            for clip_url in extractor.get_playlist(url):
-                if clip_url not in playlist:
-                    playlist.append(clip_url)
-        return playlist
-
-    def extract_clip(self, url, titlerformatter, ffprobe):
-        clips = [x.extract_clip(url, titlerformatter, ffprobe)
-                 for x in self.extractors]
-        valid_clips = [c for c in clips if not isinstance(c, FailedClip)]
-        failed_clips = [c for c in clips if isinstance(c, FailedClip)]
-        if valid_clips:
-            all_flavors = list(itertools.chain.from_iterable(
-                c.flavors for c in valid_clips))
-            clip = valid_clips[0]
-            clip.flavors = all_flavors
-            return clip
-        elif failed_clips:
-            return failed_clips[0]
-        else:
-            return FailedClip(url, 'No clips to merge')
-
-
 class AreenaPlaylist(ClipExtractor):
     def get_playlist(self, url):
         """If url is a series page, return a list of included episode pages."""
