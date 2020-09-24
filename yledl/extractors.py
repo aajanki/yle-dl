@@ -243,7 +243,7 @@ class ClipExtractor(object):
     def extract(self, url, latest_only, title_formatter, ffprobe):
         playlist = self.get_playlist(url)
         if latest_only:
-            playlist = playlist[:1]
+            playlist = playlist[-1:]
 
         return [self.extract_clip(clipurl, title_formatter, ffprobe)
                 for clipurl in playlist]
