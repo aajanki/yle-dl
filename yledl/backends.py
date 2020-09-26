@@ -392,7 +392,11 @@ class WgetBackend(ExternalDownloader):
             logger.warning('The wget backend might not be able to download '
                            'subtitles, try --backend=ffmpeg')
 
-        return super(WgetBackend, self).save_stream(output_name, clip, io)
+        res = super(WgetBackend, self).save_stream(output_name, clip, io)
+        if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
+            logger.error('wget failed! Increase verbosity to see more details.')
+
+        return res
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io.wget_binary, output_name)
@@ -401,12 +405,22 @@ class WgetBackend(ExternalDownloader):
             '--tries=5',
             '--random-wait'
         ])
-        if logger.getEffectiveLevel() > logging.INFO:
+        if logger.getEffectiveLevel() >= logging.ERROR:
+            # This will hide also errors.
+            #
+            # wget doesn't have a mode that would show errors but
+            # silence all other output:
+            # https://savannah.gnu.org/bugs/?33839
+            #
+            # We will hack around that by checking the exit status and
+            # showing a generic error message if necessary.
+            args.append('--quiet')
+        elif logger.getEffectiveLevel() > logging.INFO:
             args.append('--no-verbose')
-        if logger.getEffectiveLevel() <= logging.WARNING:
+        elif logger.getEffectiveLevel() <= logging.WARNING:
             args.append('--show-progress')
         if io.resume:
-            args.append('-c')
+            args.append('--continue')
         if io.download_limits.ratelimit:
             args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
         args.append(self.url)

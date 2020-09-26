@@ -5,6 +5,7 @@ Distributed under the GPL v3
 <unreleased>
 
 - Fix --latestepisode to actually download the latest, not the first, episode
+- The wget backend now really is silent on -qq
 
 Version 20200807
 
