@@ -1,6 +1,6 @@
 # OS-specific installation instructions for yle-dl
 
-## Debian 10 (Buster)/Ubuntu 17.10
+## Debian 10 (Buster)/Ubuntu 17.10 and later
 
 ```
 # If you have installed a previous version globally (without the
@@ -99,6 +99,22 @@ python setup.py install --user
 
 ```
 emerge -av yle-dl
+```
+
+
+## OpenSUSE Tumbleweed
+
+```
+# Install non-free codecs
+sudo zypper addrepo -f http://packman.inode.at/suse/openSUSE_Tumbleweed/ packman
+sudo zypper install --allow-vendor-change ffmpeg-4
+sudo zypper dup --allow-vendor-change --from http://packman.inode.at/suse/openSUSE_Tumbleweed/
+
+# Dependencies
+sudo zypper install python3-pip python3-requests python3-lxml wget
+
+# Install the yle-dl
+pip3 install --user --upgrade yle-dl
 ```
 
 
