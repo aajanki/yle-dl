@@ -12,6 +12,7 @@ import subprocess
 from builtins import str
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
+from .http import HttpClient
 from .utils import ffmpeg_loglevel
 
 
@@ -290,16 +291,18 @@ class HLSBackend(ExternalDownloader):
         else:
             scodec = 'srt'
 
-        if io.embed_subtitles:
-            return ['-scodec', scodec]
-        else:
+        if io.subtitles == 'none':
             return ['-sn']
+        else:
+            # TODO: select the subtitle language
+            return ['-scodec', scodec]
 
     def _pipe_subtitle_args(self, io):
-        if io.embed_subtitles:
-            return ['-scodec', 'srt']
-        else:
+        if io.subtitles == 'none':
             return ['-sn']
+        else:
+            # TODO: select the subtitle language
+            return ['-scodec', 'srt']
 
     def build_args(self, output_name, clip, io):
         args = (['-bsf:a', 'aac_adtstoasc',
@@ -388,15 +391,27 @@ class WgetBackend(ExternalDownloader):
         return self._file_extension
 
     def save_stream(self, output_name, clip, io):
-        if clip.embedded_subtitles and io.embed_subtitles:
-            logger.warning('The wget backend might not be able to download '
-                           'subtitles, try --backend=ffmpeg')
+        self.download_external_subtitles(clip.subtitles, output_name, io)
 
         res = super(WgetBackend, self).save_stream(output_name, clip, io)
         if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
             logger.error('wget failed! Increase verbosity to see more details.')
 
         return res
+
+    def download_external_subtitles(self, subtitles, video_file_name, io):
+        if io.subtitles == 'none' or not subtitles:
+            return
+        elif io.subtitles == 'all':
+            sub = subtitles[0]
+        else:
+            sub = next((s for s in subtitles if s.lang == io.subtitles), None)
+
+        if sub:
+            logger.debug('Downloading subtitles for {}'.format(sub.lang))
+
+            destination_file = os.path.splitext(video_file_name)[0] + '.srt'
+            HttpClient().download_to_file(sub.url, destination_file)
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io.wget_binary, output_name)

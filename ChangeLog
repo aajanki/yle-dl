@@ -4,6 +4,7 @@ Distributed under the GPL v3
 
 <unreleased>
 
+- Download subtitles into a separate file when using --backend wget
 - Fix --latestepisode to actually download the latest, not the first, episode
 - The wget backend now really is silent on -qq
 

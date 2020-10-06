@@ -185,10 +185,11 @@ def arg_parser():
     qual_group = parser.add_argument_group('Stream type and quality')
     qual_group.add_argument('--sublang', metavar='LANG',
                             type=to_unicode,
-                            choices=['none', 'all'],
+                            choices=['none', 'fin', 'swe', 'all'],
                             default='all',
                             help='Download subtitles if LANG is "all" '
-                            '(default) or disable subtitles if LANG is "none".')
+                            '(default), "fin" or "swe". Disable subtitles '
+                            'if LANG is "none".')
     qual_group.add_argument('--metadatalang', metavar='LANG', type=to_unicode,
                             choices=['fin', 'swe', 'smi'],
                             help='Preferred metadata language, "fin", "swe" '
@@ -413,7 +414,7 @@ def main(argv=sys.argv):
     title_formatter = TitleFormatter(output_template)
     io = IOContext(args.outputfile, preferformat, args.destdir,
                    args.resume, args.overwrite, dl_limits, excludechars,
-                   args.proxy, args.sublang == 'all',
+                   args.proxy, args.sublang,
                    args.metadatalang, args.postprocess,
                    args.ffmpeg, args.ffprobe, args.wget)
 
