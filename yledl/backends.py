@@ -270,13 +270,15 @@ class HLSBackend(ExternalDownloader):
         else:
             return []
 
-    def _metadata_args(self, clip):
+    def _metadata_args(self, clip, io):
         if not clip:
             return []
 
         metadata = []
         if clip.description:
-            metadata += ['-metadata', 'description=' + clip.description]
+            metadata_spec = '' if self._is_mp4(io) else ':s:v:0'
+            metadata += ['-metadata' + metadata_spec,
+                         'description=' + clip.description]
 
         if clip.publish_timestamp:
             metadata += ['-metadata',
@@ -285,11 +287,7 @@ class HLSBackend(ExternalDownloader):
         return metadata
 
     def _subtitle_args(self, io):
-        if ((io.outputfilename and io.outputfilename.endswith('.mp4')) or
-            io.preferred_format in ('mp4', '.mp4')):
-            scodec = 'mov_text'
-        else:
-            scodec = 'srt'
+        scodec = 'mov_text' if self._is_mp4(io) else 'srt'
 
         if io.subtitles == 'none':
             return ['-sn']
@@ -341,12 +339,16 @@ class HLSBackend(ExternalDownloader):
         args.extend(self._seek_position_arg(io.download_limits))
         args.extend(['-i', self.url])
         args.extend(self._duration_arg(io.download_limits))
-        args.extend(self._metadata_args(clip))
+        args.extend(self._metadata_args(clip, io))
         args.extend(output_options)
         return args
 
     def stream_url(self):
         return self.url
+
+    def _is_mp4(self, io):
+        return ((io.outputfilename and io.outputfilename.endswith('.mp4')) or
+                io.preferred_format in ('mp4', '.mp4'))
 
 
 class HLSAudioBackend(HLSBackend):
