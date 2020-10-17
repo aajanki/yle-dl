@@ -8,6 +8,7 @@ import os
 import os.path
 import platform
 import signal
+import shlex
 import subprocess
 from builtins import str
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
@@ -162,7 +163,7 @@ class Subprocess(object):
             return RD_SUCCESS
 
         logger.debug('Executing:')
-        shell_command_string = ' | '.join(' '.join(args) for args in commands)
+        shell_command_string = ' | '.join(shlex.join(args) for args in commands)
         logger.debug(shell_command_string)
 
         env = self.combine_envs(extra_environment)
