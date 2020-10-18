@@ -14,6 +14,7 @@ from builtins import str
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import HttpClient
+from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
 
 
@@ -292,34 +293,34 @@ class HLSBackend(ExternalDownloader):
 
         if io.subtitles == 'none':
             return ['-sn']
+        elif io.subtitles == 'all':
+            return ['-scodec', scodec,
+                    '-map', '0:p:{}:s?'.format(self.program_id)]
         else:
-            # TODO: select the subtitle language
-            return ['-scodec', scodec]
-
-    def _pipe_subtitle_args(self, io):
-        if io.subtitles == 'none':
-            return ['-sn']
-        else:
-            # TODO: select the subtitle language
-            return ['-scodec', 'srt']
+            short_code = two_letter_language_code(io.subtitles) or io.subtitles
+            return ['-scodec', scodec,
+                    '-map', '0:p:{}:s:m:language:{}?'.format(
+                        self.program_id, short_code)]
 
     def build_args(self, output_name, clip, io):
         args = (['-bsf:a', 'aac_adtstoasc',
                  '-vcodec', 'copy',
-                 '-acodec', 'copy',
-                 '-map', '0:p:{}'.format(self.program_id),
-                 '-dn'] +
+                 '-acodec', 'copy'] +
                 self._subtitle_args(io) +
-                ['file:' + output_name])
+                ['-map', '0:p:{}:v'.format(self.program_id),
+                 '-map', '0:p:{}:a'.format(self.program_id),
+                 '-dn',
+                 'file:' + output_name])
 
         return self.ffmpeg_command_line(clip, io, args)
 
     def build_pipe_args(self, io):
         args = (['-vcodec', 'copy',
                  '-acodec', 'aac',
-                 '-map', '0:p:{}'.format(self.program_id),
+                 '-map', '0:p:{}:v'.format(self.program_id),
+                 '-map', '0:p:{}:a'.format(self.program_id),
                  '-dn'] +
-                self._pipe_subtitle_args(io) +
+                self._subtitle_args(io) +
                 ['-f', 'matroska', 'pipe:1'])
 
         return self.ffmpeg_command_line(None, io, args)

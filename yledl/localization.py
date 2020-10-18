@@ -38,5 +38,9 @@ class TranslationChooser(object):
             return None
 
     def two_letter_codes(self, long_codes):
-        code_map = {'fin': 'fi', 'swe': 'sv', 'sme': 'se'}
-        return [code_map.get(x, x) for x in long_codes]
+        return [two_letter_language_code(x) or x for x in long_codes]
+
+
+def two_letter_language_code(three_letter_code):
+    code_map = {'fin': 'fi', 'swe': 'sv', 'sme': 'se'}
+    return code_map.get(three_letter_code)
