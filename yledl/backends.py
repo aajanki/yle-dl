@@ -407,7 +407,7 @@ class WgetBackend(ExternalDownloader):
         if io.subtitles == 'none' or not subtitles:
             return
         elif io.subtitles == 'all':
-            sub = subtitles[0]
+            sub = next((s for s in subtitles if s.lang == 'fin'), subtitles[0])
         else:
             sub = next((s for s in subtitles if s.lang == io.subtitles), None)
 
