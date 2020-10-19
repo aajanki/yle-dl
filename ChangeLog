@@ -2,10 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20201019
 
-- Download subtitles into a separate file when using --backend wget
-- Fix --latestepisode to actually download the latest, not the first, episode
+- Download subtitles into a separate file when using "--backend wget"
+- Fixed --latestepisode to actually download the latest, not the first, episode
 - The wget backend now really is silent on -qq
 
 Version 20200807
