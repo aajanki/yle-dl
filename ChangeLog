@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
+Version 20201022
+
+- Works again on Python 3.7 and older
+
 Version 20201019
 
 - Download subtitles into a separate file when using "--backend wget"

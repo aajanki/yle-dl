@@ -42,6 +42,14 @@ class MandatoryFileExtension(object):
         self.is_mandatory = True
 
 
+def shlex_join(elements):
+    try:
+        return shlex.join(elements)
+    except AttributeError:
+        # Python older than 3.8 does not have shlex.join
+        return ' '.join(elements)
+
+
 ### Base class for downloading a stream to a local file ###
 
 
@@ -164,7 +172,7 @@ class Subprocess(object):
             return RD_SUCCESS
 
         logger.debug('Executing:')
-        shell_command_string = ' | '.join(shlex.join(args) for args in commands)
+        shell_command_string = ' | '.join(shlex_join(args) for args in commands)
         logger.debug(shell_command_string)
 
         env = self.combine_envs(extra_environment)
