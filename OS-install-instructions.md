@@ -117,8 +117,16 @@ sudo zypper install python3-pip python3-requests python3-lxml wget
 pip3 install --user --upgrade yle-dl
 ```
 
+Non-free codecs can be installed in a similar way on OpenSUSE Leap
+15.2 except that there are no packages available for ffmpeg-4, only
+for ffmpeg-3. Older ffmpeg means that subtitles will not be downloaded
+correctly.
+
 
 ## Mac OS X
+
+First, intall [Homebrew](https://brew.sh/). Next, run the following
+commands:
 
 ```
 brew install python
