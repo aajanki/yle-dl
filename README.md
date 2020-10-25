@@ -156,23 +156,21 @@ Integration tests
 -----------------
 
 ```
-python3 setup.py pytest
+pytest-3
 ```
 
 Some tests succeed only when run on a Finnish IP address because some
 Areena streams are available only in Finland. By default these tests
-are skipped. The run all tests, set the environment variable
-`ENABLE_FINLAND_TESTS` to 1:
+are skipped. To run all tests, include the "--geoblocked" flag:
 
 ```
-export ENABLE_FINLAND_TESTS=1
-python3 setup.py pytest
+pytest-3 --geoblocked
 ```
 
 Running only a single test file:
 
 ```
-python3 setup.py pytest --addopts "-k tests/integration/test_areena_radio_it.py"
+pytest-3 -k tests/integration/test_areena_radio_it.py
 ```
 
 Examples

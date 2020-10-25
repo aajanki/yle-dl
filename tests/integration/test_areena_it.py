@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function, absolute_import, unicode_literals
-import os
 import pytest
 from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata
@@ -47,8 +46,7 @@ def test_metadata_language():
     assert title_swe.startswith('Finlands väg till fortsättningskriget')
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
-                    reason="Test works only in Finland")
+@pytest.mark.geoblocked
 def test_areena_iphone_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-4247408')
 
@@ -56,8 +54,7 @@ def test_areena_iphone_stream_url():
     assert '/a.mp4?' in streamurl[0]
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
-                    reason="Test works only in Finland")
+@pytest.mark.geoblocked
 def test_areena_iphone_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/1-4247408')
 
@@ -89,8 +86,7 @@ def test_areena_series_urls():
     assert all(['a.mp4' in url for url in urls])
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
-                    reason="Test works only in Finland")
+@pytest.mark.geoblocked
 def test_areena_live_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/tv/suorat/yle-tv1')
 
@@ -98,8 +94,7 @@ def test_areena_live_url():
     assert '.m3u8' in streamurl[0]
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
-                    reason="Test works only in Finland")
+@pytest.mark.geoblocked
 def test_areena_live_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/tv/suorat/yle-tv1')
 
@@ -109,8 +104,7 @@ def test_areena_live_metadata():
     assert metadata[0]['region'] == 'Finland'
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
-                    reason="Test works only in Finland")
+@pytest.mark.geoblocked
 def test_areena_ohjelmat_embedded_live_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/tv/ohjelmat/30-595?play=yle-tv2')
 
@@ -118,8 +112,7 @@ def test_areena_ohjelmat_embedded_live_url():
     assert 'master.m3u8' in streamurl[0]
 
 
-@pytest.mark.skipif(os.getenv('ENABLE_FINLAND_TESTS') != '1',
-                    reason="Test works only in Finland")
+@pytest.mark.geoblocked
 def test_areena_ohjelmat_embedded_live_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/tv/ohjelmat/30-595?play=yle-tv2')
 

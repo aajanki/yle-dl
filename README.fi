@@ -139,15 +139,14 @@ https://aajanki.github.io/yle-dl/#packages
 Integraatiotestien ajaminen
 ---------------------------
 
-python3 setup.py pytest
+pytest-3
 
 Jotkin testit onnistuvat vain suomalaisesta IP-osoitteesta, koska osa
-Areenan videoista on saatavilla vain Suomessa. Oletuksena nämä testit
-hypätään yli. Ajaaksesi myös nämä testit määrittele ympäristömuuttujan
-ENABLE_FINLAND_TESTS arvoksi 1:
+Areenan videoista on saatavilla vain Suomessa. Oletuksena tällaiset
+testit jätetään suorittamatta. Ajaaksesi myös nämä testit käytä
+"--geoblocked"-vipua:
 
-export ENABLE_FINLAND_TESTS=1
-python3 setup.py pytest
+pytest-3 --geoblocked
 
 
 Esimerkkejä
