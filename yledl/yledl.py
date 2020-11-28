@@ -24,7 +24,6 @@ This script downloads video and audio streams from Yle Areena
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function, absolute_import, unicode_literals
 import sys
 import re
 import codecs

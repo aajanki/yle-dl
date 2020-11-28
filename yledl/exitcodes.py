@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, unicode_literals
-
 # Public exit codes
 RD_SUCCESS = 0
 RD_FAILED = 1

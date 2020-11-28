@@ -1,4 +1,3 @@
-from __future__ import print_function, absolute_import, unicode_literals
 from .backends import Backends
 from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE

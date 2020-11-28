@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, unicode_literals
 import pytest
 from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata

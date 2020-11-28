@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, unicode_literals
 import logging
 import re
-import sys
 from datetime import datetime, timedelta, tzinfo
 
 
@@ -29,30 +27,11 @@ def parse_areena_timestamp(timestamp):
         return None
 
     timestamp = timestamp.strip()
-    if sys.version_info.major >= 3:
-        parsed = parse_areena_timestamp_py3(timestamp)
-    else:
-        parsed = parse_areena_timestamp_py2(timestamp)
-
+    parsed = parse_areena_timestamp_py3(timestamp)
     if parsed is None:
         logger.warning('Failed to parse timestamp: {}'.format(timestamp))
 
     return parsed
-
-
-def parse_areena_timestamp_py2(timestamp):
-    # The %z timezone parsing is not supported by strptime in Python
-    # 2.7. Perform a naive timezone parsing manually instead.
-    dt = None
-    m = re.search(r'\+(\d\d):00$', timestamp)
-    if m:
-        offset_hours = int(m.group(1))
-        dt = (strptime_or_none(timestamp[:-6], '%Y-%m-%dT%H:%M:%S.%f') or
-              strptime_or_none(timestamp[:-6], '%Y-%m-%dT%H:%M:%S'))
-        if dt is not None:
-            dt = dt.replace(tzinfo=FixedOffset(offset_hours))
-
-    return dt
 
 
 def parse_areena_timestamp_py3(timestamp):

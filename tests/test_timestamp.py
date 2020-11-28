@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function, absolute_import, unicode_literals
 from datetime import datetime, timedelta
 from yledl.timestamp import parse_areena_timestamp
 

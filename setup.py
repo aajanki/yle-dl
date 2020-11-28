@@ -19,11 +19,6 @@ version = re.\
   search(r"^version *= *'(.+)'$", open('yledl/version.py').read(), re.MULTILINE).\
   group(1)
 
-# On older Pythons we need some additional libraries for SSL SNI support
-ssl_sni_requires = []
-if sys.version_info < (2, 7, 9):
-    ssl_sni_requires = ['pyOpenSSL', 'ndg-httpsclient', 'pyasn1']
-
 setup(
     name='yle-dl',
     version=version,
@@ -38,7 +33,7 @@ setup(
     install_requires=[
         'requests', 'lxml', 'future',
         'attrs >= 18.1.0', 'ConfigArgParse >= 0.13.0'
-    ] + ssl_sni_requires,
+    ],
     setup_requires = maybe_pytest_runner,
     tests_require = [
         'pytest',
@@ -48,7 +43,7 @@ setup(
             'yle-dl = yledl.yledl:main'
         ]
     },
-    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*',
+    python_requires='>=3.5',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Environment :: Console',
@@ -56,8 +51,6 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',

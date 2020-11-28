@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2020 Antti Ajanki
 Distributed under the GPL v3
 
+<unreleased>
+
+- Only Python 3.5+ supported from now on
+
 Version 20201022
 
 - Works again on Python 3.7 and older

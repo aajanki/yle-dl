@@ -7,12 +7,11 @@ addons:
     - ffmpeg
 
 python:
- - 2.7
  - 3.5
  - 3.6
  - 3.7
  - 3.8
- - 3.9-dev
+ - 3.9
 
 install:
  # Install from wheel instead of from source in setup.py to speed up CI
