@@ -7,7 +7,7 @@ import logging
 import os.path
 import re
 from datetime import datetime
-from future.moves.urllib.parse import urlparse, quote_plus, parse_qs
+from urllib.parse import urlparse, quote_plus, parse_qs
 from .backends import HLSAudioBackend, HLSBackend, WgetBackend
 from .http import html_unescape
 from .io import OutputFileNameGenerator

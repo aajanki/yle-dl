@@ -30,7 +30,7 @@ import codecs
 import logging
 import os.path
 import configargparse
-from future.moves.urllib.parse import urlparse, urlunparse, parse_qs, quote
+from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
