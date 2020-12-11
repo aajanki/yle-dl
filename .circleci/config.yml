@@ -33,7 +33,7 @@ jobs:
           # E266 too many leading ‘#’ for block comment
           # W504 line break after binary operator
           command: |
-	    pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
+            pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
 
 workflows:
   main:
