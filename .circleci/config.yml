@@ -10,9 +10,15 @@ jobs:
       - checkout
       - python/install-packages:
           pkg-manager: pip-dist
+          pip-dependency-file: setup.py
       - run:
           name: Install test dependencies
           command: pip install pycodestyle pyflakes
+      - run:
+          name: Install ffmpeg
+          command: |
+            sudo apt update
+            sudo apt install -y ffmpeg
       - run:
           name: pyflakes
           command: pyflakes yledl/*.py
