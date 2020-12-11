@@ -1,0 +1,32 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.3.0
+
+jobs:
+  build-and-test:
+    executor: python/default
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+      - python/install-packages:
+          pkg-manager: pip
+          args: pycodestyle pyflakes
+      - run:
+          name: pyflakes
+          command: pyflakes yledl/*.py
+      - run:
+          name: Test
+          command: python setup.py pytest
+      - run:
+          name: Smoke test
+          command: yle-dl --help
+      - run:
+          name: Statistics
+          command: pycodestyle --statistics --count yledl/*.py
+
+workflows:
+  main:
+    jobs:
+      - build-and-test
