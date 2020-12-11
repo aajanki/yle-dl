@@ -84,7 +84,8 @@ class BaseDownloader(object):
         if (io.resume and
             IOCapability.RESUME not in self.io_capabilities and
             filename != '-' and
-            os.path.isfile(filename)):
+            os.path.isfile(filename)
+        ):
             logger.warning('Resume not supported on this stream')
 
     def file_extension(self, preferred):
@@ -125,7 +126,7 @@ class BaseDownloader(object):
         logger.debug('Downloaded duration {} s, expected {} s'.format(
             downloaded_duration, expected_duration))
 
-        return downloaded_duration >= 0.98*expected_duration
+        return downloaded_duration >= 0.98 * expected_duration
 
 
 ### Base class for downloading a stream to a file using an external program ###
@@ -267,7 +268,7 @@ class HLSBackend(ExternalDownloader):
             if self.live:
                 # Areena seem to have 6 secs/fragment. Can we trust
                 # that this is a constant?
-                return ['-live_start_index', str(seekpos//6)]
+                return ['-live_start_index', str(seekpos // 6)]
             else:
                 return ['-ss', str(seekpos)]
         else:
@@ -339,7 +340,7 @@ class HLSBackend(ExternalDownloader):
 
     def ffmpeg_command_line(self, clip, io, output_options):
         args = [io.ffmpeg_binary, '-y',
-               '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+                '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
                 '-thread_queue_size', '512',
                 '-strict', 'experimental']  # For decoding webvtt subtitles
         if logger.getEffectiveLevel() <= logging.WARNING:

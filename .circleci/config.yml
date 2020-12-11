@@ -30,7 +30,10 @@ jobs:
           command: yle-dl --help
       - run:
           name: Statistics
-          command: pycodestyle --statistics --count yledl/*.py
+          # E266 too many leading ‘#’ for block comment
+          # W504 line break after binary operator
+          command: |
+	    pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
 
 workflows:
   main:

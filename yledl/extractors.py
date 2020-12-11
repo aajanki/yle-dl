@@ -97,7 +97,8 @@ class Flavors(object):
     def media_type(media):
         mtype = media.get('type')
         if (mtype == 'AudioObject' or
-            (mtype is None and media.get('containerFormat') == 'mpeg audio')):
+            (mtype is None and media.get('containerFormat') == 'mpeg audio')
+        ):
             return 'audio'
         else:
             return 'video'
@@ -744,7 +745,7 @@ class AreenaExtractor(AreenaPlaylist):
             hours = m.group('hours') or 0
             mins = m.group('mins') or 0
             secs = m.group('secs') or 0
-            return 3600*int(hours) + 60*int(mins) + int(secs)
+            return 3600 * int(hours) + 60 * int(mins) + int(secs)
         else:
             return None
 

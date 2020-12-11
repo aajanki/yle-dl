@@ -27,7 +27,7 @@ class FullHDFlavorProber(object):
             heights = [x['height'] for x in streams if 'height' in x]
             bitrate = program.get('tags', {}).get('variant_bitrate')
             if bitrate:
-                bitrate = int(bitrate)/1000
+                bitrate = int(bitrate) / 1000
 
             pid = program.get('program_id')
             res.append(StreamFlavor(

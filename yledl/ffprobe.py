@@ -46,5 +46,5 @@ class Ffprobe(object):
         if not m:
             raise ValueError('Failed to parse duration in the ffmpeg output')
 
-        return (float(m.group(1))*60*60 + float(m.group(2))*60 +
-                float(m.group(3)) + float(m.group(4))/100)
+        return (float(m.group(1)) * 60 * 60 + float(m.group(2)) * 60 +
+                float(m.group(3)) + float(m.group(4)) / 100)
