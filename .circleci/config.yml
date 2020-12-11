@@ -10,9 +10,9 @@ jobs:
       - checkout
       - python/install-packages:
           pkg-manager: pip-dist
-      - python/install-packages:
-          pkg-manager: pip
-          args: pycodestyle pyflakes
+      - run:
+          name: Install test dependencies
+          command: pip install pycodestyle pyflakes
       - run:
           name: pyflakes
           command: pyflakes yledl/*.py
