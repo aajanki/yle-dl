@@ -13,7 +13,9 @@ jobs:
           pip-dependency-file: setup.py
       - run:
           name: Install test dependencies
-          command: pip install pycodestyle pyflakes
+          command: |
+            pip install pycodestyle pyflakes tox tox-pyenv
+            pyenv global 3.5.10 3.6.12 3.7.9 3.8.6 3.9.1
       - run:
           name: Install ffmpeg
           command: |
@@ -24,7 +26,7 @@ jobs:
           command: pyflakes yledl/*.py
       - run:
           name: Test
-          command: python setup.py pytest
+          command: tox
       - run:
           name: Smoke test
           command: yle-dl --help
