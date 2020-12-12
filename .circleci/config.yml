@@ -4,7 +4,7 @@ orbs:
   python: circleci/python@1.3.0
 
 jobs:
-  build-and-test:
+  lint:
     executor: python/default
     steps:
       - checkout
@@ -13,9 +13,7 @@ jobs:
           pip-dependency-file: setup.py
       - run:
           name: Install test dependencies
-          command: |
-            pip install pycodestyle pyflakes tox tox-pyenv
-            pyenv global 3.5.10 3.6.12 3.7.9 3.8.6 3.9.1
+          command: pip install pycodestyle pyflakes
       - run:
           name: Install ffmpeg
           command: |
@@ -24,9 +22,6 @@ jobs:
       - run:
           name: pyflakes
           command: pyflakes yledl/*.py
-      - run:
-          name: Test
-          command: tox
       - run:
           name: Smoke test
           command: yle-dl --help
@@ -37,7 +32,74 @@ jobs:
           command: |
             pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
 
+  test35:
+    docker:
+      - image: cimg/python:3.5
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+          pip-dependency-file: setup.py
+      - run: python setup.py test
+
+  test36:
+    docker:
+      - image: cimg/python:3.6
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+          pip-dependency-file: setup.py
+      - run: python setup.py test
+
+  test37:
+    docker:
+      - image: cimg/python:3.7
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+          pip-dependency-file: setup.py
+      - run: python setup.py test
+
+  test38:
+    docker:
+      - image: cimg/python:3.8
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+          pip-dependency-file: setup.py
+      - run: python setup.py test
+
+  test39:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+          pip-dependency-file: setup.py
+      - run: python setup.py test
+
+
+
 workflows:
   main:
     jobs:
-      - build-and-test
+      - lint
+      - test35:
+        requires:
+          - lint
+      - test36:
+        requires:
+          - lint
+      - test37:
+        requires:
+          - lint
+      - test38:
+        requires:
+          - lint
+      - test39:
+        requires:
+          - lint
