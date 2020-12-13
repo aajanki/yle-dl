@@ -32,9 +32,9 @@ jobs:
           command: |
             pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
 
-  test35:
+  test:
     docker:
-      - image: cimg/python:3.5
+      - image: cimg/python:<< parameters.pyversion >>
     steps:
       - run:
           name: Install ffmpeg
@@ -45,86 +45,20 @@ jobs:
       - python/install-packages:
           pkg-manager: pip-dist
           pip-dependency-file: setup.py
-      - run: python setup.py test
-
-  test36:
-    docker:
-      - image: cimg/python:3.6
-    steps:
-      - run:
-          name: Install ffmpeg
-          command: |
-            sudo apt update
-            sudo apt install -y ffmpeg
-      - checkout
-      - python/install-packages:
-          pkg-manager: pip-dist
-          pip-dependency-file: setup.py
-      - run: python setup.py test
-
-  test37:
-    docker:
-      - image: cimg/python:3.7
-    steps:
-      - run:
-          name: Install ffmpeg
-          command: |
-            sudo apt update
-            sudo apt install -y ffmpeg
-      - checkout
-      - python/install-packages:
-          pkg-manager: pip-dist
-          pip-dependency-file: setup.py
-      - run: python setup.py test
-
-  test38:
-    docker:
-      - image: cimg/python:3.8
-    steps:
-      - run:
-          name: Install ffmpeg
-          command: |
-            sudo apt update
-            sudo apt install -y ffmpeg
-      - checkout
-      - python/install-packages:
-          pkg-manager: pip-dist
-          pip-dependency-file: setup.py
-      - run: python setup.py test
-
-  test39:
-    docker:
-      - image: cimg/python:3.9
-    steps:
-      - run:
-          name: Install ffmpeg
-          command: |
-            sudo apt update
-            sudo apt install -y ffmpeg
-      - checkout
-      - python/install-packages:
-          pkg-manager: pip-dist
-          pip-dependency-file: setup.py
-      - run: python setup.py test
-
+      - run: |
+        mkdir test-results
+        pytest --junit-xml=test-results/report.xml
+      - store_test_results:
+          path: test-results
 
 
 workflows:
   main:
     jobs:
       - lint
-      - test35:
+      - test:
           requires:
             - lint
-      - test36:
-          requires:
-            - lint
-      - test37:
-          requires:
-            - lint
-      - test38:
-          requires:
-            - lint
-      - test39:
-          requires:
-            - lint
+          matrix:
+              parameters:
+                  pyversion: ["3.5", "3.6", "3.7", "3.8", "3.9"]
