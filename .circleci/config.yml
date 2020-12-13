@@ -33,6 +33,9 @@ jobs:
             pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
 
   test:
+    parameters:
+        pyversion:
+	    type: string
     docker:
       - image: cimg/python:<< parameters.pyversion >>
     steps:
