@@ -45,9 +45,11 @@ jobs:
       - python/install-packages:
           pkg-manager: pip-dist
           pip-dependency-file: setup.py
-      - run: |
-        mkdir test-results
-        pytest --junit-xml=test-results/report.xml
+      - run:
+          name: Test
+          command: |
+            mkdir test-results
+            pytest --junit-xml=test-results/report.xml
       - store_test_results:
           path: test-results
 
