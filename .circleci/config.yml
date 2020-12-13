@@ -35,7 +35,7 @@ jobs:
   test:
     parameters:
         pyversion:
-	    type: string
+            type: string
     docker:
       - image: cimg/python:<< parameters.pyversion >>
     steps:
