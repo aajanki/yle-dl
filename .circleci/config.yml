@@ -48,6 +48,18 @@ jobs:
       - python/install-packages:
           pkg-manager: pip-dist
           pip-dependency-file: setup.py
+      - when:
+          condition:
+              equal: [ "3.5", << parameters.pyversion >> ]
+          steps:
+              - run:
+                  command: pip install "pytest<6.2.0"
+      - unless:
+          condition:
+              equal: [ "3.5", << parameters.pyversion >> ]
+          steps:
+              - run:
+                  command: pip install pytest
       - run:
           name: Test
           command: |
