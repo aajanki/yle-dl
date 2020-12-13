@@ -52,7 +52,7 @@ jobs:
           name: Test
           command: |
             mkdir test-results
-            python setup.py pytest tests --junit-xml=test-results/report.xml
+            python setup.py pytest --addopts "tests --junit-xml=test-results/report.xml"
       - store_test_results:
           path: test-results
 
