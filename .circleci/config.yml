@@ -23,14 +23,14 @@ jobs:
           name: pyflakes
           command: pyflakes yledl/*.py
       - run:
-          name: Smoke test
-          command: yle-dl --help
-      - run:
-          name: Statistics
+          name: Code style check
           # E266 too many leading ‘#’ for block comment
           # W504 line break after binary operator
           command: |
             pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
+      - run:
+          name: Smoke test
+          command: yle-dl --help
 
   test:
     parameters:
@@ -67,7 +67,6 @@ jobs:
             python setup.py pytest --addopts "tests --junit-xml=test-results/report.xml"
       - store_test_results:
           path: test-results
-
 
 workflows:
   main:
