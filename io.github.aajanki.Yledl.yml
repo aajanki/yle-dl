@@ -1,0 +1,23 @@
+app-id: io.github.aajanki.Yledl
+runtime: org.freedesktop.Platform
+runtime-version: '20.08'
+sdk: org.freedesktop.Sdk
+command: yle-dl
+finish-args:
+  - --share=network
+modules:
+  - name: app-install
+    buildsystem: simple
+    build-options:
+      build-args:
+        - --share=network
+    build-commands:
+      - install -D setup.py /app/package/setup.py
+      - cp -r yledl/ /app/package/yledl
+      - pip3 install --prefix=/app /app/package
+    sources:
+      - type: file
+        path: setup.py
+      - type: dir
+        path: yledl/
+        dest: yledl/

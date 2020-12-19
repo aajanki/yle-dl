@@ -3,6 +3,8 @@ __pycache__
 /build
 /dist
 /yle_dl.egg-info
+/flatpak-build/
+/.flatpak-builder/
 /.cache
 /.eggs
 /.pytest_cache
