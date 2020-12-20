@@ -27,6 +27,6 @@ git checkout master
 ## flatpak
 
 ```sh
-flatpak-builder --force-clean flatpak-build io.github.aajanki.Yledl.yml
-flatpak-builder --run flatpak-build/ io.github.aajanki.Yledl.yml yle-dl --help
+flatpak-builder --force-clean flatpak-build io.github.aajanki.yle-dl.yml
+flatpak-builder --run flatpak-build/ io.github.aajanki.yle-dl.yml yle-dl --help
 ```
