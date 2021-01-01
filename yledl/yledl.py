@@ -81,19 +81,6 @@ def arg_parser():
                     file = sys.stderr
                 print_enc(message, file, False)
 
-    def to_unicode(s):
-        enc = sys.getfilesystemencoding()
-        try:
-            # Python 2
-            if type(s) == unicode:
-                # default values are unicode even on Python 2
-                return s
-            else:
-                return unicode(s, enc)
-        except NameError:
-            # Python 3
-            return s
-
     description = \
         ('yle-dl %s: Download media files from Yle Areena and Elävä Arkisto\n'
          'Copyright (C) 2009-2020 Antti Ajanki <antti.ajanki@iki.fi>, '
@@ -116,15 +103,15 @@ def arg_parser():
 
     io_group = parser.add_argument_group('Input and output')
     url_group = io_group.add_mutually_exclusive_group()
-    url_group.add_argument('url', nargs='?', type=to_unicode,
+    url_group.add_argument('url', nargs='?', type=str,
                            help='Address of an Areena, Elävä Arkisto, '
                            'or Yle news web page')
     url_group.add_argument('-i', metavar='FILENAME', dest='inputfile',
-                           type=to_unicode,
+                           type=str,
                            help='Read input URLs to process from the named '
                            'file, one URL per line')
     io_group.add_argument('-o', metavar='FILENAME', dest='outputfile',
-                          type=to_unicode,
+                          type=str,
                           help='Save stream to the named file')
     io_group.add_argument('--output-template', metavar='TEMPLATE',
                           default='${series}${title}${episode}${timestamp}',
@@ -143,7 +130,7 @@ def arg_parser():
                           help='Dump stream to stdout for piping to media '
                           'player. E.g. "yle-dl --pipe URL | vlc -"')
     io_group.add_argument('--destdir', metavar='DIR',
-                          type=to_unicode,
+                          type=str,
                           help='Save files to DIR')
     action_group = io_group.add_mutually_exclusive_group()
     action_group.add_argument('--showurl', action='store_true',
@@ -173,34 +160,34 @@ def arg_parser():
                           help='Maximum bandwidth consumption, '
                           'interger in kB/s')
     io_group.add_argument('--proxy', metavar='URI',
-                          type=to_unicode,
+                          type=str,
                           help='HTTP(S) proxy to use. Example: --proxy localhost:8118')
     io_group.add_argument('--postprocess', metavar='CMD',
-                          type=to_unicode,
+                          type=str,
                           help='Execute the command CMD after a successful '
                           'download. CMD is called with two arguments: '
                           'video, subtitle')
 
     qual_group = parser.add_argument_group('Stream type and quality')
     qual_group.add_argument('--sublang', metavar='LANG',
-                            type=to_unicode,
+                            type=str,
                             choices=['none', 'fin', 'swe', 'all'],
                             default='all',
                             help='Download subtitles if LANG is "all" '
                             '(default), "fin" or "swe". Disable subtitles '
                             'if LANG is "none".')
-    qual_group.add_argument('--metadatalang', metavar='LANG', type=to_unicode,
+    qual_group.add_argument('--metadatalang', metavar='LANG', type=str,
                             choices=['fin', 'swe', 'smi'],
                             help='Preferred metadata language, "fin", "swe" '
                             'or "smi"')
     qual_group.add_argument('--latestepisode', action='store_true',
                             help='Download the latest episode of a series')
     qual_group.add_argument('--maxbitrate', metavar='RATE',
-                            type=to_unicode,
+                            type=str,
                             help='Maximum bitrate stream to download, '
                             'integer in kB/s or "best" or "worst".')
     qual_group.add_argument('--resolution', metavar='RES',
-                            type=to_unicode,
+                            type=str,
                             help='Maximum vertical resolution in pixels, '
                             'default: highest available resolution')
     qual_group.add_argument('--startposition', metavar='S', type=int,
@@ -209,7 +196,7 @@ def arg_parser():
     qual_group.add_argument('--duration', metavar='S', type=int,
                             help='Record only the first S seconds of '
                             'the stream')
-    qual_group.add_argument('--preferformat', metavar='F', type=to_unicode,
+    qual_group.add_argument('--preferformat', metavar='F', type=str,
                             default='mkv',
                             help='Preferred video output format: '
                             'mkv (default) or mp4. Applies only when '
@@ -217,7 +204,7 @@ def arg_parser():
 
     dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument('--backend', metavar='BE',
-                          type=to_unicode,
+                          type=str,
                           default="ffmpeg,wget",
                           help='Downloaders that are tried until one of them '
                           ' succeeds (a comma-separated list). '
@@ -225,13 +212,13 @@ def arg_parser():
                           '"wget", '
                           '"ffmpeg"')
     dl_group.add_argument('--ffmpeg', metavar='PATH',
-                          type=to_unicode,
+                          type=str,
                           help='Set path to the ffmpeg binary')
     dl_group.add_argument('--ffprobe', metavar='PATH',
-                          type=to_unicode,
+                          type=str,
                           help='Set path to the ffprobe binary')
     dl_group.add_argument('--wget', metavar='PATH',
-                          type=to_unicode, default='',
+                          type=str, default='',
                           help='Set path to wget binary')
 
     return parser
