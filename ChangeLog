@@ -4,6 +4,7 @@ Distributed under the GPL v3
 
 <unreleased>
 
+- Some upcoming episodes were being downloaded as zero-length files
 - Only Python 3.5+ supported from now on
 
 Version 20201022

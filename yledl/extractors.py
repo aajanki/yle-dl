@@ -413,7 +413,8 @@ class AreenaPreviewApiParser(object):
 
     def is_pending(self):
         data = self.preview.get('data', {})
-        return data.get('pending_event') is not None
+        pending = data.get('pending_event') or data.get('pending_ondemand')
+        return pending is not None
 
     def is_expired(self):
         data = self.preview.get('data', {})
