@@ -309,7 +309,8 @@ class AreenaPlaylist(ClipExtractor):
         while has_next_page:
             page = self.playlist_page(series_id, page_size, offset)
             if page is None:
-                logger.warn('Playlist failed at offset {}. Some episodes may be missing!')
+                logger.warn('Playlist failed at offset {}. '
+                            'Some episodes may be missing!'.format(offset))
                 return playlist
 
             playlist.extend(page)
