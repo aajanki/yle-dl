@@ -54,8 +54,11 @@ class HttpClient(object):
         try:
             page = response.text
             return lxml.html.fromstring(page)
-        except lxml.etree.XMLSyntaxError:
-            logger.warn('HTML syntax error')
+        except lxml.etree.XMLSyntaxError as ex:
+            logger.warn('HTML syntax error: {}'.format(str(ex)))
+            return None
+        except lxml.etree.ParserError as ex:
+            logger.warn('HTML parsing error: {}'.format(str(ex)))
             return None
 
     def download_to_file(self, url, destination_filename):
