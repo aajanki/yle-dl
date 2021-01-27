@@ -25,18 +25,24 @@ def extractor_factory(url, filters, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
+        logger.debug('{} is an Elava Arkisto URL'.format(url))
         return ElavaArkistoExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
+        logger.debug('{} is a live radio URL'.format(url))
         return AreenaLiveRadioExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/audio/[-0-9]+', url):
+        logger.debug('{} is an audio URL'.format(url))
         return AreenaAudio2020Extractor(language_chooser, httpclient)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
+        logger.debug('{} is a news URL'.format(url))
         return YleUutisetExtractor(language_chooser, httpclient)
-    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or \
-            re.match(r'^https?://yle\.fi/', url):
+    elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or
+          re.match(r'^https?://yle\.fi/', url)):
+        logger.debug('{} is an Areena URL'.format(url))
         return AreenaExtractor(language_chooser, httpclient)
     else:
+        logger.debug('{} is an unrecognized URL'.format(url))
         return None
 
 
@@ -261,8 +267,7 @@ class AreenaPlaylist(ClipExtractor):
         playlist = []
         if not self.is_tv_ohjelmat_url(url):
             series_id = self.program_id_from_url(url)
-            playlist = self.get_playlist_old_style_url(
-                url, series_id)
+            playlist = self.get_playlist_old_style_url(url, series_id)
 
         if playlist is None:
             logger.error('Failed to parse a playlist')
