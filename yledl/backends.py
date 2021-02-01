@@ -341,7 +341,7 @@ class HLSBackend(ExternalDownloader):
     def ffmpeg_command_line(self, clip, io, output_options):
         args = [io.ffmpeg_binary, '-y',
                 '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-                '-thread_queue_size', '512',
+                '-thread_queue_size', '1024',
                 '-strict', 'experimental']  # For decoding webvtt subtitles
         if logger.getEffectiveLevel() <= logging.WARNING:
             args.append('-stats')
