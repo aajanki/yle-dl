@@ -158,7 +158,7 @@ def arg_parser():
                           help='Quit if a file already exists')
     io_group.add_argument('--ratelimit', metavar='BR', type=int,
                           help='Maximum bandwidth consumption, '
-                          'interger in kB/s')
+                          'integer in kB/s')
     io_group.add_argument('--proxy', metavar='URI',
                           type=str,
                           help='HTTP(S) proxy to use. Example: --proxy localhost:8118')
