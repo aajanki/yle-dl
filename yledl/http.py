@@ -121,7 +121,7 @@ def yledl_user_agent():
 def html_meta_charset(html_bytes):
     metacharset = re.search(br'<meta [^>]*?charset="(.*?)"', html_bytes)
     if metacharset:
-        return str(metacharset.group(1))
+        return metacharset.group(1).decode('ASCII')
     else:
         return None
 
