@@ -35,7 +35,7 @@ class HttpClient(object):
             session.mount('http://', HTTPAdapter(max_retries=retry))
             session.mount('https://', HTTPAdapter(max_retries=retry))
         except ImportError:
-            logger.warn('Requests library is too old. Retrying not supported.')
+            logger.warning('Requests library is too old. Retrying not supported.')
 
         return session
 
@@ -49,21 +49,23 @@ class HttpClient(object):
         response = self.get(url, extra_headers)
         metacharset = html_meta_charset(response.content)
         if metacharset:
+            logger.debug('HTML meta charset: {}'.format(metacharset))
             response.encoding = metacharset
 
         try:
             page = response.text
             return lxml.html.fromstring(page)
         except lxml.etree.XMLSyntaxError as ex:
-            logger.warn('HTML syntax error: {}'.format(str(ex)))
+            logger.warning('HTML syntax error: {}'.format(str(ex)))
             return None
         except lxml.etree.ParserError as ex:
-            logger.warn('HTML parsing error: {}'.format(str(ex)))
+            logger.warning('HTML parsing error: {}'.format(str(ex)))
             return None
 
     def download_to_file(self, url, destination_filename):
         enc = sys.getfilesystemencoding()
         encoded_filename = destination_filename.encode(enc, 'replace')
+        logger.debug('HTTP GET {}'.format(url))
         with open(encoded_filename, 'wb') as output:
             r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
             r.raise_for_status()
@@ -80,7 +82,12 @@ class HttpClient(object):
         if extra_headers:
             headers.update(extra_headers)
 
+        logger.debug('HTTP GET {}'.format(url))
         r = self._session.get(url, headers=headers)
+        logger.debug('HTTP status code: {}'.format(r.status_code))
+        logger.debug('HTTP response headers:')
+        for name, value in r.headers.items():
+            logger.debug('{}: {}'.format(name, value))
         r.raise_for_status()
 
         return r
@@ -90,7 +97,12 @@ class HttpClient(object):
         if extra_headers:
             headers.update(extra_headers)
 
+        logger.debug('HTTP POST {}'.format(url))
         r = self._session.post(url, json=json_data, headers=headers)
+        logger.debug('HTTP status code: {}'.format(r.status_code))
+        logger.debug('HTTP response headers:')
+        for name, value in r.headers.items():
+            logger.debug('{}: {}'.format(name, value))
         r.raise_for_status()
 
         return r
