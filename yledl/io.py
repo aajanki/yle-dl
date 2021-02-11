@@ -4,6 +4,8 @@ import attr
 import logging
 import os
 import os.path
+import re
+import subprocess
 from .ffprobe import Ffprobe
 from .utils import sane_filename
 
@@ -81,6 +83,16 @@ class IOContext(object):
             return None
 
         return Ffprobe(self.ffprobe_binary, self.ffmpeg_binary)
+
+    def ffmpeg_version(self):
+        if self.ffmpeg_binary:
+            args = [self.ffmpeg_binary, '-loglevel', 'quiet', '-version']
+            p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
+            if p.returncode == 0:
+                first_line = p.stdout.splitlines()[0]
+                m = re.match(r'ffmpeg version (\d+)\.(\d+)\.(\d+)', first_line)
+                if m:
+                    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
 
 
 class OutputFileNameGenerator(object):

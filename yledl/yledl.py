@@ -378,6 +378,17 @@ def start_position_from_url(url):
     return int(seeks[0]) if seeks else None
 
 
+def warn_on_obsolete_ffmpeg(backends, io):
+    if 'ffmpeg' in backends:
+        ffmpeg_version = io.ffmpeg_version()
+        if ffmpeg_version is not None:
+            logger.debug('Detected ffmpeg {}.{}.{}'.format(*ffmpeg_version))
+            if ffmpeg_version < (4, 1, 0):
+                logger.warning('Your version of ffmpeg ({}.{}.{}) might not download '
+                               'all streams correctly.'.format(*ffmpeg_version))
+                logger.warning('Please upgrade ffmpeg to version 4.1.0 or later.')
+
+
 ### main program ###
 
 
@@ -435,6 +446,8 @@ def main(argv=sys.argv):
                                    maxbitrate, maxheight, backends)
     httpclient = HttpClient(args.proxy)
     exit_status = RD_SUCCESS
+
+    warn_on_obsolete_ffmpeg(backends, io)
 
     for i, url in enumerate(urls):
         if len(urls) > 1:
