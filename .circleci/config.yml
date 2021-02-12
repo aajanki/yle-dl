@@ -1,7 +1,11 @@
 version: 2.1
 
+orbs:
+  python: circleci/python@1.3.0
+
 jobs:
   noop:
+    executor: python/default
     steps:
       - run:
           command: echo
@@ -10,6 +14,6 @@ workflows:
   main:
     jobs:
       - noop:
+        filters:
           branches:
-            ignore:
-              - gh-pages
+            ignore: gh-pages
