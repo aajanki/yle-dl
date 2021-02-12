@@ -3,7 +3,7 @@ Download videos from Yle servers
 [![Build status](https://circleci.com/gh/aajanki/yle-dl.svg?style=shield)](https://app.circleci.com/pipelines/github/aajanki/yle-dl)
 [![PyPI version](https://badge.fury.io/py/yle-dl.svg)](https://badge.fury.io/py/yle-dl)
 
-Copyright (C) 2010-2020 Antti Ajanki, antti.ajanki@iki.fi
+Copyright (C) 2010-2021 Antti Ajanki, antti.ajanki@iki.fi
 
 License: GPLv3
 
@@ -202,3 +202,8 @@ Known problems
 #### Problem: Subtitles are visible only for the first five minutes.
 
 Solution: Update your ffmpeg to version 4.1 or later.
+
+#### Problem: Trying to fetch a radio series only downloads the first episode on Mac OS X.
+
+This is an [open issue](https://github.com/aajanki/yle-dl/issues/261).
+The workaround is to download each episode one by one.

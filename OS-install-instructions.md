@@ -125,7 +125,7 @@ correctly.
 
 ## Mac OS X
 
-First, intall [Homebrew](https://brew.sh/). Next, run the following
+First, install [Homebrew](https://brew.sh/). Next, run the following
 commands:
 
 ```

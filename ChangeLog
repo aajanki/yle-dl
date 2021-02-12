@@ -1,9 +1,12 @@
 yle-dl - download videos from Yle servers
-Copyright 2009-2020 Antti Ajanki
+Copyright 2009-2021 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20210212
 
+- Partially fixed a problem downloading radio programs on Mac OS X:
+  individual episodes can again be downloaded but attempting to
+  download a series results only downloading the first episode.
 - Some upcoming episodes were being downloaded as zero-length files
 - Only Python 3.5+ supported from now on
 
