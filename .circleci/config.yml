@@ -1,0 +1,15 @@
+version: 2.1
+
+jobs:
+  noop:
+    steps:
+      - run:
+          command: echo
+
+workflows:
+  main:
+    jobs:
+      - noop:
+          branches:
+            ignore:
+              - gh-pages
