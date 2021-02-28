@@ -7,7 +7,7 @@ Copyright (C) 2010-2021 Antti Ajanki, antti.ajanki@iki.fi
 
 License: GPLv3
 
-Homepage: https://aajanki.github.com/yle-dl/index-en.html
+Homepage: https://aajanki.github.io/yle-dl/index-en.html
 
 Source code: https://github.com/aajanki/yle-dl
 
@@ -150,7 +150,7 @@ config file values which override defaults.
 Contributed packages for various distros
 ----------------------------------------
 
-[A list of contributed packages](https://aajanki.github.com/yle-dl/index-en.html#packages)
+[A list of contributed packages](https://aajanki.github.io/yle-dl/index-en.html#packages)
 
 Integration tests
 -----------------
