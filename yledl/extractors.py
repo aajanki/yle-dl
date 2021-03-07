@@ -300,14 +300,9 @@ class AreenaPlaylist(ClipExtractor):
                      'size = {size}, offset = {offset}'.format(
                          series_id=series_id, size=page_size, offset=offset))
 
-        playlist_json = self.httpclient.download_page(
-            self.playlist_url(series_id, page_size, offset))
-        if not playlist_json:
-            return None
-
-        try:
-            playlist = json.loads(playlist_json)
-        except ValueError:
+        pl_url = self.playlist_url(series_id, page_size, offset)
+        playlist = JSONP.load_json(pl_url, self.httpclient)
+        if playlist is None:
             return None
 
         playlist_data = playlist.get('data', [])
@@ -847,14 +842,9 @@ class AreenaAudio2020Extractor(AreenaExtractor):
                      'size = {size}, offset = {offset}'.format(
                          series_id=series_id, size=page_size, offset=offset))
 
-        playlist_json = self.httpclient.download_page(
-            self.playlist_url(series_id, page_size, offset))
-        if not playlist_json:
-            return None
-
-        try:
-            playlist = json.loads(playlist_json)
-        except ValueError:
+        pl_url = self.playlist_url(series_id, page_size, offset)
+        playlist = JSONP.load_json(pl_url, self.httpclient)
+        if playlist is None:
             return None
 
         playlist_data = playlist.get('data', [])
