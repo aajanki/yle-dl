@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import attr
 import itertools
 import json
@@ -9,7 +7,6 @@ import re
 from datetime import datetime
 from urllib.parse import urlparse, quote_plus, parse_qs
 from .backends import HLSAudioBackend, HLSBackend, WgetBackend
-from .http import html_unescape
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, FailedFlavor
@@ -93,6 +90,12 @@ class JSONP(object):
             return None
 
         return without_padding
+
+
+    @staticmethod
+    def parse_json_object(text, start_pos):
+        """Extract a JSON document from a text string starting at start_pos."""
+        return json.JSONDecoder().raw_decode(text[start_pos:])[0]
 
 
 ## Flavors
@@ -937,13 +940,20 @@ class YleUutisetExtractor(AreenaExtractor):
         if html is None:
             return None
 
-        javascript_re = re.search(r'window.__INITIAL_STATE__=(.+)', html)
+        javascript_re = re.search(r'window\.__INITIAL__?STATE__\s*=\s*', html)
         if not javascript_re:
             return []
 
-        state = json.loads(html_unescape(javascript_re.group(1)))
-        medias = state.get('article', {}).get('mainMedia', [])
-        data_ids = [m.get('id') for m in medias]
+        data_ids = []
+        state = JSONP.parse_json_object(html, javascript_re.end())
+        article = state.get('article', {}).get('article', {})
+        if article.get('mainMedia') is not None:
+            medias = article.get('mainMedia', [])
+            data_ids = [m.get('id') for m in medias if m.get('type') == 'VideoBlock']
+        else:
+            headline_video_id = article.get('headline', {}).get('video', {}).get('id')
+            if headline_video_id:
+                data_ids = [headline_video_id]
 
         logger.debug('Found Areena data IDs: {}'.format(','.join(data_ids)))
 
