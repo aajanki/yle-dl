@@ -124,11 +124,3 @@ def html_meta_charset(html_bytes):
         return metacharset.group(1).decode('ASCII')
     else:
         return None
-
-
-def html_unescape(escaped_html):
-    s = escaped_html.replace("&lt;", "<")
-    s = s.replace("&gt;", ">")
-    s = s.replace("&quot;", '"')
-    s = s.replace("&amp;", "&")
-    return s

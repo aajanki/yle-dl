@@ -54,20 +54,6 @@ def url_language(url):
 
 class JSONP(object):
     @staticmethod
-    def load_jsonp(url, httpclient, headers=None):
-        json_string = JSONP.remove_jsonp_padding(
-            httpclient.download_page(url, headers))
-        if not json_string:
-            return None
-
-        try:
-            json_parsed = json.loads(json_string)
-        except ValueError:
-            return None
-
-        return json_parsed
-
-    @staticmethod
     def load_json(url, httpclient, headers=None):
         json_string = httpclient.download_page(url, headers)
         if not json_string:
@@ -79,18 +65,6 @@ class JSONP(object):
             return None
 
         return json_parsed
-
-    @staticmethod
-    def remove_jsonp_padding(jsonp):
-        if not jsonp:
-            return None
-
-        without_padding = re.sub(r'^[\w.]+\(|\);$', '', jsonp)
-        if without_padding[:1] != '{' or without_padding[-1:] != '}':
-            return None
-
-        return without_padding
-
 
     @staticmethod
     def parse_json_object(text, start_pos):
