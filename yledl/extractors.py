@@ -6,6 +6,7 @@ import os.path
 import re
 from datetime import datetime
 from urllib.parse import urlparse, quote_plus, parse_qs
+from . import jsonhelpers
 from .backends import HLSAudioBackend, HLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
@@ -50,26 +51,6 @@ def url_language(url):
         return 'swe'
     else:
         return 'fin'
-
-
-class JSONP(object):
-    @staticmethod
-    def load_json(url, httpclient, headers=None):
-        json_string = httpclient.download_page(url, headers)
-        if not json_string:
-            return None
-
-        try:
-            json_parsed = json.loads(json_string)
-        except ValueError:
-            return None
-
-        return json_parsed
-
-    @staticmethod
-    def parse_json_object(text, start_pos):
-        """Extract a JSON document from a text string starting at start_pos."""
-        return json.JSONDecoder().raw_decode(text[start_pos:])[0]
 
 
 ## Flavors
@@ -301,7 +282,7 @@ class AreenaPlaylist(ClipExtractor):
                          series_id=series_id, size=page_size, offset=offset))
 
         pl_url = self.playlist_url(series_id, page_size, offset)
-        playlist = JSONP.load_json(pl_url, self.httpclient)
+        playlist = jsonhelpers.load_json(pl_url, self.httpclient)
         if playlist is None:
             return None
 
@@ -628,7 +609,7 @@ class AreenaExtractor(AreenaPlaylist):
         if preview.is_live() and not self.force_program_info():
             info = None
         else:
-            info = JSONP.load_json(self.program_info_url(pid), self.httpclient)
+            info = jsonhelpers.load_json(self.program_info_url(pid), self.httpclient)
             logger.debug('program data:\n' + json.dumps(info, indent=2))
 
         publish_timestamp = (self.publish_timestamp(info) or
@@ -695,7 +676,7 @@ class AreenaExtractor(AreenaPlaylist):
             'Referer': pageurl,
             'Origin': 'https://areena.yle.fi'
         }
-        preview_json = JSONP.load_json(self.preview_url(pid),
+        preview_json = jsonhelpers.load_json(self.preview_url(pid),
                                        self.httpclient,
                                        headers=preview_headers)
         logger.debug('preview data:\n' + json.dumps(preview_json, indent=2))
@@ -843,7 +824,7 @@ class AreenaAudio2020Extractor(AreenaExtractor):
                          series_id=series_id, size=page_size, offset=offset))
 
         pl_url = self.playlist_url(series_id, page_size, offset)
-        playlist = JSONP.load_json(pl_url, self.httpclient)
+        playlist = jsonhelpers.load_json(pl_url, self.httpclient)
         if playlist is None:
             return None
 
@@ -909,7 +890,7 @@ class YleUutisetExtractor(AreenaExtractor):
             return []
 
         data_ids = []
-        state = JSONP.parse_json_object(html, javascript_re.end())
+        state = jsonhelpers.parse_json_object(html, javascript_re.end())
         article = state.get('article', {}).get('article', {})
         if article.get('mainMedia') is not None:
             medias = article.get('mainMedia', [])
