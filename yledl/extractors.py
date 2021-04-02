@@ -912,6 +912,10 @@ class YleUutisetExtractor(AreenaExtractor):
             if headline_video_id:
                 data_ids = [headline_video_id]
 
+        content = article.get('content', [])
+        data_ids.extend(block.get('id') for block in content
+                        if block.get('type') == 'AudioBlock' and block.get('id'))
+
         logger.debug('Found Areena data IDs: {}'.format(','.join(data_ids)))
 
         return [self.id_to_areena_url(id) for id in data_ids]
