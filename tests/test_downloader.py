@@ -470,4 +470,4 @@ def test_download_fallback(simple):
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
-    assert state['stream_id'] == '3'
+    assert state['stream_id'] == '4'

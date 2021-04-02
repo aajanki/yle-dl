@@ -9,7 +9,7 @@ def test_areena_html5_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-787136')
 
     assert len(streamurl) == 1
-    assert '/a.mp4?' in streamurl[0]
+    assert '/a.m3u8?' in streamurl[0]
 
 
 def test_areena_html5_metadata():
@@ -42,32 +42,6 @@ def test_metadata_language():
     assert title_swe.startswith('Finlands väg till fortsättningskriget')
 
 
-@pytest.mark.geoblocked
-def test_areena_iphone_stream_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/1-4247408')
-
-    assert len(streamurl) == 1
-    assert '/a.mp4?' in streamurl[0]
-
-
-@pytest.mark.geoblocked
-def test_areena_iphone_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/1-4247408')
-
-    assert len(metadata) == 1
-    flavors = metadata[0]['flavors']
-    assert len(flavors) == 6
-    assert all(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f and
-               'height' in f and
-               'width' in f
-               for f in flavors)
-    assert metadata[0]['duration_seconds'] == 234
-    assert metadata[0]['region'] == 'Finland'
-    assert len(metadata[0]['description']) > 40
-    assert metadata[0]['publish_timestamp'] == '2017-11-08T01:15:00+02:00'
-
-
 def test_areena_series_titles():
     titles = fetch_title('https://areena.yle.fi/1-3826480')
 
@@ -79,7 +53,7 @@ def test_areena_series_urls():
     urls = fetch_stream_url('https://areena.yle.fi/1-3826480')
 
     assert len(urls) == 10
-    assert all(['a.mp4' in url for url in urls])
+    assert all(['a.m3u8' in url for url in urls])
 
 
 @pytest.mark.geoblocked
@@ -129,7 +103,7 @@ def test_areena_html5_clip_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-3523087')
 
     assert len(streamurl) == 1
-    assert '/a.mp4?' in streamurl[0]
+    assert '/a.m3u8?' in streamurl[0]
 
 
 def test_areena_episode_pages():

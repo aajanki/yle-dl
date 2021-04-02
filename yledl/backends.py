@@ -510,8 +510,8 @@ class Backends(object):
     WGET = 'wget'
 
     default_order = [
-        WGET,
         FFMPEG,
+        WGET,
     ]
 
     @staticmethod

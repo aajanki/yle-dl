@@ -13,7 +13,7 @@ def test_arkisto_stream_url():
                                  '/studio-julmahuvi-roudasta-rospuuttoon')
 
     assert streamurl
-    assert '/a.mp4' in streamurl[0]
+    assert '/a.m3u8' in streamurl[0]
 
 
 def test_arkisto_regression():
