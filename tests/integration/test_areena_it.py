@@ -24,7 +24,7 @@ def test_areena_html5_metadata():
                'width' in f
                for f in flavors)
     assert metadata[0]['duration_seconds'] == 3196
-    assert metadata[0]['region'] == 'World'
+    assert metadata[0]['region'] == 'Finland'
     assert metadata[0]['publish_timestamp'] == '2017-07-16T14:00:00+03:00'
     assert 'expired_timestamp' not in metadata[0]
     assert len(metadata[0]['description']) > 150
