@@ -881,16 +881,28 @@ class ElavaArkistoExtractor(AreenaExtractor):
 
 class YleUutisetExtractor(AreenaExtractor):
     def get_playlist(self, url):
-        html = self.httpclient.download_page(url)
-        if html is None:
-            return None
+        tree = self.httpclient.download_html_tree(url)
+        if tree is None:
+            return []
 
-        javascript_re = re.search(r'window\.__INITIAL__?STATE__\s*=\s*', html)
-        if not javascript_re:
+        state = None
+        state_script_nodes = tree.xpath(
+            '//script[@type="text/javascript" and '
+            '(contains(text(), "window.__INITIAL__STATE__") or '
+            ' contains(text(), "window.__INITIAL_STATE__"))]/text()')
+        if len(state_script_nodes) > 0:
+            state_json = re.sub(r'^window\.__INITIAL__?STATE__\s*=\s*', '', state_script_nodes[0])
+            state = json.loads(state_json)
+
+        if state is None:
+            state_div_nodes = tree.xpath('//div[@id="initialState"]')
+            if len(state_div_nodes) > 0:
+                state = json.loads(state_div_nodes[0].attrib.get('data-state'))
+
+        if state is None:
             return []
 
         data_ids = []
-        state = jsonhelpers.parse_json_object(html, javascript_re.end())
         article = state.get('article', {}).get('article', {})
         if article.get('mainMedia') is not None:
             medias = article.get('mainMedia', [])
