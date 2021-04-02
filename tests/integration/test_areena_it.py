@@ -6,31 +6,28 @@ from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
 
 
 def test_areena_html5_stream_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/1-403848')
+    streamurl = fetch_stream_url('https://areena.yle.fi/1-787136')
 
     assert len(streamurl) == 1
     assert '/a.mp4?' in streamurl[0]
 
 
 def test_areena_html5_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/1-403848')
+    metadata = fetch_metadata('https://areena.yle.fi/1-787136')
 
     assert len(metadata) == 1
     flavors = metadata[0]['flavors']
-    assert len(flavors) == 5
+    assert len(flavors) >= 5
     assert all(f.get('media_type') == 'video' for f in flavors)
     assert all('bitrate' in f and
                'height' in f and
                'width' in f
                for f in flavors)
-    assert metadata[0]['duration_seconds'] == 3196
-    assert metadata[0]['region'] == 'Finland'
-    assert metadata[0]['publish_timestamp'] == '2017-07-16T14:00:00+03:00'
+    assert metadata[0]['duration_seconds'] == 907
+    assert metadata[0]['region'] == 'World'
+    assert metadata[0]['publish_timestamp'] == '2021-04-01T00:01:00+03:00'
     assert 'expired_timestamp' not in metadata[0]
     assert len(metadata[0]['description']) > 150
-    assert metadata[0]['embedded_subtitles'] == [
-        {'language': 'fin', 'category': 'ohjelmatekstitys'}
-    ]
 
 
 def test_metadata_language():
