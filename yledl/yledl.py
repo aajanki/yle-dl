@@ -116,15 +116,16 @@ def arg_parser():
     io_group.add_argument('--output-template', metavar='TEMPLATE',
                           default='${series}${title}${episode}${timestamp}',
                           help='Template for generating an output file name '
-                          'when not using -o. The template supports following '
-                          'substitutions: '
+                          'when not using -o. Put the argument in single quotes: '
+                          '--output-template \'${title}\'. '
+                          'The template supports following substitutions: '
                           '${title} is replaced by the title of the episode, '
                           '${series} is the series title, '
-                          '${episode} is the season and episode number "S02E12", '
-                          '${timestamp} is stream publish timestamp "2018-12-01T18:30", '
-                          '${date} is the stream publish date "2018-12-01", '
+                          '${episode} is the season and episode number ("S02E12"), '
+                          '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
+                          '${date} is the stream publish date ("2018-12-01"), '
                           '${program_id} is an unique ID, '
-                          '$$ is an escape and will be replaced by a literal "$". '
+                          '$$ is an escape and will be replaced by a literal $. '
                           'Everything else will appear as-is.')
     io_group.add_argument('--pipe', action='store_true',
                           help='Dump stream to stdout for piping to media '
