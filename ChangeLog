@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2021 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20210502
 
 - Fixed the support for yle.fi/uutiset video and audio
 
