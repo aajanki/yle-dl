@@ -49,3 +49,21 @@ def test_arkivet_audio_metadata():
     assert metadata[0].get('title').startswith('Apan ur Dockskåpet')
     for m in metadata:
         assert all(f.get('media_type') == 'audio' for f in m.get('flavors'))
+
+
+def test_arkivet_a__stream_url():
+    streamurl = fetch_stream_url('https://svenska.yle.fi/a/7-884297')
+    assert streamurl
+    assert '/a.m3u8' in streamurl[0]
+
+
+def test_arkivet_a_metadata():
+    metadata = fetch_metadata('https://svenska.yle.fi/a/7-884297')
+
+    assert len(metadata) >= 4
+    assert metadata[1].get('title').startswith('Valborg på Borgbacken')
+    flavors = metadata[1]['flavors']
+    assert all(f.get('media_type') == 'video' for f in flavors)
+    assert all('bitrate' in f for f in flavors)
+    assert all('height' in f for f in flavors)
+    assert all('width' in f for f in flavors)

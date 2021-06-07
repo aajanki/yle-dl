@@ -170,7 +170,7 @@ pytest-3 --geoblocked
 Running only a single test file:
 
 ```
-pytest-3 -k tests/integration/test_areena_radio_it.py
+pytest-3 tests/integration/test_areena_radio_it.py
 ```
 
 Examples

@@ -25,6 +25,9 @@ def extractor_factory(url, filters, language_chooser, httpclient):
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
         logger.debug('{} is an Elava Arkisto URL'.format(url))
         return ElavaArkistoExtractor(language_chooser, httpclient)
+    elif re.match(r'^https?://svenska\.yle\.fi/a/', url):
+        logger.debug('{} is a Svenska Arkivet /a/ URL'.format(url))
+        return ElavaArkistoSvenskaAExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         logger.debug('{} is a live radio URL'.format(url))
@@ -874,6 +877,24 @@ class ElavaArkistoExtractor(AreenaExtractor):
         dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
         dataids = [str(d) for d in dataids]
         return [d if '-' in d else '1-' + d for d in dataids]
+
+
+class ElavaArkistoSvenskaAExtractor(AreenaExtractor):
+    """Extract streams from Svenska Arkivet 2021 style URLs.
+
+    Extracts from svenska.yle.fi/a/... but not from svenska.yle.fi/artikel/..."""
+
+    def get_playlist(self, url):
+        ids = self.get_dataids(url)
+        return ['https://areena.yle.fi/' + x for x in ids]
+
+    def get_dataids(self, url):
+        tree = self.httpclient.download_html_tree(url)
+        if tree is None:
+            return []
+
+        player_props = [json.loads(str(x)) for x in tree.xpath("//main//div/@data-player-props")]
+        return [x['id'] for x in player_props if 'id' in x]
 
 
 ### News clips at the Yle news site ###
