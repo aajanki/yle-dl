@@ -106,6 +106,27 @@ def test_areena_html5_clip_stream_url():
     assert '/a.m3u8?' in streamurl[0]
 
 
+def test_areena_awsmpodamdipv4_stream_url():
+    streamurl = fetch_stream_url('https://areena.yle.fi/1-50875269')
+
+    assert len(streamurl) == 1
+    assert '/index.m3u8?' in streamurl[0]
+
+
+def test_areena_awsmpodamdipv4_metadata():
+    metadata = fetch_metadata('https://areena.yle.fi/1-50875269')
+
+    assert len(metadata) == 1
+    flavors = metadata[0]['flavors']
+    assert len(flavors) >= 1
+    assert all(f.get('media_type') == 'video' for f in flavors)
+    assert metadata[0]['duration_seconds'] == 257
+    assert metadata[0]['region'] == 'World'
+    assert metadata[0]['publish_timestamp'] == '2021-06-11T08:40:00+03:00'
+    assert 'expired_timestamp' not in metadata[0]
+    assert len(metadata[0]['description']) > 150
+
+
 def test_areena_episode_pages():
     episodes = fetch_episode_pages('https://areena.yle.fi/1-3148871')
 
