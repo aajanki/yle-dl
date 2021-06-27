@@ -525,7 +525,7 @@ class AreenaExtractor(AreenaPlaylist):
             return (kaltura_flavors or
                     self.hls_probe_flavors(hls_manifest_url, media_type,
                                            False, ffprobe))
-        elif self.is_awsmpodamdipv4_media(media_id):
+        elif self.is_media_67(media_id):
             return []
         else:
             return [FailedFlavor('Unknown stream flavor')]
@@ -536,7 +536,7 @@ class AreenaExtractor(AreenaPlaylist):
     def is_full_hd_media(self, media_id):
         return media_id and media_id.startswith('55-')
 
-    def is_awsmpodamdipv4_media(self, media_id):
+    def is_media_67(self, media_id):
         # A new hosting alternative (June 2021)? Hosted on yleawsmpodamdipv4.akamaized.net
         return media_id and media_id.startswith('67-')
 
