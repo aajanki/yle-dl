@@ -62,39 +62,6 @@ python3 setup.py install --user
 ```
 
 
-## Debian 8 (Jessie)/Ubuntu 15.10 or older
-
-```
-# If you have installed a previous version globally (without the
-# --user switch in the pip install command), remove the globally
-# installed version first:
-sudo pip uninstall yle-dl
-
-sudo apt-get install wget libav-tools python-dev python-setuptools \
-     python-pip python-requests python-lxml
-pip install --user pyOpenSSL ndg-httpsclient pyasn1
-pip install --user --upgrade yle-dl
-```
-
-(You may get prompted to upgrade pip. However, it is not necessary to
-upgrade pip for installing yle-dl.)
-
-### Installing from source code on Debian 8/Ubuntu 15.10 or older
-
-```
-# If you have installed a previous version globally (without the
-# --user switch in the pip install command), remove the globally
-# installed version first:
-sudo pip uninstall yle-dl
-
-sudo apt-get install git wget libav-tools python-dev \
-    python-setuptools python-requests python-lxml
-git clone https://github.com/aajanki/yle-dl.git
-cd yle-dl
-python setup.py install --user
-```
-
-
 ## Gentoo
 
 ```
