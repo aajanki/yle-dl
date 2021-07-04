@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2021 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20210704
 
 - Support for new Svenska Arkivet URLs: https://svenska.yle.fi/a/
 - Support for a new stream type on Areena
