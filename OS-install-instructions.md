@@ -11,6 +11,11 @@ sudo pip uninstall yle-dl
 sudo apt-get install wget ffmpeg python3-dev python3-setuptools \
     python3-pip python3-requests python3-lxml
 pip3 install --user --upgrade yle-dl
+
+# If you get "command not found" message when you try to run yle-dl, append
+# the installation location onto your search path with the following command:
+#
+# echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc && source ~/.bashrc
 ```
 
 
@@ -41,6 +46,11 @@ sudo pip uninstall yle-dl
 sudo apt-get install wget ffmpeg python3-dev python3-setuptools \
     python3-pip python3-requests python3-lxml
 pip3 install --user --upgrade yle-dl
+
+# If you get "command not found" message when you try to run yle-dl, append
+# the installation location onto your search path with the following command:
+#
+# echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc && source ~/.bashrc
 ```
 
 (You may get prompted to upgrade pip. However, it is not necessary to

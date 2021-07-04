@@ -207,3 +207,13 @@ Solution: Update your ffmpeg to version 4.1 or later.
 
 This is an [open issue](https://github.com/aajanki/yle-dl/issues/261).
 The workaround is to download each episode one by one.
+
+#### Problem: I installed yle-dl but get an error message "command not found" when I try to run it
+
+The installation location is not on shell's search path. Use the full path to run yle-dl: `~/.local/bin/yle-dl`
+
+Better yet, append the search path permanently by editing shell's config file. For example, on bash do the following:
+
+```
+echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc && source ~/.bashrc
+```
