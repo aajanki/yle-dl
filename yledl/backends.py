@@ -434,7 +434,7 @@ class WgetBackend(ExternalDownloader):
             logger.debug('Downloading subtitles for {}'.format(sub.lang))
 
             destination_file = os.path.splitext(video_file_name)[0] + '.srt'
-            HttpClient().download_to_file(sub.url, destination_file)
+            HttpClient(io.proxy).download_to_file(sub.url, destination_file)
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io.wget_binary, output_name)
