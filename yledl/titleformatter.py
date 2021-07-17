@@ -28,6 +28,7 @@ class TitleFormatter(object):
         values = {
             'series': series_title or '',
             'title': main_title,
+            'full_title': title,
             'episode': self._episode_number(season, episode),
             'timestamp': self._timestamp_string(publish_timestamp),
             'date': self._date_string(publish_timestamp),
