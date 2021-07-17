@@ -121,6 +121,8 @@ def arg_parser():
                           'The template supports following substitutions: '
                           '${title} is replaced by the title of the episode, '
                           '${series} is the series title, '
+                          '${full_title} is the episode title, including the series '
+                          'name if applicable, '
                           '${episode} is the season and episode number ("S02E12"), '
                           '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
                           '${date} is the stream publish date ("2018-12-01"), '
