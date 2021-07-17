@@ -249,7 +249,10 @@ class HLSBackend(ExternalDownloader):
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
-        self.io_capabilities = frozenset([IOCapability.SLICE])
+        self.io_capabilities = frozenset([
+            IOCapability.SLICE,
+            IOCapability.PROXY
+        ])
         self.name = Backends.FFMPEG
 
     def file_extension(self, preferred):
@@ -259,6 +262,12 @@ class HLSBackend(ExternalDownloader):
     def _duration_arg(self, download_limits):
         if download_limits.duration:
             return ['-t', str(download_limits.duration)]
+        else:
+            return []
+
+    def _proxy_arg(self, io):
+        if io.proxy:
+            return ['-http_proxy', io.proxy]
         else:
             return []
 
@@ -348,6 +357,7 @@ class HLSBackend(ExternalDownloader):
             args.append('-stats')
         args.extend(self._probe_args())
         args.extend(self._seek_position_arg(io.download_limits))
+        args.extend(self._proxy_arg(io))
         args.extend(['-i', self.url])
         args.extend(self._duration_arg(io.download_limits))
         args.extend(self._metadata_args(clip, io))
@@ -424,7 +434,7 @@ class WgetBackend(ExternalDownloader):
             logger.debug('Downloading subtitles for {}'.format(sub.lang))
 
             destination_file = os.path.splitext(video_file_name)[0] + '.srt'
-            HttpClient().download_to_file(sub.url, destination_file)
+            HttpClient(io.proxy).download_to_file(sub.url, destination_file)
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io.wget_binary, output_name)
