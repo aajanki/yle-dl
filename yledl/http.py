@@ -6,6 +6,7 @@ import lxml.etree
 import re
 import requests
 import sys
+from . import config
 from requests.adapters import HTTPAdapter
 from .version import version
 
@@ -111,6 +112,7 @@ class HttpClient(object):
 def yledl_headers():
     headers = requests.utils.default_headers()
     headers.update({'User-Agent': yledl_user_agent()})
+    headers.update({'X-Forwarded-For': config._x_forwarded_for_ip_address})
     return headers
 
 
