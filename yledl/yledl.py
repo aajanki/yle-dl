@@ -30,6 +30,9 @@ import codecs
 import logging
 import os.path
 import configargparse
+import ipaddress
+import random
+from . import config
 from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
@@ -399,6 +402,9 @@ def main(argv=sys.argv):
     parser = arg_parser()
     args = parser.parse_args(argv[1:])
     set_log_level(args)
+
+    elisa_ipv4_range = list(ipaddress.ip_network('91.152.0.0/13').hosts())
+    config._x_forwarded_for_ip_address = str(random.choice(elisa_ipv4_range))
 
     urls = get_urls(args)
     if not urls:

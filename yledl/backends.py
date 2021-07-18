@@ -9,6 +9,7 @@ import platform
 import signal
 import shlex
 import subprocess
+from . import config
 from builtins import str
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
@@ -349,6 +350,7 @@ class HLSBackend(ExternalDownloader):
 
     def ffmpeg_command_line(self, clip, io, output_options):
         args = [io.ffmpeg_binary, '-y',
+                '-headers', 'X-Forwarded-For: %s\r\n' % config._x_forwarded_for_ip_address,
                 '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
                 '-thread_queue_size', '1024',
                 '-seekable', '0', # needed for media ID 67-xxxx streams
