@@ -481,6 +481,7 @@ class WgetBackend(ExternalDownloader):
             '-O', output_filename,
             '--no-use-server-timestamps',
             '--user-agent=' + spoofed_user_agent,
+            '--header', 'X-Forwarded-For: %s' % config._x_forwarded_for_ip_address,
             '--timeout=20'
         ]
 
