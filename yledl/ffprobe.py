@@ -11,13 +11,15 @@ logger = logging.getLogger('yledl')
 
 
 class Ffprobe(object):
-    def __init__(self, ffprobe_binary, ffmpeg_binary):
+    def __init__(self, ffprobe_binary, ffmpeg_binary, x_forwarded_for):
         self.ffprobe_binary = ffprobe_binary
         self.ffmpeg_binary = ffmpeg_binary
+        self.x_forwarded_for = x_forwarded_for
 
     def show_programs_for_url(self, url):
         args = [self.ffprobe_binary,
                 '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+                '-headers', 'X-Forwarded-For: %s\r\n' % self.x_forwarded_for,
                 '-show_programs',
                 '-print_format', 'json=c=1', '-strict', 'experimental',
                 '-probesize', '80000000', '-i', url]

@@ -90,7 +90,7 @@ class IOContext(object):
         if self.ffprobe_binary is None:
             return None
 
-        return Ffprobe(self.ffprobe_binary, self.ffmpeg_binary)
+        return Ffprobe(self.ffprobe_binary, self.ffmpeg_binary, self.x_forwarded_for)
 
     def ffmpeg_version(self):
         if self.ffmpeg_binary:
