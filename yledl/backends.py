@@ -9,7 +9,6 @@ import platform
 import signal
 import shlex
 import subprocess
-from . import config
 from builtins import str
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
@@ -350,7 +349,7 @@ class HLSBackend(ExternalDownloader):
 
     def ffmpeg_command_line(self, clip, io, output_options):
         args = [io.ffmpeg_binary, '-y',
-                '-headers', 'X-Forwarded-For: %s\r\n' % config._x_forwarded_for_ip_address,
+                '-headers', 'X-Forwarded-For: %s\r\n' % io.x_forwarded_for,
                 '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
                 '-thread_queue_size', '1024',
                 '-seekable', '0', # needed for media ID 67-xxxx streams
@@ -436,10 +435,10 @@ class WgetBackend(ExternalDownloader):
             logger.debug('Downloading subtitles for {}'.format(sub.lang))
 
             destination_file = os.path.splitext(video_file_name)[0] + '.srt'
-            HttpClient(io.proxy).download_to_file(sub.url, destination_file)
+            HttpClient(io).download_to_file(sub.url, destination_file)
 
     def build_args(self, output_name, clip, io):
-        args = self.shared_wget_args(io.wget_binary, output_name)
+        args = self.shared_wget_args(io, output_name)
         args.extend([
             '--progress=bar',
             '--tries=5',
@@ -467,9 +466,9 @@ class WgetBackend(ExternalDownloader):
         return args
 
     def build_pipe_args(self, io):
-        return self.shared_wget_args(io.wget_binary, '-') + [self.url]
+        return self.shared_wget_args(io, '-') + [self.url]
 
-    def shared_wget_args(self, wget_binary, output_filename):
+    def shared_wget_args(self, io, output_filename):
         # Sometimes it seems to be necessary to spoof the user-agent,
         # see the issue #206
         spoofed_user_agent = (
@@ -477,11 +476,11 @@ class WgetBackend(ExternalDownloader):
             'Gecko/20100101 Firefox/67.0')
 
         return [
-            wget_binary,
+            io.wget_binary,
             '-O', output_filename,
             '--no-use-server-timestamps',
             '--user-agent=' + spoofed_user_agent,
-            '--header', 'X-Forwarded-For: %s' % config._x_forwarded_for_ip_address,
+            '--header', 'X-Forwarded-For: %s' % io.x_forwarded_for,
             '--timeout=20'
         ]
 

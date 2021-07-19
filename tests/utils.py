@@ -2,6 +2,7 @@ import sys
 import json
 from io import BytesIO
 from yledl import execute_action, StreamFilters, IOContext, StreamAction, RD_SUCCESS
+from yledl.io import random_elisa_ipv4
 from yledl.http import HttpClient
 from yledl.titleformatter import TitleFormatter
 
@@ -38,8 +39,9 @@ def fetch_metadata(url, filters=StreamFilters(), meta_language=None):
 
 
 def fetch(url, action, filters, meta_language=None):
-    io = IOContext(destdir='/tmp/', metadata_language=meta_language)
-    httpclient = HttpClient()
+    io = IOContext(destdir='/tmp/', metadata_language=meta_language,
+                   x_forwarded_for=random_elisa_ipv4())
+    httpclient = HttpClient(io)
     title_formatter = TitleFormatter()
 
     with Capturing() as output:

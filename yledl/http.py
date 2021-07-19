@@ -6,7 +6,6 @@ import lxml.etree
 import re
 import requests
 import sys
-from . import config
 from requests.adapters import HTTPAdapter
 from .version import version
 
@@ -14,8 +13,9 @@ logger = logging.getLogger('yledl')
 
 
 class HttpClient(object):
-    def __init__(self, proxy=None):
-        self._session = self._create_session(proxy)
+    def __init__(self, io):
+        self._session = self._create_session(io.proxy)
+        self.x_forwarded_for = io.x_forwarded_for
 
     def _create_session(self, proxy):
         session = requests.Session()
@@ -68,7 +68,7 @@ class HttpClient(object):
         encoded_filename = destination_filename.encode(enc, 'replace')
         logger.debug('HTTP GET {}'.format(url))
         with open(encoded_filename, 'wb') as output:
-            r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
+            r = requests.get(url, headers=self.yledl_headers(), stream=True, timeout=20)
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=4096):
                 output.write(chunk)
@@ -79,7 +79,7 @@ class HttpClient(object):
         if '#' in url:
             url = url[:url.find('#')]
 
-        headers = yledl_headers()
+        headers = self.yledl_headers()
         if extra_headers:
             headers.update(extra_headers)
 
@@ -94,7 +94,7 @@ class HttpClient(object):
         return r
 
     def post(self, url, json_data, extra_headers=None):
-        headers = yledl_headers()
+        headers = self.yledl_headers()
         if extra_headers:
             headers.update(extra_headers)
 
@@ -108,12 +108,12 @@ class HttpClient(object):
 
         return r
 
-
-def yledl_headers():
-    headers = requests.utils.default_headers()
-    headers.update({'User-Agent': yledl_user_agent()})
-    headers.update({'X-Forwarded-For': config._x_forwarded_for_ip_address})
-    return headers
+    def yledl_headers(self):
+        headers = requests.utils.default_headers()
+        headers.update({'User-Agent': yledl_user_agent()})
+        if self.x_forwarded_for:
+            headers.update({'X-Forwarded-For': self.x_forwarded_for})
+        return headers
 
 
 def yledl_user_agent():

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
 import attr
+import ipaddress
 import logging
 import os
 import os.path
+import random
 import re
 import subprocess
 from .ffprobe import Ffprobe
@@ -47,6 +49,11 @@ def wget_default(arg):
     return arg or 'wget'
 
 
+def random_elisa_ipv4():
+    elisa_ipv4_range = list(ipaddress.ip_network('91.152.0.0/13').hosts())
+    return str(random.choice(elisa_ipv4_range))
+
+
 @attr.s
 class DownloadLimits(object):
     # Seek to this position (seconds) before starting the recording
@@ -71,6 +78,7 @@ class IOContext(object):
     download_limits = attr.ib(default=None, converter=convert_download_limits)
     excludechars = attr.ib(default='*/|')
     proxy = attr.ib(default=None)
+    x_forwarded_for = attr.ib(default=None)
     subtitles = attr.ib(default='all')
     metadata_language = attr.ib(default=None)
     postprocess_command = attr.ib(default=None)

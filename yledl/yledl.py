@@ -30,9 +30,6 @@ import codecs
 import logging
 import os.path
 import configargparse
-import ipaddress
-import random
-from . import config
 from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
@@ -40,7 +37,7 @@ from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory, url_language
 from .geolocation import AreenaGeoLocation
 from .http import HttpClient
-from .io import IOContext, DownloadLimits
+from .io import IOContext, DownloadLimits, random_elisa_ipv4
 from .localization import TranslationChooser
 from .streamfilters import StreamFilters
 from .titleformatter import TitleFormatter
@@ -403,9 +400,6 @@ def main(argv=sys.argv):
     args = parser.parse_args(argv[1:])
     set_log_level(args)
 
-    elisa_ipv4_range = list(ipaddress.ip_network('91.152.0.0/13').hosts())
-    config._x_forwarded_for_ip_address = str(random.choice(elisa_ipv4_range))
-
     urls = get_urls(args)
     if not urls:
         parser.print_help()
@@ -418,7 +412,7 @@ def main(argv=sys.argv):
     title_formatter = TitleFormatter(output_template)
     io = IOContext(args.outputfile, preferformat, args.destdir,
                    args.resume, args.overwrite, dl_limits, excludechars,
-                   args.proxy, args.sublang,
+                   args.proxy, random_elisa_ipv4(), args.sublang,
                    args.metadatalang, args.postprocess,
                    args.ffmpeg, args.ffprobe, args.wget)
 
@@ -451,7 +445,7 @@ def main(argv=sys.argv):
     maxheight = resolution_from_arg(args.resolution)
     stream_filters = StreamFilters(args.latestepisode,
                                    maxbitrate, maxheight, backends)
-    httpclient = HttpClient(args.proxy)
+    httpclient = HttpClient(io)
     exit_status = RD_SUCCESS
 
     warn_on_obsolete_ffmpeg(backends, io)
