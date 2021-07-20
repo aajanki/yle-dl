@@ -76,22 +76,23 @@ class TitleFormatter(object):
         return ''.join(res)
 
     def _main_title(self, title, subheading, series_title):
-        main_title = self._remove_genre_prefix(
-            self._remove_repeated_main_title(title))
-        ageless_title = self._remove_age_limit(main_title)
+        episode_title = self._remove_genre_prefix(self._remove_repeated_main_title(title))
+        ageless_title = self._remove_age_limit(episode_title)
 
-        if series_title:
-            series_prefix = re.escape(series_title) + r'\b'
-            if re.match(series_prefix, ageless_title, re.IGNORECASE):
-                main_title = ageless_title[len(series_title):]
-                main_title = main_title.lstrip(':').lstrip(' ')
+        if series_title and series_title == ageless_title:
+            episode_title = ''
+        elif series_title:
+            series_prefix = re.escape(series_title) + r': *'
+            series_prefix_match = re.match(series_prefix, ageless_title, re.IGNORECASE)
+            if series_prefix_match:
+                episode_title = ageless_title[series_prefix_match.end():]
 
-        if subheading and not main_title:
+        if subheading and not episode_title:
             return subheading
-        if subheading and subheading not in main_title:
-            return main_title + ': ' + subheading
+        elif subheading and subheading not in episode_title:
+            return episode_title + ': ' + subheading
         else:
-            return main_title
+            return episode_title
 
     def _remove_age_limit(self, title):
         """Strip (S) or (12) postfix from the title."""

@@ -97,6 +97,11 @@ def test_no_repeated_series_title_with_episode_title():
     assert title == 'Doctor Who: Kerblam!'
 
 
+def test_series_name_as_part_of_episode_title():
+    title = tf.format('Rölli ja Robotti Ruttunen', series_title='Rölli')
+    assert title == 'Rölli: Rölli ja Robotti Ruttunen'
+
+
 def test_main_title_equals_series_title_plus_age_limit():
     title = tf.format('Rantahotelli (S)', series_title='Rantahotelli')
     assert title == 'Rantahotelli'
@@ -107,10 +112,10 @@ def test_strip_whitespace():
     assert title == 'Rantahotelli'
 
     title = tf.format('Uutiset klo 18', series_title='Uutiset ')
-    assert title == 'Uutiset: klo 18'
+    assert title == 'Uutiset: Uutiset klo 18'
 
     title = tf.format('Uutiset klo 18', series_title=' Uutiset ')
-    assert title == 'Uutiset: klo 18'
+    assert title == 'Uutiset: Uutiset klo 18'
 
 
 def test_all_components(pasila):
