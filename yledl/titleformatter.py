@@ -6,7 +6,7 @@ from collections import defaultdict
 
 
 class TitleFormatter(object):
-    def __init__(self, template='${series}: ${title}: ${episode}-${timestamp}'):
+    def __init__(self, template='${series_separator}${title}: ${episode_separator}${timestamp}'):
         self.template = template
         self.tokens = self._parse_template(template)
 
@@ -27,8 +27,10 @@ class TitleFormatter(object):
 
         values = {
             'series': series_title or '',
+            'series_separator': self._series_separator(series_title),
             'title': main_title,
             'episode': self._episode_number(season, episode),
+            'episode_separator': self._episode_number_separator(season, episode),
             'timestamp': self._timestamp_string(publish_timestamp),
             'date': self._date_string(publish_timestamp),
             'program_id': program_id,
@@ -110,11 +112,24 @@ class TitleFormatter(object):
                 return title[len(prefix):].strip()
         return title
 
+    def _series_separator(self, series_title):
+        if series_title:
+            return series_title + ': '
+        else:
+            return ''
+
     def _episode_number(self, season, episode):
         if season and episode:
             return 'S%02dE%02d' % (season, episode)
         elif episode:
             return 'E%02d' % (episode)
+        else:
+            return ''
+
+    def _episode_number_separator(self, season, episode):
+        value = self._episode_number(season, episode)
+        if value:
+            return value + '-'
         else:
             return ''
 
