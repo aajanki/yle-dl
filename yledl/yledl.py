@@ -114,7 +114,7 @@ def arg_parser():
                           type=str,
                           help='Save stream to the named file')
     io_group.add_argument('--output-template', metavar='TEMPLATE',
-                          default='${series}${title}${episode}${timestamp}',
+                          default='${series}: ${title}: ${episode}-${timestamp}',
                           help='Template for generating an output file name '
                           'when not using -o. Put the argument in single quotes: '
                           '--output-template \'${title}\'. '

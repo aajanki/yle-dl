@@ -6,7 +6,7 @@ from collections import defaultdict
 
 
 class TitleFormatter(object):
-    def __init__(self, template='${series}${title}${episode}${timestamp}'):
+    def __init__(self, template='${series}: ${title}: ${episode}-${timestamp}'):
         self.template = template
         self.tokens = self._parse_template(template)
 
@@ -33,12 +33,8 @@ class TitleFormatter(object):
             'date': self._date_string(publish_timestamp),
             'program_id': program_id,
         }
-        separators = defaultdict(lambda: ': ',
-                                 timestamp='-',
-                                 date='-',
-                                 program_id='-')
 
-        return self._substitute(self.tokens, values, separators)
+        return self._substitute(self.tokens, values)
 
     def is_constant_pattern(self):
         return all(t.is_constant() for t in self.tokens)
@@ -64,12 +60,10 @@ class TitleFormatter(object):
 
         return res
 
-    def _substitute(self, tokens, values, separators):
+    def _substitute(self, tokens, values):
         res = []
-        empty_separator = defaultdict(lambda: '')
         for token in self.tokens:
-            sep = empty_separator if len(res) == 0 else separators
-            subst = token.substitute(values, sep)
+            subst = token.substitute(values)
             if subst:
                 res.append(subst)
 
@@ -146,10 +140,10 @@ class Substitution(object):
     def is_constant(self):
         return False
 
-    def substitute(self, values, separators):
+    def substitute(self, values):
         key = self.variable_name[2:-1]
         val = values.get(key, self.variable_name)
-        return separators[key] + val if val else ''
+        return val if val else ''
 
 
 class Literal(object):
@@ -159,5 +153,5 @@ class Literal(object):
     def is_constant(self):
         return True
 
-    def substitute(self, values, separators):
+    def substitute(self, values):
         return self.text
