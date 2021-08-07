@@ -22,12 +22,10 @@ logger = logging.getLogger('yledl')
 def extractor_factory(url, filters, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url) or \
-       re.match(r'^https?://svenska\.yle\.fi/artikel/', url):
+       re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
+       re.match(r'^https?://svenska\.yle\.fi/a/', url):
         logger.debug('{} is an Elava Arkisto URL'.format(url))
         return ElavaArkistoExtractor(language_chooser, httpclient)
-    elif re.match(r'^https?://svenska\.yle\.fi/a/', url):
-        logger.debug('{} is a Svenska Arkivet /a/ URL'.format(url))
-        return ElavaArkistoSvenskaAExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         logger.debug('{} is a live radio URL'.format(url))
@@ -883,26 +881,25 @@ class ElavaArkistoExtractor(AreenaExtractor):
         if tree is None:
             return []
 
+        return self.ordered_union(self._simple_dataids(tree), self._ydd_dataids(tree))
+
+    def ordered_union(self, xs, ys):
+        union = list(xs) # copy
+        for y in ys:
+            if y not in union:
+                union.append(y)
+        return union
+
+    def _simple_dataids(self, tree):
         dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
         dataids = [str(d) for d in dataids]
         return [d if '-' in d else '1-' + d for d in dataids]
 
-
-class ElavaArkistoSvenskaAExtractor(AreenaExtractor):
-    """Extract streams from Svenska Arkivet 2021 style URLs.
-
-    Extracts from svenska.yle.fi/a/... but not from svenska.yle.fi/artikel/..."""
-
-    def get_playlist(self, url):
-        ids = self.get_dataids(url)
-        return ['https://areena.yle.fi/' + x for x in ids]
-
-    def get_dataids(self, url):
-        tree = self.httpclient.download_html_tree(url)
-        if tree is None:
-            return []
-
-        player_props = [json.loads(str(x)) for x in tree.xpath("//main//div/@data-player-props")]
+    def _ydd_dataids(self, tree):
+        player_props = [
+            json.loads(p)
+            for p in tree.xpath("//main[@id='main-content']//div/@data-player-props")
+        ]
         return [x['id'] for x in player_props if 'id' in x]
 
 
