@@ -40,6 +40,11 @@ class TitleFormatter(object):
     def is_constant_pattern(self):
         return all(t.is_constant() for t in self.tokens)
 
+    def maybe_missing_separators(self):
+        return (len(self.tokens) > 1 and
+                not any(isinstance(t, Literal) for t in self.tokens) and
+                not "_separator" in self.template)
+
     def _parse_template(self, template):
         res = []
 

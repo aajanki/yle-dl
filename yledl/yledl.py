@@ -392,6 +392,12 @@ def warn_on_obsolete_ffmpeg(backends, io):
                 logger.warning('Please upgrade ffmpeg to version 4.1.0 or later.')
 
 
+def warn_on_output_template_syntax_change(title_formatter):
+    if title_formatter.maybe_missing_separators():
+        logger.warning('The syntax of --output-template has changed! '
+                       'Insert separator characters in the template if needed')
+
+
 ### main program ###
 
 
@@ -451,6 +457,7 @@ def main(argv=sys.argv):
     exit_status = RD_SUCCESS
 
     warn_on_obsolete_ffmpeg(backends, io)
+    warn_on_output_template_syntax_change(title_formatter)
 
     for i, url in enumerate(urls):
         if len(urls) > 1:
