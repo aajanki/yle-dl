@@ -2,6 +2,15 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2021 Antti Ajanki
 Distributed under the GPL v3
 
+Version 20210808
+
+- Some geo-restricted streams can now be downloaded outside Finland
+- Changed the syntax of --output-template: separator characters are not
+  inserted automatically anymore
+- Proxy support for the HLS backend
+- Word were sometimes missing from episode titles
+- Support for new Arkisto URLs: https://yle.fi/aihe/a/
+
 Version 20210704
 
 - Support for new Svenska Arkivet URLs: https://svenska.yle.fi/a/
