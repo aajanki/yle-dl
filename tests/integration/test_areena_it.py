@@ -132,3 +132,13 @@ def test_areena_episode_pages():
 
     # The first page contains 12 episodes, make sure we get several pages
     assert len(episodes) > 20
+
+
+def test_areena_episodes_alternative_id():
+    # The series page of "Sekaisin" can be accessed through 1-50570316
+    # and 1-3430975, but yle-dl must use only the latter ID in API
+    # calls internally.
+    episodes = fetch_episode_pages('https://areena.yle.fi/1-50570316')
+
+    # The first page contains 8 to 15 episodes, make sure we get several pages
+    assert len(episodes) > 20

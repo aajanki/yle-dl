@@ -2,6 +2,11 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2021 Antti Ajanki
 Distributed under the GPL v3
 
+<unreleased>
+
+- Fixed listing of episodes on series which have alternative IDs, for
+  example "Sekaisin"
+
 Version 20210808
 
 - Some geo-restricted streams can now be downloaded outside Finland

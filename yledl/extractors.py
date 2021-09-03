@@ -5,6 +5,7 @@ import logging
 import os.path
 import re
 from datetime import datetime
+from requests import HTTPError
 from urllib.parse import urlparse, quote_plus, parse_qs
 from . import jsonhelpers
 from .backends import HLSAudioBackend, HLSBackend, WgetBackend
@@ -225,8 +226,7 @@ class AreenaPlaylist(ClipExtractor):
         """If url is a series page, return a list of included episode pages."""
         playlist = []
         if not self.is_tv_ohjelmat_url(url):
-            series_id = self.program_id_from_url(url)
-            playlist = self.get_playlist_old_style_url(url, series_id)
+            playlist = self.get_playlist_series_page(url)
 
         if playlist is None:
             logger.error('Failed to parse a playlist')
@@ -251,12 +251,26 @@ class AreenaPlaylist(ClipExtractor):
     def is_tv_ohjelmat_url(self, url):
         return urlparse(url).path.startswith('/tv/ohjelmat/')
 
-    def get_playlist_old_style_url(self, url, series_id):
+    def get_playlist_series_page(self, url):
         playlist = []
         html = self.httpclient.download_html_tree(url)
         if html is not None and self.is_playlist_page(html):
+            sid1 = self.extract_series_id_from_html(html)
+            sid2 = self.program_id_from_url(url)
+            series_id = sid1 or sid2
             playlist = self.playlist_episode_urls(series_id)
         return playlist
+
+    def extract_series_id_from_html(self, html_tree):
+        series_main_url = html_tree.xpath('//div[@id = "seriesInfo"]/section/header/h2/a/@href')
+        if len(series_main_url) > 0:
+            sid = str(series_main_url[0]).split('/')[-1]
+
+            # Make sure that we got a media ID instead of some random URL
+            if re.match(r'^\d-\d+$', sid):
+                return sid
+
+        return None
 
     def playlist_episode_urls(self, series_id):
         # Areena server fails (502 Bad gateway) if page_size is larger
@@ -686,9 +700,16 @@ class AreenaExtractor(AreenaPlaylist):
             'Referer': pageurl,
             'Origin': 'https://areena.yle.fi'
         }
-        preview_json = jsonhelpers.load_json(self.preview_url(pid),
-                                       self.httpclient,
-                                       headers=preview_headers)
+        try:
+            preview_json = jsonhelpers.load_json(self.preview_url(pid),
+                                                 self.httpclient,
+                                                 headers=preview_headers)
+        except HTTPError as ex:
+            if ex.response.status_code == 404:
+                logger.warning(f'Preview API result not found: {self.preview_url(pid)}')
+                preview_json = []
+            else:
+                raise
         logger.debug('preview data:\n' + json.dumps(preview_json, indent=2))
 
         return AreenaPreviewApiParser(preview_json)
