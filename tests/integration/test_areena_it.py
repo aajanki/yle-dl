@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import pytest
+from datetime import datetime
 from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
     fetch_metadata
+from yledl import StreamFilters
 
 
 def test_areena_html5_stream_url():
@@ -142,3 +142,24 @@ def test_areena_episodes_alternative_id():
 
     # The first page contains 8 to 15 episodes, make sure we get several pages
     assert len(episodes) > 20
+
+
+def test_areena_episodes_sort_order():
+    metadata = fetch_metadata('https://areena.yle.fi/1-4655342')
+
+    # Should be sorted from oldest to newest
+    timestamps = [x['publish_timestamp'] for x in metadata]
+    assert len(timestamps) > 1
+    assert timestamps == sorted(timestamps)
+
+
+def test_areena_latest_episode():
+    filters = StreamFilters(latest_only=True)
+    metadata = fetch_metadata('https://areena.yle.fi/1-4655342', filters)
+
+    assert len(metadata) == 1
+
+    # The latest episode at the time of writing this test was
+    # published on 2021-01-27
+    publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
+    assert publish_date >= datetime(2021, 1, 27)

@@ -6,6 +6,7 @@ Distributed under the GPL v3
 
 - Fixed listing of episodes on series which have alternative IDs, for
   example "Sekaisin"
+- --latestepisode is much faster than before
 
 Version 20210808
 

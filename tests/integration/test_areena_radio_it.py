@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+from datetime import datetime
 from utils import fetch_title, fetch_stream_url, fetch_metadata
 from yledl import StreamFilters
 
@@ -77,3 +76,25 @@ def test_radio_metadata_2020():
     assert metadata[0]['flavors'][0]['media_type'] == 'audio'
     assert metadata[0]['duration_seconds'] == 1451
     assert len(metadata[0]['description']) > 150
+
+
+def test_radio_episodes_sort_order():
+    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50677839')
+
+    # Should be sorted from oldest to newest
+    timestamps = [x['publish_timestamp'] for x in metadata]
+    assert len(timestamps) > 1
+    assert timestamps == sorted(timestamps)
+
+
+def test_radio_latest():
+    # Test fetching the latest radio episode and also implicitly that
+    # getting the latest episode is fast even though there are
+    # hundreds of news episodes.
+    filters = StreamFilters(latest_only=True)
+    metadata = fetch_metadata('https://areena.yle.fi/audio/1-1440981', filters)
+
+    assert len(metadata) == 1
+
+    publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
+    assert publish_date >= datetime(2021, 1, 1)
