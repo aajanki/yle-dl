@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import copy
 import json
 import logging
@@ -77,20 +75,15 @@ class YleDlDownloader(object):
         return self.process(clips, pipe_clip, needs_retry, filters)
 
     def get_urls(self, clips, filters):
-        urls = []
         for clip in clips:
             streams = self.select_streams(clip.flavors, filters)
             if streams and any(s.is_valid() for s in streams):
                 valid_stream = next(s for s in streams if s.is_valid())
-                urls.append(valid_stream.stream_url())
-        return urls
-
-    def get_episode_pages(self, clips):
-        return [clip.webpage for clip in clips]
+                yield valid_stream.stream_url()
 
     def get_titles(self, clips, io):
-        return [sane_filename(m.get('title', ''), io.excludechars)
-                for m in self.metadata_generator(clips, io)]
+        return (sane_filename(m.get('title', ''), io.excludechars)
+                for m in self.metadata_generator(clips, io))
 
     def metadata_generator(self, clips, io):
         return (clip.metadata(io) for clip in clips)

@@ -293,6 +293,7 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
 
 
 def download_clips(clips, dl, io, title_formatter, stream_filters):
+    clips = list(clips)
     if (len(clips) > 1 and io.outputfilename is not None):
         logger.error('The source is a playlist with multiple clips, '
                      'but only one output file specified')

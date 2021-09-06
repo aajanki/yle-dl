@@ -208,8 +208,8 @@ class ClipExtractor(object):
 
     def extract(self, url, latest_only, title_formatter, ffprobe):
         playlist = self.get_playlist(url, latest_only)
-        return [self.extract_clip(clipurl, title_formatter, ffprobe)
-                for clipurl in playlist]
+        return (self.extract_clip(clipurl, title_formatter, ffprobe)
+                for clipurl in playlist)
 
     def get_playlist(self, url, latest_only=False):
         raise NotImplementedError("get_playlist must be overridden")

@@ -293,7 +293,7 @@ def test_pipe_success(simple):
 
 def test_print_urls(simple):
     clips = [successful_clip({}), successful_clip({})]
-    urls = simple.downloader.get_urls(clips, simple.filters)
+    urls = list(simple.downloader.get_urls(clips, simple.filters))
 
     assert urls == [
         'https://example.com/video/high_quality.mp4',
@@ -305,7 +305,7 @@ def test_print_titles(simple):
     titles = ['Uutiset', 'Pasila: S01E01-2018-07-01T00:00']
     clips = [successful_clip({}, t) for t in titles]
 
-    assert simple.downloader.get_titles(clips, simple.io) == titles
+    assert list(simple.downloader.get_titles(clips, simple.io)) == titles
 
 
 def test_print_titles_replaces_whitespace(simple):
@@ -313,7 +313,7 @@ def test_print_titles_replaces_whitespace(simple):
     expected_titles = ['Title with all kinds of whitespace characters']
     clips = [successful_clip({}, t) for t in titles]
 
-    assert simple.downloader.get_titles(clips, simple.io) == expected_titles
+    assert list(simple.downloader.get_titles(clips, simple.io)) == expected_titles
 
 
 def test_print_metadata(simple):
