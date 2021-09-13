@@ -1,5 +1,6 @@
 import sys
 import json
+from datetime import timedelta, tzinfo
 from io import BytesIO
 from yledl import execute_action, StreamFilters, IOContext, StreamAction, RD_SUCCESS
 from yledl.io import random_elisa_ipv4
@@ -19,6 +20,20 @@ class Capturing(list):
         self.extend(self._bytesio.getvalue().decode('UTF-8').splitlines())
         del self._bytesio    # free up some memory
         sys.stdout = self._stdout
+
+
+class FixedOffset(tzinfo):
+    def __init__(self, offset_hours):
+        self.__offset = timedelta(hours=offset_hours)
+
+    def utcoffset(self, dt):
+        return self.__offset
+
+    def tzname(self, dt):
+        return 'FixedOffset'
+
+    def dst(self, dt):
+        return timedelta(0)
 
 
 def fetch_title(url, filters=StreamFilters()):

@@ -1,25 +1,9 @@
-# -*- coding: utf-8 -*-
-
 import logging
 import re
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime
 
 
 logger = logging.getLogger('yledl')
-
-
-class FixedOffset(tzinfo):
-    def __init__(self, offset_hours):
-        self.__offset = timedelta(hours=offset_hours)
-
-    def utcoffset(self, dt):
-        return self.__offset
-
-    def tzname(self, dt):
-        return 'FixedOffset'
-
-    def dst(self, dt):
-        return timedelta(0)
 
 
 def parse_areena_timestamp(timestamp):

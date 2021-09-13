@@ -12,8 +12,3 @@ def load_json(url, httpclient, headers=None):
         return None
 
     return json_parsed
-
-
-def parse_json_object(text, start_pos):
-    """Extract a JSON document from a text string starting at start_pos."""
-    return json.JSONDecoder().raw_decode(text[start_pos:])[0]

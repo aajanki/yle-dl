@@ -1,6 +1,6 @@
 import pytest
 from datetime import datetime, date
-from yledl.timestamp import FixedOffset
+from utils import FixedOffset
 from yledl.titleformatter import TitleFormatter
 
 tf = TitleFormatter()

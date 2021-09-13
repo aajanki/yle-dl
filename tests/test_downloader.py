@@ -1,15 +1,13 @@
-# -*- coding: utf-8 -*-
-
 import attr
 import json
 import pytest
 from datetime import datetime
+from utils import FixedOffset
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor
 from yledl.subtitles import EmbeddedSubtitle, Subtitle
-from yledl.timestamp import FixedOffset
 
 
 class StateCollectingBackend(BaseDownloader):
