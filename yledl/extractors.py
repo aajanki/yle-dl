@@ -22,7 +22,6 @@ logger = logging.getLogger('yledl')
 
 def extractor_factory(url, filters, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
-       re.match(r'^https?://(areena|arenan)\.yle\.fi/26-', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/a/', url):
         logger.debug('{} is an Elava Arkisto URL'.format(url))
