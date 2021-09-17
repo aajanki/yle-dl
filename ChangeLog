@@ -2,10 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2021 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20210917
 
-- Fixed listing of episodes on series which have alternative IDs, for
-  example "Sekaisin"
+- Apparently each seasons of a series can have a distinct ID. Added
+  support for those.
 - --latestepisode is much faster than before
 
 Version 20210808
