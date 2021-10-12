@@ -67,4 +67,4 @@ workflows:
             - lint
           matrix:
               parameters:
-                  pyversion: ["3.6", "3.7", "3.8", "3.9"]
+                  pyversion: ["3.6", "3.7", "3.8", "3.9", "3.10"]
