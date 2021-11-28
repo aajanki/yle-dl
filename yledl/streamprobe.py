@@ -41,4 +41,13 @@ class FullHDFlavorProber(object):
                 ]
             ))
 
-        return sorted(res, key=lambda x: x.height or 0)
+
+        res = self._drop_duplicates(res)
+        return sorted(res, key=lambda x: (x.height or 0, x.bitrate or 0))
+
+    def _drop_duplicates(self, stream_flavors):
+        def flavor_key(s):
+            return (s.width, s.height, s.bitrate, next((x.url for x in s.streams), None))
+
+        unique = {flavor_key(s): s for s in stream_flavors}
+        return unique.values()
