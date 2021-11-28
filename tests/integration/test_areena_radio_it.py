@@ -16,9 +16,11 @@ def test_radio_title_hls():
     title = fetch_title('https://areena.yle.fi/1-4551633')
 
     assert len(title) == 1
-    assert title[0].startswith(
-        'Tiedeykkönen Extra: Ilmastonmuutos: '
-        'Ihminen elää ilman vettä vain muutaman päivän')
+    # The title changed sometime in Autumn 2021
+    t = title[0]
+    assert (
+        t.startswith('Tiedeykkönen Extra: Ilmastonmuutos: Ihminen elää ilman vettä vain muutaman päivän')
+        or t.startswith('Ilmastonmuutoksen vaikutukset: Ihminen elää ilman vettä vain muutaman päivän'))
 
 
 def test_radio_stream_url_hls():
