@@ -243,7 +243,7 @@ class Subprocess(object):
 
 
 class HLSBackend(ExternalDownloader):
-    def __init__(self, url, long_probe=False, program_id=0, is_live=False):
+    def __init__(self, url, long_probe=False, program_id=None, is_live=False):
         ExternalDownloader.__init__(self)
         self.url = url
         self.long_probe = long_probe
@@ -305,28 +305,45 @@ class HLSBackend(ExternalDownloader):
 
         return metadata
 
+    def _program_id(self, io):
+        if self.program_id is None:
+            ffprobe = io.ffprobe()
+            programs = ffprobe.show_programs_for_url(self.url)
+            if programs['programs']:
+                self.program_id = max(p['program_id'] for p in programs['programs'])
+            else:
+                self.program_id = 0
+
+        return self.program_id
+
     def _subtitle_args(self, io):
         scodec = 'mov_text' if self._is_mp4(io) else 'srt'
+        pid = self._program_id(io)
 
         if io.subtitles == 'none':
             return ['-sn']
         elif io.subtitles == 'all':
             return ['-scodec', scodec,
-                    '-map', '0:p:{}:s?'.format(self.program_id)]
+                    '-map', f'0:p:{pid}:s?']
         else:
             short_code = two_letter_language_code(io.subtitles) or io.subtitles
             return ['-scodec', scodec,
-                    '-map', '0:p:{}:s:m:language:{}?'.format(
-                        self.program_id, short_code)]
+                    '-map', f'0:p:{pid}:s:m:language:{short_code}?']
+
+    def _map_video_and_audio_streams(self, io):
+        pid = self._program_id(io)
+        return [
+            '-map', f'0:p:{pid}:v',
+            '-map', f'0:p:{pid}:a'
+        ]
 
     def build_args(self, output_name, clip, io):
         args = (['-bsf:a', 'aac_adtstoasc',
                  '-vcodec', 'copy',
                  '-acodec', 'copy'] +
                 self._subtitle_args(io) +
-                ['-map', '0:p:{}:v'.format(self.program_id),
-                 '-map', '0:p:{}:a'.format(self.program_id),
-                 '-dn',
+                self._map_video_and_audio_streams(io) +
+                ['-dn',
                  'file:' + output_name])
 
         return self.ffmpeg_command_line(clip, io, args)
@@ -334,9 +351,8 @@ class HLSBackend(ExternalDownloader):
     def build_pipe_args(self, io):
         args = (['-vcodec', 'copy',
                  '-acodec', 'aac',
-                 '-map', '0:p:{}:v'.format(self.program_id),
-                 '-map', '0:p:{}:a'.format(self.program_id),
                  '-dn'] +
+                self._map_video_and_audio_streams() +
                 self._subtitle_args(io) +
                 ['-f', 'matroska', 'pipe:1'])
 
