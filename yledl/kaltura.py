@@ -160,11 +160,12 @@ class YleKalturaApiClient(KalturaApiClient):
             entry_id = flavor.get('entryId')
             ext = '.' + flavor.get('fileExt', 'mp4')
             media_type = self.flavor_media_type(flavor)
+            is_live = flavor.get('objectType') == 'KalturaLiveAsset'
 
             backends = []
             for profile in delivery_profiles.get(flavor_id, []):
                 backends.extend(profile.backends(
-                    entry_id, media_type, ext, self.partner_id,
+                    entry_id, media_type, is_live, ext, self.partner_id,
                     self.client_tag, referrer))
 
             res.append(StreamFlavor(
@@ -241,8 +242,7 @@ class DeliveryProfile(object):
                     referrer=b64referrer,
                     client_tag=client_tag))
 
-    def backends(self, entry_id, media_type, file_ext, partner_id,
-                 client_tag, referrer):
+    def backends(self, entry_id, media_type, is_live, file_ext, partner_id, client_tag, referrer):
         backends = []
         manifest_url = self.manifest_url(entry_id, partner_id,
                                          client_tag, referrer)
@@ -250,7 +250,7 @@ class DeliveryProfile(object):
         if self.stream_format == 'url':
             backends.append(WgetBackend(manifest_url, file_ext))
         elif media_type == 'video':
-            backends.append(HLSBackend(manifest_url))
+            backends.append(HLSBackend(manifest_url, is_live=is_live))
         else:
             backends.append(HLSAudioBackend(manifest_url))
 
