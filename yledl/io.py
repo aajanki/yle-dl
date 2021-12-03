@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-
 import attr
 import ipaddress
 import logging
-import os
 import os.path
 import random
 import re
@@ -12,25 +9,6 @@ from .ffprobe import Ffprobe
 from .utils import sane_filename
 
 logger = logging.getLogger('yledl')
-
-
-def which(program):
-    """Search for program on $PATH and return the full path if found."""
-    # Adapted from http://stackoverflow.com/questions/377017
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, fname = os.path.split(program)
-    if fpath:
-        if is_exe(program):
-            return program
-    else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            exe_file = os.path.join(path, program)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
 
 
 def convert_download_limits(arg):
