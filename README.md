@@ -196,6 +196,11 @@ Executing a script to postprocess a downloaded video (see the example postproces
 yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
 ```
 
+Creating a new release
+----------------------
+
+[Release instructions](releasing.md)
+
 Known problems
 --------------
 
