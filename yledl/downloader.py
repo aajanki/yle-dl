@@ -1,5 +1,4 @@
 import copy
-import json
 import logging
 import os.path
 from .utils import sane_filename
@@ -82,14 +81,10 @@ class YleDlDownloader(object):
                 yield valid_stream.stream_url()
 
     def get_titles(self, clips, io):
-        return (sane_filename(m.get('title', ''), io.excludechars)
-                for m in self.metadata_generator(clips, io))
-
-    def metadata_generator(self, clips, io):
-        return (clip.metadata(io) for clip in clips)
+        return (sane_filename(clip.title or '', io.excludechars) for clip in clips)
 
     def get_metadata(self, clips, io):
-        return [json.dumps(list(self.metadata_generator(clips, io)), indent=2)]
+        return list(clip.metadata(io) for clip in clips)
 
     def process(self, clips, streamfunc, needs_retry, filters):
         if not clips:

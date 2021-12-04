@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 """
 yle-dl - download videos from Yle servers
@@ -27,6 +26,7 @@ This script downloads video and audio streams from Yle Areena
 import sys
 import re
 import codecs
+import json
 import logging
 import os.path
 import configargparse
@@ -281,7 +281,7 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
         print_lines(dl.get_titles(clips(), io))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        print_lines(dl.get_metadata(clips(), io))
+        print_enc(json.dumps(dl.get_metadata(clips(), io), indent=2))
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
         return dl.pipe(clips(), io, stream_filters)

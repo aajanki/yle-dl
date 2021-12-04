@@ -1,5 +1,4 @@
 import attr
-import json
 import pytest
 from datetime import datetime
 from utils import FixedOffset
@@ -318,15 +317,14 @@ def test_print_metadata(simple):
     state = {}
     clips = [successful_clip(state)]
     metadata = simple.downloader.get_metadata(clips, simple.io)
-    parsed_metadata = json.loads(metadata[0])
 
     assert len(metadata) == 1
 
     # Match filename fuzzily because the exact name depends on the existing
     # file names
-    assert 'Test clip' in parsed_metadata[0]['filename']
-    del parsed_metadata[0]['filename']
-    assert parsed_metadata == [
+    assert 'Test clip' in metadata[0]['filename']
+    del metadata[0]['filename']
+    assert metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
             'title': 'Test clip: S01E01-2018-07-01T00:00',
@@ -389,16 +387,15 @@ def test_print_metadata_incomplete(simple):
     state = {}
     clips = [incomplete_flavors_clip(state)]
     metadata = simple.downloader.get_metadata(clips, simple.io)
-    parsed_metadata = json.loads(metadata[0])
 
-    assert len(parsed_metadata) == 1
+    assert len(metadata) == 1
 
     # Match filename fuzzily because the exact name depends on the existing
     # file names
-    assert 'Test clip' in parsed_metadata[0]['filename']
-    del parsed_metadata[0]['filename']
+    assert 'Test clip' in metadata[0]['filename']
+    del metadata[0]['filename']
 
-    assert parsed_metadata == [
+    assert metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
             'title': 'Test clip: S01E01-2018-07-01T00:00',
@@ -446,9 +443,8 @@ def test_download_failed_stream(simple):
 def test_print_metadata_failed_clip(simple):
     clips = [failed_clip()]
     metadata = simple.downloader.get_metadata(clips, simple.io)
-    parsed_metadata = json.loads(metadata[0])
 
-    assert parsed_metadata == [
+    assert metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
             'flavors': [
