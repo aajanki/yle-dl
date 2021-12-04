@@ -17,9 +17,9 @@ def test_arkisto_stream_url():
 
 
 def test_arkisto_a_stream_url():
-    streamurl = fetch_stream_url('https://yle.fi/aihe/a/20-10001072')
+    streamurl = fetch_stream_url('https://yle.fi/aihe/a/20-10001712')
 
-    assert len(streamurl) >= 20
+    assert len(streamurl) >= 2
     assert all(('/a.m3u8' in url or '/a.mp3' in url) for url in streamurl)
 
 

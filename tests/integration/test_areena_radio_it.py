@@ -81,7 +81,7 @@ def test_radio_metadata_2020():
 
 
 def test_radio_episodes_sort_order():
-    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50677839')
+    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50375734')
 
     # Should be sorted from oldest to newest
     timestamps = [x['publish_timestamp'] for x in metadata]
