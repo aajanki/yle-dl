@@ -352,7 +352,7 @@ class HLSBackend(ExternalDownloader):
         args = (['-vcodec', 'copy',
                  '-acodec', 'aac',
                  '-dn'] +
-                self._map_video_and_audio_streams() +
+                self._map_video_and_audio_streams(io) +
                 self._subtitle_args(io) +
                 ['-f', 'matroska', 'pipe:1'])
 

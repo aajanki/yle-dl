@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2021 Antti Ajanki
 Distributed under the GPL v3
 
+<unpublished>
+
+- Writing to standard output (--pipe and -o -) was broken in the previous release
+
 Version 20211203
 
 - Select the highest resolution by default on Pentulive (and other live streams)
