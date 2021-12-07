@@ -431,7 +431,8 @@ class WgetBackend(ExternalDownloader):
         return self._file_extension
 
     def save_stream(self, output_name, clip, io):
-        self.download_external_subtitles(clip.subtitles, output_name, io)
+        if clip is not None:
+            self.download_external_subtitles(clip.subtitles, output_name, io)
 
         res = super(WgetBackend, self).save_stream(output_name, clip, io)
         if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
