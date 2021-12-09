@@ -309,12 +309,33 @@ class HLSBackend(ExternalDownloader):
         if self.program_id is None:
             ffprobe = io.ffprobe()
             programs = ffprobe.show_programs_for_url(self.url)
-            if programs['programs']:
-                self.program_id = max(p['program_id'] for p in programs['programs'])
+            if programs.get('programs'):
+                self.program_id = self._select_max_bitrate_video_audio_pid(programs['programs'])
             else:
                 self.program_id = 0
 
         return self.program_id
+
+    def _select_max_bitrate_video_audio_pid(self, programs):
+        if not programs:
+            return 0
+
+        # Find programs that have both video and audio streams
+        video_audio_programs = [
+            p for p in programs
+            if {'video', 'audio'}.issubset({s.get('codec_type') for s in p['streams']})
+        ]
+
+        programs = video_audio_programs or programs
+
+        # Take the program with the highest bitrate (or the highest
+        # program_id if there are no bitrate metadata. Usually the
+        # latter programs have higher quality.)
+        best = max(
+            programs,
+            key=lambda p: (int(p.get('tags', {}).get('variant_bitrate', 0)), p.get('program_id')))
+
+        return best.get('program_id', 0)
 
     def _subtitle_args(self, io):
         scodec = 'mov_text' if self._is_mp4(io) else 'srt'
@@ -333,8 +354,8 @@ class HLSBackend(ExternalDownloader):
     def _map_video_and_audio_streams(self, io):
         pid = self._program_id(io)
         return [
-            '-map', f'0:p:{pid}:v',
-            '-map', f'0:p:{pid}:a'
+            '-map', f'0:p:{pid}:v?',
+            '-map', f'0:p:{pid}:a?'
         ]
 
     def build_args(self, output_name, clip, io):
