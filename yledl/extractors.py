@@ -340,13 +340,7 @@ class AreenaPreviewApiParser(object):
         if not title_object:
             return {}
 
-        title = language_chooser.choose_long_form(title_object).strip()
-
-        if self.is_live():
-            ts = datetime.now().replace(microsecond=0)
-            title = title + '-' + ts.isoformat()
-
-        return {'title': title}
+        return {'title': language_chooser.choose_long_form(title_object).strip()}
 
     def description(self, language_chooser):
         description_object = self.ongoing().get('description', {})
@@ -359,8 +353,11 @@ class AreenaPreviewApiParser(object):
         return self.ongoing().get('region')
 
     def timestamp(self):
-        dt = self.ongoing().get('start_time')
-        return parse_areena_timestamp(dt)
+        if self.is_live():
+            return datetime.now().replace(microsecond=0)
+        else:
+            dt = self.ongoing().get('start_time')
+            return parse_areena_timestamp(dt)
 
     def manifest_url(self):
         return self.ongoing().get('manifest_url')
