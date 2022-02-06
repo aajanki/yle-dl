@@ -74,24 +74,6 @@ def test_areena_live_metadata():
     assert metadata[0]['region'] == 'Finland'
 
 
-@pytest.mark.geoblocked
-def test_areena_ohjelmat_embedded_live_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/tv/ohjelmat/30-595?play=yle-tv2')
-
-    assert len(streamurl) == 1
-    assert 'master.m3u8' in streamurl[0]
-
-
-@pytest.mark.geoblocked
-def test_areena_ohjelmat_embedded_live_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/tv/ohjelmat/30-595?play=yle-tv2')
-
-    assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) >= 1
-    assert all(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
-    assert metadata[0]['region'] == 'Finland'
-
-
 def test_areena_html5_clip_title():
     title = fetch_title('https://areena.yle.fi/1-3523087')
 
