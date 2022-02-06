@@ -359,33 +359,22 @@ class HLSBackend(ExternalDownloader):
         ]
 
     def build_args(self, output_name, clip, io):
-        args = (['-bsf:a', 'aac_adtstoasc',
-                 '-vcodec', 'copy',
-                 '-acodec', 'copy'] +
-                self._subtitle_args(io) +
-                self._map_video_and_audio_streams(io) +
-                ['-dn',
-                 'file:' + output_name])
-
-        return self.ffmpeg_command_line(clip, io, args)
+        return ([io.ffmpeg_binary] +
+                self.input_args(io) +
+                self.output_args_file(clip, io, output_name))
 
     def build_pipe_args(self, io):
-        args = (['-vcodec', 'copy',
-                 '-acodec', 'aac',
-                 '-dn'] +
-                self._map_video_and_audio_streams(io) +
-                self._subtitle_args(io) +
-                ['-f', 'matroska', 'pipe:1'])
-
-        return self.ffmpeg_command_line(None, io, args)
+        return ([io.ffmpeg_binary] +
+                self.input_args(io) +
+                self.output_args_pipe(io))
 
     def pipe(self, io):
         commands = [self.build_pipe_args(io)]
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
 
-    def ffmpeg_command_line(self, clip, io, output_options):
-        args = [io.ffmpeg_binary, '-y',
+    def input_args(self, io):
+        args = ['-y',
                 '-headers', 'X-Forwarded-For: %s\r\n' % io.x_forwarded_for,
                 '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
                 '-thread_queue_size', '1024',
@@ -399,10 +388,31 @@ class HLSBackend(ExternalDownloader):
         args.extend(self._seek_position_arg(io.download_limits))
         args.extend(self._proxy_arg(io))
         args.extend(['-i', self.url])
-        args.extend(self._duration_arg(io.download_limits))
-        args.extend(self._metadata_args(clip, io))
-        args.extend(output_options)
         return args
+
+    def output_args_pipe(self, io):
+        return (
+            self._duration_arg(io.download_limits) +
+            self._map_video_and_audio_streams(io) +
+            self._subtitle_args(io) +
+            ['-vcodec', 'copy',
+             '-acodec', 'aac',
+             '-dn',
+             '-f', 'matroska', 'pipe:1']
+        )
+
+    def output_args_file(self, clip, io, output_name):
+        return (
+            self._duration_arg(io.download_limits) +
+            self._metadata_args(clip, io) +
+            self._map_video_and_audio_streams(io) +
+            self._subtitle_args(io) +
+            ['-bsf:a', 'aac_adtstoasc',
+             '-vcodec', 'copy',
+             '-acodec', 'copy',
+             '-dn',
+             'file:' + output_name]
+        )
 
     def stream_url(self):
         return self.url
@@ -419,17 +429,25 @@ class HLSAudioBackend(HLSBackend):
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
 
-    def build_args(self, output_name, clip, io):
-        return self.ffmpeg_command_line(
-            clip, io,
-            ['-map', '0:4?', '-acodec', 'copy',
-             '-f', 'mp3', 'file:' + output_name])
+    def output_args_file(self, clip, io, output_name):
+        return (
+            self._duration_arg(io.download_limits) +
+            self._metadata_args(clip, io) +
+            ['-map', '0:4?',
+             '-acodec', 'copy',
+             '-f', 'mp3',
+             'file:' + output_name]
+        )
 
-    def build_pipe_args(self, io):
-        return self.ffmpeg_command_line(
-            None, io,
-            ['-map', '0:4?', '-acodec', 'copy',
-             '-f', 'mp3', 'pipe:1'])
+    def output_args_pipe(self, io):
+        return (
+            self._duration_arg(io.download_limits) +
+            ['-map', '0:4?',
+             '-acodec', 'copy',
+             '-dn',
+             '-f', 'mp3',
+             'pipe:1']
+        )
 
 
 ### Download a plain HTTP file ###
