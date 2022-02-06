@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import json
 import logging
 import re
@@ -17,12 +15,15 @@ class Ffprobe(object):
         self.x_forwarded_for = x_forwarded_for
 
     def show_programs_for_url(self, url):
-        args = [self.ffprobe_binary,
-                '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-                '-headers', 'X-Forwarded-For: %s\r\n' % self.x_forwarded_for,
-                '-show_programs',
-                '-print_format', 'json=c=1', '-strict', 'experimental',
-                '-probesize', '80000000', '-i', url]
+        args = [
+            self.ffprobe_binary,
+            '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-headers', 'X-Forwarded-For: %s\r\n' % self.x_forwarded_for,
+            '-show_programs',
+            '-print_format', 'json=c=1',
+            '-probesize', '80000000',
+            '-i', url,
+        ]
         try:
             return json.loads(subprocess.check_output(args).decode('utf-8'))
         except subprocess.CalledProcessError as ex:
