@@ -1,6 +1,11 @@
 yle-dl - download videos from Yle servers
-Copyright 2009-2021 Antti Ajanki
+Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3
+
+<unreleased>
+
+- Downloading live streams works again
+- Known bug: subtitles are not displayed on live stream
 
 Version 20211213
 

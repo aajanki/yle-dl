@@ -379,8 +379,11 @@ class HLSBackend(ExternalDownloader):
                 '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
                 '-thread_queue_size', '1024',
                 '-seekable', '0'] # needed for media ID 67-xxxx streams
-        if io.subtitles != 'none':
+        if not (io.subtitles == 'none' or self.live):
             # needed for decoding webvtt subtitles
+            #
+            # Subtitles disabled on live streams, because ffmpeg (at
+            # least 4.4) hangs on subtitle detection (Feb 2022).
             args.extend(['-strict', 'experimental'])
         if logger.getEffectiveLevel() <= logging.WARNING:
             args.append('-stats')

@@ -208,6 +208,10 @@ Known problems
 
 Solution: Update your ffmpeg to version 4.1 or later.
 
+#### Problem: Subtitles are missing on live stream
+
+This is a known problem. Currently there are no fixes.
+
 #### Problem: Trying to fetch a radio series only downloads the first episode on Mac OS X.
 
 This is an [open issue](https://github.com/aajanki/yle-dl/issues/261).
