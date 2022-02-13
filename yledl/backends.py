@@ -377,7 +377,7 @@ class HLSBackend(ExternalDownloader):
         args = ['-y',
                 '-headers', 'X-Forwarded-For: %s\r\n' % io.x_forwarded_for,
                 '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-                '-thread_queue_size', '1024',
+                '-thread_queue_size', '2048',
                 '-seekable', '0'] # needed for media ID 67-xxxx streams
         if not (io.subtitles == 'none' or self.live):
             # needed for decoding webvtt subtitles
