@@ -247,11 +247,14 @@ class DeliveryProfile(object):
         manifest_url = self.manifest_url(entry_id, partner_id,
                                          client_tag, referrer)
 
-        if self.stream_format == 'url':
+        if media_type == 'audio':
+            backends.extend([
+                HLSAudioBackend(manifest_url),
+                WgetBackend(manifest_url, file_ext)
+            ])
+        elif self.stream_format == 'url':
             backends.append(WgetBackend(manifest_url, file_ext))
-        elif media_type == 'video':
-            backends.append(HLSBackend(manifest_url, is_live=is_live))
         else:
-            backends.append(HLSAudioBackend(manifest_url))
+            backends.append(HLSBackend(manifest_url, is_live=is_live))
 
         return backends

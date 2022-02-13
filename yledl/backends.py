@@ -436,8 +436,7 @@ class HLSAudioBackend(HLSBackend):
         return (
             self._duration_arg(io.download_limits) +
             self._metadata_args(clip, io) +
-            ['-map', '0:4?',
-             '-acodec', 'copy',
+            ['-acodec', 'copy',
              '-f', 'mp3',
              'file:' + output_name]
         )
@@ -445,9 +444,7 @@ class HLSAudioBackend(HLSBackend):
     def output_args_pipe(self, io):
         return (
             self._duration_arg(io.download_limits) +
-            ['-map', '0:4?',
-             '-acodec', 'copy',
-             '-dn',
+            ['-acodec', 'copy',
              '-f', 'mp3',
              'pipe:1']
         )
