@@ -63,6 +63,7 @@ class IOContext(object):
     ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
     ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
     wget_binary = attr.ib(default='wget', converter=wget_default)
+    create_dirs = attr.ib(default=False)
 
     def ffprobe(self):
         if self.ffprobe_binary is None:
@@ -96,6 +97,15 @@ class OutputFileNameGenerator(object):
             path = self._filename_from_title(
                 sanitized_title, destdir, extension)
             path = self._impose_maximum_filename_length(path)
+
+        dir, _ = os.path.split(path)
+        if not os.path.exists(dir):
+            if not io.create_dirs:
+                logger.error('Directory "{}" does not exist. '
+                             'Use --create-dirs to automatically create.'.format(dir))
+                return None
+            logger.info('Creating directory "{}"'.format(dir))
+            os.makedirs(dir)
 
         return path
 

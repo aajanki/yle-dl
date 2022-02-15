@@ -27,6 +27,8 @@ class YleDlDownloader(object):
             downloader.warn_on_unsupported_feature(io)
 
             outputfile = self.generate_output_name(clip.title, downloader, io)
+            if not outputfile:
+                return (RD_FAILED, None)
             if self.should_skip_downloading(outputfile, downloader, clip, io):
                 logger.info('{} has already been downloaded.'.format(outputfile))
                 return (RD_SUCCESS, outputfile)
