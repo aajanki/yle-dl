@@ -128,6 +128,7 @@ def arg_parser():
                           '${date} is the stream publish date ("2018-12-01"), '
                           '${program_id} is an unique ID, '
                           '$$ is an escape and will be replaced by a literal $. '
+                          '/ specifies a subdirectory. '
                           'Everything else will appear as-is.')
     io_group.add_argument('--pipe', action='store_true',
                           help='Dump stream to stdout for piping to media '

@@ -162,7 +162,7 @@ class Substitution(object):
     def substitute(self, values):
         key = self.variable_name[2:-1]
         val = values.get(key, self.variable_name)
-        return val if val else ''
+        return val.replace('/', '_') if val else ''
 
 
 class Literal(object):
