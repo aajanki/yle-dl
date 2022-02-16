@@ -63,6 +63,7 @@ class IOContext(object):
     ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
     ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
     wget_binary = attr.ib(default='wget', converter=wget_default)
+    create_dirs = attr.ib(default=False)
 
     def ffprobe(self):
         if self.ffprobe_binary is None:
@@ -85,7 +86,6 @@ class OutputFileNameGenerator(object):
     def filename(self, title, extension, io):
         """Select a filename for the output."""
 
-        sanitized_title = sane_filename(title, io.excludechars)
         forced_name = io.outputfilename
         destdir = io.destdir
 
@@ -93,9 +93,25 @@ class OutputFileNameGenerator(object):
             path = self._filename_from_template(
                 forced_name, destdir, extension)
         else:
+            if '/' in title:
+                # Title contains a subdirectory
+                path, title = title.rsplit('/', maxsplit=1)
+                destdir = destdir or ''
+                for subdir in path.split('/'):
+                    destdir = os.path.join(destdir, subdir)
+            sanitized_title = sane_filename(title, io.excludechars)
             path = self._filename_from_title(
                 sanitized_title, destdir, extension)
             path = self._impose_maximum_filename_length(path)
+
+        dir, _ = os.path.split(path)
+        if not os.path.exists(dir):
+            if not io.create_dirs:
+                logger.error('Directory "{}" does not exist. '
+                             'Use --create-dirs to automatically create.'.format(dir))
+                return None
+            logger.info('Creating directory "{}"'.format(dir))
+            os.makedirs(dir)
 
         return path
 

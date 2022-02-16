@@ -128,6 +128,7 @@ def arg_parser():
                           '${date} is the stream publish date ("2018-12-01"), '
                           '${program_id} is an unique ID, '
                           '$$ is an escape and will be replaced by a literal $. '
+                          '/ specifies a subdirectory. '
                           'Everything else will appear as-is.')
     io_group.add_argument('--pipe', action='store_true',
                           help='Dump stream to stdout for piping to media '
@@ -135,6 +136,8 @@ def arg_parser():
     io_group.add_argument('--destdir', metavar='DIR',
                           type=str,
                           help='Save files to DIR')
+    io_group.add_argument('--create-dirs', action='store_true',
+                          help='Create directories automatically.')
     action_group = io_group.add_mutually_exclusive_group()
     action_group.add_argument('--showurl', action='store_true',
                               help="Print URL, don't download")
@@ -423,7 +426,8 @@ def main(argv=sys.argv):
                    args.resume, args.overwrite, dl_limits, excludechars,
                    args.proxy, random_elisa_ipv4(), args.sublang,
                    args.metadatalang, args.postprocess,
-                   args.ffmpeg, args.ffprobe, args.wget)
+                   args.ffmpeg, args.ffprobe, args.wget,
+                   args.create_dirs)
 
     if args.showurl:
         action = StreamAction.PRINT_STREAM_URL
