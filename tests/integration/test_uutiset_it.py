@@ -27,24 +27,20 @@ def test_uutiset_main_media_metadata():
 
 def test_uutiset_headline_metadata():
     # This page has a video embedded as "headline.video"
-    metadata = fetch_metadata('https://yle.fi/uutiset/3-11796748')
+    metadata = fetch_metadata('https://yle.fi/uutiset/3-12328632')
 
     assert len(metadata) == 1
-    assert metadata[0]['webpage'] == 'https://areena.yle.fi/1-50765436'
-    assert metadata[0]['title'].startswith('Yle Uutiset suora: Missä mennään rokotehankkeessa')
-    assert metadata[0]['duration_seconds'] == 3547
+    assert metadata[0]['webpage'] == 'https://areena.yle.fi/1-61842917'
+    assert metadata[0]['title'].startswith('Uutisvideot: Presidentti Sauli Niinistö')
+    assert metadata[0]['duration_seconds'] == 49
     assert metadata[0]['region'] == 'World'
-    assert metadata[0]['publish_timestamp'] == '2021-02-18T10:58:40+02:00'
+    assert metadata[0]['publish_timestamp'] == '2022-02-22T14:36:36+02:00'
     assert 'expired_timestamp' not in metadata[0]
-    assert len(metadata[0]['description']) > 150
+    assert len(metadata[0]['description']) > 100
 
     flavors = metadata[0]['flavors']
-    assert len(flavors) >= 3
+    assert len(flavors) >= 1
     assert all(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f and
-               'height' in f and
-               'width' in f
-               for f in flavors)
 
 
 def test_uutiset_inline_audio_block_metadata():
