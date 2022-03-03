@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import Backends, FailingBackend
 from yledl.streamflavor import StreamFlavor, FailedFlavor
 
 
-class MockBackend(object):
+class MockBackend:
     def __init__(self, name, data=None):
         self.name = name
         self.data = data
@@ -14,7 +12,7 @@ class MockBackend(object):
         return True
 
 
-class MockGeoLocation(object):
+class MockGeoLocation:
     def located_in_finland(self, referrer):
         return True
 

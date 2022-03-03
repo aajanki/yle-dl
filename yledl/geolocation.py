@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import json
 import logging
 import requests
@@ -8,7 +6,7 @@ import requests
 logger = logging.getLogger('yledl')
 
 
-class AreenaGeoLocation(object):
+class AreenaGeoLocation:
     def __init__(self, httpclient):
         self.httpclient = httpclient
 

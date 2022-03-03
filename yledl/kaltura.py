@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import attr
 import logging
 import json
@@ -12,7 +10,7 @@ from .subtitles import EmbeddedSubtitle
 logger = logging.getLogger('yledl')
 
 
-class KalturaApiClient(object):
+class KalturaApiClient:
     def __init__(self, api_url, httpclient):
         self.api_url = api_url
         self.httpclient = httpclient
@@ -76,7 +74,7 @@ class KalturaApiClient(object):
         return mrequest
 
     def perform_request(self, request, referrer, origin):
-        endpoint = self.api_url + '/api_v3/service/multirequest'
+        endpoint = f'{self.api_url}/api_v3/service/multirequest'
         extra_headers = {
             'Referer': referrer,
             'Origin': origin,
@@ -94,7 +92,7 @@ class YleKalturaApiClient(KalturaApiClient):
     http_origin = 'https://areena.yle.fi'
 
     def __init__(self, requests_session):
-        super(YleKalturaApiClient, self).__init__(self.api_url, requests_session)
+        super().__init__(self.api_url, requests_session)
 
     def playback_context(self, entry_id, referrer):
         subrequests = [
@@ -128,7 +126,7 @@ class YleKalturaApiClient(KalturaApiClient):
                             if self.is_web_stream(fl)]
         num_non_web = len(flavor_assets) - len(filtered_flavors)
         if num_non_web:
-            logger.debug('Ignored %d non-web flavors' % num_non_web)
+            logger.debug(f'Ignored {num_non_web:d} non-web flavors')
 
         return self.create_flavors(filtered_flavors, delivery_profiles, referrer)
 
@@ -207,11 +205,11 @@ class YleKalturaApiClient(KalturaApiClient):
             manifest_file = url.split('/')[-1]
 
             for flavor_id in flavor_ids:
-                profile = DeliveryProfile(flavor_id, source_format,
-                                          manifest_file)
-
-                pkey = flavor_id + '_' + source_format
-                profiles_by_id_and_format[pkey] = profile
+                profiles_by_id_and_format[f'{flavor_id}_{source_format}'] = DeliveryProfile(
+                    flavor_id,
+                    source_format,
+                    manifest_file,
+                )
 
         profiles = {}
         for p in profiles_by_id_and_format.values():
@@ -221,26 +219,20 @@ class YleKalturaApiClient(KalturaApiClient):
 
 
 @attr.s
-class DeliveryProfile(object):
+class DeliveryProfile:
     flavor_id = attr.ib()
     stream_format = attr.ib()
     manifest_file = attr.ib()
 
     def manifest_url(self, entry_id, partner_id, client_tag, referrer):
         b64referrer = base64.b64encode(referrer.encode('utf-8')).decode('utf-8')
-        return ('https://cdnsecakmi.kaltura.com/p/{partner_id}/'
-                'sp/{partner_id}00/playManifest/entryId/{entry_id}/'
-                'flavorId/{flavor_id}/format/{stream_format}/protocol/https/'
-                '{manifest_file}?uiConfId=43362851&referrer={referrer}'
-                '&playSessionId=11111111-1111-1111-1111-111111111111'
-                '&clientTag={client_tag}'.format(
-                    partner_id=partner_id,
-                    entry_id=entry_id,
-                    flavor_id=self.flavor_id,
-                    stream_format=self.stream_format,
-                    manifest_file=self.manifest_file,
-                    referrer=b64referrer,
-                    client_tag=client_tag))
+        return (
+            f'https://cdnsecakmi.kaltura.com/p/{partner_id}/'
+            f'sp/{partner_id}00/playManifest/entryId/{entry_id}/'
+            f'flavorId/{self.flavor_id}/format/{self.stream_format}/protocol/https/'
+            f'{self.manifest_file}?uiConfId=43362851&referrer={b64referrer}'
+            f'&playSessionId=11111111-1111-1111-1111-111111111111&clientTag={client_tag}'
+        )
 
     def backends(self, entry_id, media_type, is_live, file_ext, partner_id, client_tag, referrer):
         backends = []

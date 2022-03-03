@@ -8,7 +8,7 @@ from .utils import ffmpeg_loglevel
 logger = logging.getLogger('yledl')
 
 
-class Ffprobe(object):
+class Ffprobe:
     def __init__(self, ffprobe_binary, ffmpeg_binary, x_forwarded_for):
         self.ffprobe_binary = ffprobe_binary
         self.ffmpeg_binary = ffmpeg_binary
@@ -18,7 +18,7 @@ class Ffprobe(object):
         args = [
             self.ffprobe_binary,
             '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-            '-headers', 'X-Forwarded-For: %s\r\n' % self.x_forwarded_for,
+            '-headers', f'X-Forwarded-For: {self.x_forwarded_for}\r\n',
             '-show_programs',
             '-print_format', 'json=c=1',
             '-probesize', '80000000',
@@ -28,11 +28,17 @@ class Ffprobe(object):
             return json.loads(subprocess.check_output(args).decode('utf-8'))
         except subprocess.CalledProcessError as ex:
             raise ValueError(
-                'Stream probing failed with status {}'.format(ex.returncode))
+                f'Stream probing failed with status {ex.returncode}')
 
     def duration_seconds_file(self, filename):
-        args = [self.ffmpeg_binary, '-stats', '-loglevel', 'fatal',
-                '-i', 'file:' + filename, '-f', 'null', '-']
+        args = [
+            self.ffmpeg_binary,
+            '-stats',
+            '-loglevel', 'fatal',
+            '-i', f'file:{filename}',
+            '-f', 'null',
+            '-',
+        ]
 
         try:
             decoding_result = (
@@ -41,7 +47,7 @@ class Ffprobe(object):
                 .rsplit('\r', 1)[-1])
         except subprocess.CalledProcessError as ex:
             raise ValueError(
-                'Stream probing failed with status {}'.format(ex.returncode))
+                f'Stream probing failed with status {ex.returncode}')
         except UnicodeDecodeError:
             raise ValueError('Unexpected encoding on stream probing response')
 

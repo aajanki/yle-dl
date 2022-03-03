@@ -1,5 +1,6 @@
 import json
 
+
 def load_json(url, httpclient, headers=None):
     """Download and parse a JSON document at a given URL."""
     json_string = httpclient.download_page(url, headers)

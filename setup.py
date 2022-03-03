@@ -2,11 +2,11 @@ import re
 import sys
 from setuptools import setup
 
-needs_pytest = set(['pytest', 'test', 'ptr']).intersection(sys.argv)
+needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
 maybe_pytest_runner = ['pytest-runner'] if needs_pytest else []
 
 long_description = \
-u"""\
+"""\
 yle-dl is a tool for downloading media files from the video streaming
 services of the Finnish national broadcasting company Yle: Yle
 Areena, Elävä Arkisto and Yle news.

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Public exit codes
 RD_SUCCESS = 0
 RD_FAILED = 1

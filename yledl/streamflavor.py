@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 import attr
 from .backends import FailingBackend
 
 
 @attr.s
-class StreamFlavor(object):
+class StreamFlavor:
     media_type = attr.ib()
     height = attr.ib(default=None, converter=attr.converters.optional(int))
     width = attr.ib(default=None, converter=attr.converters.optional(int))

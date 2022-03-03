@@ -24,24 +24,24 @@ def extractor_factory(url, filters, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/a/', url):
-        logger.debug('{} is an Elava Arkisto URL'.format(url))
+        logger.debug(f'{url} is an Elava Arkisto URL')
         return ElavaArkistoExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
-        logger.debug('{} is a live radio URL'.format(url))
+        logger.debug(f'{url} is a live radio URL')
         return AreenaLiveRadioExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/audio/[-0-9]+', url):
-        logger.debug('{} is an audio URL'.format(url))
+        logger.debug(f'{url} is an audio URL')
         return AreenaAudio2020Extractor(language_chooser, httpclient)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
-        logger.debug('{} is a news URL'.format(url))
+        logger.debug(f'{url} is a news URL')
         return YleUutisetExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or
           re.match(r'^https?://yle\.fi/', url)):
-        logger.debug('{} is an Areena URL'.format(url))
+        logger.debug(f'{url} is an Areena URL')
         return AreenaExtractor(language_chooser, httpclient)
     else:
-        logger.debug('{} is an unrecognized URL'.format(url))
+        logger.debug(f'{url} is an unrecognized URL')
         return None
 
 
@@ -57,11 +57,12 @@ def url_language(url):
 ## Flavors
 
 
-class Flavors(object):
+class Flavors:
     @staticmethod
     def media_type(media):
         mtype = media.get('type')
-        if (mtype == 'AudioObject' or
+        if (
+            mtype == 'AudioObject' or
             (mtype is None and media.get('containerFormat') == 'mpeg audio')
         ):
             return 'audio'
@@ -73,7 +74,7 @@ class Flavors(object):
 
 
 @attr.s
-class Clip(object):
+class Clip:
     webpage = attr.ib()
     flavors = attr.ib()
     title = attr.ib(default='')
@@ -88,7 +89,7 @@ class Clip(object):
 
     def metadata(self, io):
         flavors_meta = sorted(
-            [self.flavor_meta(f) for f in self.flavors],
+            (self.flavor_meta(f) for f in self.flavors),
             key=lambda x: x.get('bitrate', 0))
         meta = [
             ('program_id', self.program_id),
@@ -186,7 +187,7 @@ class FailedClip(Clip):
 
 
 @attr.s
-class AreenaApiProgramInfo(object):
+class AreenaApiProgramInfo:
     media_id = attr.ib()
     title = attr.ib()
     description = attr.ib()
@@ -201,7 +202,7 @@ class AreenaApiProgramInfo(object):
     expired = attr.ib()
 
 
-class ClipExtractor(object):
+class ClipExtractor:
     def __init__(self, httpclient):
         self.httpclient = httpclient
 
@@ -228,7 +229,7 @@ class AreenaPlaylist(ClipExtractor):
             logger.error('Failed to parse a playlist')
             playlist = []
         elif playlist:
-            logger.debug('playlist page with %d clips' % len(playlist))
+            logger.debug(f'playlist page with {len(playlist)} clips')
         else:
             logger.debug('not a playlist')
             playlist = [url]
@@ -283,8 +284,7 @@ class AreenaPlaylist(ClipExtractor):
         while has_next_page:
             page = self.playlist_page(series_id, sort_order, page_size, offset)
             if page is None:
-                logger.warn('Playlist failed at offset {}. '
-                            'Some episodes may be missing!'.format(offset))
+                logger.warning(f'Playlist failed at offset {offset}. Some episodes may be missing!')
                 break
 
             playlist.extend(page)
@@ -294,9 +294,7 @@ class AreenaPlaylist(ClipExtractor):
         return playlist
 
     def playlist_page(self, series_id, sort_order, page_size, offset):
-        logger.debug('Getting a playlist page {series_id}, '
-                     'size = {size}, offset = {offset}'.format(
-                         series_id=series_id, size=page_size, offset=offset))
+        logger.debug(f'Getting a playlist page {series_id}, size = {page_size}, offset = {offset}')
 
         pl_url = self.playlist_url(series_id, sort_order, page_size, offset)
         playlist = jsonhelpers.load_json(pl_url, self.httpclient)
@@ -305,24 +303,31 @@ class AreenaPlaylist(ClipExtractor):
 
         playlist_data = playlist.get('data', [])
         episode_ids = (x['id'] for x in playlist_data if 'id' in x)
-        return ['https://areena.yle.fi/' + x for x in episode_ids]
+        return [f'https://areena.yle.fi/{episode_id}' for episode_id in episode_ids]
 
     def playlist_url(self, series_id, sort_order, page_size=100, offset=0):
         offset_param = f'&offset={str(offset)}' if offset else ''
-        return (f'https://areena.yle.fi/api/programs/v1/episodes/{series_id}.json?'
-                f'type=program&availability=&'
-                f'limit={str(page_size)}&'
-                f'order=episode.hash%3A{sort_order}%2Cpublication.starttime%3A{sort_order}%2Ctitle.fi%3Aasc&'
-                f'app_id=areena_web_frontend_prod&'
-                f'app_key=4622a8f8505bb056c956832a70c105d4'
-                f'{offset_param}')
+        order_param = '%2C'.join((
+            f'episode.hash%3A{sort_order}',
+            f'publication.starttime%3A{sort_order}',
+            'title.fi%3Aasc'
+        ))
+        return (
+            f'https://areena.yle.fi/api/programs/v1/episodes/{series_id}.json?'
+            f'type=program&availability=&'
+            f'limit={str(page_size)}&'
+            f'order={order_param}&'
+            f'app_id=areena_web_frontend_prod&'
+            f'app_key=4622a8f8505bb056c956832a70c105d4'
+            f'{offset_param}'
+        )
 
     def is_playlist_page(self, html_tree):
         body = html_tree.xpath('/html/body[contains(@class, "series-cover-page")]')
         return len(body) != 0
 
 
-class AreenaPreviewApiParser(object):
+class AreenaPreviewApiParser:
     def __init__(self, data):
         self.preview = data or {}
 
@@ -429,7 +434,7 @@ class AreenaPreviewApiParser(object):
 
 class AreenaExtractor(AreenaPlaylist):
     def __init__(self, language_chooser, httpclient):
-        super(AreenaExtractor, self).__init__(httpclient)
+        super().__init__(httpclient)
         self.language_chooser = language_chooser
 
     def extract_clip(self, clip_url, title_formatter, ffprobe):
@@ -457,8 +462,10 @@ class AreenaExtractor(AreenaPlaylist):
         if program_info.pending:
             error_message = 'Stream not yet available.'
             if program_info.publish_timestamp:
-                error_message = ('{} Becomes available on {}'.format(
-                    error_message, program_info.publish_timestamp.isoformat()))
+                error_message = (
+                    f'{error_message} Becomes available on '
+                    f'{program_info.publish_timestamp.isoformat()}'
+                )
         elif program_info.expired:
             error_message = 'This stream has expired'
         elif all_streams and all(not s.is_valid() for s in all_streams):
@@ -626,7 +633,7 @@ class AreenaExtractor(AreenaPlaylist):
             info = None
         else:
             info = jsonhelpers.load_json(self.program_info_url(pid), self.httpclient)
-            logger.debug('program data:\n' + json.dumps(info, indent=2))
+            logger.debug(f'program data:\n{json.dumps(info, indent=2)}')
 
         publish_timestamp = (self.publish_timestamp(info) or
                              preview.timestamp())
@@ -683,9 +690,11 @@ class AreenaExtractor(AreenaPlaylist):
         )
 
     def program_info_url(self, program_id):
-        return 'https://areena.yle.fi/api/programs/v1/id/{}.json?' \
-            'app_id=areena_web_frontend_prod&' \
-            'app_key=4622a8f8505bb056c956832a70c105d4'.format(quote_plus(program_id))
+        return (
+            f'https://areena.yle.fi/api/programs/v1/id/{quote_plus(program_id)}.json'
+            '?app_id=areena_web_frontend_prod'
+            '&app_key=4622a8f8505bb056c956832a70c105d4'
+        )
 
     def preview_parser(self, pid, pageurl):
         preview_headers = {
@@ -702,15 +711,17 @@ class AreenaExtractor(AreenaPlaylist):
                 preview_json = []
             else:
                 raise
-        logger.debug('preview data:\n' + json.dumps(preview_json, indent=2))
+        logger.debug(f'preview data:\n{json.dumps(preview_json, indent=2)}')
 
         return AreenaPreviewApiParser(preview_json)
 
     def preview_url(self, program_id):
-        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
-            'language=fin&ssl=true&countryCode=FI&host=areenaylefi' \
-            '&app_id=player_static_prod' \
-            '&app_key=8930d72170e48303cf5f3867780d549b'.format(program_id)
+        return (
+            f'https://player.api.yle.fi/v1/preview/{program_id}.json?'
+            'language=fin&ssl=true&countryCode=FI&host=areenaylefi'
+            '&app_id=player_static_prod'
+            '&app_key=8930d72170e48303cf5f3867780d549b'
+        )
 
     def publish_event_is_current(self, event):
         return event.get('temporalStatus') == 'currently'
@@ -843,10 +854,15 @@ class AreenaAudio2020Extractor(AreenaExtractor):
 
     def playlist_url(self, series_id, sort_order, page_size=100, offset=0):
         offset_param = f'&offset={str(offset)}' if offset else ''
+        order_param = '%2C'.join([
+            f'episode.hash%3A{sort_order}',
+            f'publication.starttime%3A{sort_order}',
+            'title.fi%3Aasc',
+        ])
         return (f'https://areena.yle.fi/api/programs/v1/episodes/{series_id}.json?'
                 f'type=program&availability=&'
                 f'limit={str(page_size)}&'
-                f'order=episode.hash%3A{sort_order}%2Cpublication.starttime%3A{sort_order}%2Ctitle.fi%3Aasc&'
+                f'order={order_param}&'
                 f'app_id=areena_web_radio_prod&'
                 f'app_key=b3a0dc973c0aab997f1021bc7a0e3157'
                 f'{offset_param}')
@@ -861,7 +877,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
         if latest_only:
             ids = ids[-1:]
 
-        return ['https://areena.yle.fi/' + x for x in ids]
+        return [f'https://areena.yle.fi/{x}' for x in ids]
 
     def get_dataids(self, url):
         tree = self.httpclient.download_html_tree(url)
@@ -871,7 +887,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
         return self.ordered_union(self._simple_dataids(tree), self._ydd_dataids(tree))
 
     def ordered_union(self, xs, ys):
-        union = list(xs) # copy
+        union = list(xs)  # copy
         for y in ys:
             if y not in union:
                 union.append(y)
@@ -880,7 +896,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
     def _simple_dataids(self, tree):
         dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
         dataids = [str(d) for d in dataids]
-        return [d if '-' in d else '1-' + d for d in dataids]
+        return [d if '-' in d else f'1-{d}' for d in dataids]
 
     def _ydd_dataids(self, tree):
         player_props = [
@@ -930,7 +946,7 @@ class YleUutisetExtractor(AreenaExtractor):
         data_ids.extend(block.get('id') for block in content
                         if block.get('type') == 'AudioBlock' and block.get('id'))
 
-        logger.debug('Found Areena data IDs: {}'.format(','.join(data_ids)))
+        logger.debug(f"Found Areena data IDs: {','.join(data_ids)}")
 
         playlist = [self.id_to_areena_url(id) for id in data_ids]
         if latest_only:
@@ -942,5 +958,5 @@ class YleUutisetExtractor(AreenaExtractor):
         if '-' in data_id:
             areena_id = data_id
         else:
-            areena_id = '1-' + data_id
-        return 'https://areena.yle.fi/' + areena_id
+            areena_id = f'1-{data_id}'
+        return f'https://areena.yle.fi/{areena_id}'

@@ -33,7 +33,7 @@ def random_elisa_ipv4():
 
 
 @attr.s
-class DownloadLimits(object):
+class DownloadLimits:
     # Seek to this position (seconds) before starting the recording
     start_position = attr.ib(
         default=None,
@@ -47,7 +47,7 @@ class DownloadLimits(object):
 
 
 @attr.s
-class IOContext(object):
+class IOContext:
     outputfilename = attr.ib(default=None)
     preferred_format = attr.ib(default=None)
     destdir = attr.ib(default=None)
@@ -82,7 +82,7 @@ class IOContext(object):
                     return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
 
 
-class OutputFileNameGenerator(object):
+class OutputFileNameGenerator:
     def filename(self, title, extension, io):
         """Select a filename for the output."""
 
@@ -107,10 +107,11 @@ class OutputFileNameGenerator(object):
         dir, _ = os.path.split(path)
         if not os.path.exists(dir):
             if not io.create_dirs:
-                logger.error('Directory "{}" does not exist. '
-                             'Use --create-dirs to automatically create.'.format(dir))
+                logger.error(
+                    f'Directory "{dir}" does not exist. Use --create-dirs to automatically create.'
+                )
                 return None
-            logger.info('Creating directory "{}"'.format(dir))
+            logger.info(f'Creating directory "{dir}"')
             os.makedirs(dir)
 
         return path
@@ -130,8 +131,7 @@ class OutputFileNameGenerator(object):
         basename, old_ext = os.path.splitext(filename)
         if not old_ext or old_ext != ext:
             if old_ext:
-                logger.warn('Unsupported extension {}. Replacing it with {}'
-                            .format(old_ext, ext))
+                logger.warn(f'Unsupported extension {old_ext}. Replacing it with {ext}')
             return basename + ext
         else:
             return filename

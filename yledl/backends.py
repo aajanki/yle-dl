@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import ctypes
 import ctypes.util
 import logging
@@ -9,7 +7,6 @@ import platform
 import signal
 import shlex
 import subprocess
-from builtins import str
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import HttpClient
@@ -20,21 +17,21 @@ from .utils import ffmpeg_loglevel
 logger = logging.getLogger('yledl')
 
 
-class IOCapability(object):
+class IOCapability:
     RESUME = 'resume'
     PROXY = 'proxy'
     RATELIMIT = 'ratelimit'
     SLICE = 'slice'
 
 
-class PreferredFileExtension(object):
+class PreferredFileExtension:
     def __init__(self, extension):
         assert extension.startswith('.')
         self.extension = extension
         self.is_mandatory = False
 
 
-class MandatoryFileExtension(object):
+class MandatoryFileExtension:
     def __init__(self, extension):
         assert extension.startswith('.')
         self.extension = extension
@@ -52,7 +49,7 @@ def shlex_join(elements):
 ### Base class for downloading a stream to a local file ###
 
 
-class BaseDownloader(object):
+class BaseDownloader:
     def __init__(self):
         self.io_capabilities = frozenset()
         self.error_message = None
@@ -81,7 +78,8 @@ class BaseDownloader(object):
         # are trying to resume a partial download
 
     def warn_on_unsupported_resume(self, filename, clip, io):
-        if (io.resume and
+        if (
+            io.resume and
             IOCapability.RESUME not in self.io_capabilities and
             filename != '-' and
             os.path.isfile(filename)
@@ -108,9 +106,7 @@ class BaseDownloader(object):
         if not ffprobe or not os.path.exists(filename):
             return False
 
-        logger.info('{} already exists.\n'
-                    'Checking if the stream is complete...'
-                    .format(filename))
+        logger.info(f'{filename} already exists.\nChecking if the stream is complete...')
 
         expected_duration = clip.duration_seconds
         if expected_duration is None or expected_duration <= 0:
@@ -119,12 +115,10 @@ class BaseDownloader(object):
         try:
             downloaded_duration = ffprobe.duration_seconds_file(filename)
         except ValueError as ex:
-            logger.warning('Failed to get duration for the file'
-                           '{}: {}'.format(filename, str(ex)))
+            logger.warning(f'Failed to get duration for the file{filename}: {ex}')
             return False
 
-        logger.debug('Downloaded duration {} s, expected {} s'.format(
-            downloaded_duration, expected_duration))
+        logger.debug(f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s')
 
         return downloaded_duration >= 0.98 * expected_duration
 
@@ -158,7 +152,7 @@ class ExternalDownloader(BaseDownloader):
         return Subprocess().execute(commands, env)
 
 
-class Subprocess(object):
+class Subprocess:
     def execute(self, commands, extra_environment):
         """Start external processes connected with pipes and wait completion.
 
@@ -188,7 +182,7 @@ class Subprocess(object):
                 pass
             return RD_INCOMPLETE
         except OSError as exc:
-            logger.error('Failed to execute ' + shell_command_string)
+            logger.error(f'Failed to execute {shell_command_string}')
             logger.error(exc.strerror)
             return RD_SUBPROCESS_EXECUTE_FAILED
 
@@ -296,12 +290,16 @@ class HLSBackend(ExternalDownloader):
         metadata = []
         if clip.description:
             metadata_spec = '' if self._is_mp4(io) else ':s:v:0'
-            metadata += ['-metadata' + metadata_spec,
-                         'description=' + clip.description]
+            metadata += [
+                f'-metadata{metadata_spec}',
+                f'description={clip.description}',
+            ]
 
         if clip.publish_timestamp:
-            metadata += ['-metadata',
-                         'creation_time=' + clip.publish_timestamp.isoformat()]
+            metadata += [
+                '-metadata',
+                f'creation_time={clip.publish_timestamp.isoformat()}',
+            ]
 
         return metadata
 
@@ -374,11 +372,13 @@ class HLSBackend(ExternalDownloader):
         return self.external_downloader(commands, env)
 
     def input_args(self, io):
-        args = ['-y',
-                '-headers', 'X-Forwarded-For: %s\r\n' % io.x_forwarded_for,
-                '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-                '-thread_queue_size', '2048',
-                '-seekable', '0'] # needed for media ID 67-xxxx streams
+        args = [
+            '-y',
+            '-headers', f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
+            '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-thread_queue_size', '2048',
+            '-seekable', '0',  # needed for media ID 67-xxxx streams
+        ]
         if not (io.subtitles == 'none' or self.live):
             # needed for decoding webvtt subtitles
             #
@@ -414,7 +414,7 @@ class HLSBackend(ExternalDownloader):
              '-vcodec', 'copy',
              '-acodec', 'copy',
              '-dn',
-             'file:' + output_name]
+             f'file:{output_name}']
         )
 
     def stream_url(self):
@@ -438,7 +438,7 @@ class HLSAudioBackend(HLSBackend):
             self._metadata_args(clip, io) +
             ['-acodec', 'copy',
              '-f', 'mp3',
-             'file:' + output_name]
+             f'file:{output_name}']
         )
 
     def output_args_pipe(self, io):
@@ -459,7 +459,7 @@ class WgetBackend(ExternalDownloader):
         self.url = url
 
         if not file_extension:
-            logger.warning('Mandatory file extension is missing for URL {}'.format(url))
+            logger.warning(f'Mandatory file extension is missing for URL {url}')
         self._file_extension = MandatoryFileExtension(file_extension or '')
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
@@ -475,7 +475,7 @@ class WgetBackend(ExternalDownloader):
         if clip is not None:
             self.download_external_subtitles(clip.subtitles, output_name, io)
 
-        res = super(WgetBackend, self).save_stream(output_name, clip, io)
+        res = super().save_stream(output_name, clip, io)
         if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
             logger.error('wget failed! Increase verbosity to see more details.')
 
@@ -490,9 +490,9 @@ class WgetBackend(ExternalDownloader):
             sub = next((s for s in subtitles if s.lang == io.subtitles), None)
 
         if sub:
-            logger.debug('Downloading subtitles for {}'.format(sub.lang))
-
-            destination_file = os.path.splitext(video_file_name)[0] + '.srt'
+            logger.debug(f'Downloading subtitles for {sub.lang}')
+            basename = os.path.splitext(video_file_name)[0]
+            destination_file = f'{basename}.srt'
             HttpClient(io).download_to_file(sub.url, destination_file)
 
     def build_args(self, output_name, clip, io):
@@ -519,7 +519,7 @@ class WgetBackend(ExternalDownloader):
         if io.resume:
             args.append('--continue')
         if io.download_limits.ratelimit:
-            args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
+            args.append(f'--limit-rate={io.download_limits.ratelimit}k')
         args.append(self.url)
         return args
 
@@ -537,8 +537,8 @@ class WgetBackend(ExternalDownloader):
             io.wget_binary,
             '-O', output_filename,
             '--no-use-server-timestamps',
-            '--user-agent=' + spoofed_user_agent,
-            '--header', 'X-Forwarded-For: %s' % io.x_forwarded_for,
+            f'--user-agent={spoofed_user_agent}',
+            '--header', f'X-Forwarded-For: {io.x_forwarded_for}',
             '--timeout=20'
         ]
 
@@ -576,7 +576,7 @@ class FailingBackend(BaseDownloader):
         return RD_FAILED
 
 
-class Backends(object):
+class Backends:
     FFMPEG = 'ffmpeg'
     WGET = 'wget'
 
@@ -594,7 +594,7 @@ class Backends(object):
         backends = []
         for bn in backend_names:
             if not Backends.is_valid_backend(bn):
-                logger.warning('Invalid backend: ' + bn)
+                logger.warning(f'Invalid backend: {bn}')
                 continue
 
             if bn not in backends:

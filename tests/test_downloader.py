@@ -31,7 +31,7 @@ class StateCollectingBackend(BaseDownloader):
         return RD_SUCCESS
 
     def stream_url(self):
-        return 'https://example.com/video/{}.mp4'.format(self.id)
+        return f'https://example.com/video/{self.id}.mp4'
 
     def next_available_filename(self, proposed):
         return proposed
@@ -51,7 +51,7 @@ class FailingBackend(StateCollectingBackend):
         return RD_FAILED
 
 
-class MockGeoLocation(object):
+class MockGeoLocation:
     def located_in_finland(self, referrer):
         return True
 
@@ -189,7 +189,7 @@ def failed_stream_clip(state_dict):
 
 
 @attr.s
-class DownloaderParametersFixture(object):
+class DownloaderParametersFixture:
     io = attr.ib()
     filters = attr.ib()
     downloader = attr.ib()

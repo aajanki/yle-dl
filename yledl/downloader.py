@@ -12,15 +12,14 @@ from .streamflavor import FailedFlavor
 logger = logging.getLogger('yledl')
 
 
-class YleDlDownloader(object):
+class YleDlDownloader:
     def __init__(self, geolocation):
         self.geolocation = geolocation
 
     def download_clips(self, clips, io, filters):
         def download(clip, downloader):
             if not downloader:
-                logger.error('Downloading the stream at %s is not yet '
-                             'supported.' % clip.webpage)
+                logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
                 logger.error('Try --showurl')
                 return RD_FAILED
 
@@ -30,7 +29,7 @@ class YleDlDownloader(object):
             if not outputfile:
                 return (RD_FAILED, None)
             if self.should_skip_downloading(outputfile, downloader, clip, io):
-                logger.info('{} has already been downloaded.'.format(outputfile))
+                logger.info(f'{outputfile} has already been downloaded.')
                 return (RD_SUCCESS, outputfile)
 
             self.log_output_file(outputfile)
@@ -63,8 +62,7 @@ class YleDlDownloader(object):
     def pipe(self, clips, io, filters):
         def pipe_clip(clip, downloader):
             if not downloader:
-                logger.error('Downloading the stream at %s is not yet '
-                             'supported.' % clip.webpage)
+                logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
                 return RD_FAILED
             downloader.warn_on_unsupported_feature(io)
             res = downloader.pipe(io)
@@ -101,8 +99,7 @@ class YleDlDownloader(object):
                 logger.error('No stream found')
                 overall_status = RD_FAILED
             elif all(not stream.is_valid() for stream in streams):
-                logger.error('Unsupported stream: %s' %
-                             streams[0].error_message)
+                logger.error(f'Unsupported stream: {streams[0].error_message}')
                 self.print_geo_warning(clip)
 
                 overall_status = RD_FAILED
@@ -125,7 +122,7 @@ class YleDlDownloader(object):
                     self.remove_retry_file(output_file)
                     output_file = None
 
-                logger.debug('Now trying downloader {}'.format(stream.name))
+                logger.debug(f'Now trying downloader {stream.name}')
 
                 (latest_result, output_file) = streamfunc(clip, stream)
                 if needs_retry(latest_result):
@@ -152,7 +149,7 @@ class YleDlDownloader(object):
 
         if filtered:
             selected = filtered[-1]
-            logger.debug('Selected flavor: {}'.format(selected))
+            logger.debug(f'Selected flavor: {selected}')
         else:
             selected = None
 
@@ -228,8 +225,7 @@ class YleDlDownloader(object):
                           for fl in flavors]
 
         if supported_backends:
-            msg = ('Required backend not enabled. Try: --backend {}'
-                   .format(','.join(supported_backends)))
+            msg = (f'Required backend not enabled. Try: --backend {",".join(supported_backends)}')
         elif error_messages:
             msg = error_messages[0]
         else:
@@ -253,7 +249,8 @@ class YleDlDownloader(object):
             return None
 
     def print_geo_warning(self, clip):
-        if (clip.region in ['Finland', None] and
+        if (
+            clip.region in ['Finland', None] and
             not self.geolocation.located_in_finland(clip.webpage)
         ):
             logger.error('This clip is only available in Finland '
@@ -262,9 +259,9 @@ class YleDlDownloader(object):
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':
             if done:
-                logger.info('Stream saved to ' + outputfile)
+                logger.info(f'Stream saved to {outputfile}')
             else:
-                logger.info('Output file: ' + outputfile)
+                logger.info(f'Output file: {outputfile}')
 
     def remove_retry_file(self, filename):
         if filename and os.path.isfile(filename):

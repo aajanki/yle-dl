@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import re
 from datetime import datetime
 
 
-class TitleFormatter(object):
+class TitleFormatter:
     def __init__(self, template='${series_separator}${title}: ${episode_separator}${timestamp}'):
         self.template = template
         self.tokens = self._parse_template(template)
@@ -41,9 +39,11 @@ class TitleFormatter(object):
         return all(t.is_constant() for t in self.tokens)
 
     def maybe_missing_separators(self):
-        return (len(self.tokens) > 1 and
-                not any(isinstance(t, Literal) for t in self.tokens) and
-                not "_separator" in self.template)
+        return (
+            len(self.tokens) > 1 and
+            not any(isinstance(t, Literal) for t in self.tokens) and
+            "_separator" not in self.template
+        )
 
     def _parse_template(self, template):
         res = []
@@ -82,7 +82,7 @@ class TitleFormatter(object):
         if series_title and series_title == ageless_title:
             episode_title = ''
         elif series_title:
-            series_prefix = re.escape(series_title) + r': *'
+            series_prefix = f'{re.escape(series_title)}: *'
             series_prefix_match = re.match(series_prefix, ageless_title, re.IGNORECASE)
             if series_prefix_match:
                 episode_title = ageless_title[series_prefix_match.end():]
@@ -90,7 +90,7 @@ class TitleFormatter(object):
         if subheading and not episode_title:
             return subheading
         elif subheading and subheading not in episode_title:
-            return episode_title + ': ' + subheading
+            return f'{episode_title}: {subheading}'
         else:
             return episode_title
 
@@ -118,22 +118,22 @@ class TitleFormatter(object):
 
     def _series_separator(self, series_title):
         if series_title:
-            return series_title + ': '
+            return f'{series_title}: '
         else:
             return ''
 
     def _episode_number(self, season, episode):
         if season and episode:
-            return 'S%02dE%02d' % (season, episode)
+            return f'S{season:02d}E{episode:02d}'
         elif episode:
-            return 'E%02d' % (episode)
+            return f'E{episode:02d}'
         else:
             return ''
 
     def _episode_number_separator(self, season, episode):
         value = self._episode_number(season, episode)
         if value:
-            return value + '-'
+            return f'{value}-'
         else:
             return ''
 
@@ -152,7 +152,7 @@ class TitleFormatter(object):
             return ''
 
 
-class Substitution(object):
+class Substitution:
     def __init__(self, variable_name):
         self.variable_name = variable_name
 
@@ -165,7 +165,7 @@ class Substitution(object):
         return val.replace('/', '_') if val else ''
 
 
-class Literal(object):
+class Literal:
     def __init__(self, text):
         self.text = text
 

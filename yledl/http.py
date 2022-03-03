@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import logging
 import lxml.html
 import lxml.etree
@@ -12,7 +10,7 @@ from .version import version
 logger = logging.getLogger('yledl')
 
 
-class HttpClient(object):
+class HttpClient:
     def __init__(self, io):
         self._session = self._create_session(io.proxy)
         self.x_forwarded_for = io.x_forwarded_for
@@ -50,23 +48,23 @@ class HttpClient(object):
         response = self.get(url, extra_headers)
         metacharset = html_meta_charset(response.content)
         if metacharset:
-            logger.debug('HTML meta charset: {}'.format(metacharset))
+            logger.debug(f'HTML meta charset: {metacharset}')
             response.encoding = metacharset
 
         try:
             page = response.text
             return lxml.html.fromstring(page)
         except lxml.etree.XMLSyntaxError as ex:
-            logger.warning('HTML syntax error: {}'.format(str(ex)))
+            logger.warning(f'HTML syntax error: {str(ex)}')
             return None
         except lxml.etree.ParserError as ex:
-            logger.warning('HTML parsing error: {}'.format(str(ex)))
+            logger.warning(f'HTML parsing error: {str(ex)}')
             return None
 
     def download_to_file(self, url, destination_filename):
         enc = sys.getfilesystemencoding()
         encoded_filename = destination_filename.encode(enc, 'replace')
-        logger.debug('HTTP GET {}'.format(url))
+        logger.debug(f'HTTP GET {url}')
         with open(encoded_filename, 'wb') as output:
             r = requests.get(url, headers=self.yledl_headers(), stream=True, timeout=20)
             r.raise_for_status()
@@ -75,7 +73,7 @@ class HttpClient(object):
 
     def get(self, url, extra_headers=None):
         if url.find('://') == -1:
-            url = 'http://' + url
+            url = f'http://{url}'
         if '#' in url:
             url = url[:url.find('#')]
 
@@ -83,12 +81,12 @@ class HttpClient(object):
         if extra_headers:
             headers.update(extra_headers)
 
-        logger.debug('HTTP GET {}'.format(url))
+        logger.debug(f'HTTP GET {url}')
         r = self._session.get(url, headers=headers)
-        logger.debug('HTTP status code: {}'.format(r.status_code))
+        logger.debug(f'HTTP status code: {r.status_code}')
         logger.debug('HTTP response headers:')
         for name, value in r.headers.items():
-            logger.debug('{}: {}'.format(name, value))
+            logger.debug(f'{name}: {value}')
         r.raise_for_status()
 
         return r
@@ -98,12 +96,12 @@ class HttpClient(object):
         if extra_headers:
             headers.update(extra_headers)
 
-        logger.debug('HTTP POST {}'.format(url))
+        logger.debug(f'HTTP POST {url}')
         r = self._session.post(url, json=json_data, headers=headers)
-        logger.debug('HTTP status code: {}'.format(r.status_code))
+        logger.debug(f'HTTP status code: {r.status_code}')
         logger.debug('HTTP response headers:')
         for name, value in r.headers.items():
-            logger.debug('{}: {}'.format(name, value))
+            logger.debug(f'{name}: {value}')
         r.raise_for_status()
 
         return r
@@ -117,7 +115,8 @@ class HttpClient(object):
 
 
 def yledl_user_agent():
-    return 'yle-dl/' + version.split(' ')[0]
+    major = version.split(' ')[0]
+    return f'yle-dl/{major}'
 
 
 def html_meta_charset(html_bytes):

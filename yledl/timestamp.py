@@ -13,7 +13,7 @@ def parse_areena_timestamp(timestamp):
     timestamp = timestamp.strip()
     parsed = parse_areena_timestamp_py3(timestamp)
     if parsed is None:
-        logger.warning('Failed to parse timestamp: {}'.format(timestamp))
+        logger.warning(f'Failed to parse timestamp: {timestamp}')
 
     return parsed
 

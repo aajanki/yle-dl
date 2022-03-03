@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
-
 import attr
 from .backends import Backends
 
 
 @attr.s
-class StreamFilters(object):
+class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
