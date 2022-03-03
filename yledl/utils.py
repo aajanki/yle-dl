@@ -24,7 +24,7 @@ def print_enc(msg, out=None, linefeed_and_flush=True):
 
 
 def sane_filename(name, excludechars):
-    tr = dict((ord(c), ord('_')) for c in excludechars)
+    tr = {ord(c): ord('_') for c in excludechars}
     x = re.sub(r'\s+', ' ', name, flags=re.UNICODE).strip(' .').translate(tr)
     return x or 'ylevideo'
 

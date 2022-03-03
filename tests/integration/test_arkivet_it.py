@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from utils import fetch_title, fetch_stream_url, fetch_metadata
 
 def test_arkivet_title():

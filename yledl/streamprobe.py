@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import logging
 from .backends import HLSBackend
 from .streamflavor import StreamFlavor, FailedFlavor
@@ -8,12 +6,12 @@ from .streamflavor import StreamFlavor, FailedFlavor
 logger = logging.getLogger('yledl')
 
 
-class FullHDFlavorProber(object):
+class FullHDFlavorProber:
     def probe_flavors(self, manifest_url, is_live, ffprobe):
         try:
             programs = ffprobe.show_programs_for_url(manifest_url)
         except ValueError as ex:
-            return [FailedFlavor('Failed to probe stream: {}'.format(str(ex)))]
+            return [FailedFlavor(f'Failed to probe stream: {str(ex)}')]
 
         return self.programs_to_stream_flavors(programs, manifest_url, is_live)
 

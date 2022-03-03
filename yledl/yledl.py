@@ -51,7 +51,7 @@ def yledl_logger():
             if record.levelno == logging.INFO:
                 return record.getMessage()
             else:
-                return super(PlainInfoFormatter, self).format(record)
+                return super().format(record)
 
     logger = logging.getLogger('yledl')
     handler = logging.StreamHandler()
@@ -64,7 +64,7 @@ def yledl_logger():
 logger = yledl_logger()
 
 
-class StreamAction(object):
+class StreamAction:
     DOWNLOAD = 1
     PIPE = 2
     PRINT_STREAM_URL = 3
@@ -348,7 +348,7 @@ def resolution_from_arg(arg):
     try:
         return int(arg)
     except ValueError:
-        logger.warning('Invalid resolution: {}'.format(arg))
+        logger.warning(f'Invalid resolution: {arg}')
         return None
 
 

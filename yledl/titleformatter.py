@@ -1,10 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import re
 from datetime import datetime
 
 
-class TitleFormatter(object):
+class TitleFormatter:
     def __init__(self, template='${series_separator}${title}: ${episode_separator}${timestamp}'):
         self.template = template
         self.tokens = self._parse_template(template)
@@ -152,7 +150,7 @@ class TitleFormatter(object):
             return ''
 
 
-class Substitution(object):
+class Substitution:
     def __init__(self, variable_name):
         self.variable_name = variable_name
 
@@ -165,7 +163,7 @@ class Substitution(object):
         return val.replace('/', '_') if val else ''
 
 
-class Literal(object):
+class Literal:
     def __init__(self, text):
         self.text = text
 

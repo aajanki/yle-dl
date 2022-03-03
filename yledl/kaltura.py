@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import attr
 import logging
 import json
@@ -12,7 +10,7 @@ from .subtitles import EmbeddedSubtitle
 logger = logging.getLogger('yledl')
 
 
-class KalturaApiClient(object):
+class KalturaApiClient:
     def __init__(self, api_url, httpclient):
         self.api_url = api_url
         self.httpclient = httpclient
@@ -94,7 +92,7 @@ class YleKalturaApiClient(KalturaApiClient):
     http_origin = 'https://areena.yle.fi'
 
     def __init__(self, requests_session):
-        super(YleKalturaApiClient, self).__init__(self.api_url, requests_session)
+        super().__init__(self.api_url, requests_session)
 
     def playback_context(self, entry_id, referrer):
         subrequests = [
@@ -221,7 +219,7 @@ class YleKalturaApiClient(KalturaApiClient):
 
 
 @attr.s
-class DeliveryProfile(object):
+class DeliveryProfile:
     flavor_id = attr.ib()
     stream_format = attr.ib()
     manifest_file = attr.ib()

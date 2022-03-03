@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import ctypes
 import ctypes.util
 import logging
@@ -9,7 +7,6 @@ import platform
 import signal
 import shlex
 import subprocess
-from builtins import str
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
     RD_SUBPROCESS_EXECUTE_FAILED
 from .http import HttpClient
@@ -20,21 +17,21 @@ from .utils import ffmpeg_loglevel
 logger = logging.getLogger('yledl')
 
 
-class IOCapability(object):
+class IOCapability:
     RESUME = 'resume'
     PROXY = 'proxy'
     RATELIMIT = 'ratelimit'
     SLICE = 'slice'
 
 
-class PreferredFileExtension(object):
+class PreferredFileExtension:
     def __init__(self, extension):
         assert extension.startswith('.')
         self.extension = extension
         self.is_mandatory = False
 
 
-class MandatoryFileExtension(object):
+class MandatoryFileExtension:
     def __init__(self, extension):
         assert extension.startswith('.')
         self.extension = extension
@@ -52,7 +49,7 @@ def shlex_join(elements):
 ### Base class for downloading a stream to a local file ###
 
 
-class BaseDownloader(object):
+class BaseDownloader:
     def __init__(self):
         self.io_capabilities = frozenset()
         self.error_message = None
@@ -158,7 +155,7 @@ class ExternalDownloader(BaseDownloader):
         return Subprocess().execute(commands, env)
 
 
-class Subprocess(object):
+class Subprocess:
     def execute(self, commands, extra_environment):
         """Start external processes connected with pipes and wait completion.
 
@@ -459,7 +456,7 @@ class WgetBackend(ExternalDownloader):
         self.url = url
 
         if not file_extension:
-            logger.warning('Mandatory file extension is missing for URL {}'.format(url))
+            logger.warning(f'Mandatory file extension is missing for URL {url}')
         self._file_extension = MandatoryFileExtension(file_extension or '')
         self.io_capabilities = frozenset([
             IOCapability.RESUME,
@@ -475,7 +472,7 @@ class WgetBackend(ExternalDownloader):
         if clip is not None:
             self.download_external_subtitles(clip.subtitles, output_name, io)
 
-        res = super(WgetBackend, self).save_stream(output_name, clip, io)
+        res = super().save_stream(output_name, clip, io)
         if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
             logger.error('wget failed! Increase verbosity to see more details.')
 
@@ -490,7 +487,7 @@ class WgetBackend(ExternalDownloader):
             sub = next((s for s in subtitles if s.lang == io.subtitles), None)
 
         if sub:
-            logger.debug('Downloading subtitles for {}'.format(sub.lang))
+            logger.debug(f'Downloading subtitles for {sub.lang}')
 
             destination_file = os.path.splitext(video_file_name)[0] + '.srt'
             HttpClient(io).download_to_file(sub.url, destination_file)
@@ -519,7 +516,7 @@ class WgetBackend(ExternalDownloader):
         if io.resume:
             args.append('--continue')
         if io.download_limits.ratelimit:
-            args.append('--limit-rate={}k'.format(io.download_limits.ratelimit))
+            args.append(f'--limit-rate={io.download_limits.ratelimit}k')
         args.append(self.url)
         return args
 
@@ -576,7 +573,7 @@ class FailingBackend(BaseDownloader):
         return RD_FAILED
 
 
-class Backends(object):
+class Backends:
     FFMPEG = 'ffmpeg'
     WGET = 'wget'
 

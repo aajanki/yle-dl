@@ -33,7 +33,7 @@ def random_elisa_ipv4():
 
 
 @attr.s
-class DownloadLimits(object):
+class DownloadLimits:
     # Seek to this position (seconds) before starting the recording
     start_position = attr.ib(
         default=None,
@@ -47,7 +47,7 @@ class DownloadLimits(object):
 
 
 @attr.s
-class IOContext(object):
+class IOContext:
     outputfilename = attr.ib(default=None)
     preferred_format = attr.ib(default=None)
     destdir = attr.ib(default=None)
@@ -82,7 +82,7 @@ class IOContext(object):
                     return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
 
 
-class OutputFileNameGenerator(object):
+class OutputFileNameGenerator:
     def filename(self, title, extension, io):
         """Select a filename for the output."""
 
@@ -110,7 +110,7 @@ class OutputFileNameGenerator(object):
                 logger.error('Directory "{}" does not exist. '
                              'Use --create-dirs to automatically create.'.format(dir))
                 return None
-            logger.info('Creating directory "{}"'.format(dir))
+            logger.info(f'Creating directory "{dir}"')
             os.makedirs(dir)
 
         return path

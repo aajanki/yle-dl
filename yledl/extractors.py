@@ -24,24 +24,24 @@ def extractor_factory(url, filters, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/a/', url):
-        logger.debug('{} is an Elava Arkisto URL'.format(url))
+        logger.debug(f'{url} is an Elava Arkisto URL')
         return ElavaArkistoExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
-        logger.debug('{} is a live radio URL'.format(url))
+        logger.debug(f'{url} is a live radio URL')
         return AreenaLiveRadioExtractor(language_chooser, httpclient)
     elif re.match(r'^https?://(areena|arenan)\.yle\.fi/audio/[-0-9]+', url):
-        logger.debug('{} is an audio URL'.format(url))
+        logger.debug(f'{url} is an audio URL')
         return AreenaAudio2020Extractor(language_chooser, httpclient)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
-        logger.debug('{} is a news URL'.format(url))
+        logger.debug(f'{url} is a news URL')
         return YleUutisetExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or
           re.match(r'^https?://yle\.fi/', url)):
-        logger.debug('{} is an Areena URL'.format(url))
+        logger.debug(f'{url} is an Areena URL')
         return AreenaExtractor(language_chooser, httpclient)
     else:
-        logger.debug('{} is an unrecognized URL'.format(url))
+        logger.debug(f'{url} is an unrecognized URL')
         return None
 
 
@@ -57,7 +57,7 @@ def url_language(url):
 ## Flavors
 
 
-class Flavors(object):
+class Flavors:
     @staticmethod
     def media_type(media):
         mtype = media.get('type')
@@ -73,7 +73,7 @@ class Flavors(object):
 
 
 @attr.s
-class Clip(object):
+class Clip:
     webpage = attr.ib()
     flavors = attr.ib()
     title = attr.ib(default='')
@@ -88,7 +88,7 @@ class Clip(object):
 
     def metadata(self, io):
         flavors_meta = sorted(
-            [self.flavor_meta(f) for f in self.flavors],
+            (self.flavor_meta(f) for f in self.flavors),
             key=lambda x: x.get('bitrate', 0))
         meta = [
             ('program_id', self.program_id),
@@ -186,7 +186,7 @@ class FailedClip(Clip):
 
 
 @attr.s
-class AreenaApiProgramInfo(object):
+class AreenaApiProgramInfo:
     media_id = attr.ib()
     title = attr.ib()
     description = attr.ib()
@@ -201,7 +201,7 @@ class AreenaApiProgramInfo(object):
     expired = attr.ib()
 
 
-class ClipExtractor(object):
+class ClipExtractor:
     def __init__(self, httpclient):
         self.httpclient = httpclient
 
@@ -322,7 +322,7 @@ class AreenaPlaylist(ClipExtractor):
         return len(body) != 0
 
 
-class AreenaPreviewApiParser(object):
+class AreenaPreviewApiParser:
     def __init__(self, data):
         self.preview = data or {}
 
@@ -429,7 +429,7 @@ class AreenaPreviewApiParser(object):
 
 class AreenaExtractor(AreenaPlaylist):
     def __init__(self, language_chooser, httpclient):
-        super(AreenaExtractor, self).__init__(httpclient)
+        super().__init__(httpclient)
         self.language_chooser = language_chooser
 
     def extract_clip(self, clip_url, title_formatter, ffprobe):

@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
-
 default_languages = ['fin', 'swe']
 
 
-class TranslationChooser(object):
+class TranslationChooser:
     def __init__(self, preferred_three_letter_codes):
         if preferred_three_letter_codes:
             preferred = [x.lower() for x in preferred_three_letter_codes]

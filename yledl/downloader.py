@@ -12,7 +12,7 @@ from .streamflavor import FailedFlavor
 logger = logging.getLogger('yledl')
 
 
-class YleDlDownloader(object):
+class YleDlDownloader:
     def __init__(self, geolocation):
         self.geolocation = geolocation
 
@@ -30,7 +30,7 @@ class YleDlDownloader(object):
             if not outputfile:
                 return (RD_FAILED, None)
             if self.should_skip_downloading(outputfile, downloader, clip, io):
-                logger.info('{} has already been downloaded.'.format(outputfile))
+                logger.info(f'{outputfile} has already been downloaded.')
                 return (RD_SUCCESS, outputfile)
 
             self.log_output_file(outputfile)
@@ -125,7 +125,7 @@ class YleDlDownloader(object):
                     self.remove_retry_file(output_file)
                     output_file = None
 
-                logger.debug('Now trying downloader {}'.format(stream.name))
+                logger.debug(f'Now trying downloader {stream.name}')
 
                 (latest_result, output_file) = streamfunc(clip, stream)
                 if needs_retry(latest_result):
@@ -152,7 +152,7 @@ class YleDlDownloader(object):
 
         if filtered:
             selected = filtered[-1]
-            logger.debug('Selected flavor: {}'.format(selected))
+            logger.debug(f'Selected flavor: {selected}')
         else:
             selected = None
 
