@@ -253,7 +253,8 @@ class YleDlDownloader:
             return None
 
     def print_geo_warning(self, clip):
-        if (clip.region in ['Finland', None] and
+        if (
+            clip.region in ['Finland', None] and
             not self.geolocation.located_in_finland(clip.webpage)
         ):
             logger.error('This clip is only available in Finland '

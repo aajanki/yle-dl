@@ -78,7 +78,8 @@ class BaseDownloader:
         # are trying to resume a partial download
 
     def warn_on_unsupported_resume(self, filename, clip, io):
-        if (io.resume and
+        if (
+            io.resume and
             IOCapability.RESUME not in self.io_capabilities and
             filename != '-' and
             os.path.isfile(filename)
@@ -371,11 +372,13 @@ class HLSBackend(ExternalDownloader):
         return self.external_downloader(commands, env)
 
     def input_args(self, io):
-        args = ['-y',
-                '-headers', 'X-Forwarded-For: %s\r\n' % io.x_forwarded_for,
-                '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-                '-thread_queue_size', '2048',
-                '-seekable', '0'] # needed for media ID 67-xxxx streams
+        args = [
+            '-y',
+            '-headers', 'X-Forwarded-For: %s\r\n' % io.x_forwarded_for,
+            '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-thread_queue_size', '2048',
+            '-seekable', '0',  # needed for media ID 67-xxxx streams
+        ]
         if not (io.subtitles == 'none' or self.live):
             # needed for decoding webvtt subtitles
             #

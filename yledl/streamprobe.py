@@ -2,7 +2,6 @@ import logging
 from .backends import HLSBackend
 from .streamflavor import StreamFlavor, FailedFlavor
 
-
 logger = logging.getLogger('yledl')
 
 
@@ -38,7 +37,6 @@ class FullHDFlavorProber:
                                program_id=pid, is_live=is_live)
                 ]
             ))
-
 
         res = self._drop_duplicates(res)
         return sorted(res, key=lambda x: (x.height or 0, x.bitrate or 0))

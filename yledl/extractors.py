@@ -61,7 +61,8 @@ class Flavors:
     @staticmethod
     def media_type(media):
         mtype = media.get('type')
-        if (mtype == 'AudioObject' or
+        if (
+            mtype == 'AudioObject' or
             (mtype is None and media.get('containerFormat') == 'mpeg audio')
         ):
             return 'audio'
@@ -309,13 +310,20 @@ class AreenaPlaylist(ClipExtractor):
 
     def playlist_url(self, series_id, sort_order, page_size=100, offset=0):
         offset_param = f'&offset={str(offset)}' if offset else ''
-        return (f'https://areena.yle.fi/api/programs/v1/episodes/{series_id}.json?'
-                f'type=program&availability=&'
-                f'limit={str(page_size)}&'
-                f'order=episode.hash%3A{sort_order}%2Cpublication.starttime%3A{sort_order}%2Ctitle.fi%3Aasc&'
-                f'app_id=areena_web_frontend_prod&'
-                f'app_key=4622a8f8505bb056c956832a70c105d4'
-                f'{offset_param}')
+        order_param = '%2C'.join((
+            f'episode.hash%3A{sort_order}',
+            f'publication.starttime%3A{sort_order}',
+            'title.fi%3Aasc'
+        ))
+        return (
+            f'https://areena.yle.fi/api/programs/v1/episodes/{series_id}.json?'
+            f'type=program&availability=&'
+            f'limit={str(page_size)}&'
+            f'order={order_param}&'
+            f'app_id=areena_web_frontend_prod&'
+            f'app_key=4622a8f8505bb056c956832a70c105d4'
+            f'{offset_param}'
+        )
 
     def is_playlist_page(self, html_tree):
         body = html_tree.xpath('/html/body[contains(@class, "series-cover-page")]')
@@ -843,10 +851,15 @@ class AreenaAudio2020Extractor(AreenaExtractor):
 
     def playlist_url(self, series_id, sort_order, page_size=100, offset=0):
         offset_param = f'&offset={str(offset)}' if offset else ''
+        order_param = '%2C'.join([
+            f'episode.hash%3A{sort_order}',
+            f'publication.starttime%3A{sort_order}',
+            'title.fi%3Aasc',
+        ])
         return (f'https://areena.yle.fi/api/programs/v1/episodes/{series_id}.json?'
                 f'type=program&availability=&'
                 f'limit={str(page_size)}&'
-                f'order=episode.hash%3A{sort_order}%2Cpublication.starttime%3A{sort_order}%2Ctitle.fi%3Aasc&'
+                f'order={order_param}&'
                 f'app_id=areena_web_radio_prod&'
                 f'app_key=b3a0dc973c0aab997f1021bc7a0e3157'
                 f'{offset_param}')
@@ -871,7 +884,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
         return self.ordered_union(self._simple_dataids(tree), self._ydd_dataids(tree))
 
     def ordered_union(self, xs, ys):
-        union = list(xs) # copy
+        union = list(xs)  # copy
         for y in ys:
             if y not in union:
                 union.append(y)
