@@ -43,6 +43,11 @@ class HttpClient:
         response = self.get(url, extra_headers)
         return response.text if response else None
 
+    def download_json(self, url, extra_headers=None):
+        """Returns JSON from an URL."""
+        response = self.get(url, extra_headers)
+        return response.json()
+
     def download_html_tree(self, url, extra_headers=None):
         """Downloads a HTML document and returns it parsed as an lxml tree."""
         response = self.get(url, extra_headers)

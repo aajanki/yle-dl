@@ -7,7 +7,6 @@ import re
 from datetime import datetime
 from requests import HTTPError
 from urllib.parse import urlparse, quote_plus, parse_qs
-from . import jsonhelpers
 from .backends import HLSAudioBackend, HLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
@@ -297,7 +296,7 @@ class AreenaPlaylist(ClipExtractor):
         logger.debug(f'Getting a playlist page {series_id}, size = {page_size}, offset = {offset}')
 
         pl_url = self.playlist_url(series_id, sort_order, page_size, offset)
-        playlist = jsonhelpers.load_json(pl_url, self.httpclient)
+        playlist = self.httpclient.download_json(pl_url)
         if playlist is None:
             return None
 
@@ -632,7 +631,7 @@ class AreenaExtractor(AreenaPlaylist):
         if preview.is_live() and not self.force_program_info():
             info = None
         else:
-            info = jsonhelpers.load_json(self.program_info_url(pid), self.httpclient)
+            info = self.httpclient.download_json(self.program_info_url(pid))
             logger.debug(f'program data:\n{json.dumps(info, indent=2)}')
 
         publish_timestamp = (self.publish_timestamp(info) or
@@ -701,13 +700,12 @@ class AreenaExtractor(AreenaPlaylist):
             'Referer': pageurl,
             'Origin': 'https://areena.yle.fi'
         }
+        url = self.preview_url(pid)
         try:
-            preview_json = jsonhelpers.load_json(self.preview_url(pid),
-                                                 self.httpclient,
-                                                 headers=preview_headers)
+            preview_json = self.httpclient.download_json(url, preview_headers)
         except HTTPError as ex:
             if ex.response.status_code == 404:
-                logger.warning(f'Preview API result not found: {self.preview_url(pid)}')
+                logger.warning(f'Preview API result not found: {url}')
                 preview_json = []
             else:
                 raise
