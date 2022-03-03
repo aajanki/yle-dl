@@ -107,8 +107,9 @@ class OutputFileNameGenerator:
         dir, _ = os.path.split(path)
         if not os.path.exists(dir):
             if not io.create_dirs:
-                logger.error('Directory "{}" does not exist. '
-                             'Use --create-dirs to automatically create.'.format(dir))
+                logger.error(
+                    f'Directory "{dir}" does not exist. Use --create-dirs to automatically create.'
+                )
                 return None
             logger.info(f'Creating directory "{dir}"')
             os.makedirs(dir)

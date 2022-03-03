@@ -284,8 +284,7 @@ class AreenaPlaylist(ClipExtractor):
         while has_next_page:
             page = self.playlist_page(series_id, sort_order, page_size, offset)
             if page is None:
-                logger.warn('Playlist failed at offset {}. '
-                            'Some episodes may be missing!'.format(offset))
+                logger.warning(f'Playlist failed at offset {offset}. Some episodes may be missing!')
                 break
 
             playlist.extend(page)
@@ -295,9 +294,7 @@ class AreenaPlaylist(ClipExtractor):
         return playlist
 
     def playlist_page(self, series_id, sort_order, page_size, offset):
-        logger.debug('Getting a playlist page {series_id}, '
-                     'size = {size}, offset = {offset}'.format(
-                         series_id=series_id, size=page_size, offset=offset))
+        logger.debug(f'Getting a playlist page {series_id}, size = {page_size}, offset = {offset}')
 
         pl_url = self.playlist_url(series_id, sort_order, page_size, offset)
         playlist = jsonhelpers.load_json(pl_url, self.httpclient)
@@ -465,8 +462,10 @@ class AreenaExtractor(AreenaPlaylist):
         if program_info.pending:
             error_message = 'Stream not yet available.'
             if program_info.publish_timestamp:
-                error_message = ('{} Becomes available on {}'.format(
-                    error_message, program_info.publish_timestamp.isoformat()))
+                error_message = (
+                    f'{error_message} Becomes available on '
+                    f'{program_info.publish_timestamp.isoformat()}'
+                )
         elif program_info.expired:
             error_message = 'This stream has expired'
         elif all_streams and all(not s.is_valid() for s in all_streams):
@@ -691,9 +690,11 @@ class AreenaExtractor(AreenaPlaylist):
         )
 
     def program_info_url(self, program_id):
-        return 'https://areena.yle.fi/api/programs/v1/id/{}.json?' \
-            'app_id=areena_web_frontend_prod&' \
-            'app_key=4622a8f8505bb056c956832a70c105d4'.format(quote_plus(program_id))
+        return (
+            f'https://areena.yle.fi/api/programs/v1/id/{quote_plus(program_id)}.json'
+            '?app_id=areena_web_frontend_prod'
+            '&app_key=4622a8f8505bb056c956832a70c105d4'
+        )
 
     def preview_parser(self, pid, pageurl):
         preview_headers = {
@@ -715,10 +716,12 @@ class AreenaExtractor(AreenaPlaylist):
         return AreenaPreviewApiParser(preview_json)
 
     def preview_url(self, program_id):
-        return 'https://player.api.yle.fi/v1/preview/{}.json?' \
-            'language=fin&ssl=true&countryCode=FI&host=areenaylefi' \
-            '&app_id=player_static_prod' \
-            '&app_key=8930d72170e48303cf5f3867780d549b'.format(program_id)
+        return (
+            f'https://player.api.yle.fi/v1/preview/{program_id}.json?'
+            'language=fin&ssl=true&countryCode=FI&host=areenaylefi'
+            '&app_id=player_static_prod'
+            '&app_key=8930d72170e48303cf5f3867780d549b'
+        )
 
     def publish_event_is_current(self, event):
         return event.get('temporalStatus') == 'currently'

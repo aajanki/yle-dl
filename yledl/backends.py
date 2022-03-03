@@ -106,9 +106,7 @@ class BaseDownloader:
         if not ffprobe or not os.path.exists(filename):
             return False
 
-        logger.info('{} already exists.\n'
-                    'Checking if the stream is complete...'
-                    .format(filename))
+        logger.info(f'{filename} already exists.\nChecking if the stream is complete...')
 
         expected_duration = clip.duration_seconds
         if expected_duration is None or expected_duration <= 0:
@@ -117,11 +115,10 @@ class BaseDownloader:
         try:
             downloaded_duration = ffprobe.duration_seconds_file(filename)
         except ValueError as ex:
-            logger.warning(f'Failed to get duration for the file{filename}: {str(ex)}')
+            logger.warning(f'Failed to get duration for the file{filename}: {ex}')
             return False
 
-        logger.debug('Downloaded duration {} s, expected {} s'.format(
-            downloaded_duration, expected_duration))
+        logger.debug(f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s')
 
         return downloaded_duration >= 0.98 * expected_duration
 

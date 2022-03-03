@@ -19,8 +19,7 @@ class YleDlDownloader:
     def download_clips(self, clips, io, filters):
         def download(clip, downloader):
             if not downloader:
-                logger.error('Downloading the stream at %s is not yet '
-                             'supported.' % clip.webpage)
+                logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
                 logger.error('Try --showurl')
                 return RD_FAILED
 
@@ -63,8 +62,7 @@ class YleDlDownloader:
     def pipe(self, clips, io, filters):
         def pipe_clip(clip, downloader):
             if not downloader:
-                logger.error('Downloading the stream at %s is not yet '
-                             'supported.' % clip.webpage)
+                logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
                 return RD_FAILED
             downloader.warn_on_unsupported_feature(io)
             res = downloader.pipe(io)
@@ -227,8 +225,7 @@ class YleDlDownloader:
                           for fl in flavors]
 
         if supported_backends:
-            msg = ('Required backend not enabled. Try: --backend {}'
-                   .format(','.join(supported_backends)))
+            msg = (f'Required backend not enabled. Try: --backend {",".join(supported_backends)}')
         elif error_messages:
             msg = error_messages[0]
         else:

@@ -124,9 +124,9 @@ class TitleFormatter:
 
     def _episode_number(self, season, episode):
         if season and episode:
-            return 'S%02dE%02d' % (season, episode)
+            return f'S{season:02d}E{episode:02d}'
         elif episode:
-            return 'E%02d' % (episode)
+            return f'E{episode:02d}'
         else:
             return ''
 

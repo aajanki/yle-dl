@@ -81,10 +81,10 @@ def arg_parser():
                     file = sys.stderr
                 print_enc(message, file, False)
 
-    description = \
-        ('yle-dl %s: Download media files from Yle Areena and Elävä Arkisto\n'
-         'Copyright (C) 2009-2022 Antti Ajanki <antti.ajanki@iki.fi>, '
-         'license: GPLv3\n' % version)
+    description = (
+        f'yle-dl {version}: Download media files from Yle Areena and Elävä Arkisto\n'
+        'Copyright (C) 2009-2022 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
+    )
 
     parser = ArgumentParserEncoded(
         default_config_files=['~/.yledl.conf'],
@@ -389,11 +389,14 @@ def warn_on_obsolete_ffmpeg(backends, io):
     if 'ffmpeg' in backends:
         ffmpeg_version = io.ffmpeg_version()
         if ffmpeg_version is not None:
-            logger.debug('Detected ffmpeg {}.{}.{}'.format(*ffmpeg_version))
+            formatted_ffmpeg_version = '{}.{}.{}'.format(*ffmpeg_version)
+            logger.debug(f'Detected ffmpeg {formatted_ffmpeg_version}')
             if ffmpeg_version < (4, 1, 0):
-                logger.warning('Your version of ffmpeg ({}.{}.{}) might not download '
-                               'all streams correctly.'.format(*ffmpeg_version))
-                logger.warning('Please upgrade ffmpeg to version 4.1.0 or later.')
+                logger.warning(
+                    f'Your version of ffmpeg ({formatted_ffmpeg_version}) '
+                    'might not download all streams correctly.\n'
+                    'Please upgrade ffmpeg to version 4.1.0 or later.'
+                )
 
 
 def warn_on_output_template_syntax_change(title_formatter):

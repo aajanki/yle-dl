@@ -126,7 +126,7 @@ class YleKalturaApiClient(KalturaApiClient):
                             if self.is_web_stream(fl)]
         num_non_web = len(flavor_assets) - len(filtered_flavors)
         if num_non_web:
-            logger.debug('Ignored %d non-web flavors' % num_non_web)
+            logger.debug(f'Ignored {num_non_web:d} non-web flavors')
 
         return self.create_flavors(filtered_flavors, delivery_profiles, referrer)
 
@@ -226,19 +226,13 @@ class DeliveryProfile:
 
     def manifest_url(self, entry_id, partner_id, client_tag, referrer):
         b64referrer = base64.b64encode(referrer.encode('utf-8')).decode('utf-8')
-        return ('https://cdnsecakmi.kaltura.com/p/{partner_id}/'
-                'sp/{partner_id}00/playManifest/entryId/{entry_id}/'
-                'flavorId/{flavor_id}/format/{stream_format}/protocol/https/'
-                '{manifest_file}?uiConfId=43362851&referrer={referrer}'
-                '&playSessionId=11111111-1111-1111-1111-111111111111'
-                '&clientTag={client_tag}'.format(
-                    partner_id=partner_id,
-                    entry_id=entry_id,
-                    flavor_id=self.flavor_id,
-                    stream_format=self.stream_format,
-                    manifest_file=self.manifest_file,
-                    referrer=b64referrer,
-                    client_tag=client_tag))
+        return (
+            f'https://cdnsecakmi.kaltura.com/p/{partner_id}/'
+            f'sp/{partner_id}00/playManifest/entryId/{entry_id}/'
+            f'flavorId/{self.flavor_id}/format/{self.stream_format}/protocol/https/'
+            f'{self.manifest_file}?uiConfId=43362851&referrer={b64referrer}'
+            f'&playSessionId=11111111-1111-1111-1111-111111111111&clientTag={client_tag}'
+        )
 
     def backends(self, entry_id, media_type, is_live, file_ext, partner_id, client_tag, referrer):
         backends = []
