@@ -45,19 +45,21 @@ from .utils import print_enc
 from .version import version
 
 
-def yledl_logger():
-    class PlainInfoFormatter(logging.Formatter):
-        def format(self, record):
-            if record.levelno == logging.INFO:
-                return record.getMessage()
-            else:
-                return super().format(record)
+class PlainInfoFormatter(logging.Formatter):
+    def format(self, record):
+        if record.levelno == logging.INFO:
+            return record.getMessage()
+        else:
+            return super(PlainInfoFormatter, self).format(record)
 
+
+def yledl_logger():
     logger = logging.getLogger('yledl')
-    handler = logging.StreamHandler()
-    formatter = PlainInfoFormatter('%(levelname)s: %(message)s')
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    if not logger.handlers:  # If this logger already has a local handler, don't add another.
+        handler = logging.StreamHandler()
+        formatter = PlainInfoFormatter('%(levelname)s: %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
     return logger
 
 
