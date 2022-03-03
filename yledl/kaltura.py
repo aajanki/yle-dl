@@ -74,7 +74,7 @@ class KalturaApiClient:
         return mrequest
 
     def perform_request(self, request, referrer, origin):
-        endpoint = self.api_url + '/api_v3/service/multirequest'
+        endpoint = f'{self.api_url}/api_v3/service/multirequest'
         extra_headers = {
             'Referer': referrer,
             'Origin': origin,
@@ -205,11 +205,11 @@ class YleKalturaApiClient(KalturaApiClient):
             manifest_file = url.split('/')[-1]
 
             for flavor_id in flavor_ids:
-                profile = DeliveryProfile(flavor_id, source_format,
-                                          manifest_file)
-
-                pkey = flavor_id + '_' + source_format
-                profiles_by_id_and_format[pkey] = profile
+                profiles_by_id_and_format[f'{flavor_id}_{source_format}'] = DeliveryProfile(
+                    flavor_id,
+                    source_format,
+                    manifest_file,
+                )
 
         profiles = {}
         for p in profiles_by_id_and_format.values():

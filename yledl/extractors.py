@@ -303,7 +303,7 @@ class AreenaPlaylist(ClipExtractor):
 
         playlist_data = playlist.get('data', [])
         episode_ids = (x['id'] for x in playlist_data if 'id' in x)
-        return ['https://areena.yle.fi/' + x for x in episode_ids]
+        return [f'https://areena.yle.fi/{episode_id}' for episode_id in episode_ids]
 
     def playlist_url(self, series_id, sort_order, page_size=100, offset=0):
         offset_param = f'&offset={str(offset)}' if offset else ''
@@ -633,7 +633,7 @@ class AreenaExtractor(AreenaPlaylist):
             info = None
         else:
             info = jsonhelpers.load_json(self.program_info_url(pid), self.httpclient)
-            logger.debug('program data:\n' + json.dumps(info, indent=2))
+            logger.debug(f'program data:\n{json.dumps(info, indent=2)}')
 
         publish_timestamp = (self.publish_timestamp(info) or
                              preview.timestamp())
@@ -711,7 +711,7 @@ class AreenaExtractor(AreenaPlaylist):
                 preview_json = []
             else:
                 raise
-        logger.debug('preview data:\n' + json.dumps(preview_json, indent=2))
+        logger.debug(f'preview data:\n{json.dumps(preview_json, indent=2)}')
 
         return AreenaPreviewApiParser(preview_json)
 
@@ -877,7 +877,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
         if latest_only:
             ids = ids[-1:]
 
-        return ['https://areena.yle.fi/' + x for x in ids]
+        return [f'https://areena.yle.fi/{x}' for x in ids]
 
     def get_dataids(self, url):
         tree = self.httpclient.download_html_tree(url)
@@ -896,7 +896,7 @@ class ElavaArkistoExtractor(AreenaExtractor):
     def _simple_dataids(self, tree):
         dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
         dataids = [str(d) for d in dataids]
-        return [d if '-' in d else '1-' + d for d in dataids]
+        return [d if '-' in d else f'1-{d}' for d in dataids]
 
     def _ydd_dataids(self, tree):
         player_props = [
@@ -958,5 +958,5 @@ class YleUutisetExtractor(AreenaExtractor):
         if '-' in data_id:
             areena_id = data_id
         else:
-            areena_id = '1-' + data_id
-        return 'https://areena.yle.fi/' + areena_id
+            areena_id = f'1-{data_id}'
+        return f'https://areena.yle.fi/{areena_id}'

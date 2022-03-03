@@ -259,9 +259,9 @@ class YleDlDownloader:
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':
             if done:
-                logger.info('Stream saved to ' + outputfile)
+                logger.info(f'Stream saved to {outputfile}')
             else:
-                logger.info('Output file: ' + outputfile)
+                logger.info(f'Output file: {outputfile}')
 
     def remove_retry_file(self, filename):
         if filename and os.path.isfile(filename):

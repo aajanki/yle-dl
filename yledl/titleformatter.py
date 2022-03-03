@@ -82,7 +82,7 @@ class TitleFormatter:
         if series_title and series_title == ageless_title:
             episode_title = ''
         elif series_title:
-            series_prefix = re.escape(series_title) + r': *'
+            series_prefix = f'{re.escape(series_title)}: *'
             series_prefix_match = re.match(series_prefix, ageless_title, re.IGNORECASE)
             if series_prefix_match:
                 episode_title = ageless_title[series_prefix_match.end():]
@@ -90,7 +90,7 @@ class TitleFormatter:
         if subheading and not episode_title:
             return subheading
         elif subheading and subheading not in episode_title:
-            return episode_title + ': ' + subheading
+            return f'{episode_title}: {subheading}'
         else:
             return episode_title
 
@@ -118,7 +118,7 @@ class TitleFormatter:
 
     def _series_separator(self, series_title):
         if series_title:
-            return series_title + ': '
+            return f'{series_title}: '
         else:
             return ''
 
@@ -133,7 +133,7 @@ class TitleFormatter:
     def _episode_number_separator(self, season, episode):
         value = self._episode_number(season, episode)
         if value:
-            return value + '-'
+            return f'{value}-'
         else:
             return ''
 

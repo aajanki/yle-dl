@@ -31,8 +31,14 @@ class Ffprobe:
                 f'Stream probing failed with status {ex.returncode}')
 
     def duration_seconds_file(self, filename):
-        args = [self.ffmpeg_binary, '-stats', '-loglevel', 'fatal',
-                '-i', 'file:' + filename, '-f', 'null', '-']
+        args = [
+            self.ffmpeg_binary,
+            '-stats',
+            '-loglevel', 'fatal',
+            '-i', f'file:{filename}',
+            '-f', 'null',
+            '-',
+        ]
 
         try:
             decoding_result = (

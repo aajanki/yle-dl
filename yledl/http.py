@@ -73,7 +73,7 @@ class HttpClient:
 
     def get(self, url, extra_headers=None):
         if url.find('://') == -1:
-            url = 'http://' + url
+            url = f'http://{url}'
         if '#' in url:
             url = url[:url.find('#')]
 
@@ -115,7 +115,8 @@ class HttpClient:
 
 
 def yledl_user_agent():
-    return 'yle-dl/' + version.split(' ')[0]
+    major = version.split(' ')[0]
+    return f'yle-dl/{major}'
 
 
 def html_meta_charset(html_bytes):

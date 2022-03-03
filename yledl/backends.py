@@ -182,7 +182,7 @@ class Subprocess:
                 pass
             return RD_INCOMPLETE
         except OSError as exc:
-            logger.error('Failed to execute ' + shell_command_string)
+            logger.error(f'Failed to execute {shell_command_string}')
             logger.error(exc.strerror)
             return RD_SUBPROCESS_EXECUTE_FAILED
 
@@ -290,12 +290,16 @@ class HLSBackend(ExternalDownloader):
         metadata = []
         if clip.description:
             metadata_spec = '' if self._is_mp4(io) else ':s:v:0'
-            metadata += ['-metadata' + metadata_spec,
-                         'description=' + clip.description]
+            metadata += [
+                f'-metadata{metadata_spec}',
+                f'description={clip.description}',
+            ]
 
         if clip.publish_timestamp:
-            metadata += ['-metadata',
-                         'creation_time=' + clip.publish_timestamp.isoformat()]
+            metadata += [
+                '-metadata',
+                f'creation_time={clip.publish_timestamp.isoformat()}',
+            ]
 
         return metadata
 
@@ -410,7 +414,7 @@ class HLSBackend(ExternalDownloader):
              '-vcodec', 'copy',
              '-acodec', 'copy',
              '-dn',
-             'file:' + output_name]
+             f'file:{output_name}']
         )
 
     def stream_url(self):
@@ -434,7 +438,7 @@ class HLSAudioBackend(HLSBackend):
             self._metadata_args(clip, io) +
             ['-acodec', 'copy',
              '-f', 'mp3',
-             'file:' + output_name]
+             f'file:{output_name}']
         )
 
     def output_args_pipe(self, io):
@@ -487,8 +491,8 @@ class WgetBackend(ExternalDownloader):
 
         if sub:
             logger.debug(f'Downloading subtitles for {sub.lang}')
-
-            destination_file = os.path.splitext(video_file_name)[0] + '.srt'
+            basename = os.path.splitext(video_file_name)[0]
+            destination_file = f'{basename}.srt'
             HttpClient(io).download_to_file(sub.url, destination_file)
 
     def build_args(self, output_name, clip, io):
@@ -533,7 +537,7 @@ class WgetBackend(ExternalDownloader):
             io.wget_binary,
             '-O', output_filename,
             '--no-use-server-timestamps',
-            '--user-agent=' + spoofed_user_agent,
+            f'--user-agent={spoofed_user_agent}',
             '--header', f'X-Forwarded-For: {io.x_forwarded_for}',
             '--timeout=20'
         ]
@@ -590,7 +594,7 @@ class Backends:
         backends = []
         for bn in backend_names:
             if not Backends.is_valid_backend(bn):
-                logger.warning('Invalid backend: ' + bn)
+                logger.warning(f'Invalid backend: {bn}')
                 continue
 
             if bn not in backends:
