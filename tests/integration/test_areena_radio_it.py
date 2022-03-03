@@ -70,6 +70,13 @@ def test_radio_series_2020():
     assert len(urls) >= 6
 
 
+def test_radio_series_redirect():
+    # Will get redicted to https://areena.yle.fi/audio/1-61070264
+    urls = fetch_stream_url('https://areena.yle.fi/1-61070264')
+
+    assert len(urls) >= 10
+
+
 def test_radio_metadata_2020():
     metadata = fetch_metadata('https://areena.yle.fi/audio/1-50198110')
 
