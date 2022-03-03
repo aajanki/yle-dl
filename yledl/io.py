@@ -130,8 +130,7 @@ class OutputFileNameGenerator:
         basename, old_ext = os.path.splitext(filename)
         if not old_ext or old_ext != ext:
             if old_ext:
-                logger.warn('Unsupported extension {}. Replacing it with {}'
-                            .format(old_ext, ext))
+                logger.warn(f'Unsupported extension {old_ext}. Replacing it with {ext}')
             return basename + ext
         else:
             return filename

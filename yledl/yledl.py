@@ -263,7 +263,7 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
     extractor = extractor_factory(
         url, stream_filters, language_chooser(url, io), httpclient)
     if not extractor:
-        logger.error('Unsupported URL %s.' % url)
+        logger.error(f'Unsupported URL {url}.')
         logger.error('If you think yle-dl should support this page, open a '
                      'bug report at https://github.com/aajanki/yle-dl/issues')
         return RD_FAILED
@@ -334,7 +334,7 @@ def bitrate_from_arg(arg):
         try:
             return int(arg)
         except ValueError:
-            logger.warning('Invalid bitrate %s, defaulting to best' % arg)
+            logger.warning(f'Invalid bitrate {arg}, defaulting to best')
             return 999999
 
 
@@ -467,8 +467,7 @@ def main(argv=sys.argv):
     for i, url in enumerate(urls):
         if len(urls) > 1:
             logger.info('')
-            logger.info('Now downloading from URL {}/{}: {}'.format(
-                i + 1, len(urls), url))
+            logger.info(f'Now downloading from URL {i + 1}/{len(urls)}: {url}')
 
         io.download_limits.start_position = \
             args.startposition or start_position_from_url(url)

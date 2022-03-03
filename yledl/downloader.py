@@ -101,8 +101,7 @@ class YleDlDownloader:
                 logger.error('No stream found')
                 overall_status = RD_FAILED
             elif all(not stream.is_valid() for stream in streams):
-                logger.error('Unsupported stream: %s' %
-                             streams[0].error_message)
+                logger.error(f'Unsupported stream: {streams[0].error_message}')
                 self.print_geo_warning(clip)
 
                 overall_status = RD_FAILED

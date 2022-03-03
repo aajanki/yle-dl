@@ -117,8 +117,7 @@ class BaseDownloader:
         try:
             downloaded_duration = ffprobe.duration_seconds_file(filename)
         except ValueError as ex:
-            logger.warning('Failed to get duration for the file'
-                           '{}: {}'.format(filename, str(ex)))
+            logger.warning(f'Failed to get duration for the file{filename}: {str(ex)}')
             return False
 
         logger.debug('Downloaded duration {} s, expected {} s'.format(
@@ -374,7 +373,7 @@ class HLSBackend(ExternalDownloader):
     def input_args(self, io):
         args = [
             '-y',
-            '-headers', 'X-Forwarded-For: %s\r\n' % io.x_forwarded_for,
+            '-headers', f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
             '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
             '-thread_queue_size', '2048',
             '-seekable', '0',  # needed for media ID 67-xxxx streams
@@ -538,7 +537,7 @@ class WgetBackend(ExternalDownloader):
             '-O', output_filename,
             '--no-use-server-timestamps',
             '--user-agent=' + spoofed_user_agent,
-            '--header', 'X-Forwarded-For: %s' % io.x_forwarded_for,
+            '--header', f'X-Forwarded-For: {io.x_forwarded_for}',
             '--timeout=20'
         ]
 

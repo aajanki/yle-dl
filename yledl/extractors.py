@@ -229,7 +229,7 @@ class AreenaPlaylist(ClipExtractor):
             logger.error('Failed to parse a playlist')
             playlist = []
         elif playlist:
-            logger.debug('playlist page with %d clips' % len(playlist))
+            logger.debug(f'playlist page with {len(playlist)} clips')
         else:
             logger.debug('not a playlist')
             playlist = [url]
@@ -943,7 +943,7 @@ class YleUutisetExtractor(AreenaExtractor):
         data_ids.extend(block.get('id') for block in content
                         if block.get('type') == 'AudioBlock' and block.get('id'))
 
-        logger.debug('Found Areena data IDs: {}'.format(','.join(data_ids)))
+        logger.debug(f"Found Areena data IDs: {','.join(data_ids)}")
 
         playlist = [self.id_to_areena_url(id) for id in data_ids]
         if latest_only:

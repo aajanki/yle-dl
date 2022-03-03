@@ -18,7 +18,7 @@ class Ffprobe:
         args = [
             self.ffprobe_binary,
             '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-            '-headers', 'X-Forwarded-For: %s\r\n' % self.x_forwarded_for,
+            '-headers', f'X-Forwarded-For: {self.x_forwarded_for}\r\n',
             '-show_programs',
             '-print_format', 'json=c=1',
             '-probesize', '80000000',
