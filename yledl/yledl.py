@@ -262,6 +262,25 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
     RD_INCOMPLETE if a stream was downloaded partially but the
     download was interrupted.
     """
+    while True:  # Retry loop for redirected URLs
+        try:
+            res = _internal_execute_action(
+                url,
+                action,
+                io,
+                httpclient,
+                title_formatter,
+                stream_filters
+            )
+        except PlaylistRedirected as playlist_redirected:
+            new_url = playlist_redirected.suggested_url
+            logger.info(f'Redirected from {url} to {new_url}, following.')
+            url = new_url
+            continue
+        return res
+
+
+def _internal_execute_action(url, action, io, httpclient, title_formatter, stream_filters):
     extractor = extractor_factory(
         url, stream_filters, language_chooser(url, io), httpclient)
     if not extractor:
@@ -476,22 +495,14 @@ def main(argv=sys.argv):
 
         io.download_limits.start_position = \
             args.startposition or start_position_from_url(url)
-        while True:  # Retry loop for redirected URLs
-            try:
-                res = execute_action(
-                    url,
-                    action=action,
-                    io=io,
-                    httpclient=httpclient,
-                    title_formatter=title_formatter,
-                    stream_filters=stream_filters,
-                )
-            except PlaylistRedirected as playlist_redirected:
-                new_url = playlist_redirected.suggested_url
-                logger.info(f'Redirected from {url} to {new_url}, following.')
-                url = new_url
-                continue
-            break
+        res = execute_action(
+            url,
+            action=action,
+            io=io,
+            httpclient=httpclient,
+            title_formatter=title_formatter,
+            stream_filters=stream_filters,
+        )
 
         if res != RD_SUCCESS:
             exit_status = res
