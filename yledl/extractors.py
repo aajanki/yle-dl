@@ -14,9 +14,16 @@ from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp
 from .subtitles import Subtitle
+from .http import Redirected
 
 
 logger = logging.getLogger('yledl')
+
+
+class PlaylistRedirected(Exception):
+    def __init__(self, message: str, suggested_url: str) -> None:
+        super().__init__(message)
+        self.suggested_url = suggested_url
 
 
 def extractor_factory(url, filters, language_chooser, httpclient):
@@ -206,9 +213,20 @@ class ClipExtractor:
         self.httpclient = httpclient
 
     def extract(self, url, latest_only, title_formatter, ffprobe):
-        playlist = self.get_playlist(url, latest_only)
+        playlist = self.guarded_get_playlist(url, latest_only)
         return (self.extract_clip(clipurl, title_formatter, ffprobe)
                 for clipurl in playlist)
+
+    def guarded_get_playlist(self, url, latest_only=False):
+        # get_playlist, but with a guard to turn a http Redirected error to a PlaylistRedirected
+        # for upstream handling
+        try:
+            return self.get_playlist(url, latest_only)
+        except Redirected as r:
+            raise PlaylistRedirected(
+                f"Redirected while retrieving playlist: please try {r.response.url!r} instead",
+                suggested_url=r.response.url,
+            ) from r
 
     def get_playlist(self, url, latest_only=False):
         raise NotImplementedError("get_playlist must be overridden")
@@ -249,7 +267,7 @@ class AreenaPlaylist(ClipExtractor):
 
     def get_playlist_series_page(self, url, latest_only):
         playlist = []
-        html = self.httpclient.download_html_tree(url)
+        html = self.httpclient.download_html_tree(url, raise_if_redirected=True)
         if html is not None and self.is_playlist_page(html):
             sid1 = self.extract_series_id_from_html(html)
             sid2 = self.program_id_from_url(url)

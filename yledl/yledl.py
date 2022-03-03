@@ -277,7 +277,7 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
                                  title_formatter, io.ffprobe())
 
     if action == StreamAction.PRINT_EPISODE_PAGES:
-        print_lines(extractor.get_playlist(url))
+        print_lines(extractor.guarded_get_playlist(url))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_URL:
         print_lines(dl.get_urls(clips(), stream_filters))
