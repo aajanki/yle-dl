@@ -70,7 +70,7 @@ class KalturaApiClient:
             'clientTag': client_tag,
             'partnerId': partner_id
         }
-        mrequest.update({str(i): req for i, req in enumerate(subrequests)})
+        mrequest.update({str(i+1): req for i, req in enumerate(subrequests)})
         return mrequest
 
     def perform_request(self, request, referrer, origin):
@@ -87,7 +87,7 @@ class KalturaApiClient:
 class YleKalturaApiClient(KalturaApiClient):
     partner_id = '1955031'
     widget_id = '_1955031'
-    client_tag = 'html5:v0.39.4'
+    client_tag = 'html5:v1.7.1'
     api_url = 'https://cdnapisec.kaltura.com'
     http_origin = 'https://areena.yle.fi'
 
@@ -98,16 +98,15 @@ class YleKalturaApiClient(KalturaApiClient):
         subrequests = [
             self.start_widget_session(self.widget_id),
             self.list_base_entry(entry_id, '{1:result:ks}'),
-            self.get_playback_context(entry_id, '{1:result:ks}'),
-            self.list_metadata(entry_id, '{1:result:ks}')
+            self.get_playback_context('{2:result:objects:0:id}', '{1:result:ks}'),
+            self.list_metadata('{2:result:objects:0:id}', '{1:result:ks}')
         ]
+        mreq = self.multi_request(subrequests, self.client_tag, self.partner_id)
 
         logger.debug('Sending Kaltura API flavors request:\n' +
-                     json.dumps(subrequests, indent=2))
+                     json.dumps(mreq, indent=2))
 
-        response = self.perform_request(
-            self.multi_request(subrequests, self.client_tag, self.partner_id),
-            referrer, self.http_origin)
+        response = self.perform_request(mreq, referrer, self.http_origin)
 
         logger.debug('Kaltura API response:\n' +
                      json.dumps(response, indent=2))
@@ -119,7 +118,7 @@ class YleKalturaApiClient(KalturaApiClient):
             return [FailedFlavor('No Kaltura playback context')]
 
         flavor_assets = playback_context.get('flavorAssets', {})
-        sources = playback_context.get('sources', {})
+        sources = playback_context.get('sources', [])
         delivery_profiles = self.delivery_profiles_by_flavor_id(sources)
 
         filtered_flavors = [fl for fl in flavor_assets
