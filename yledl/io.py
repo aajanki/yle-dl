@@ -28,8 +28,15 @@ def wget_default(arg):
 
 
 def random_elisa_ipv4():
-    elisa_ipv4_range = list(ipaddress.ip_network('91.152.0.0/13').hosts())
-    return str(random.choice(elisa_ipv4_range))
+    return str(random_ip(ipaddress.ip_network('91.152.0.0/13')))
+
+
+def random_ip(ip_network):
+    # Convert to an int range, because sampling from a range is efficient
+    ip_range_start = ip_network.network_address + 1
+    ip_range_end = ip_network.broadcast_address - 1
+    int_ip_range = range(int(ip_range_start), int(ip_range_end) + 1)
+    return ipaddress.ip_address(random.choice(int_ip_range))
 
 
 @attr.s
