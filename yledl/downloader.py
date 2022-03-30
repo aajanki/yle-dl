@@ -275,4 +275,4 @@ class YleDlDownloader:
         if postprocess_command:
             args = [postprocess_command, videofile]
             args.extend(subtitlefiles)
-            return Subprocess().execute(args, None)
+            return Subprocess().execute([args], None)
