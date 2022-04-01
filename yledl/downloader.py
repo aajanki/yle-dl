@@ -1,6 +1,6 @@
 import copy
 import logging
-import os.path
+import os
 from .utils import sane_filename
 from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \

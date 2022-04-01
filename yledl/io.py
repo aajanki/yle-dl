@@ -1,7 +1,7 @@
 import attr
 import ipaddress
 import logging
-import os.path
+import os
 import random
 import re
 import subprocess
