@@ -221,8 +221,8 @@ class YleDlDownloader:
                 s.name for s in fl.streams if s.is_valid())
 
         error_messages = [s.error_message
-                          for s in fl.streams if not s.is_valid()
-                          for fl in flavors]
+                          for fl in flavors
+                          for s in fl.streams if not s.is_valid()]
 
         if supported_backends:
             msg = (f'Required backend not enabled. Try: --backend {",".join(supported_backends)}')
