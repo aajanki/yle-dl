@@ -1,6 +1,6 @@
 import copy
 import logging
-import os.path
+import os
 from .utils import sane_filename
 from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
@@ -221,8 +221,8 @@ class YleDlDownloader:
                 s.name for s in fl.streams if s.is_valid())
 
         error_messages = [s.error_message
-                          for s in fl.streams if not s.is_valid()
-                          for fl in flavors]
+                          for fl in flavors
+                          for s in fl.streams if not s.is_valid()]
 
         if supported_backends:
             msg = (f'Required backend not enabled. Try: --backend {",".join(supported_backends)}')
@@ -275,4 +275,4 @@ class YleDlDownloader:
         if postprocess_command:
             args = [postprocess_command, videofile]
             args.extend(subtitlefiles)
-            return Subprocess().execute(args, None)
+            return Subprocess().execute([args], None)

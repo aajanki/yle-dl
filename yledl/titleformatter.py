@@ -33,7 +33,7 @@ class TitleFormatter:
             'program_id': program_id,
         }
 
-        return self._substitute(self.tokens, values)
+        return self._substitute(values)
 
     def is_constant_pattern(self):
         return all(t.is_constant() for t in self.tokens)
@@ -66,7 +66,7 @@ class TitleFormatter:
 
         return res
 
-    def _substitute(self, tokens, values):
+    def _substitute(self, values):
         res = []
         for token in self.tokens:
             subst = token.substitute(values)
