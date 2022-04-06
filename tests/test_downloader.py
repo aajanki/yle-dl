@@ -1,4 +1,7 @@
 import attr
+import copy
+import logging
+import unittest.mock
 import pytest
 from datetime import datetime
 from utils import FixedOffset
@@ -6,7 +9,7 @@ from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
 from yledl.downloader import YleDlDownloader
 from yledl.extractors import Clip, FailedClip, StreamFlavor
-from yledl.subtitles import EmbeddedSubtitle, Subtitle
+from yledl.subtitles import EmbeddedSubtitle
 
 
 class StateCollectingBackend(BaseDownloader):
@@ -457,6 +460,7 @@ def test_print_metadata_failed_clip(simple):
         }
     ]
 
+
 def test_download_fallback(simple):
     state = {}
     clips = [multistream_clip(state)]
@@ -465,3 +469,19 @@ def test_download_fallback(simple):
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
     assert state['stream_id'] == '4'
+
+
+def test_postprocessing_no_log_errors(simple):
+    # Smoke test for PR #303
+
+    state = {}
+    clips = [successful_clip(state)]
+    io_postprocess = copy.copy(simple.io)
+    io_postprocess.postprocess_command = 'echo'
+    logger = logging.getLogger('yledl')
+    with unittest.mock.patch.object(logger, 'error') as mock_log_error:
+        res = simple.downloader.download_clips(clips, io_postprocess, simple.filters)
+
+        mock_log_error.assert_not_called()
+
+    assert res == RD_SUCCESS
