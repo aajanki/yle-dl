@@ -1,6 +1,4 @@
-import pytest
-from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
-    fetch_metadata
+from utils import fetch_metadata
 
 
 def test_uutiset_main_media_metadata():
