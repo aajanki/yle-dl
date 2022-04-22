@@ -6,7 +6,7 @@ import os.path
 import re
 from datetime import datetime
 from requests import HTTPError
-from urllib.parse import urlparse, quote_plus, parse_qs
+from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, HLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
@@ -568,9 +568,6 @@ class AreenaExtractor(AreenaPlaylist):
         # A new hosting alternative (June 2021)? Hosted on yleawsmpodamdipv4.akamaized.net
         return media_id and media_id.startswith('67-')
 
-    def is_mediakanta_media(self, media_id):
-        return media_id and media_id.startswith('6-')
-
     def is_live_media(self, media_id):
         return media_id and media_id.startswith('10-')
 
@@ -602,13 +599,6 @@ class AreenaExtractor(AreenaPlaylist):
         backend = WgetBackend(download_url, ext)
         return [StreamFlavor(media_type=media_type, streams=[backend])]
 
-    def program_media_id(self, program_info):
-        event = self.publish_event(program_info)
-        return event.get('media', {}).get('id')
-
-    def program_media_type(self, program_info):
-        return None
-
     def publish_event(self, program_info):
         events = (program_info or {}).get('data', {}) \
                                      .get('publicationEvent', [])
@@ -633,46 +623,21 @@ class AreenaExtractor(AreenaPlaylist):
         ts = self.publish_event(program_info).get('startTime')
         return parse_areena_timestamp(ts)
 
-    def expiration_timestamp(self, program_info):
-        ts = self.publish_event(program_info).get('endTime')
-        return parse_areena_timestamp(ts)
-
-    def force_program_info(self):
-        return False
-
     def program_info_for_pid(self, pid, pageurl, title_formatter, ffprobe):
         if not pid:
             return None
 
         preview = self.preview_parser(pid, pageurl)
-
-        if preview.is_live() and not self.force_program_info():
-            info = None
-        else:
-            info = self.httpclient.download_json(self.program_info_url(pid))
-            logger.debug(f'program data:\n{json.dumps(info, indent=2)}')
-
-        publish_timestamp = (self.publish_timestamp(info) or
-                             preview.timestamp())
-        titles = (self.program_title(info) or
-                  preview.title(self.language_chooser) or
-                  {'title': 'areena'})
-        episode_number = self.program_episode_number(info)
+        publish_timestamp = preview.timestamp()
+        titles = preview.title(self.language_chooser) or {'title': 'areena'}
         title_params = {
             'program_id': pid,
             'publish_timestamp': publish_timestamp,
         }
         title_params.update(titles)
-        title_params.update(episode_number)
         title = title_formatter.format(**title_params)
-        media_id = self.program_media_id(info) or preview.media_id()
-        manifest_url = preview.manifest_url()
-        download_url = ((info and info.get('downloadUrl')) or
-                        preview.media_url())
-        download_url = self.ignore_invalid_download_url(download_url)
-        media_type = self.program_media_type(info) or preview.media_type()
-        description = (self.program_description(info) or
-                       preview.description(self.language_chooser))
+        media_id = preview.media_id()
+        download_url = self.ignore_invalid_download_url(preview.media_url())
         if self.is_html5_media(media_id):
             entry_id = self.kaltura_entry_id(media_id)
             kapi_client = YleKalturaApiClient(self.httpclient)
@@ -689,28 +654,18 @@ class AreenaExtractor(AreenaPlaylist):
         return AreenaApiProgramInfo(
             media_id=media_id,
             title=title,
-            description=description,
-            flavors=self.media_flavors(media_id, manifest_url,
+            description=preview.description(self.language_chooser),
+            flavors=self.media_flavors(media_id, preview.manifest_url(),
                                        download_url, kaltura_flavors,
-                                       media_type, ffprobe),
+                                       preview.media_type(), ffprobe),
             embedded_subtitles=kaltura_embedded_subtitles,
             subtitles=preview_subtitles,
-            duration_seconds=(preview.duration_seconds() or
-                              self.program_info_duration_seconds(info)),
-            available_at_region=(self.available_at_region(info) or
-                                 preview.available_at_region() or
-                                 'Finland'),
+            duration_seconds=preview.duration_seconds(),
+            available_at_region=preview.available_at_region() or 'Finland',
             publish_timestamp=publish_timestamp,
-            expiration_timestamp=self.expiration_timestamp(info),
+            expiration_timestamp=None,
             pending=preview.is_pending(),
             expired=preview.is_expired(),
-        )
-
-    def program_info_url(self, program_id):
-        return (
-            f'https://areena.yle.fi/api/programs/v1/id/{quote_plus(program_id)}.json'
-            '?app_id=areena_web_frontend_prod'
-            '&app_key=4622a8f8505bb056c956832a70c105d4'
         )
 
     def preview_parser(self, pid, pageurl):
@@ -741,81 +696,6 @@ class AreenaExtractor(AreenaPlaylist):
 
     def publish_event_is_current(self, event):
         return event.get('temporalStatus') == 'currently'
-
-    def program_info_duration_seconds(self, program_info):
-        pt_duration = ((program_info or {})
-                       .get('data', {})
-                       .get('duration'))
-        return self.pt_duration_as_seconds(pt_duration) if pt_duration else None
-
-    def pt_duration_as_seconds(self, pt_duration):
-        r = r'PT(?:(?P<hours>\d+)H)?(?:(?P<mins>\d+)M)?(?:(?P<secs>\d+)S)?$'
-        m = re.match(r, pt_duration)
-        if m:
-            hours = m.group('hours') or 0
-            mins = m.group('mins') or 0
-            secs = m.group('secs') or 0
-            return 3600 * int(hours) + 60 * int(mins) + int(secs)
-        else:
-            return None
-
-    def available_at_region(self, program_info):
-        return self.publish_event(program_info).get('region')
-
-    def program_title(self, program_info):
-        if not program_info:
-            return {}
-
-        program = program_info.get('data', {})
-        title_object = program.get('title')
-        title = (self.language_chooser.choose_short_form(title_object) or
-                 'areena')
-
-        stitle_object = program.get('partOfSeries', {}).get('title')
-        series_title = self.language_chooser.choose_short_form(stitle_object)
-
-        item_title_object = program.get('itemTitle')
-        item_title = self.language_chooser.choose_short_form(item_title_object)
-        promo_object = program.get('promotionTitle')
-        promotion_title = self.language_chooser.choose_short_form(promo_object)
-        if promotion_title and len(promotion_title) > 40:
-            # Promotion title is sometimes used as an extended
-            # description. Don't include these in the title.
-            promotion_title = None
-
-        return {
-            'title': title,
-            'series_title': series_title,
-            'subheading': item_title or promotion_title,
-        }
-
-    def program_episode_number(self, program_info):
-        if not program_info:
-            return {}
-
-        program = program_info.get('data', {})
-        part_of_season_object = program.get('partOfSeason')
-        if part_of_season_object:
-            season = part_of_season_object.get('seasonNumber')
-        else:
-            season = program.get('seasonNumber')
-
-        return {
-            'season': season,
-            'episode': program.get('episodeNumber')
-        }
-
-    def program_description(self, program_info):
-        if not program_info:
-            return None
-
-        description = (program_info
-                       .get('data', {})
-                       .get('description', ''))
-        if not description:
-            return None
-
-        return self.language_chooser.choose_short_form(description).strip()
 
     def ignore_invalid_download_url(self, url):
         # Sometimes download url is missing the file name
