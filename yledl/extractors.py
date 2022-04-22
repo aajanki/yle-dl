@@ -26,7 +26,7 @@ class PlaylistRedirected(Exception):
         self.suggested_url = suggested_url
 
 
-def extractor_factory(url, filters, language_chooser, httpclient):
+def extractor_factory(url, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/a/', url):

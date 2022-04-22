@@ -281,8 +281,7 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
 
 
 def _internal_execute_action(url, action, io, httpclient, title_formatter, stream_filters):
-    extractor = extractor_factory(
-        url, stream_filters, language_chooser(url, io), httpclient)
+    extractor = extractor_factory(url, language_chooser(url, io), httpclient)
     if not extractor:
         logger.error(f'Unsupported URL {url}.')
         logger.error('If you think yle-dl should support this page, open a '
