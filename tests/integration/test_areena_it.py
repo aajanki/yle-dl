@@ -116,18 +116,22 @@ def test_areena_episode_pages():
     assert len(episodes) > 20
 
 
-def test_areena_episodes_alternative_id():
-    # The series page of "Sekaisin" can be accessed through 1-50570316
-    # and 1-3430975, but yle-dl must use only the latter ID in API
-    # calls internally.
+def test_areena_season_id():
+    # An Areena TV URL can point to either a series or a season.
+    #
+    # For example, the series page of "Sekaisin" is 1-3430975 and the third
+    # season of "Sekaisin" is 1-50570316.
+    #
+    # Yle-dl downloads all episodes from all seasons no matter which ID is
+    # used.
     episodes = fetch_episode_pages('https://areena.yle.fi/1-50570316')
 
-    # The first page contains 8 to 15 episodes, make sure we get several pages
+    # The seasons contain 8 to 15 episodes, make sure we get several seasons
     assert len(episodes) > 20
 
 
 def test_areena_episodes_sort_order():
-    metadata = fetch_metadata('https://areena.yle.fi/1-4655342')
+    metadata = fetch_metadata('https://areena.yle.fi/1-4530023')
 
     # Should be sorted from oldest to newest
     timestamps = [x['publish_timestamp'] for x in metadata]

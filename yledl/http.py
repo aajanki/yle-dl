@@ -10,10 +10,6 @@ from .version import version
 logger = logging.getLogger('yledl')
 
 
-class Redirected(requests.RequestException):
-    pass
-
-
 class HttpClient:
     def __init__(self, io):
         self._session = self._create_session(io.proxy)
@@ -42,9 +38,9 @@ class HttpClient:
 
         return session
 
-    def download_page(self, url, extra_headers=None, raise_if_redirected=False):
+    def download_page(self, url, extra_headers=None):
         """Returns contents of a URL."""
-        response = self.get(url, extra_headers, raise_if_redirected=raise_if_redirected)
+        response = self.get(url, extra_headers)
         return response.text if response else None
 
     def download_json(self, url, extra_headers=None):
@@ -52,9 +48,9 @@ class HttpClient:
         response = self.get(url, extra_headers)
         return response.json()
 
-    def download_html_tree(self, url, extra_headers=None, raise_if_redirected=False):
+    def download_html_tree(self, url, extra_headers=None):
         """Downloads a HTML document and returns it parsed as an lxml tree."""
-        response = self.get(url, extra_headers, raise_if_redirected=raise_if_redirected)
+        response = self.get(url, extra_headers)
         metacharset = html_meta_charset(response.content)
         if metacharset:
             logger.debug(f'HTML meta charset: {metacharset}')
@@ -80,7 +76,7 @@ class HttpClient:
             for chunk in r.iter_content(chunk_size=4096):
                 output.write(chunk)
 
-    def get(self, url, extra_headers=None, *, raise_if_redirected=False):
+    def get(self, url, extra_headers=None):
         if url.find('://') == -1:
             url = f'http://{url}'
         if '#' in url:
@@ -92,8 +88,6 @@ class HttpClient:
 
         logger.debug(f'HTTP GET {url}')
         r = self._session.get(url, headers=headers)
-        if raise_if_redirected and r.url != url:
-            raise Redirected(r.url, response=r)
         logger.debug(f'HTTP status code: {r.status_code}')
         logger.debug('HTTP response headers:')
         for name, value in r.headers.items():

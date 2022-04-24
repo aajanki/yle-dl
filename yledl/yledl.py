@@ -34,7 +34,7 @@ from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
-from .extractors import extractor_factory, url_language, PlaylistRedirected
+from .extractors import extractor_factory, url_language
 from .geolocation import AreenaGeoLocation
 from .http import HttpClient
 from .io import IOContext, DownloadLimits, random_elisa_ipv4
@@ -262,25 +262,6 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
     RD_INCOMPLETE if a stream was downloaded partially but the
     download was interrupted.
     """
-    while True:  # Retry loop for redirected URLs
-        try:
-            res = _internal_execute_action(
-                url,
-                action,
-                io,
-                httpclient,
-                title_formatter,
-                stream_filters
-            )
-        except PlaylistRedirected as playlist_redirected:
-            new_url = playlist_redirected.suggested_url
-            logger.info(f'Redirected from {url} to {new_url}, following.')
-            url = new_url
-            continue
-        return res
-
-
-def _internal_execute_action(url, action, io, httpclient, title_formatter, stream_filters):
     extractor = extractor_factory(url, language_chooser(url, io), httpclient)
     if not extractor:
         logger.error(f'Unsupported URL {url}.')
@@ -295,7 +276,7 @@ def _internal_execute_action(url, action, io, httpclient, title_formatter, strea
                                  title_formatter, io.ffprobe())
 
     if action == StreamAction.PRINT_EPISODE_PAGES:
-        print_lines(extractor.guarded_get_playlist(url))
+        print_lines(extractor.get_playlist(url))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_URL:
         print_lines(dl.get_urls(clips(), stream_filters))
