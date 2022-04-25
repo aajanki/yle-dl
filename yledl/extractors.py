@@ -356,11 +356,17 @@ class AreenaPreviewApiParser:
         return self.ongoing().get('duration', {}).get('duration_in_seconds')
 
     def title(self, language_chooser):
-        title_object = self.ongoing().get('title', {})
-        if not title_object:
-            return {}
+        title = {}
+        ongoing = self.ongoing()
+        title_object = ongoing.get('title', {})
+        if title_object:
+            title['title'] = language_chooser.choose_long_form(title_object).strip()
 
-        return {'title': language_chooser.choose_long_form(title_object).strip()}
+        series_title_object = ongoing.get('series', {}).get('title', {})
+        if series_title_object:
+            title['series_title'] = language_chooser.choose_long_form(series_title_object).strip()
+
+        return title
 
     def description(self, language_chooser):
         description_object = self.ongoing().get('description', {})
@@ -368,6 +374,10 @@ class AreenaPreviewApiParser:
             return None
 
         return language_chooser.choose_long_form(description_object).strip()
+
+    def episode_number(self):
+        episode = self.ongoing().get('episode_number')
+        return {'episode': episode} if episode is not None else {}
 
     def available_at_region(self):
         return self.ongoing().get('region')
@@ -642,6 +652,7 @@ class AreenaExtractor(ClipExtractor):
             'publish_timestamp': publish_timestamp,
         }
         title_params.update(titles)
+        title_params.update(preview.episode_number())
         title = title_formatter.format(**title_params)
         media_id = preview.media_id()
         download_url = self.ignore_invalid_download_url(preview.media_url())
