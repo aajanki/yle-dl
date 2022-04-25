@@ -2,6 +2,13 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3
 
+Version 20220425
+
+- Compatible with the recent changes in Areena
+- Follow redirects when downloading certain audio episodes
+- Support the / character in --output-template
+- Postprocessing scripts are working again
+
 Version 20220213
 
 - Downloading live streams works again
