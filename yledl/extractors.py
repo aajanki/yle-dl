@@ -652,7 +652,10 @@ class AreenaExtractor(ClipExtractor):
             'publish_timestamp': publish_timestamp,
         }
         title_params.update(titles)
-        title_params.update(preview.episode_number())
+        season_and_episode = preview.episode_number()
+        if season_and_episode:
+            season_and_episode.update(self.extract_season_number(pageurl))
+        title_params.update(season_and_episode)
         title = title_formatter.format(**title_params)
         media_id = preview.media_id()
         download_url = self.ignore_invalid_download_url(preview.media_url())
@@ -718,6 +721,18 @@ class AreenaExtractor(ClipExtractor):
     def ignore_invalid_download_url(self, url):
         # Sometimes download url is missing the file name
         return None if (url and url.endswith('/')) else url
+
+    def extract_season_number(self, pageurl):
+        # TODO: how to get the season number without downloading the HTML page?
+        tree = self.httpclient.download_html_tree(pageurl)
+        title_tag = tree.xpath('/html/head/title/text()')
+        if len(title_tag) > 0:
+            title = title_tag[0]
+            m = re.match(r'K(\d+), J\d+', title)
+            if m:
+                return {'season': int(m.group(1))}
+
+        return {}
 
 
 ### Areena live radio ###

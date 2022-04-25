@@ -139,6 +139,21 @@ def test_areena_episodes_sort_order():
     assert timestamps == sorted(timestamps)
 
 
+def test_areena_season_and_episode_number():
+    # The episode titles should include S01E01, S01E02, etc.
+    expected_episodes = []
+    for season in range(1, 3 + 1):
+        for episode in range(1, 12 + 1):
+            expected_episodes.append(f'S{season:02d}E{episode:02d}')
+
+    metadata = fetch_metadata('https://areena.yle.fi/1-4530023')
+    titles = [x['title'] for x in metadata]
+
+    assert len(titles) == len(expected_episodes)
+    for title, substring in zip(titles, expected_episodes):
+        assert substring in title
+
+
 def test_areena_latest_episode():
     filters = StreamFilters(latest_only=True)
     metadata = fetch_metadata('https://areena.yle.fi/1-4655342', filters)
