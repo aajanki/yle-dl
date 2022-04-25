@@ -9,11 +9,12 @@ def test_arkisto_title():
 
 
 def test_arkisto_stream_url():
-    streamurl = fetch_stream_url('https://yle.fi/aihe/artikkeli/2010/10/28'
+    streamurls = fetch_stream_url('https://yle.fi/aihe/artikkeli/2010/10/28'
                                  '/studio-julmahuvi-roudasta-rospuuttoon')
 
-    assert streamurl
-    assert '/a.m3u8' in streamurl[0]
+    assert len(streamurls) >= 1
+    for url in streamurls:
+        assert '/a.m3u8' in url or '/index.m3u8' in url
 
 
 def test_arkisto_a_stream_url():
