@@ -176,24 +176,32 @@ pytest-3 tests/integration/test_areena_radio_it.py
 Examples
 --------
 
+Save an Areena stream to a file with an automatically generated name:
 ```
-yle-dl https://areena.yle.fi/1-1544491 -o video.mkv
+yle-dl https://areena.yle.fi/1-787136
 ```
+
+or from Elävä Arkisto:
 
 ```
 yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
+Save a stream to a file called video.mkv:
+```
+yle-dl https://areena.yle.fi/1-787136 -o video.mkv
+```
+
 Playing in mpv (or in vlc or in any other video player) without downloading first:
 
 ```
-yle-dl --pipe https://areena.yle.fi/1-2409251 | mpv --cache=1000 --slang=fi -
+yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache=1000 --slang=fi -
 ```
 
 Executing a script to postprocess a downloaded video (see the example postprocessing script at scripts/muxmp4):
 
 ```
-yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
+yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-787136
 ```
 
 Creating a new release

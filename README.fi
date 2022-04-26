@@ -152,27 +152,23 @@ pytest-3 --geoblocked
 Esimerkkejä
 -----------
 
-* Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
+Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
 
-  yle-dl https://areena.yle.fi/1-1544491
+  yle-dl https://areena.yle.fi/1-787136
 
-* Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
+Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 
   yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 
-* Ohjelman lataaminen tiedostoon uutiset.mkv:
+Ohjelman lataaminen tiedostoon rikos_ja_rakkaus.mkv:
 
-  yle-dl https://areena.yle.fi/1-1544491 -o uutiset.mkv
+  yle-dl https://areena.yle.fi/1-1907797 -o rikos_ja_rakkaus.mkv
 
-* Lataa uusimmat uutiset
+Toistaminen suoraan videotoistimessa:
 
-  yle-dl --latestepisode https://areena.yle.fi/?q=uutiset
+  yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache=1000 --slang=fi -
 
-* Toistaminen suoraan videotoistimessa:
-
-  yle-dl --pipe https://areena.yle.fi/1-2409251 | mpv --cache=1000 --slang=fi -
-
-* Ladatun tiedoston jatkokäsitteleminen skriptillä (katso esimerkki
-  scripts/muxmp4-tiedostossa):
+Ladatun tiedoston jatkokäsitteleminen skriptillä (katso esimerkki
+scripts/muxmp4-tiedostossa):
 
   yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
