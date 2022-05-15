@@ -6,7 +6,7 @@ import os.path
 import re
 from datetime import datetime
 from requests import HTTPError
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import urlencode, urlparse, parse_qs, quote_plus
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
@@ -23,7 +23,7 @@ def extractor_factory(url, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/a/', url):
-        logger.debug(f'{url} is an Elava Arkisto URL')
+        logger.debug(f'{url} is an Elävä Arkisto URL')
         return ElavaArkistoExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
@@ -654,7 +654,7 @@ class AreenaExtractor(ClipExtractor):
         title_params.update(titles)
         season_and_episode = preview.episode_number()
         if season_and_episode:
-            season_and_episode.update(self.extract_season_number(pageurl))
+            season_and_episode.update(self.extract_season_number(pid))
         title_params.update(season_and_episode)
         title = title_formatter.format(**title_params)
         media_id = preview.media_id()
@@ -722,17 +722,40 @@ class AreenaExtractor(ClipExtractor):
         # Sometimes download url is missing the file name
         return None if (url and url.endswith('/')) else url
 
-    def extract_season_number(self, pageurl):
-        # TODO: how to get the season number without downloading the HTML page?
-        tree = self.httpclient.download_html_tree(pageurl)
-        title_tag = tree.xpath('/html/head/title/text()')
-        if len(title_tag) > 0:
-            title = title_tag[0]
-            m = re.match(r'K(\d+), J\d+', title)
-            if m:
-                return {'season': int(m.group(1))}
+    def extract_season_number(self, program_id):
+        # Fetch the season number from programs.api.yle.fi because it's not
+        # available from the preview API.
+        url = self.program_api_url(program_id, ['partOfSeries', 'partOfSeason'])
+        try:
+            program_api_json = self.httpclient.download_json(url)
+        except HTTPError as ex:
+            if ex.response.status_code == 404:
+                logger.warning(f'API result not found: {url}')
+            else:
+                logger.warning(f'API HTTP error {ex.response.status_code}: {url}')
+            program_api_json = {}
 
-        return {}
+        res = {}
+        data = program_api_json.get('data', {})
+        season_number = data.get('partOfSeason', {}).get('seasonNumber')
+        if season_number is None and 'partOfSeries' in data:
+            season_number = 1
+
+        if season_number is not None:
+            res['season'] = season_number
+
+        return res
+
+    def program_api_url(self, program_id, fields=None):
+        query_dict = {
+            'app_id': 'areena_web_frontend_prod',
+            'app_key': '4622a8f8505bb056c956832a70c105d4',
+        }
+        if fields:
+            query_dict['fields'] = ','.join(fields)
+        q = urlencode(query_dict)
+        qid = quote_plus(program_id)
+        return f'https://programs.api.yle.fi/v3/schema/v1/items/{qid}?{q}'
 
 
 ### Areena live radio ###
