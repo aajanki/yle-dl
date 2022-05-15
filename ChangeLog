@@ -5,6 +5,7 @@ Distributed under the GPL v3
 <unreleased>
 
 - Improved subtitle support by preferring MPEG-DASH streams over HLS
+- Support collection pages, that is pages which have the title "Suositellut"
 
 Version 20220425
 

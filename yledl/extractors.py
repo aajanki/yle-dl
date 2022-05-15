@@ -229,10 +229,14 @@ class AreenaPlaylistParser:
             logger.warning(f'Failed to download {url} while looking for a playlist')
             return [url]
 
+        package_id = self._extract_package_id(tree)
         if self._is_playlist(tree):
             series_id = self._extract_series_id(url, tree)
-            playlist = self._playlist_episode_urls(series_id, latest_only)
-            logger.debug(f'playlist page with {len(playlist)} clips')
+            playlist = self._download_playlist(series_id, latest_only, self._playlist_page)
+            logger.debug(f'playlist page with {len(playlist)} episodes')
+        elif package_id is not None:
+            playlist = self._download_playlist(package_id, latest_only, self._package_episodes_page)
+            logger.debug(f'package page with {len(playlist)} episodes')
         else:
             logger.debug('not a playlist')
             playlist = [url]
@@ -289,7 +293,7 @@ class AreenaPlaylistParser:
         else:
             return False
 
-    def _playlist_episode_urls(self, series_id, latest_only):
+    def _download_playlist(self, series_id, latest_only, get_playlist_page):
         # Areena server fails (502 Bad gateway) if page_size is larger
         # than 100.
         if latest_only:
@@ -302,7 +306,7 @@ class AreenaPlaylistParser:
         playlist = []
         has_next_page = True
         while has_next_page:
-            page = self._playlist_page(series_id, ascending, offset, page_size)
+            page = get_playlist_page(series_id, ascending, offset, page_size)
             if page is None:
                 logger.warning(f'Playlist failed at offset {offset}. Some episodes may be missing!')
                 break
@@ -327,6 +331,20 @@ class AreenaPlaylistParser:
         episode_ids = (x['id'] for x in playlist_data if 'id' in x)
         return [f'https://areena.yle.fi/{episode_id}' for episode_id in episode_ids]
 
+    def _package_episodes_page(self, package_id, ascending, offset, page_size):
+        logger.debug(
+            f'Getting a package page {package_id}, size = {page_size}, offset = {offset}')
+
+        pl_url = self._package_url(package_id, offset, page_size)
+        playlist = self.httpclient.download_json(pl_url)
+        if playlist is None:
+            return None
+
+        playlist_data = playlist.get('data', [])
+        logger.debug(f'Package playlist data:\n{json.dumps(playlist_data, indent=2)}')
+        episode_ids = (x['id'] for x in playlist_data if 'id' in x)
+        return [f'https://areena.yle.fi/{episode_id}' for episode_id in episode_ids]
+
     def _playlist_url(self, series_id, ascending, offset=0, page_size=100):
         sort_order = 'asc' if ascending else 'desc'
         q = urlencode({
@@ -340,6 +358,23 @@ class AreenaPlaylistParser:
             'app_key': '4622a8f8505bb056c956832a70c105d4',
         })
         return f'https://programs.api.yle.fi/v3/schema/v1/series/{series_id}/episodes?{q}'
+
+    def _extract_package_id(self, tree):
+        package_id = tree.xpath('/html/body/@data-package-id')
+        if package_id:
+            return package_id[0]
+        else:
+            return None
+
+    def _package_url(self, package_id, offset=0, page_size=100):
+        q = urlencode({
+            'offset': str(offset),
+            'limit': str(page_size),
+            'fields': 'id',
+            'app_id': 'areena_web_frontend_prod',
+            'app_key': '4622a8f8505bb056c956832a70c105d4',
+        })
+        return f'https://programs.api.yle.fi/v3/schema/v1/packages/{package_id}/extended-recommendations?{q}'
 
 
 class AreenaPreviewApiParser:

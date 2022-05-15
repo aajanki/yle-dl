@@ -164,3 +164,10 @@ def test_areena_latest_episode():
     # published on 2021-01-27
     publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
     assert publish_date >= datetime(2021, 1, 27)
+
+
+def test_package_page():
+    # This is a "package" type page
+    episodes = fetch_episode_pages('https://areena.yle.fi/tv/ohjelmat/30-1774')
+
+    assert len(episodes) > 10
