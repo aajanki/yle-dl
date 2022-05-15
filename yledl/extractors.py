@@ -7,7 +7,7 @@ import re
 from datetime import datetime
 from requests import HTTPError
 from urllib.parse import urlencode, urlparse, parse_qs
-from .backends import HLSAudioBackend, HLSBackend, WgetBackend
+from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, FailedFlavor
@@ -596,7 +596,7 @@ class AreenaExtractor(ClipExtractor):
             return []
 
         if media_type == 'video':
-            backend = HLSBackend(hls_manifest_url)
+            backend = DASHHLSBackend(hls_manifest_url, experimental_subtitles=True)
         else:
             backend = HLSAudioBackend(hls_manifest_url)
 

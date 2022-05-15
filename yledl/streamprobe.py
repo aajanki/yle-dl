@@ -1,5 +1,5 @@
 import logging
-from .backends import HLSBackend
+from .backends import DASHHLSBackend
 from .streamflavor import StreamFlavor, FailedFlavor
 
 logger = logging.getLogger('yledl')
@@ -33,8 +33,9 @@ class FullHDFlavorProber:
                 width=widths[0] if widths else None,
                 bitrate=bitrate,
                 streams=[
-                    HLSBackend(manifest_url, long_probe=True,
-                               program_id=pid, is_live=is_live)
+                    DASHHLSBackend(manifest_url, long_probe=True,
+                                   program_id=pid, is_live=is_live,
+                                   experimental_subtitles=True)
                 ]
             ))
 

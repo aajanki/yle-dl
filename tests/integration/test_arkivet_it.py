@@ -12,7 +12,7 @@ def test_arkivet_stream_url():
     streamurl = fetch_stream_url('https://svenska.yle.fi/artikel/2014/06/13'
                                  '/halla-det-ar-naturvaktarna')
     assert streamurl
-    assert '/a.m3u8' in streamurl[0]
+    assert '/manifest.mpd' in streamurl[0]
 
 
 def test_arkivet_metadata():
@@ -52,7 +52,8 @@ def test_arkivet_audio_metadata():
 def test_arkivet_a__stream_url():
     streamurl = fetch_stream_url('https://svenska.yle.fi/a/7-884297')
     assert streamurl
-    assert '/a.m3u8' in streamurl[0]
+    for url in streamurl:
+        assert '/manifest.mpd' in url or '/a.m3u8' in url or '/a.mp3' in url
 
 
 def test_arkivet_a_metadata():

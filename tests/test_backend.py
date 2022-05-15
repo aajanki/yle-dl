@@ -1,12 +1,12 @@
 from yledl import IOContext, RD_SUCCESS
-from yledl.backends import HLSBackend, WgetBackend
+from yledl.backends import DASHHLSBackend, WgetBackend
 
 
 tv1_url = 'https://yletv-lh.akamaihd.net/i/yletv1hls_1@103188/master.m3u8'
 io = IOContext(destdir='/tmp/')
 
 
-class MockHLSBackend(HLSBackend):
+class MockHLSBackend(DASHHLSBackend):
     def __init__(self, url, long_probe=False, program_id=None, is_live=False):
         super().__init__(url, long_probe, program_id, is_live)
 

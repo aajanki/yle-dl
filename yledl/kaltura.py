@@ -2,7 +2,7 @@ import attr
 import logging
 import json
 import base64
-from .backends import HLSBackend, HLSAudioBackend, WgetBackend
+from .backends import DASHHLSBackend, HLSAudioBackend, WgetBackend
 from .streamflavor import StreamFlavor, FailedFlavor
 from .subtitles import EmbeddedSubtitle
 
@@ -192,32 +192,35 @@ class YleKalturaApiClient(KalturaApiClient):
         return web or mbr or ipad
 
     def delivery_profiles_by_flavor_id(self, sources):
-        format_whitelist = ['url', 'applehttp']
-        valid_sources = [s for s in sources
-                         if s.get('format') in format_whitelist]
-
-        profiles_by_id_and_format = {}
-        for source in valid_sources:
+        profiles = {}
+        for source in sources:
             flavor_ids = source.get('flavorIds', '').split(',')
             source_format = source.get('format')
-            url = source.get('url')
-            manifest_file = url.split('/')[-1]
+            manifest_file = source.get('url').split('/')[-1]
 
             for flavor_id in flavor_ids:
-                profiles_by_id_and_format[f'{flavor_id}_{source_format}'] = DeliveryProfile(
+                p = DeliveryProfile(
                     flavor_id,
                     source_format,
                     manifest_file,
                 )
+                profiles.setdefault(p.flavor_id, set()).add(p)
 
-        profiles = {}
-        for p in profiles_by_id_and_format.values():
-            profiles.setdefault(p.flavor_id, []).append(p)
+        # Filter profiles:
+        # 1) Take DASH, if available for a specific flavor, otherwise take HLS
+        # 2) Always include URL when available
+        # 3) Other stream types are ignored
+        profiles_filtered = {}
+        for flavor_id, profiles_for_flavor in profiles.items():
+            dash_profiles = [p for p in profiles_for_flavor if p.stream_format == 'mpegdash']
+            hls_profiles = [p for p in profiles_for_flavor if p.stream_format == 'applehttp']
+            url_profiles = [p for p in profiles_for_flavor if p.stream_format == 'url']
+            profiles_filtered[flavor_id] = (dash_profiles or hls_profiles) + url_profiles
 
-        return profiles
+        return profiles_filtered
 
 
-@attr.s
+@attr.s(frozen=True)
 class DeliveryProfile:
     flavor_id = attr.ib()
     stream_format = attr.ib()
@@ -245,7 +248,9 @@ class DeliveryProfile:
             ])
         elif self.stream_format == 'url':
             backends.append(WgetBackend(manifest_url, file_ext))
-        else:
-            backends.append(HLSBackend(manifest_url, is_live=is_live))
+        elif self.stream_format == 'applehttp':
+            backends.append(DASHHLSBackend(manifest_url, is_live=is_live, experimental_subtitles=True))
+        else:  # DASH
+            backends.append(DASHHLSBackend(manifest_url, is_live=is_live))
 
         return backends

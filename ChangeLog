@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3
 
+<unreleased>
+
+- Improved subtitle support by preferring MPEG-DASH streams over HLS
+
 Version 20220425
 
 - Compatible with the recent changes in Areena

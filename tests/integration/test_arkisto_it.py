@@ -14,7 +14,7 @@ def test_arkisto_stream_url():
 
     assert len(streamurls) >= 1
     for url in streamurls:
-        assert '/a.m3u8' in url or '/index.m3u8' in url
+        assert '/manifest.mpd' in url or '/a.m3u8' in url or '/index.m3u8' in url
 
 
 def test_arkisto_a_stream_url():

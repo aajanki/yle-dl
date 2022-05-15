@@ -9,7 +9,7 @@ def test_areena_html5_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-787136')
 
     assert len(streamurl) == 1
-    assert '/a.m3u8?' in streamurl[0]
+    assert '/manifest.mpd?' in streamurl[0]
 
 
 def test_areena_html5_metadata():
@@ -53,7 +53,7 @@ def test_areena_series_urls():
     urls = fetch_stream_url('https://areena.yle.fi/1-3826480')
 
     assert len(urls) == 10
-    assert all(['a.m3u8' in url for url in urls])
+    assert all(['manifest.mpd' in url for url in urls])
 
 
 @pytest.mark.geoblocked
@@ -85,7 +85,7 @@ def test_areena_html5_clip_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-3523087')
 
     assert len(streamurl) == 1
-    assert '/a.m3u8?' in streamurl[0]
+    assert '/manifest.mpd?' in streamurl[0]
 
 
 def test_areena_awsmpodamdipv4_stream_url():

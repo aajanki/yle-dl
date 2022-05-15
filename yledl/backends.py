@@ -233,16 +233,18 @@ class Subprocess:
             pass
 
 
-### Download a HLS stream by delegating to ffmpeg ###
+### Download a MPEG-DASH and HLS stream by delegating to ffmpeg ###
 
 
-class HLSBackend(ExternalDownloader):
-    def __init__(self, url, long_probe=False, program_id=None, is_live=False):
+class DASHHLSBackend(ExternalDownloader):
+    def __init__(self, url, long_probe=False, program_id=None,
+                 is_live=False, experimental_subtitles=False):
         ExternalDownloader.__init__(self)
         self.url = url
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
+        self.experimental_subtitles = experimental_subtitles
         self.io_capabilities = frozenset([
             IOCapability.SLICE,
             IOCapability.PROXY
@@ -379,8 +381,8 @@ class HLSBackend(ExternalDownloader):
             '-thread_queue_size', '2048',
             '-seekable', '0',  # needed for media ID 67-xxxx streams
         ]
-        if not (io.subtitles == 'none' or self.live):
-            # needed for decoding webvtt subtitles
+        if not (io.subtitles == 'none' or self.live) and self.experimental_subtitles:
+            # Needed for decoding webvtt subtitles on HLS streams
             #
             # Subtitles disabled on live streams, because ffmpeg (at
             # least 4.4) hangs on subtitle detection (Feb 2022).
@@ -425,9 +427,9 @@ class HLSBackend(ExternalDownloader):
                 io.preferred_format in ('mp4', '.mp4'))
 
 
-class HLSAudioBackend(HLSBackend):
+class HLSAudioBackend(DASHHLSBackend):
     def __init__(self, url):
-        HLSBackend.__init__(self, url, False)
+        DASHHLSBackend.__init__(self, url)
 
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
