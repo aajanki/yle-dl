@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3
 
-<unreleased>
+Version 20220518
 
 - Improved subtitle support by preferring MPEG-DASH streams over HLS
 - Support collection pages, that is pages which have the title "Suositellut"
