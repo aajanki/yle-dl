@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime
 from utils import fetch_title, fetch_stream_url, fetch_metadata
 from yledl import StreamFilters
@@ -40,6 +41,7 @@ def test_radio_metadata_hls():
     assert len(metadata[0]['description']) > 150
 
 
+@pytest.mark.geoblocked
 def test_radio_live_url():
     url = fetch_stream_url('https://areena.yle.fi/audio/ohjelmat/57-kpDBBz8Pz')
 
@@ -47,6 +49,7 @@ def test_radio_live_url():
     assert '.m3u8' in url[0]
 
 
+@pytest.mark.geoblocked
 def test_radio_live_url2():
     url = fetch_stream_url(
         'https://areena.yle.fi/audio/ohjelmat/57-3gO4bl7J6?'
@@ -55,6 +58,8 @@ def test_radio_live_url2():
     assert len(url) == 1
     assert '.m3u8' in url[0]
 
+
+@pytest.mark.geoblocked
 def test_radio_live_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/audio/ohjelmat/57-kpDBBz8Pz')
 
