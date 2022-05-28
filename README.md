@@ -220,10 +220,14 @@ Solution: Update your ffmpeg to version 4.1 or later.
 
 This is a known problem. Currently there are no fixes.
 
-#### Problem: Trying to fetch a radio series only downloads the first episode on Mac OS X.
+#### Problem: I get warnings about unsupported subtitles and dropping subtitles
 
-This is an [open issue](https://github.com/aajanki/yle-dl/issues/261).
-The workaround is to download each episode one by one.
+Downloading produces a bunch of warnings such as "Can't support the
+subtitle" and "Dropping 114 duplicated subtitle events".
+
+These warning messages are harmless and can be ignored. Subtitles
+should get downloaded correctly in most cases despite the warnings.
+The only exceptions are live streams.
 
 #### Problem: I installed yle-dl but get an error message "command not found" when I try to run it
 

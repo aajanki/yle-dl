@@ -206,16 +206,13 @@ class YleKalturaApiClient(KalturaApiClient):
                 )
                 profiles.setdefault(p.flavor_id, set()).add(p)
 
-        # Filter profiles:
-        # 1) Take DASH, if available for a specific flavor, otherwise take HLS
-        # 2) Always include URL when available
-        # 3) Other stream types are ignored
+        # Filter profiles: Take HLS and URL profiles when available. Ignore
+        # other stream types.
         profiles_filtered = {}
         for flavor_id, profiles_for_flavor in profiles.items():
-            dash_profiles = [p for p in profiles_for_flavor if p.stream_format == 'mpegdash']
             hls_profiles = [p for p in profiles_for_flavor if p.stream_format == 'applehttp']
             url_profiles = [p for p in profiles_for_flavor if p.stream_format == 'url']
-            profiles_filtered[flavor_id] = (dash_profiles or hls_profiles) + url_profiles
+            profiles_filtered[flavor_id] = hls_profiles + url_profiles
 
         return profiles_filtered
 
