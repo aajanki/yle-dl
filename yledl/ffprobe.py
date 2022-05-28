@@ -2,6 +2,7 @@ import json
 import logging
 import re
 import subprocess
+from .errors import FfmpegNotFoundError
 from .utils import ffmpeg_loglevel
 
 
@@ -29,6 +30,8 @@ class Ffprobe:
         except subprocess.CalledProcessError as ex:
             raise ValueError(
                 f'Stream probing failed with status {ex.returncode}')
+        except FileNotFoundError:
+            raise FfmpegNotFoundError()
 
     def duration_seconds_file(self, filename):
         args = [
@@ -50,6 +53,8 @@ class Ffprobe:
                 f'Stream probing failed with status {ex.returncode}')
         except UnicodeDecodeError:
             raise ValueError('Unexpected encoding on stream probing response')
+        except FileNotFoundError:
+            raise FfmpegNotFoundError()
 
         m = re.search(r'time=(\d\d):(\d\d):(\d\d)\.(\d\d) ', decoding_result)
         if not m:

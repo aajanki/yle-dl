@@ -5,6 +5,7 @@ import os
 import random
 import re
 import subprocess
+from .errors import FfmpegNotFoundError
 from .ffprobe import Ffprobe
 from .utils import sane_filename
 
@@ -81,12 +82,15 @@ class IOContext:
     def ffmpeg_version(self):
         if self.ffmpeg_binary:
             args = [self.ffmpeg_binary, '-loglevel', 'quiet', '-version']
-            p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
-            if p.returncode == 0:
-                first_line = p.stdout.splitlines()[0]
-                m = re.match(r'ffmpeg version (\d+)\.(\d+)\.(\d+)', first_line)
-                if m:
-                    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            try:
+                p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
+                if p.returncode == 0:
+                    first_line = p.stdout.splitlines()[0]
+                    m = re.match(r'ffmpeg version (\d+)\.(\d+)\.(\d+)', first_line)
+                    if m:
+                        return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            except FileNotFoundError:
+                raise FfmpegNotFoundError()
 
 
 class OutputFileNameGenerator:

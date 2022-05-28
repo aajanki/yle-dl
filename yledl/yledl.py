@@ -33,6 +33,7 @@ import configargparse
 from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
+from .errors import FfmpegNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory, url_language
 from .geolocation import AreenaGeoLocation
@@ -465,27 +466,33 @@ def main(argv=sys.argv):
     httpclient = HttpClient(io)
     exit_status = RD_SUCCESS
 
-    warn_on_obsolete_ffmpeg(backends, io)
-    warn_on_output_template_syntax_change(title_formatter)
+    try:
+        warn_on_obsolete_ffmpeg(backends, io)
+        warn_on_output_template_syntax_change(title_formatter)
 
-    for i, url in enumerate(urls):
-        if len(urls) > 1:
-            logger.info('')
-            logger.info(f'Now downloading from URL {i + 1}/{len(urls)}: {url}')
+        for i, url in enumerate(urls):
+            if len(urls) > 1:
+                logger.info('')
+                logger.info(f'Now downloading from URL {i + 1}/{len(urls)}: {url}')
 
-        io.download_limits.start_position = \
-            args.startposition or start_position_from_url(url)
-        res = execute_action(
-            url,
-            action=action,
-            io=io,
-            httpclient=httpclient,
-            title_formatter=title_formatter,
-            stream_filters=stream_filters,
-        )
+            io.download_limits.start_position = \
+                args.startposition or start_position_from_url(url)
+            res = execute_action(
+                url,
+                action=action,
+                io=io,
+                httpclient=httpclient,
+                title_formatter=title_formatter,
+                stream_filters=stream_filters,
+            )
 
-        if res != RD_SUCCESS:
-            exit_status = res
+            if res != RD_SUCCESS:
+                exit_status = res
+    except FfmpegNotFoundError:
+        logger.error('ffmpeg or ffprobe not found on PATH.')
+        logger.error('Install ffmpeg, use "--ffmpeg" to set ffmpeg location or '
+                     'use "--backend wget".')
+        exit_status = RD_FAILED
 
     return exit_status
 
