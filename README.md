@@ -195,7 +195,7 @@ yle-dl https://areena.yle.fi/1-787136 -o video.mkv
 Playing in mpv (or in vlc or in any other video player) without downloading first:
 
 ```
-yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache=1000 --slang=fi -
+yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache-secs=1000 --slang=fi -
 ```
 
 Executing a script to postprocess a downloaded video (see the example postprocessing script at scripts/muxmp4):
