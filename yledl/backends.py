@@ -281,7 +281,10 @@ class DASHHLSBackend(ExternalDownloader):
 
     def _probe_args(self):
         if self.long_probe:
-            return ['-probesize', '80000000']
+            return [
+                '-analyzeduration', '10000000',  # 10 seconds
+                '-probesize', '80000000',  # bytes
+            ]
         else:
             return []
 

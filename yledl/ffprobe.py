@@ -22,7 +22,8 @@ class Ffprobe:
             '-headers', f'X-Forwarded-For: {self.x_forwarded_for}\r\n',
             '-show_programs',
             '-print_format', 'json=c=1',
-            '-probesize', '80000000',
+            '-analyzeduration', '10000000',  # 10 seconds
+            '-probesize', '80000000',  # bytes
             '-i', url,
         ]
         try:
