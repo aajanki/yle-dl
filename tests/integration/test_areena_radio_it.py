@@ -35,7 +35,7 @@ def test_radio_metadata_hls():
     metadata = fetch_metadata('https://areena.yle.fi/1-4551633')
 
     assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) == 1
+    assert len(metadata[0]['flavors']) >= 1
     assert metadata[0]['flavors'][0]['media_type'] == 'audio'
     assert metadata[0]['duration_seconds'] == 2954
     assert len(metadata[0]['description']) > 150
@@ -86,7 +86,7 @@ def test_radio_metadata_2020():
     metadata = fetch_metadata('https://areena.yle.fi/audio/1-50198110')
 
     assert len(metadata) == 1
-    assert len(metadata[0]['flavors']) == 1
+    assert len(metadata[0]['flavors']) >= 1
     assert metadata[0]['flavors'][0]['media_type'] == 'audio'
     assert metadata[0]['duration_seconds'] == 1451
     assert len(metadata[0]['description']) > 150

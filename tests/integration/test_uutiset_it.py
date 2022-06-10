@@ -57,4 +57,3 @@ def test_uutiset_inline_audio_block_metadata():
     flavors = metadata[0]['flavors']
     assert len(flavors) >= 1
     assert all(f.get('media_type') == 'audio' for f in flavors)
-    assert all('bitrate' in f for f in flavors)
