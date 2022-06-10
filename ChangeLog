@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3
 
+Version 20220610
+
+- Downloading was failing sometimes because of a too small probe size
+
 Version 20220531
 
 - Switched back to HLS stream. MPEG-DASH resulted in slow and
