@@ -24,7 +24,7 @@ def extractor_factory(url, language_chooser, httpclient):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/a/', url):
-        logger.debug(f'{url} is an Elava Arkisto URL')
+        logger.debug(f'{url} is an Elävä Arkisto URL')
         return ElavaArkistoExtractor(language_chooser, httpclient)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
