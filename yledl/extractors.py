@@ -243,42 +243,26 @@ class AreenaPlaylistParser:
             logger.warning(f'Failed to download {url} while looking for a playlist')
             return [url]
 
-        package_id = self._extract_package_id(tree)
-        if self._is_playlist(tree) or package_id is not None:
-            playlist = self._download_playlist_or_latest(tree, package_id, latest_only)
-            logger.debug(f'playlist page with {len(playlist)} episodes')
+        playlist = []
+        playlist_data = None
+        if self._is_tv_series_page(tree):
+            logger.debug('TV playlist')
+            playlist_data = self._parse_series_playlist(tree)
+        elif self._is_radio_series_page(tree):
+            logger.debug('Radio playlist')
+            playlist_data = self._parse_radio_playlist(tree)
+        elif self._extract_package_id(tree) is not None:
+            logger.debug('Package playlist')
+            playlist_data = self._parse_package_playlist(tree)
         else:
-            logger.debug('not a playlist')
+            logger.debug('Not a playlist')
             playlist = [url]
 
+        if playlist_data is not None:
+            playlist = self._download_playlist_or_latest(playlist_data, latest_only)
+            logger.debug(f'playlist page with {len(playlist)} episodes')
+
         return playlist
-
-    def _extract_series_id(self, url, tree):
-        # The url may be a season page. If so, we can find the series ID from
-        # the HTML body. If the body doesn't contain the series ID (audio
-        # series don't), just assume that the ID in the URL is the series ID.
-        series_info = tree.xpath('/html/head/script[contains(text(), "partOfSeries")]/text()')
-        if len(series_info) > 0:
-            try:
-                info = json.loads(series_info[0])
-                series_url = info.get('partOfSeries', {}).get('@id')
-                if series_url:
-                    url = series_url
-            except json.JSONDecodeError:
-                logger.debug('Failed to parse series info from the HTML head')
-                pass
-
-        return urlparse(url).path.split('/')[-1]
-
-    def _is_playlist(self, tree):
-        if self._is_tv_series_page(tree):
-            logger.debug('TV playlist page')
-            return True
-        elif self._is_radio_series_page(tree):
-            logger.debug('Radio playlist page')
-            return True
-        else:
-            return False
 
     def _is_tv_series_page(self, tree):
         next_data_tag = tree.xpath('//script[@id="__NEXT_DATA__"]')
@@ -338,8 +322,24 @@ class AreenaPlaylistParser:
 
         return None
 
-    def _download_playlist_or_latest(self, html_tree, package_id, latest_only):
-        playlist = self._download_playlist(html_tree, package_id)
+    def _parse_radio_playlist(self, html_tree):
+        playlist = []
+        state_tag = html_tree.xpath('//script[contains(., "window.STORE_STATE_FROM_SERVER")]')
+        if state_tag:
+            state_str = state_tag[0].text
+            data = json.loads(state_str.split('=', 1)[-1].strip())
+            tabs = data.get('viewStore', {}).get('viewPageView', {}).get('tabs', [])
+            tabs = [t for t in tabs if t.get('title') == 'Jaksot']
+            if tabs:
+                all_content = tabs[0].get('allContent')
+                if all_content:
+                    uri = all_content[0].get('source', {}).get('uri')
+                    return PlaylistData(uri, {})
+
+        return playlist
+
+    def _download_playlist_or_latest(self, playlist_data, latest_only):
+        playlist = self._download_playlist(playlist_data)
 
         # The episode API doesn't seem to have any way to download only the
         # latest episode or start from the latest. We need to download all and
@@ -349,12 +349,7 @@ class AreenaPlaylistParser:
 
         return playlist
 
-    def _download_playlist(self, html_tree, package_id):
-        if package_id:
-            playlist_data = self._parse_package_playlist(html_tree)
-        else:
-            playlist_data = self._parse_series_playlist(html_tree)
-
+    def _download_playlist(self, playlist_data):
         if playlist_data is None:
             logger.warning('Failed to download a playlist')
             return []
