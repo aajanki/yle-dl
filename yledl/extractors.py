@@ -14,6 +14,7 @@ from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp
 from .subtitles import Subtitle
+from .http import update_url_query
 
 
 logger = logging.getLogger('yledl')
@@ -198,6 +199,19 @@ class AreenaApiProgramInfo:
     expired = attr.ib()
 
 
+@attr.frozen
+class PlaylistData:
+    base_url: str
+    season_parameters: dict
+
+    def season_playlist_urls(self):
+        if self.season_parameters:
+            for season_query in self.season_parameters:
+                yield update_url_query(self.base_url, season_query)
+        else:
+            yield self.base_url
+
+
 class ClipExtractor:
     def __init__(self, httpclient):
         self.httpclient = httpclient
@@ -231,11 +245,11 @@ class AreenaPlaylistParser:
 
         package_id = self._extract_package_id(tree)
         if self._is_playlist(tree):
-            series_id = self._extract_series_id(url, tree)
-            playlist = self._download_playlist(series_id, latest_only, self._playlist_page)
+            playlist = self._download_playlist_or_latest(tree, latest_only)
             logger.debug(f'playlist page with {len(playlist)} episodes')
         elif package_id is not None:
-            playlist = self._download_playlist(package_id, latest_only, self._package_episodes_page)
+            # TODO ????
+            playlist = self._download_playlist_or_latest(package_id, latest_only, self._package_episodes_page)
             logger.debug(f'package page with {len(playlist)} episodes')
         else:
             logger.debug('not a playlist')
@@ -293,71 +307,88 @@ class AreenaPlaylistParser:
         else:
             return False
 
-    def _download_playlist(self, series_id, latest_only, get_playlist_page):
-        # Areena server fails (502 Bad gateway) if page_size is larger
-        # than 100.
-        if latest_only:
-            page_size = 1
-            ascending = False
-        else:
-            page_size = 100
-            ascending = True
-        offset = 0
-        playlist = []
-        has_next_page = True
-        while has_next_page:
-            page = get_playlist_page(series_id, ascending, offset, page_size)
-            if page is None:
-                logger.warning(f'Playlist failed at offset {offset}. Some episodes may be missing!')
-                break
+    def _parse_playlist_data(self, html_tree):
+        next_data_tag = html_tree.xpath('//script[@id="__NEXT_DATA__"]')
+        if next_data_tag:
+            next_data = json.loads(next_data_tag[0].text)
+            tabs = next_data.get('props', {}).get('pageProps', {}).get('view', {}).get('tabs', [])
+            episodes_tab = [tab for tab in tabs if tab.get('title') == 'Jaksot']
+            if episodes_tab:
+                episodes_content = episodes_tab[0].get('content', [])
+                if episodes_content:
+                    playlist_data = episodes_content[0]
+                    uri = playlist_data.get('source', {}).get('uri')
 
-            playlist.extend(page)
-            offset += len(page)
-            has_next_page = (len(page) == page_size) and not latest_only
+                    series_parameters = {}
+                    filters = playlist_data.get('filters', [])
+                    if filters:
+                        options = filters[0].get('options', [])
+                        series_parameters = [x['parameters'] for x in options]
+
+                    return PlaylistData(uri, series_parameters)
+
+        return None
+
+    def _download_playlist_or_latest(self, html_tree, latest_only):
+        playlist = self._download_playlist(html_tree)
+
+        # The episode API doesn't seem to have any way to download only the
+        # latest episode or start from the latest. We need to download all and
+        # pick the latest.
+        if latest_only:
+            playlist = playlist[-1:]
 
         return playlist
 
-    def _playlist_page(self, series_id, ascending, offset, page_size):
-        logger.debug(
-            f'Getting a playlist page {series_id}, size = {page_size}, offset = {offset}')
+    def _download_playlist(self, html_tree):
+        playlist = []
+        playlist_data = self._parse_playlist_data(html_tree)
+        if playlist_data is None:
+            logger.warning('Failed to download a playlist')
+            return playlist
 
-        pl_url = self._playlist_url(series_id, ascending, offset, page_size)
-        playlist = self.httpclient.download_json(pl_url)
+        season_urls = list(enumerate(playlist_data.season_playlist_urls(), start=1))
+        for season_num, season_url in season_urls:
+            # Areena server fails (502 Bad gateway) if page_size is larger
+            # than 100.
+            page_size = 100
+            offset = 0
+            has_next_page = True
+            while has_next_page:
+                logger.debug(
+                    f'Getting a playlist page, season = {season_num}, size = {page_size}, offset = {offset}')
+
+                params = {
+                   'offset': str(offset),
+                   'limit': str(page_size),
+                   'app_id': 'areena-web-items',
+                   'app_key': 'v9No1mV0omg2BppmDkmDL6tGKw1pRFZt',
+                }
+                playlist_page_url = update_url_query(season_url, params)
+                page = self._parse_series_episode_data(playlist_page_url)
+
+                if page is None:
+                    logger.warning(f'Playlist failed at offset {offset}. Some episodes may be missing!')
+                    break
+
+                playlist.extend(page)
+                offset += len(page)
+                has_next_page = len(page) == page_size
+
+        return playlist
+
+    def _parse_series_episode_data(self, playlist_page_url):
+        playlist = self.httpclient.download_json(playlist_page_url)
         if playlist is None:
             return None
 
-        playlist_data = playlist.get('data', [])
-        logger.debug(f'Playlist data:\n{json.dumps(playlist_data, indent=2)}')
-        episode_ids = (x['id'] for x in playlist_data if 'id' in x)
+        episode_ids = []
+        for data in playlist.get('data', []):
+            uri = data.get('pointer', {}).get('uri')
+            if uri:
+                episode_ids.append(uri.rsplit('/')[-1])
+
         return [f'https://areena.yle.fi/{episode_id}' for episode_id in episode_ids]
-
-    def _package_episodes_page(self, package_id, ascending, offset, page_size):
-        logger.debug(
-            f'Getting a package page {package_id}, size = {page_size}, offset = {offset}')
-
-        pl_url = self._package_url(package_id, offset, page_size)
-        playlist = self.httpclient.download_json(pl_url)
-        if playlist is None:
-            return None
-
-        playlist_data = playlist.get('data', [])
-        logger.debug(f'Package playlist data:\n{json.dumps(playlist_data, indent=2)}')
-        episode_ids = (x['id'] for x in playlist_data if 'id' in x)
-        return [f'https://areena.yle.fi/{episode_id}' for episode_id in episode_ids]
-
-    def _playlist_url(self, series_id, ascending, offset=0, page_size=100):
-        sort_order = 'asc' if ascending else 'desc'
-        q = urlencode({
-            'availability': 'current',
-            'order': f'natural:{sort_order}',
-            'program_type': 'program',
-            'fields': 'id',
-            'offset': str(offset),
-            'limit': str(page_size),
-            'app_id': 'areena_web_frontend_prod',
-            'app_key': '4622a8f8505bb056c956832a70c105d4',
-        })
-        return f'https://programs.api.yle.fi/v3/schema/v1/series/{series_id}/episodes?{q}'
 
     def _extract_package_id(self, tree):
         package_id = tree.xpath('/html/body/@data-package-id')

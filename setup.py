@@ -30,7 +30,7 @@ setup(
     include_package_data=True,
     install_requires=[
         'requests', 'lxml',
-        'attrs >= 18.1.0', 'ConfigArgParse >= 0.13.0'
+        'attrs >= 20.1.0', 'ConfigArgParse >= 0.13.0'
     ],
     setup_requires = maybe_pytest_runner,
     tests_require = [

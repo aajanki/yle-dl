@@ -5,6 +5,7 @@ import re
 import requests
 import sys
 from requests.adapters import HTTPAdapter
+from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
 from .version import version
 
 logger = logging.getLogger('yledl')
@@ -130,3 +131,17 @@ def html_meta_charset(html_bytes):
         return metacharset.group(1).decode('ASCII')
     else:
         return None
+
+
+def update_url_query(url, new_query_parameters):
+    """Add the key-value pairs in new_query_parameters in the input URL query.
+
+    Overwrite existing query parameters with the same name.
+    """
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query)
+    params = {k: v[0] for k, v in params.items()}
+    params.update(new_query_parameters)
+    q = urlencode(params)
+    parts = (parsed[0], parsed[1], parsed[2], '', q, '')
+    return urlunparse(parts)
