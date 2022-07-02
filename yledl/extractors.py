@@ -6,7 +6,7 @@ import os.path
 import re
 from datetime import datetime
 from requests import HTTPError
-from urllib.parse import urlencode, urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
@@ -244,13 +244,9 @@ class AreenaPlaylistParser:
             return [url]
 
         package_id = self._extract_package_id(tree)
-        if self._is_playlist(tree):
-            playlist = self._download_playlist_or_latest(tree, latest_only)
+        if self._is_playlist(tree) or package_id is not None:
+            playlist = self._download_playlist_or_latest(tree, package_id, latest_only)
             logger.debug(f'playlist page with {len(playlist)} episodes')
-        elif package_id is not None:
-            # TODO ????
-            playlist = self._download_playlist_or_latest(package_id, latest_only, self._package_episodes_page)
-            logger.debug(f'package page with {len(playlist)} episodes')
         else:
             logger.debug('not a playlist')
             playlist = [url]
@@ -307,7 +303,7 @@ class AreenaPlaylistParser:
         else:
             return False
 
-    def _parse_playlist_data(self, html_tree):
+    def _parse_series_playlist(self, html_tree):
         next_data_tag = html_tree.xpath('//script[@id="__NEXT_DATA__"]')
         if next_data_tag:
             next_data = json.loads(next_data_tag[0].text)
@@ -329,8 +325,21 @@ class AreenaPlaylistParser:
 
         return None
 
-    def _download_playlist_or_latest(self, html_tree, latest_only):
-        playlist = self._download_playlist(html_tree)
+    def _parse_package_playlist(self, html_tree):
+        package_tag = html_tree.xpath('//div[@class="package-view"]/@data-view')
+        if package_tag:
+            package_data = json.loads(package_tag[0])
+            tabs = package_data.get('tabs', [])
+            if tabs:
+                content = tabs[0].get('content', [])
+                if content:
+                    uri = content[0].get('source', {}).get('uri')
+                    return PlaylistData(uri, {})
+
+        return None
+
+    def _download_playlist_or_latest(self, html_tree, package_id, latest_only):
+        playlist = self._download_playlist(html_tree, package_id)
 
         # The episode API doesn't seem to have any way to download only the
         # latest episode or start from the latest. We need to download all and
@@ -340,13 +349,17 @@ class AreenaPlaylistParser:
 
         return playlist
 
-    def _download_playlist(self, html_tree):
-        playlist = []
-        playlist_data = self._parse_playlist_data(html_tree)
+    def _download_playlist(self, html_tree, package_id):
+        if package_id:
+            playlist_data = self._parse_package_playlist(html_tree)
+        else:
+            playlist_data = self._parse_series_playlist(html_tree)
+
         if playlist_data is None:
             logger.warning('Failed to download a playlist')
-            return playlist
+            return []
 
+        playlist = []
         season_urls = list(enumerate(playlist_data.season_playlist_urls(), start=1))
         for season_num, season_url in season_urls:
             # Areena server fails (502 Bad gateway) if page_size is larger
@@ -396,16 +409,6 @@ class AreenaPlaylistParser:
             return package_id[0]
         else:
             return None
-
-    def _package_url(self, package_id, offset=0, page_size=100):
-        q = urlencode({
-            'offset': str(offset),
-            'limit': str(page_size),
-            'fields': 'id',
-            'app_id': 'areena_web_frontend_prod',
-            'app_key': '4622a8f8505bb056c956832a70c105d4',
-        })
-        return f'https://programs.api.yle.fi/v3/schema/v1/packages/{package_id}/extended-recommendations?{q}'
 
 
 class AreenaPreviewApiParser:
