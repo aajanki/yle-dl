@@ -217,11 +217,11 @@ class YleKalturaApiClient(KalturaApiClient):
         return profiles_filtered
 
 
-@attr.s(frozen=True)
+@attr.frozen
 class DeliveryProfile:
-    flavor_id = attr.ib()
-    stream_format = attr.ib()
-    manifest_file = attr.ib()
+    flavor_id: str
+    stream_format: str
+    manifest_file: str
 
     def manifest_url(self, entry_id, partner_id, client_tag, referrer):
         b64referrer = base64.b64encode(referrer.encode('utf-8')).decode('utf-8')

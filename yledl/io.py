@@ -5,6 +5,7 @@ import os
 import random
 import re
 import subprocess
+from typing import Optional
 from .errors import FfmpegNotFoundError
 from .ffprobe import Ffprobe
 from .utils import sane_filename
@@ -40,38 +41,38 @@ def random_ip(ip_network):
     return ipaddress.ip_address(random.choice(int_ip_range))
 
 
-@attr.s
+@attr.define
 class DownloadLimits:
     # Seek to this position (seconds) before starting the recording
-    start_position = attr.ib(
+    start_position = attr.field(
         default=None,
         validator=attr.validators.optional(attr.validators.instance_of(int)))
     # Limit the duration of the recorded stream (seconds)
-    duration = attr.ib(
+    duration = attr.field(
         default=None,
         validator=attr.validators.optional(attr.validators.instance_of(int)))
     # Maximum download rate (int in kb/s or "best" or "worst")
-    ratelimit = attr.ib(default=None)
+    ratelimit = attr.field(default=None)
 
 
-@attr.s
+@attr.define
 class IOContext:
-    outputfilename = attr.ib(default=None)
-    preferred_format = attr.ib(default=None)
-    destdir = attr.ib(default=None)
-    resume = attr.ib(default=False)
-    overwrite = attr.ib(default=True)
-    download_limits = attr.ib(default=None, converter=convert_download_limits)
-    excludechars = attr.ib(default='*/|')
-    proxy = attr.ib(default=None)
-    x_forwarded_for = attr.ib(default=None)
-    subtitles = attr.ib(default='all')
-    metadata_language = attr.ib(default=None)
-    postprocess_command = attr.ib(default=None)
-    ffmpeg_binary = attr.ib(default='ffmpeg', converter=ffmpeg_default)
-    ffprobe_binary = attr.ib(default='ffprobe', converter=ffprobe_default)
-    wget_binary = attr.ib(default='wget', converter=wget_default)
-    create_dirs = attr.ib(default=False)
+    outputfilename: Optional[str] = attr.field(default=None)
+    preferred_format: Optional[str] = attr.field(default=None)
+    destdir: Optional[str] = attr.field(default=None)
+    resume: bool = attr.field(default=False)
+    overwrite: bool = attr.field(default=True)
+    download_limits: Optional[DownloadLimits] = attr.field(default=None, converter=convert_download_limits)
+    excludechars: str = attr.field(default='*/|')
+    proxy: Optional[str] = attr.field(default=None)
+    x_forwarded_for: Optional[str] = attr.field(default=None)
+    subtitles: str = attr.field(default='all')
+    metadata_language: Optional[str] = attr.field(default=None)
+    postprocess_command: Optional[str] = attr.field(default=None)
+    ffmpeg_binary: str = attr.field(default='ffmpeg', converter=ffmpeg_default)
+    ffprobe_binary: str = attr.field(default='ffprobe', converter=ffprobe_default)
+    wget_binary: str = attr.field(default='wget', converter=wget_default)
+    create_dirs: bool = attr.field(default=False)
 
     def ffprobe(self):
         if self.ffprobe_binary is None:

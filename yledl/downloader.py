@@ -1,6 +1,7 @@
 import copy
 import logging
 import os
+from attr import asdict
 from .utils import sane_filename
 from .backends import Subprocess
 from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
@@ -140,9 +141,9 @@ class YleDlDownloader:
         for fl in flavors:
             logger.debug('bitrate: {bitrate}, height: {height}, '
                          'width: {width}'
-                         .format(**vars(fl)))
+                         .format(**asdict(fl)))
         logger.debug('max_height: {maxheight}, max_bitrate: {maxbitrate}'
-                     .format(**vars(filters)))
+                     .format(**asdict(filters)))
 
         filtered = self.apply_backend_filter(flavors, filters)
         filtered = self.apply_resolution_filters(filtered, filters)

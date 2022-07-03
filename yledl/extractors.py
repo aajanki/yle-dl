@@ -14,7 +14,7 @@ from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp
-from .subtitles import Subtitle
+from .subtitles import Subtitle, EmbeddedSubtitle
 from .http import update_url_query
 
 
@@ -71,19 +71,19 @@ class Flavors:
 ## Clip
 
 
-@attr.s
+@attr.define
 class Clip:
-    webpage = attr.ib()
-    flavors = attr.ib()
-    title = attr.ib(default='')
-    description = attr.ib(default=None)
-    duration_seconds = attr.ib(default=None, converter=attr.converters.optional(int))
-    region = attr.ib(default='Finland')
-    publish_timestamp = attr.ib(default=None)
-    expiration_timestamp = attr.ib(default=None)
-    embedded_subtitles = attr.ib(factory=list)
-    subtitles = attr.ib(factory=list)
-    program_id = attr.ib(default=None)
+    webpage: str
+    flavors: list = attr.field(factory=list)
+    title: str = attr.field(default='')
+    description: Optional[str] = attr.field(default=None)
+    duration_seconds: Optional[int] = attr.field(default=None, converter=attr.converters.optional(int))
+    region: str = attr.field(default='Finland')
+    publish_timestamp: Optional[datetime] = attr.field(default=None)
+    expiration_timestamp: Optional[datetime] = attr.field(default=None)
+    embedded_subtitles: list = attr.field(factory=list)
+    subtitles: list = attr.field(factory=list)
+    program_id: Optional[str] = attr.field(default=None)
 
     def metadata(self, io):
         flavors_meta = sorted(
@@ -184,20 +184,20 @@ class FailedClip(Clip):
             program_id=program_id)
 
 
-@attr.s
+@attr.frozen
 class AreenaApiProgramInfo:
-    media_id = attr.ib()
-    title = attr.ib()
-    description = attr.ib()
-    flavors = attr.ib()
-    embedded_subtitles = attr.ib()
-    subtitles = attr.ib()
-    duration_seconds = attr.ib()
-    available_at_region = attr.ib()
-    publish_timestamp = attr.ib()
-    expiration_timestamp = attr.ib()
-    pending = attr.ib()
-    expired = attr.ib()
+    media_id: str
+    title: str
+    description: Optional[str]
+    flavors: list[StreamFlavor]
+    embedded_subtitles: list[EmbeddedSubtitle]
+    subtitles: list[Subtitle]
+    duration_seconds: Optional[int]
+    available_at_region: str
+    publish_timestamp: Optional[datetime]
+    expiration_timestamp: Optional[datetime]
+    pending: bool
+    expired: bool
 
 
 @attr.frozen

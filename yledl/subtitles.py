@@ -1,14 +1,14 @@
 import attr
 
 
-@attr.s
+@attr.frozen
 class Subtitle:
-    url = attr.ib()
-    lang = attr.ib()
-    category = attr.ib()
+    url: str
+    lang: str
+    category: str
 
 
-@attr.s
+@attr.frozen
 class EmbeddedSubtitle:
-    language = attr.ib()
-    category = attr.ib()
+    language: str
+    category: str

@@ -191,11 +191,11 @@ def failed_stream_clip(state_dict):
     )
 
 
-@attr.s
+@attr.frozen
 class DownloaderParametersFixture:
-    io = attr.ib()
-    filters = attr.ib()
-    downloader = attr.ib()
+    io = attr.field()
+    filters = attr.field()
+    downloader = attr.field()
 
 
 @pytest.fixture

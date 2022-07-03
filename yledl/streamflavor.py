@@ -2,13 +2,13 @@ import attr
 from .backends import FailingBackend
 
 
-@attr.s
+@attr.define
 class StreamFlavor:
-    media_type = attr.ib()
-    height = attr.ib(default=None, converter=attr.converters.optional(int))
-    width = attr.ib(default=None, converter=attr.converters.optional(int))
-    bitrate = attr.ib(default=None, converter=attr.converters.optional(int))
-    streams = attr.ib(factory=list)
+    media_type = attr.field()
+    height = attr.field(default=None, converter=attr.converters.optional(int))
+    width = attr.field(default=None, converter=attr.converters.optional(int))
+    bitrate = attr.field(default=None, converter=attr.converters.optional(int))
+    streams = attr.field(factory=list)
 
 
 class FailedFlavor(StreamFlavor):
