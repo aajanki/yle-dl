@@ -6,6 +6,7 @@ import os.path
 import re
 from datetime import datetime
 from requests import HTTPError
+from typing import Optional
 from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
@@ -212,6 +213,17 @@ class PlaylistData:
             yield self.base_url
 
 
+@attr.frozen
+class EpisodeMetadata:
+    uri: str
+    season_number: Optional[int]
+    episode_number: Optional[int]
+    release_date: Optional[datetime]
+
+    def sort_key(self):
+        return self.season_number or 9999, self.episode_number or 99999, self.release_date
+
+
 class ClipExtractor:
     def __init__(self, httpclient):
         self.httpclient = httpclient
@@ -341,13 +353,16 @@ class AreenaPlaylistParser:
     def _download_playlist_or_latest(self, playlist_data, latest_only):
         playlist = self._download_playlist(playlist_data)
 
+        # The Areena API might return episodes in wrong order
+        playlist = sorted(playlist, key=lambda x: x.sort_key())
+
         # The episode API doesn't seem to have any way to download only the
         # latest episode or start from the latest. We need to download all and
         # pick the latest.
         if latest_only:
             playlist = playlist[-1:]
 
-        return playlist
+        return [x.uri for x in playlist]
 
     def _download_playlist(self, playlist_data):
         if playlist_data is None:
@@ -373,7 +388,7 @@ class AreenaPlaylistParser:
                    'app_key': 'v9No1mV0omg2BppmDkmDL6tGKw1pRFZt',
                 }
                 playlist_page_url = update_url_query(season_url, params)
-                page = self._parse_series_episode_data(playlist_page_url)
+                page = self._parse_series_episode_data(playlist_page_url, season_num)
 
                 if page is None:
                     logger.warning(f'Playlist failed at offset {offset}. Some episodes may be missing!')
@@ -385,18 +400,43 @@ class AreenaPlaylistParser:
 
         return playlist
 
-    def _parse_series_episode_data(self, playlist_page_url):
+    def _parse_series_episode_data(self, playlist_page_url, season_number):
         playlist = self.httpclient.download_json(playlist_page_url)
         if playlist is None:
             return None
 
-        episode_ids = []
+        episodes = []
         for data in playlist.get('data', []):
             uri = data.get('pointer', {}).get('uri')
-            if uri:
-                episode_ids.append(uri.rsplit('/')[-1])
 
-        return [f'https://areena.yle.fi/{episode_id}' for episode_id in episode_ids]
+            release_date = None
+            labels = data.get('labels')
+            release_date_labels = [x for x in labels if x.get('type') == 'releaseDate']
+            if release_date_labels:
+                try:
+                    date_str = release_date_labels[0].get('raw')
+                    release_date = datetime.fromisoformat(date_str)
+                except ValueError:
+                    pass
+
+            episode_number = None
+            title = data.get('title')
+            if title:
+                # Try to parse the episode number from the title. That's the
+                # only location where the episode number is available in the
+                # API response.
+                m = re.match(r'Jakso (\d+)', title, flags=re.IGNORECASE)
+                if m:
+                    episode_number = int(m.group(1))
+
+            if uri:
+                media_id = uri.rsplit('/')[-1]
+                uri = f'https://areena.yle.fi/{media_id}'
+                episodes.append(
+                    EpisodeMetadata(uri, season_number, episode_number, release_date)
+                )
+
+        return episodes
 
     def _extract_package_id(self, tree):
         package_id = tree.xpath('/html/body/@data-package-id')
