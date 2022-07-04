@@ -6,7 +6,7 @@ import os.path
 import re
 from datetime import datetime
 from requests import HTTPError
-from typing import Optional
+from typing import List, Optional
 from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .io import OutputFileNameGenerator
@@ -81,8 +81,8 @@ class Clip:
     region: str = attr.field(default='Finland')
     publish_timestamp: Optional[datetime] = attr.field(default=None)
     expiration_timestamp: Optional[datetime] = attr.field(default=None)
-    embedded_subtitles: list = attr.field(factory=list)
-    subtitles: list = attr.field(factory=list)
+    embedded_subtitles: List = attr.field(factory=list)
+    subtitles: List = attr.field(factory=list)
     program_id: Optional[str] = attr.field(default=None)
 
     def metadata(self, io):
@@ -189,9 +189,9 @@ class AreenaApiProgramInfo:
     media_id: str
     title: str
     description: Optional[str]
-    flavors: list[StreamFlavor]
-    embedded_subtitles: list[EmbeddedSubtitle]
-    subtitles: list[Subtitle]
+    flavors: List[StreamFlavor]
+    embedded_subtitles: List[EmbeddedSubtitle]
+    subtitles: List[Subtitle]
     duration_seconds: Optional[int]
     available_at_region: str
     publish_timestamp: Optional[datetime]
