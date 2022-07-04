@@ -415,7 +415,7 @@ class AreenaPlaylistParser:
             if release_date_labels:
                 try:
                     date_str = release_date_labels[0].get('raw')
-                    release_date = datetime.fromisoformat(date_str)
+                    release_date = parse_areena_timestamp(date_str)
                 except ValueError:
                     pass
 
