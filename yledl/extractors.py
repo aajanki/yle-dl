@@ -221,7 +221,11 @@ class EpisodeMetadata:
     release_date: Optional[datetime]
 
     def sort_key(self):
-        return self.season_number or 9999, self.episode_number or 99999, self.release_date
+        return (
+            self.season_number or 99999,
+            self.episode_number or 99999,
+            self.release_date or datetime(1970, 1, 1, 0, 0, 0)
+        )
 
 
 class ClipExtractor:
