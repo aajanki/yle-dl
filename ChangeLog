@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3
 
+<unreleased>
+
+- Fixed a crash if a title is missing
+
 Version 20220704
 
 - Fixed series pages after changes in Areena

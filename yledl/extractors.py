@@ -754,8 +754,9 @@ class AreenaExtractor(ClipExtractor):
 
         preview = self.preview_parser(pid, pageurl)
         publish_timestamp = preview.timestamp()
-        titles = preview.title(self.language_chooser) or {'title': 'areena'}
+        titles = preview.title(self.language_chooser)
         title_params = {
+            'title': '',
             'program_id': pid,
             'publish_timestamp': publish_timestamp,
         }
@@ -764,7 +765,7 @@ class AreenaExtractor(ClipExtractor):
         if season_and_episode:
             season_and_episode.update(self.extract_season_number(pageurl))
         title_params.update(season_and_episode)
-        title = title_formatter.format(**title_params)
+        title = title_formatter.format(**title_params) or 'areena'
         media_id = preview.media_id()
         download_url = self.ignore_invalid_download_url(preview.media_url())
         if self.is_html5_media(media_id):
