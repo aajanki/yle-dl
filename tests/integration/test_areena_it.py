@@ -155,6 +155,7 @@ def test_areena_season_and_episode_number():
 
 
 def test_areena_latest_episode():
+    # This series has seasons
     filters = StreamFilters(latest_only=True)
     metadata = fetch_metadata('https://areena.yle.fi/1-4655342', filters)
 
@@ -164,6 +165,19 @@ def test_areena_latest_episode():
     # published on 2021-01-27
     publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
     assert publish_date >= datetime(2021, 1, 27)
+
+
+def test_areena_latest_episode_no_seasons():
+    # This series has no seasons
+    filters = StreamFilters(latest_only=True)
+    metadata = fetch_metadata('https://areena.yle.fi/1-1494772', filters)
+
+    assert len(metadata) == 1
+
+    # The latest episode at the time of writing this test was
+    # published on 2022-07-12
+    publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
+    assert publish_date >= datetime(2022, 7, 12)
 
 
 def test_package_page():

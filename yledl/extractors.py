@@ -411,43 +411,77 @@ class AreenaPlaylistParser:
 
         episodes = []
         for data in playlist.get('data', []):
-            uri = data.get('pointer', {}).get('uri')
-
-            release_date = None
-            labels = data.get('labels')
-            release_date_labels = [x for x in labels if x.get('type') == 'releaseDate']
-            if release_date_labels:
-                try:
-                    date_str = release_date_labels[0].get('raw')
-                    release_date = parse_areena_timestamp(date_str)
-                except ValueError:
-                    pass
-
-            episode_number = None
-            title = data.get('title')
-            if title:
-                # Try to parse the episode number from the title. That's the
-                # only location where the episode number is available in the
-                # API response.
-                m = re.match(r'Jakso (\d+)', title, flags=re.IGNORECASE)
-                if m:
-                    episode_number = int(m.group(1))
+            uri = self._episode_uri(data)
+            episode_number = self._episode_number(data)
+            release_date = self._tv_release_date(data) or self._radio_release_date(data)
 
             if uri:
-                media_id = uri.rsplit('/')[-1]
-                uri = f'https://areena.yle.fi/{media_id}'
                 episodes.append(
                     EpisodeMetadata(uri, season_number, episode_number, release_date)
                 )
 
         return episodes
 
-    def _extract_package_id(self, tree):
+    @staticmethod
+    def _extract_package_id(tree):
         package_id = tree.xpath('/html/body/@data-package-id')
         if package_id:
             return package_id[0]
         else:
             return None
+
+    @staticmethod
+    def _episode_uri(data):
+        program_uri = data.get('pointer', {}).get('uri')
+        if program_uri:
+            media_id = program_uri.rsplit('/')[-1]
+            return f'https://areena.yle.fi/{media_id}'
+        else:
+            return None
+
+    @staticmethod
+    def _episode_number(data):
+        title = data.get('title')
+        if title:
+            # Try to parse the episode number from the title. That's the
+            # only location where the episode number is available in the
+            # API response.
+            m = re.match(r'Jakso (\d+)', title, flags=re.IGNORECASE)
+            if m:
+                return int(m.group(1))
+
+        return None
+
+    def _tv_release_date(self, data):
+        labels = data.get('labels')
+        generics = self._label_by_type(labels, 'generic', 'formatted')
+        for val in generics:
+            # Look for a label that matches the format "pe 15.3.2019"
+            m = re.match(r'[a-z]{2} (?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4})', val)
+            if m:
+                return datetime(
+                    int(m.group('year')),
+                    int(m.group('month')),
+                    int(m.group('day'))
+                )
+
+        return None
+
+    def _radio_release_date(self, data):
+        labels = data.get('labels')
+        date_str = self._label_by_type(labels, 'releaseDate', 'raw')
+        if date_str:
+            try:
+                return parse_areena_timestamp(date_str[0])
+            except ValueError:
+                pass
+
+        return None
+
+    def _label_by_type(self, labels: dict, type_name: str, key_name: str) -> List[str]:
+        """Return a key value of an Areena API label object which as the given type."""
+        matches = [x for x in labels if x.get('type') == type_name]
+        return [x[key_name] for x in matches if key_name in x]
 
 
 class AreenaPreviewApiParser:

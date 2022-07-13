@@ -5,6 +5,7 @@ Distributed under the GPL v3
 <unreleased>
 
 - Fixed a crash if a title is missing
+- "--latestepisode" was sometimes selecting a wrong episode
 
 Version 20220704
 
