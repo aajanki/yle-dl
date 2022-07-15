@@ -283,7 +283,8 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
         print_lines(dl.get_titles(url, stream_filters.latest_only, io))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        print_enc(json.dumps(dl.get_metadata(url, stream_filters.latest_only, io), indent=2))
+        metadata = dl.get_metadata(url, stream_filters.latest_only, io)
+        print_enc(json.dumps(metadata, indent=2, ensure_ascii=False))
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
         return dl.pipe(url, io, stream_filters)
