@@ -355,7 +355,12 @@ class AreenaPlaylistParser:
         return playlist
 
     def _download_playlist_or_latest(self, playlist_data, latest_only):
-        playlist = self._download_playlist(playlist_data)
+        season_urls = list(enumerate(playlist_data.season_playlist_urls(), start=1))
+        if latest_only:
+            # Optimization: The latest episode belongs to the latest season
+            season_urls = season_urls[-1:]
+
+        playlist = self._download_playlist(season_urls)
 
         # The Areena API might return episodes in wrong order
         playlist = sorted(playlist, key=lambda x: x.sort_key())
@@ -368,13 +373,8 @@ class AreenaPlaylistParser:
 
         return [x.uri for x in playlist]
 
-    def _download_playlist(self, playlist_data):
-        if playlist_data is None:
-            logger.warning('Failed to download a playlist')
-            return []
-
+    def _download_playlist(self, season_urls):
         playlist = []
-        season_urls = list(enumerate(playlist_data.season_playlist_urls(), start=1))
         for season_num, season_url in season_urls:
             # Areena server fails (502 Bad gateway) if page_size is larger
             # than 100.
