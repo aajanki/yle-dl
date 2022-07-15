@@ -263,53 +263,38 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
     RD_INCOMPLETE if a stream was downloaded partially but the
     download was interrupted.
     """
-    extractor = extractor_factory(url, language_chooser(url, io), httpclient)
+    extractor = extractor_factory(url, language_chooser(url, io), httpclient,
+                                  title_formatter, io.ffprobe())
     if not extractor:
         logger.error(f'Unsupported URL {url}.')
         logger.error('If you think yle-dl should support this page, open a '
                      'bug report at https://github.com/aajanki/yle-dl/issues')
         return RD_FAILED
 
-    dl = YleDlDownloader(AreenaGeoLocation(httpclient))
-
-    def clips():
-        return extractor.extract(url, stream_filters.latest_only,
-                                 title_formatter, io.ffprobe())
+    dl = YleDlDownloader(extractor, AreenaGeoLocation(httpclient))
 
     if action == StreamAction.PRINT_EPISODE_PAGES:
         print_lines(extractor.get_playlist(url))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_URL:
-        print_lines(dl.get_urls(clips(), stream_filters))
+        print_lines(dl.get_urls(url, stream_filters))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_TITLE:
-        print_lines(dl.get_titles(clips(), io))
+        print_lines(dl.get_titles(url, stream_filters.latest_only, io))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        print_enc(json.dumps(dl.get_metadata(clips(), io), indent=2))
+        print_enc(json.dumps(
+            dl.get_metadata(url, stream_filters.latest_only, io),
+            indent=2
+        ))
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
-        return dl.pipe(clips(), io, stream_filters)
+        return dl.pipe(url, title_formatter, io, stream_filters)
     elif action == StreamAction.DOWNLOAD:
-        return download_clips(clips(), dl, io, title_formatter, stream_filters)
+        return dl.download_clips(url, title_formatter, io, stream_filters)
     else:
         logger.error('Internal error: Unknown action')
         return RD_FAILED
-
-
-def download_clips(clips, dl, io, title_formatter, stream_filters):
-    clips = list(clips)
-    if (len(clips) > 1 and io.outputfilename is not None):
-        logger.error('The source is a playlist with multiple clips, '
-                     'but only one output file specified')
-        return RD_FAILED
-    elif (len(clips) > 1 and title_formatter.is_constant_pattern()):
-        logger.error('The source is a playlist with multiple clips, '
-                     'but --output-template is a literal: {}'
-                     .format(title_formatter.template))
-        return RD_FAILED
-    else:
-        return dl.download_clips(clips, io, stream_filters)
 
 
 def language_chooser(url, io):

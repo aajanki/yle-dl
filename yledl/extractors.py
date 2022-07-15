@@ -21,23 +21,23 @@ from .http import update_url_query
 logger = logging.getLogger('yledl')
 
 
-def extractor_factory(url, language_chooser, httpclient):
+def extractor_factory(url, language_chooser, httpclient, title_formatter, ffprobe):
     if re.match(r'^https?://yle\.fi/aihe/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
        re.match(r'^https?://svenska\.yle\.fi/a/', url):
         logger.debug(f'{url} is an Elävä Arkisto URL')
-        return ElavaArkistoExtractor(language_chooser, httpclient)
+        return ElavaArkistoExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         logger.debug(f'{url} is a live radio URL')
-        return AreenaLiveRadioExtractor(language_chooser, httpclient)
+        return AreenaLiveRadioExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
         logger.debug(f'{url} is a news URL')
-        return YleUutisetExtractor(language_chooser, httpclient)
+        return YleUutisetExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or
           re.match(r'^https?://yle\.fi/', url)):
         logger.debug(f'{url} is an Areena URL')
-        return AreenaExtractor(language_chooser, httpclient)
+        return AreenaExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     else:
         logger.debug(f'{url} is an unrecognized URL')
         return None
@@ -229,12 +229,14 @@ class EpisodeMetadata:
 
 
 class ClipExtractor:
-    def __init__(self, httpclient):
+    def __init__(self, httpclient, title_formatter, ffprobe):
         self.httpclient = httpclient
+        self.title_formatter = title_formatter
+        self.ffprobe = ffprobe
 
-    def extract(self, url, latest_only, title_formatter, ffprobe):
+    def extract(self, url, latest_only):
         playlist = self.get_playlist(url, latest_only)
-        return (self.extract_clip(clipurl, title_formatter, ffprobe)
+        return (self.extract_clip(clipurl, self.title_formatter, self.ffprobe)
                 for clipurl in playlist)
 
     def get_playlist(self, url, latest_only=False):
@@ -600,8 +602,8 @@ class AreenaPreviewApiParser:
 
 
 class AreenaExtractor(ClipExtractor):
-    def __init__(self, language_chooser, httpclient):
-        super().__init__(httpclient)
+    def __init__(self, language_chooser, httpclient, title_formatter, ffprobe):
+        super().__init__(httpclient, title_formatter, ffprobe)
         self.language_chooser = language_chooser
 
     def extract_clip(self, clip_url, title_formatter, ffprobe):

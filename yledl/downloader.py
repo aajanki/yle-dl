@@ -14,10 +14,11 @@ logger = logging.getLogger('yledl')
 
 
 class YleDlDownloader:
-    def __init__(self, geolocation):
+    def __init__(self, extractor, geolocation):
+        self.extractor = extractor
         self.geolocation = geolocation
 
-    def download_clips(self, clips, io, filters):
+    def download_clips(self, base_url, title_formatter, io, filters):
         def download(clip, downloader):
             if not downloader:
                 logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
@@ -45,7 +46,7 @@ class YleDlDownloader:
         def needs_retry(res):
             return res not in [RD_SUCCESS, RD_INCOMPLETE]
 
-        return self.process(clips, download, needs_retry, filters)
+        return self.process(base_url, download, needs_retry, filters, title_formatter, io)
 
     def should_skip_downloading(self, outputfile, downloader, clip, io):
         limits = io.download_limits
@@ -60,7 +61,7 @@ class YleDlDownloader:
         extension = downloader.file_extension(io.preferred_format)
         return generator.filename(title, extension, io)
 
-    def pipe(self, clips, io, filters):
+    def pipe(self, base_url, title_formatter, io, filters):
         def pipe_clip(clip, downloader):
             if not downloader:
                 logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
@@ -72,28 +73,43 @@ class YleDlDownloader:
         def needs_retry(res):
             return res == RD_SUBPROCESS_EXECUTE_FAILED
 
-        return self.process(clips, pipe_clip, needs_retry, filters)
+        return self.process(base_url, pipe_clip, needs_retry, filters, title_formatter, io)
 
-    def get_urls(self, clips, filters):
+    def get_urls(self, base_url, filters):
+        clips = self.extractor.extract(base_url, filters.latest_only)
         for clip in clips:
             streams = self.select_streams(clip.flavors, filters)
             if streams and any(s.is_valid() for s in streams):
                 valid_stream = next(s for s in streams if s.is_valid())
                 yield valid_stream.stream_url()
 
-    def get_titles(self, clips, io):
+    def get_titles(self, base_url, latest_only, io):
+        clips = self.extractor.extract(base_url, latest_only)
         return (sane_filename(clip.title or '', io.excludechars) for clip in clips)
 
-    def get_metadata(self, clips, io):
+    def get_metadata(self, base_url, latest_only, io):
+        clips = self.extractor.extract(base_url, latest_only)
         return list(clip.metadata(io) for clip in clips)
 
-    def process(self, clips, streamfunc, needs_retry, filters):
-        if not clips:
+    def process(self, base_url, streamfunc, needs_retry, filters, title_formatter, io):
+        playlist = self.extractor.get_playlist(base_url, filters.latest_only)
+
+        if len(playlist) == 0:
             logger.error('No streams found')
             return RD_SUCCESS
+        elif len(playlist) > 1 and io.outputfilename is not None:
+            logger.error('The source is a playlist with multiple clips, '
+                         'but only one output file specified')
+            return RD_FAILED
+        elif len(playlist) > 1 and title_formatter.is_constant_pattern():
+            logger.error('The source is a playlist with multiple clips, '
+                         'but --output-template is a literal: {}'
+                         .format(title_formatter.template))
+            return RD_FAILED
 
         overall_status = RD_SUCCESS
-        for clip in clips:
+        for clip_url in playlist:
+            clip = self.extractor.extract_clip(clip_url, title_formatter, io.ffprobe())
             streams = self.select_streams(clip.flavors, filters)
 
             if not streams:
