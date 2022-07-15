@@ -67,10 +67,10 @@ class MockExtractor:
         self.title_formatter = TitleFormatter()
 
     def extract(self, url, latest_only):
-        return self.clips_by_url.values()
+        return list(self.clips_by_url.values())
 
     def get_playlist(self, url, latest_only=False):
-        return self.clips_by_url.keys()
+        return list(self.clips_by_url.keys())
 
     def extract_clip(self, url):
         return self.clips_by_url[url]

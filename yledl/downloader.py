@@ -46,8 +46,19 @@ class YleDlDownloader:
         def needs_retry(res):
             return res not in [RD_SUCCESS, RD_INCOMPLETE]
 
-        return self.process(
-            base_url, download, needs_retry, filters, self.extractor.title_formatter, io)
+        playlist = self.extractor.get_playlist(base_url, filters.latest_only)
+
+        if len(playlist) > 1 and io.outputfilename is not None:
+            logger.error('The source is a playlist with multiple clips, '
+                         'but only one output file specified')
+            return RD_FAILED
+        elif len(playlist) > 1 and self.extractor.title_formatter.is_constant_pattern():
+            logger.error('The source is a playlist with multiple clips, '
+                         'but --output-template is a literal: '
+                         f'{self.extractor.title_formatter.template}')
+            return RD_FAILED
+
+        return self.process(playlist, download, needs_retry, filters)
 
     def should_skip_downloading(self, outputfile, downloader, clip, io):
         limits = io.download_limits
@@ -63,6 +74,11 @@ class YleDlDownloader:
         return generator.filename(title, extension, io)
 
     def pipe(self, base_url, io, filters):
+        playlist = self.extractor.get_playlist(base_url)
+
+        # Can pipe one stream only. Drop other streams if there are more than one.
+        playlist = playlist[:1]
+
         def pipe_clip(clip, downloader):
             if not downloader:
                 logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
@@ -74,7 +90,7 @@ class YleDlDownloader:
         def needs_retry(res):
             return res == RD_SUBPROCESS_EXECUTE_FAILED
 
-        return self.process(base_url, pipe_clip, needs_retry, filters, None, io)
+        return self.process(playlist, pipe_clip, needs_retry, filters)
 
     def get_urls(self, base_url, filters):
         clips = self.extractor.extract(base_url, filters.latest_only)
@@ -92,23 +108,10 @@ class YleDlDownloader:
         clips = self.extractor.extract(base_url, latest_only)
         return list(clip.metadata(io) for clip in clips)
 
-    def process(self, base_url, streamfunc, needs_retry, filters, title_formatter, io):
-        playlist = self.extractor.get_playlist(base_url, filters.latest_only)
-
+    def process(self, playlist, streamfunc, needs_retry, filters):
         if len(playlist) == 0:
             logger.error('No streams found')
             return RD_SUCCESS
-        elif len(playlist) > 1 and io.outputfilename is not None:
-            logger.error('The source is a playlist with multiple clips, '
-                         'but only one output file specified')
-            return RD_FAILED
-        elif (len(playlist) > 1 and
-              title_formatter is not None and
-              title_formatter.is_constant_pattern()):
-            logger.error('The source is a playlist with multiple clips, '
-                         'but --output-template is a literal: {}'
-                         .format(title_formatter.template))
-            return RD_FAILED
 
         overall_status = RD_SUCCESS
         for clip_url in playlist:
@@ -124,8 +127,7 @@ class YleDlDownloader:
 
                 overall_status = RD_FAILED
             else:
-                res = self.try_all_streams(
-                    streamfunc, clip, streams, needs_retry)
+                res = self.try_all_streams(streamfunc, clip, streams, needs_retry)
                 if res != RD_SUCCESS and overall_status != RD_FAILED:
                     overall_status = res
 
@@ -140,7 +142,6 @@ class YleDlDownloader:
                 # earlier failed stream
                 if output_file:
                     self.remove_retry_file(output_file)
-                    output_file = None
 
                 logger.debug(f'Now trying downloader {stream.name}')
 
@@ -245,7 +246,7 @@ class YleDlDownloader:
                           for s in fl.streams if not s.is_valid()]
 
         if supported_backends:
-            msg = (f'Required backend not enabled. Try: --backend {",".join(supported_backends)}')
+            msg = f'Required backend not enabled. Try: --backend {",".join(supported_backends)}'
         elif error_messages:
             msg = error_messages[0]
         else:
