@@ -92,8 +92,19 @@ def test_radio_metadata_2020():
     assert len(metadata[0]['description']) > 150
 
 
-def test_radio_episodes_sort_order():
+def test_radio_episodes_sort_order_latest_last_source():
+    # This page lists episodes in the latest-last order
     metadata = fetch_metadata('https://areena.yle.fi/audio/1-50375734')
+
+    # Should be sorted from oldest to newest
+    timestamps = [x['publish_timestamp'] for x in metadata]
+    assert len(timestamps) > 1
+    assert timestamps == sorted(timestamps)
+
+
+def test_radio_episodes_sort_order_latest_first_source():
+    # This page lists episodes in the latest-first order
+    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50438875')
 
     # Should be sorted from oldest to newest
     timestamps = [x['publish_timestamp'] for x in metadata]
