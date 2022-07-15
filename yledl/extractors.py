@@ -77,7 +77,8 @@ class Clip:
     flavors: list = attr.field(factory=list)
     title: str = attr.field(default='')
     description: Optional[str] = attr.field(default=None)
-    duration_seconds: Optional[int] = attr.field(default=None, converter=attr.converters.optional(int))
+    duration_seconds: Optional[int] = attr.field(default=None,
+                                                 converter=attr.converters.optional(int))
     region: str = attr.field(default='Finland')
     publish_timestamp: Optional[datetime] = attr.field(default=None)
     expiration_timestamp: Optional[datetime] = attr.field(default=None)
@@ -382,19 +383,21 @@ class AreenaPlaylistParser:
             has_next_page = True
             while has_next_page:
                 logger.debug(
-                    f'Getting a playlist page, season = {season_num}, size = {page_size}, offset = {offset}')
+                    f'Getting a playlist page, season = {season_num}, '
+                    f'size = {page_size}, offset = {offset}')
 
                 params = {
-                   'offset': str(offset),
-                   'limit': str(page_size),
-                   'app_id': 'areena-web-items',
-                   'app_key': 'v9No1mV0omg2BppmDkmDL6tGKw1pRFZt',
+                    'offset': str(offset),
+                    'limit': str(page_size),
+                    'app_id': 'areena-web-items',
+                    'app_key': 'v9No1mV0omg2BppmDkmDL6tGKw1pRFZt',
                 }
                 playlist_page_url = update_url_query(season_url, params)
                 page = self._parse_series_episode_data(playlist_page_url, season_num)
 
                 if page is None:
-                    logger.warning(f'Playlist failed at offset {offset}. Some episodes may be missing!')
+                    logger.warning(
+                        f'Playlist failed at offset {offset}. Some episodes may be missing!')
                     break
 
                 playlist.extend(page)

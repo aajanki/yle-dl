@@ -46,7 +46,8 @@ class YleDlDownloader:
         def needs_retry(res):
             return res not in [RD_SUCCESS, RD_INCOMPLETE]
 
-        return self.process(base_url, download, needs_retry, filters, self.extractor.title_formatter, io)
+        return self.process(
+            base_url, download, needs_retry, filters, self.extractor.title_formatter, io)
 
     def should_skip_downloading(self, outputfile, downloader, clip, io):
         limits = io.download_limits
@@ -101,7 +102,9 @@ class YleDlDownloader:
             logger.error('The source is a playlist with multiple clips, '
                          'but only one output file specified')
             return RD_FAILED
-        elif len(playlist) > 1 and title_formatter is not None and title_formatter.is_constant_pattern():
+        elif (len(playlist) > 1 and
+              title_formatter is not None and
+              title_formatter.is_constant_pattern()):
             logger.error('The source is a playlist with multiple clips, '
                          'but --output-template is a literal: {}'
                          .format(title_formatter.template))

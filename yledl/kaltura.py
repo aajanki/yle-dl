@@ -70,7 +70,7 @@ class KalturaApiClient:
             'clientTag': client_tag,
             'partnerId': partner_id
         }
-        mrequest.update({str(i+1): req for i, req in enumerate(subrequests)})
+        mrequest.update({str(i + 1): req for i, req in enumerate(subrequests)})
         return mrequest
 
     def perform_request(self, request, referrer, origin):
@@ -246,7 +246,8 @@ class DeliveryProfile:
         elif self.stream_format == 'url':
             backends.append(WgetBackend(manifest_url, file_ext))
         elif self.stream_format == 'applehttp':
-            backends.append(DASHHLSBackend(manifest_url, is_live=is_live, experimental_subtitles=True))
+            backends.append(DASHHLSBackend(
+                manifest_url, is_live=is_live, experimental_subtitles=True))
         else:  # DASH
             backends.append(DASHHLSBackend(manifest_url, is_live=is_live))
 

@@ -62,7 +62,8 @@ class IOContext:
     destdir: Optional[str] = attr.field(default=None)
     resume: bool = attr.field(default=False)
     overwrite: bool = attr.field(default=True)
-    download_limits: Optional[DownloadLimits] = attr.field(default=None, converter=convert_download_limits)
+    download_limits: Optional[DownloadLimits] = attr.field(default=None,
+                                                           converter=convert_download_limits)
     excludechars: str = attr.field(default='*/|')
     proxy: Optional[str] = attr.field(default=None)
     x_forwarded_for: Optional[str] = attr.field(default=None)
