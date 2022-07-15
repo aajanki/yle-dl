@@ -229,20 +229,17 @@ class EpisodeMetadata:
 
 
 class ClipExtractor:
-    def __init__(self, httpclient, title_formatter, ffprobe):
+    def __init__(self, httpclient):
         self.httpclient = httpclient
-        self.title_formatter = title_formatter
-        self.ffprobe = ffprobe
 
     def extract(self, url, latest_only):
         playlist = self.get_playlist(url, latest_only)
-        return (self.extract_clip(clipurl, self.title_formatter, self.ffprobe)
-                for clipurl in playlist)
+        return (self.extract_clip(clipurl) for clipurl in playlist)
 
     def get_playlist(self, url, latest_only=False):
         return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
 
-    def extract_clip(self, url, title_formatter, ffprobe):
+    def extract_clip(self, url):
         raise NotImplementedError("extract_clip must be overridden")
 
 
@@ -603,13 +600,15 @@ class AreenaPreviewApiParser:
 
 class AreenaExtractor(ClipExtractor):
     def __init__(self, language_chooser, httpclient, title_formatter, ffprobe):
-        super().__init__(httpclient, title_formatter, ffprobe)
+        super().__init__(httpclient)
         self.language_chooser = language_chooser
+        self.title_formatter = title_formatter
+        self.ffprobe = ffprobe
 
-    def extract_clip(self, clip_url, title_formatter, ffprobe):
+    def extract_clip(self, clip_url):
         pid = self.program_id_from_url(clip_url)
         program_info = self.program_info_for_pid(
-            pid, clip_url, title_formatter, ffprobe)
+            pid, clip_url, self.title_formatter, self.ffprobe)
         return self.create_clip_or_failure(pid, program_info, clip_url)
 
     def program_id_from_url(self, url):

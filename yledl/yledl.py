@@ -283,15 +283,12 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
         print_lines(dl.get_titles(url, stream_filters.latest_only, io))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        print_enc(json.dumps(
-            dl.get_metadata(url, stream_filters.latest_only, io),
-            indent=2
-        ))
+        print_enc(json.dumps(dl.get_metadata(url, stream_filters.latest_only, io), indent=2))
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
-        return dl.pipe(url, title_formatter, io, stream_filters)
+        return dl.pipe(url, io, stream_filters)
     elif action == StreamAction.DOWNLOAD:
-        return dl.download_clips(url, title_formatter, io, stream_filters)
+        return dl.download_clips(url, io, stream_filters)
     else:
         logger.error('Internal error: Unknown action')
         return RD_FAILED

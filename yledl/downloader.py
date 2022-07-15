@@ -18,7 +18,7 @@ class YleDlDownloader:
         self.extractor = extractor
         self.geolocation = geolocation
 
-    def download_clips(self, base_url, title_formatter, io, filters):
+    def download_clips(self, base_url, io, filters):
         def download(clip, downloader):
             if not downloader:
                 logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
@@ -46,7 +46,7 @@ class YleDlDownloader:
         def needs_retry(res):
             return res not in [RD_SUCCESS, RD_INCOMPLETE]
 
-        return self.process(base_url, download, needs_retry, filters, title_formatter, io)
+        return self.process(base_url, download, needs_retry, filters, self.extractor.title_formatter, io)
 
     def should_skip_downloading(self, outputfile, downloader, clip, io):
         limits = io.download_limits
@@ -61,7 +61,7 @@ class YleDlDownloader:
         extension = downloader.file_extension(io.preferred_format)
         return generator.filename(title, extension, io)
 
-    def pipe(self, base_url, title_formatter, io, filters):
+    def pipe(self, base_url, io, filters):
         def pipe_clip(clip, downloader):
             if not downloader:
                 logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
@@ -73,7 +73,7 @@ class YleDlDownloader:
         def needs_retry(res):
             return res == RD_SUBPROCESS_EXECUTE_FAILED
 
-        return self.process(base_url, pipe_clip, needs_retry, filters, title_formatter, io)
+        return self.process(base_url, pipe_clip, needs_retry, filters, None, io)
 
     def get_urls(self, base_url, filters):
         clips = self.extractor.extract(base_url, filters.latest_only)
@@ -101,7 +101,7 @@ class YleDlDownloader:
             logger.error('The source is a playlist with multiple clips, '
                          'but only one output file specified')
             return RD_FAILED
-        elif len(playlist) > 1 and title_formatter.is_constant_pattern():
+        elif len(playlist) > 1 and title_formatter is not None and title_formatter.is_constant_pattern():
             logger.error('The source is a playlist with multiple clips, '
                          'but --output-template is a literal: {}'
                          .format(title_formatter.template))
@@ -109,7 +109,7 @@ class YleDlDownloader:
 
         overall_status = RD_SUCCESS
         for clip_url in playlist:
-            clip = self.extractor.extract_clip(clip_url, title_formatter, io.ffprobe())
+            clip = self.extractor.extract_clip(clip_url)
             streams = self.select_streams(clip.flavors, filters)
 
             if not streams:

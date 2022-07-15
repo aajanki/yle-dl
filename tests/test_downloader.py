@@ -64,6 +64,7 @@ class MockGeoLocation:
 class MockExtractor:
     def __init__(self, clips_by_url):
         self.clips_by_url = clips_by_url
+        self.title_formatter = TitleFormatter()
 
     def extract(self, url, latest_only):
         return self.clips_by_url.values()
@@ -71,7 +72,7 @@ class MockExtractor:
     def get_playlist(self, url, latest_only=False):
         return self.clips_by_url.keys()
 
-    def extract_clip(self, url, title_formatter, ffprobe):
+    def extract_clip(self, url):
         return self.clips_by_url[url]
 
 
@@ -228,7 +229,7 @@ def downloader(clips_by_url):
 def test_download_success(simple):
     state = {}
     dl = downloader({'a': successful_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, simple.filters)
+    res = dl.download_clips('', simple.io, simple.filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -238,7 +239,7 @@ def test_download_success(simple):
 def test_download_incomplete_metadata(simple):
     state = {}
     dl = downloader({'a': incomplete_flavors_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, simple.filters)
+    res = dl.download_clips('', simple.io, simple.filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -249,7 +250,7 @@ def test_download_filter_resolution(simple):
     state = {}
     filters = StreamFilters(maxheight=400)
     dl = downloader({'a': successful_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, filters)
+    res = dl.download_clips('', simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -260,7 +261,7 @@ def test_download_filter_exact_resolution(simple):
     state = {}
     filters = StreamFilters(maxheight=720)
     dl = downloader({'a': successful_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, filters)
+    res = dl.download_clips('', simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -271,7 +272,7 @@ def test_download_filter_bitrate1(simple):
     state = {}
     filters = StreamFilters(maxbitrate=1500)
     dl = downloader({'a': successful_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, filters)
+    res = dl.download_clips('', simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -282,7 +283,7 @@ def test_download_filter_bitrate2(simple):
     state = {}
     filters = StreamFilters(maxbitrate=2000)
     dl = downloader({'a': successful_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, filters)
+    res = dl.download_clips('', simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -293,7 +294,7 @@ def test_download_multiple_filters(simple):
     state = {}
     filters = StreamFilters(maxheight=700, maxbitrate=900)
     dl = downloader({'a': successful_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, filters)
+    res = dl.download_clips('', simple.io, filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -303,7 +304,7 @@ def test_download_multiple_filters(simple):
 def test_pipe_success(simple):
     state = {}
     dl = downloader({'a': successful_clip(state)})
-    res = dl.pipe('', TitleFormatter(), simple.io, simple.filters)
+    res = dl.pipe('', simple.io, simple.filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'pipe'
@@ -453,14 +454,14 @@ def test_print_metadata_incomplete(simple):
 
 def test_download_failed_clip(simple):
     dl = downloader({'a': failed_clip()})
-    res = dl.download_clips('', TitleFormatter(), simple.io, simple.filters)
+    res = dl.download_clips('', simple.io, simple.filters)
 
     assert res == RD_FAILED
 
 
 def test_download_failed_stream(simple):
     dl = downloader({'a': failed_stream_clip({})})
-    res = dl.download_clips('', TitleFormatter(), simple.io, simple.filters)
+    res = dl.download_clips('', simple.io, simple.filters)
 
     assert res == RD_FAILED
 
@@ -486,7 +487,7 @@ def test_print_metadata_failed_clip(simple):
 def test_download_fallback(simple):
     state = {}
     dl = downloader({'a': multistream_clip(state)})
-    res = dl.download_clips('', TitleFormatter(), simple.io, simple.filters)
+    res = dl.download_clips('', simple.io, simple.filters)
 
     assert res == RD_SUCCESS
     assert state['command'] == 'download'
@@ -500,7 +501,7 @@ def test_postprocessing_no_log_errors(simple):
     io_postprocess.postprocess_command = 'echo'
     logger = logging.getLogger('yledl')
     with unittest.mock.patch.object(logger, 'error') as mock_log_error:
-        res = dl.download_clips('', TitleFormatter(), io_postprocess, simple.filters)
+        res = dl.download_clips('', io_postprocess, simple.filters)
 
         mock_log_error.assert_not_called()
 
