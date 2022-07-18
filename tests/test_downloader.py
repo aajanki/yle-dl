@@ -5,6 +5,7 @@ import unittest.mock
 import pytest
 from collections import OrderedDict
 from datetime import datetime
+from unittest.mock import Mock
 from utils import FixedOffset
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader
@@ -16,7 +17,7 @@ from yledl.titleformatter import TitleFormatter
 
 class StateCollectingBackend(BaseDownloader):
     def __init__(self, state_dict, id, name='ffmpeg'):
-        BaseDownloader.__init__(self)
+        super().__init__()
         self.id = id
         self.state_dict = state_dict
         self.name = name
@@ -76,57 +77,62 @@ class MockExtractor:
         return self.clips_by_url[url]
 
 
+def backend_that_fails_n_times(n):
+    """Return a BaseDownloader instance that first fails and then succeeds.
+
+    The first n calls to save_stream() and pipe() return RD_FAILED and the next
+     call after that return RD_SUCCESS.
+
+    save_stream() and pipe() are Mock instances.
+    """
+    backend = BaseDownloader()
+    backend.name = 'ffmpeg'
+    return_values = [RD_FAILED]*n + [RD_SUCCESS]
+    backend.save_stream = Mock(side_effect=return_values)
+    backend.pipe = Mock(side_effect=return_values)
+    return backend
+
+
 def successful_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
-    return Clip(
-        webpage='https://areena.yle.fi/1-1234567',
-        flavors=[
-            # The flavors are intentionally unsorted
-            StreamFlavor(
-                media_type='video',
-                height=1080,
-                width=1920,
-                bitrate=2808,
-                streams=[StateCollectingBackend(state_dict, 'high_quality')]
-            ),
-            StreamFlavor(
-                media_type='video',
-                height=360,
-                width=640,
-                bitrate=880,
-                streams=[StateCollectingBackend(state_dict, 'low_quality')]
-            ),
-            StreamFlavor(
-                media_type='video',
-                height=480,
-                width=640,
-                bitrate=964,
-                streams=[StateCollectingBackend(state_dict, 'low_quality_2')],
-            ),
-            StreamFlavor(
-                media_type='video',
-                height=720,
-                width=1280,
-                bitrate=1412,
-                streams=[StateCollectingBackend(state_dict, 'medium_quality')]
-            ),
-            StreamFlavor(
-                media_type='video',
-                height=720,
-                width=1280,
-                bitrate=1872,
-                streams=[StateCollectingBackend(state_dict, 'medium_quality_high_bitrate')]
-            )
-        ],
-        title=title,
-        duration_seconds=950,
-        region='Finland',
-        publish_timestamp=datetime(2018, 7, 1, tzinfo=FixedOffset(3)),
-        expiration_timestamp=datetime(2019, 1, 1, tzinfo=FixedOffset(3)),
-        embedded_subtitles=[
-            EmbeddedSubtitle('fin', 'käännöstekstitys'),
-            EmbeddedSubtitle('swe', 'käännöstekstitys')
-        ]
-    )
+    flavors = [
+        # The flavors are intentionally unsorted
+        StreamFlavor(
+            media_type='video',
+            height=1080,
+            width=1920,
+            bitrate=2808,
+            streams=[StateCollectingBackend(state_dict, 'high_quality')]
+        ),
+        StreamFlavor(
+            media_type='video',
+            height=360,
+            width=640,
+            bitrate=880,
+            streams=[StateCollectingBackend(state_dict, 'low_quality')]
+        ),
+        StreamFlavor(
+            media_type='video',
+            height=480,
+            width=640,
+            bitrate=964,
+            streams=[StateCollectingBackend(state_dict, 'low_quality_2')],
+        ),
+        StreamFlavor(
+            media_type='video',
+            height=720,
+            width=1280,
+            bitrate=1412,
+            streams=[StateCollectingBackend(state_dict, 'medium_quality')]
+        ),
+        StreamFlavor(
+            media_type='video',
+            height=720,
+            width=1280,
+            bitrate=1872,
+            streams=[StateCollectingBackend(state_dict, 'medium_quality_high_bitrate')]
+        )
+    ]
+    return create_clip(flavors, title)
 
 
 def incomplete_flavors_clip(state_dict):
@@ -156,29 +162,21 @@ def incomplete_flavors_clip(state_dict):
     )
 
 
-def multistream_clip(state_dict, title='Test clip: S01E01-2018-07-01T00:00'):
-    return Clip(
-        webpage='https://areena.yle.fi/1-1234567',
-        flavors=[
-            StreamFlavor(
-                media_type='video',
-                height=360,
-                width=640,
-                bitrate=964,
-                streams=[
-                    FailingBackend(state_dict, '1', 'wget'),
-                    FailingBackend(state_dict, '2', 'Invalid stream'),
-                    StateCollectingBackend(state_dict, '3', 'wget'),
-                    StateCollectingBackend(state_dict, '4', 'ffmpeg')
-                ]
-            )
-        ],
-        title='Test clip: S01E01-2018-07-01T00:00',
-        duration_seconds=950,
-        region='Finland',
-        publish_timestamp=None,
-        expiration_timestamp=None
-    )
+def multistream_clip(state_dict):
+    return create_clip([
+        StreamFlavor(
+            media_type='video',
+            height=360,
+            width=640,
+            bitrate=964,
+            streams=[
+                FailingBackend(state_dict, '1', 'wget'),
+                FailingBackend(state_dict, '2', 'Invalid stream'),
+                StateCollectingBackend(state_dict, '3', 'wget'),
+                StateCollectingBackend(state_dict, '4', 'ffmpeg')
+            ]
+        )
+    ])
 
 
 def failed_clip():
@@ -186,25 +184,33 @@ def failed_clip():
 
 
 def failed_stream_clip(state_dict):
+    return create_clip([
+        StreamFlavor(
+            media_type='video',
+            height=360,
+            width=640,
+            bitrate=964,
+            streams=[
+                FailingBackend(state_dict, '1', 'wget'),
+                FailingBackend(state_dict, '2', 'ffmpeg')
+            ]
+        )
+    ])
+
+
+def create_clip(flavors, title='Test clip: S01E01-2018-07-01T00:00'):
     return Clip(
         webpage='https://areena.yle.fi/1-1234567',
-        flavors=[
-            StreamFlavor(
-                media_type='video',
-                height=360,
-                width=640,
-                bitrate=964,
-                streams=[
-                    FailingBackend(state_dict, '1', 'wget'),
-                    FailingBackend(state_dict, '2', 'ffmpeg')
-                ]
-            )
-        ],
-        title='Test clip: S01E01-2018-07-01T00:00',
+        flavors=flavors,
+        title=title,
         duration_seconds=950,
         region='Finland',
-        publish_timestamp=None,
-        expiration_timestamp=None
+        publish_timestamp=datetime(2018, 7, 1, tzinfo=FixedOffset(3)),
+        expiration_timestamp=datetime(2019, 1, 1, tzinfo=FixedOffset(3)),
+        embedded_subtitles=[
+            EmbeddedSubtitle('fin', 'käännöstekstitys'),
+            EmbeddedSubtitle('swe', 'käännöstekstitys')
+        ]
     )
 
 
@@ -506,3 +512,62 @@ def test_postprocessing_no_log_errors(simple):
         mock_log_error.assert_not_called()
 
     assert res == RD_SUCCESS
+
+
+def test_download_successful_after_retry(simple):
+    backend = backend_that_fails_n_times(2)
+    flavors = [
+        StreamFlavor(
+            media_type='video',
+            height=1080,
+            width=1920,
+            bitrate=2808,
+            streams=[backend]
+        )
+    ]
+    extractor = MockExtractor({'a': create_clip(flavors)})
+    dl = YleDlDownloader(extractor, MockGeoLocation())
+
+    res = dl.download_clips('', simple.io, simple.filters)
+
+    assert res == RD_SUCCESS
+    assert backend.save_stream.call_count == 3
+
+
+def test_download_fails_if_too_many_failures(simple):
+    backend = backend_that_fails_n_times(10)
+    flavors = [
+        StreamFlavor(
+            media_type='video',
+            height=1080,
+            width=1920,
+            bitrate=2808,
+            streams=[backend]
+        )
+    ]
+    extractor = MockExtractor({'a': create_clip(flavors)})
+    dl = YleDlDownloader(extractor, MockGeoLocation())
+
+    res = dl.download_clips('', simple.io, simple.filters)
+
+    assert res == RD_FAILED
+    assert backend.save_stream.call_count >= 4
+
+
+def test_pipe_does_not_retry(simple):
+    backend = backend_that_fails_n_times(1)
+    flavors = [
+        StreamFlavor(
+            media_type='video',
+            height=1080,
+            width=1920,
+            bitrate=2808,
+            streams=[backend]
+        )
+    ]
+    extractor = MockExtractor({'a': create_clip(flavors)})
+    dl = YleDlDownloader(extractor, MockGeoLocation())
+
+    res = dl.pipe('', simple.io, simple.filters)
+
+    assert res == RD_FAILED

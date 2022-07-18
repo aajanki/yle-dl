@@ -2,10 +2,10 @@ import copy
 import logging
 import os
 from attr import asdict
+from .errors import TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
-from .exitcodes import to_external_rd_code, RD_SUCCESS, RD_INCOMPLETE, \
-    RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
+from .exitcodes import RD_SUCCESS, RD_INCOMPLETE, RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .io import OutputFileNameGenerator
 from .streamflavor import FailedFlavor
 
@@ -19,33 +19,6 @@ class YleDlDownloader:
         self.geolocation = geolocation
 
     def download_clips(self, base_url, io, filters):
-        def download(clip, downloader):
-            if not downloader:
-                logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
-                logger.error('Try --showurl')
-                return RD_FAILED
-
-            downloader.warn_on_unsupported_feature(io)
-
-            outputfile = self.generate_output_name(clip.title, downloader, io)
-            if not outputfile:
-                return (RD_FAILED, None)
-            if self.should_skip_downloading(outputfile, downloader, clip, io):
-                logger.info(f'{outputfile} has already been downloaded.')
-                return (RD_SUCCESS, outputfile)
-
-            self.log_output_file(outputfile)
-            dl_result = downloader.save_stream(outputfile, clip, io)
-
-            if dl_result == RD_SUCCESS:
-                self.log_output_file(outputfile, True)
-                self.postprocess(io.postprocess_command, outputfile, [])
-
-            return (dl_result, outputfile)
-
-        def needs_retry(res):
-            return res not in [RD_SUCCESS, RD_INCOMPLETE]
-
         playlist = self.extractor.get_playlist(base_url, filters.latest_only)
 
         if len(playlist) > 1 and io.outputfilename is not None:
@@ -58,39 +31,28 @@ class YleDlDownloader:
                          f'{self.extractor.title_formatter.template}')
             return RD_FAILED
 
-        return self.process(playlist, download, needs_retry, filters)
+        if len(playlist) == 0:
+            logger.info('No streams found')
 
-    def should_skip_downloading(self, outputfile, downloader, clip, io):
-        limits = io.download_limits
-        slicing_active = limits.start_position or 0 > 0 or limits.duration
+        overall_status = RD_SUCCESS
+        for clip_url in playlist:
+            res = self.download_with_retry(clip_url, filters, io, max_retry_count=3)
+            if res != RD_SUCCESS and overall_status != RD_FAILED:
+                overall_status = res
 
-        return ((not io.overwrite and os.path.exists(outputfile)) or
-                (not slicing_active and
-                 downloader.full_stream_already_downloaded(outputfile, clip, io)))
-
-    def generate_output_name(self, title, downloader, io):
-        generator = OutputFileNameGenerator()
-        extension = downloader.file_extension(io.preferred_format)
-        return generator.filename(title, extension, io)
+        return overall_status
 
     def pipe(self, base_url, io, filters):
         playlist = self.extractor.get_playlist(base_url)
 
+        if len(playlist) == 0:
+            logger.error('No streams found')
+            return RD_SUCCESS
+
         # Can pipe one stream only. Drop other streams if there are more than one.
-        playlist = playlist[:1]
-
-        def pipe_clip(clip, downloader):
-            if not downloader:
-                logger.error(f'Downloading the stream at {clip.webpage} is not yet supported.')
-                return RD_FAILED
-            downloader.warn_on_unsupported_feature(io)
-            res = downloader.pipe(io)
-            return (res, None)
-
-        def needs_retry(res):
-            return res == RD_SUBPROCESS_EXECUTE_FAILED
-
-        return self.process(playlist, pipe_clip, needs_retry, filters)
+        clip_url = playlist[0]
+        clip = self.extractor.extract_clip(clip_url)
+        return self.pipe_first_available_stream(clip, filters, io)
 
     def get_urls(self, base_url, filters):
         clips = self.extractor.extract(base_url, filters.latest_only)
@@ -108,50 +70,132 @@ class YleDlDownloader:
         clips = self.extractor.extract(base_url, latest_only)
         return list(clip.metadata(io) for clip in clips)
 
-    def process(self, playlist, streamfunc, needs_retry, filters):
-        if len(playlist) == 0:
-            logger.error('No streams found')
+    def download_with_retry(self, clip_url, filters, io, max_retry_count):
+        attempt = 0
+        if max_retry_count < 0:
+            max_retry_count = 0
+
+        latest_result = RD_FAILED
+        while attempt <= max_retry_count:
+            if attempt > 0:
+                logger.info(f'Retry attempt {attempt} of {max_retry_count}')
+
+            clip = self.extractor.extract_clip(clip_url)
+            try:
+                latest_result = self.download_first_available_stream(clip, filters, io)
+            except TransientDownloadError as ex:
+                attempt += 1
+                if attempt <= max_retry_count:
+                    self.remove_retry_file(ex.filename)
+                continue
+
+            # Download completed
+            return latest_result
+
+        # Failed and run out of retry attempts
+        return latest_result
+
+    def download_first_available_stream(self, clip, filters, io):
+        streams = self.select_streams(clip.flavors, filters) or []
+        valid_streams = [s for s in streams if s.is_valid()]
+
+        if not streams:
+            logger.error('No stream found')
+            return RD_FAILED
+        elif not valid_streams:
+            logger.error(f'Unsupported stream: {streams[0].error_message}')
+            self.print_geo_warning(clip)
+            return RD_FAILED
+
+        return self.download_stream(valid_streams, clip, io)
+
+    def download_stream(self, valid_streams, clip, io):
+        if not valid_streams:
+            return RD_FAILED
+
+        stream = valid_streams[0]
+
+        logger.debug(f'Now trying downloader {stream.name}')
+
+        output_file = self.generate_output_name(clip.title, stream, io)
+        latest_result = self.save_to_file(clip, stream, io, output_file)
+
+        if latest_result == RD_SUBPROCESS_EXECUTE_FAILED:
+            # The downloader subprocess failed to start (a missing application?).
+            # Try the next backend.
+            self.remove_retry_file(output_file)
+            return self.download_stream(valid_streams[1:], clip, io)
+        elif latest_result in [RD_FAILED, RD_INCOMPLETE]:
+            # The stream started to download but there was an error.
+            # Retrying might help.
+            # TODO: sort out transient (retryable) and non-transient errors
+            raise TransientDownloadError(output_file)
+        else:
+            return latest_result
+
+    def save_to_file(self, clip, downloader, io, outputfile):
+        downloader.warn_on_unsupported_feature(io)
+
+        if not outputfile:
+            return RD_FAILED
+
+        if self.should_skip_downloading(outputfile, downloader, clip, io):
+            logger.info(f'{outputfile} has already been downloaded.')
             return RD_SUCCESS
 
-        overall_status = RD_SUCCESS
-        for clip_url in playlist:
-            clip = self.extractor.extract_clip(clip_url)
-            streams = self.select_streams(clip.flavors, filters)
+        self.log_output_file(outputfile)
+        dl_result = downloader.save_stream(outputfile, clip, io)
 
-            if not streams:
-                logger.error('No stream found')
-                overall_status = RD_FAILED
-            elif all(not stream.is_valid() for stream in streams):
-                logger.error(f'Unsupported stream: {streams[0].error_message}')
-                self.print_geo_warning(clip)
+        if dl_result == RD_SUCCESS:
+            self.log_output_file(outputfile, True)
+            self.postprocess(io.postprocess_command, outputfile, [])
 
-                overall_status = RD_FAILED
-            else:
-                res = self.try_all_streams(streamfunc, clip, streams, needs_retry)
-                if res != RD_SUCCESS and overall_status != RD_FAILED:
-                    overall_status = res
+        return dl_result
 
-        return to_external_rd_code(overall_status)
+    def pipe_first_available_stream(self, clip, filters, io):
+        streams = self.select_streams(clip.flavors, filters) or []
+        valid_streams = [s for s in streams if s.is_valid()]
 
-    def try_all_streams(self, streamfunc, clip, streams, needs_retry):
-        latest_result = RD_FAILED
-        output_file = None
-        for stream in streams:
-            if stream.is_valid():
-                # Remove if there is a partially downloaded file from the
-                # earlier failed stream
-                if output_file:
-                    self.remove_retry_file(output_file)
+        if not streams:
+            logger.error('No stream found')
+            return RD_FAILED
+        elif not valid_streams:
+            logger.error(f'Unsupported stream: {streams[0].error_message}')
+            self.print_geo_warning(clip)
+            return RD_FAILED
 
-                logger.debug(f'Now trying downloader {stream.name}')
+        return self.pipe_stream(valid_streams, clip, io)
 
-                (latest_result, output_file) = streamfunc(clip, stream)
-                if needs_retry(latest_result):
-                    continue
+    def pipe_stream(self, valid_streams, clip, io):
+        if not valid_streams:
+            return RD_FAILED
 
-                return latest_result
+        stream = valid_streams[0]
 
-        return latest_result
+        logger.debug(f'Now trying downloader {stream.name}')
+
+        stream.warn_on_unsupported_feature(io)
+        res = stream.pipe(io)
+
+        if res == RD_SUBPROCESS_EXECUTE_FAILED:
+            # The downloader subprocess failed to start (a missing application?).
+            # Try the next backend.
+            return self.pipe_stream(valid_streams[1:], clip, io)
+        else:
+            return res
+
+    def should_skip_downloading(self, outputfile, downloader, clip, io):
+        limits = io.download_limits
+        slicing_active = limits.start_position or 0 > 0 or limits.duration
+
+        return ((not io.overwrite and os.path.exists(outputfile)) or
+                (not slicing_active and
+                 downloader.full_stream_already_downloaded(outputfile, clip, io)))
+
+    def generate_output_name(self, title, downloader, io):
+        generator = OutputFileNameGenerator()
+        extension = downloader.file_extension(io.preferred_format)
+        return generator.filename(title, extension, io)
 
     def select_flavor(self, flavors, filters):
         if not flavors:
@@ -290,7 +334,7 @@ class YleDlDownloader:
             try:
                 os.remove(filename)
             except OSError:
-                logger.warn('Failed to remove a partial output file')
+                logger.warning('Failed to remove a partial output file')
 
     def postprocess(self, postprocess_command, videofile, subtitlefiles):
         if postprocess_command:

@@ -504,7 +504,7 @@ class WgetBackend(ExternalDownloader):
         args = self.shared_wget_args(io, output_name)
         args.extend([
             '--progress=bar',
-            '--tries=5',
+            '--tries=3',
             '--random-wait'
         ])
         if logger.getEffectiveLevel() >= logging.ERROR:

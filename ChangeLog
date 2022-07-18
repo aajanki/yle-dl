@@ -6,6 +6,7 @@ Distributed under the GPL v3
 
 - Fixed a crash if a title is missing
 - "--latestepisode" was sometimes selecting a wrong episode
+- Improved retry on very long and slow downloads
 
 Version 20220704
 
