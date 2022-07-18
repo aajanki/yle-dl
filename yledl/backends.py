@@ -7,7 +7,7 @@ import platform
 import signal
 import shlex
 import subprocess
-from .errors import ExternalApplicationNotFoundError
+from .errors import ExternalApplicationNotFoundError, TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .http import HttpClient
 from .localization import two_letter_language_code
@@ -44,6 +44,10 @@ def shlex_join(elements):
     except AttributeError:
         # Python older than 3.8 does not have shlex.join
         return ' '.join(elements)
+
+
+def exit_code_to_rd(exit_code):
+    return RD_SUCCESS if exit_code == 0 else RD_FAILED
 
 
 ### Base class for downloading a stream to a local file ###
@@ -149,7 +153,7 @@ class ExternalDownloader(BaseDownloader):
         return None
 
     def external_downloader(self, commands, env=None):
-        return Subprocess().execute(commands, env)
+        return exit_code_to_rd(Subprocess().execute(commands, env))
 
 
 class Subprocess:
@@ -172,7 +176,7 @@ class Subprocess:
         env = self.combine_envs(extra_environment)
         process = self.start_process(commands, env)
         try:
-            return self.exit_code_to_rd(process.wait())
+            return process.wait()
         except KeyboardInterrupt:
             try:
                 os.kill(process.pid, signal.SIGINT)
@@ -216,9 +220,6 @@ class Subprocess:
             p.stdout.close()
 
         return processes[0]
-
-    def exit_code_to_rd(self, exit_code):
-        return RD_SUCCESS if exit_code == 0 else RD_FAILED
 
     def _sigterm_when_parent_dies(self):
         PR_SET_PDEATHSIG = 1
@@ -504,7 +505,7 @@ class WgetBackend(ExternalDownloader):
         args = self.shared_wget_args(io, output_name)
         args.extend([
             '--progress=bar',
-            '--tries=3',
+            '--tries=1',
             '--random-wait'
         ])
         if logger.getEffectiveLevel() >= logging.ERROR:
@@ -555,6 +556,18 @@ class WgetBackend(ExternalDownloader):
             else:
                 env = {'https_proxy': io.proxy}
         return env
+
+    def external_downloader(self, commands, env=None):
+        res = Subprocess().execute(commands, env)
+
+        # These exit status codes indicate errors where retrying might help
+        # (from the wget man page).
+        if res == 3:  # File I/O error
+            raise TransientDownloadError('wget: File I/O error')
+        elif res == 4:  # Network failure
+            raise TransientDownloadError('wget: Network failure')
+
+        return exit_code_to_rd(res)
 
     def stream_url(self):
         return self.url

@@ -6,7 +6,7 @@ from .errors import TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
 from .errors import ExternalApplicationNotFoundError
-from .exitcodes import RD_SUCCESS, RD_FAILED
+from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .io import OutputFileNameGenerator
 from .streamflavor import FailedFlavor
 
@@ -85,9 +85,10 @@ class YleDlDownloader:
             try:
                 latest_result = self.download_first_available_stream(clip, filters, io)
             except TransientDownloadError as ex:
+                logger.warning(ex.message)
+
+                latest_result = RD_FAILED
                 attempt += 1
-                if attempt <= max_retry_count:
-                    self.remove_retry_file(ex.filename)
                 continue
 
             # Download completed
@@ -120,14 +121,7 @@ class YleDlDownloader:
             except ExternalApplicationNotFoundError:
                 # The downloader subprocess failed to start (a missing application?).
                 # Try the next backend.
-                self.remove_retry_file(output_file)
                 continue
-
-            if latest_result == RD_FAILED:
-                # The stream started to download but there was an error.
-                # Retrying might help.
-                # TODO: sort out transient (retryable) and non-transient errors
-                raise TransientDownloadError(output_file)
 
             # The backend finished successfully or failed
             return latest_result
@@ -180,6 +174,11 @@ class YleDlDownloader:
                 # The downloader subprocess failed to start (a missing application?).
                 # Try the next backend.
                 continue
+            except TransientDownloadError:
+                # The downloader got started but failed a some point. We have
+                # already output something, so we can't switch streams anymore.
+                # Just report the error status.
+                return RD_FAILED
 
         # All backends failed
         return RD_FAILED
@@ -327,14 +326,6 @@ class YleDlDownloader:
                 logger.info(f'Stream saved to {outputfile}')
             else:
                 logger.info(f'Output file: {outputfile}')
-
-    def remove_retry_file(self, filename):
-        if filename and os.path.isfile(filename):
-            logger.debug('Removing the partially downloaded file')
-            try:
-                os.remove(filename)
-            except OSError:
-                logger.warning('Failed to remove a partial output file')
 
     def postprocess(self, postprocess_command, videofile, subtitlefiles):
         if postprocess_command:

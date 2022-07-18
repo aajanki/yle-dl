@@ -10,6 +10,7 @@ from utils import FixedOffset
 from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader, FailingBackend
 from yledl.downloader import YleDlDownloader
+from yledl.errors import TransientDownloadError
 from yledl.extractors import Clip, FailedClip, StreamFlavor
 from yledl.subtitles import EmbeddedSubtitle
 from yledl.titleformatter import TitleFormatter
@@ -58,7 +59,7 @@ def backend_that_fails_n_times(n):
     """
     backend = BaseDownloader()
     backend.name = 'ffmpeg'
-    return_values = [RD_FAILED]*n + [RD_SUCCESS]
+    return_values = [TransientDownloadError('Failed!')]*n + [RD_SUCCESS]
     backend.save_stream = Mock(side_effect=return_values)
     backend.pipe = Mock(side_effect=return_values)
     return backend
