@@ -5,7 +5,7 @@ from attr import asdict
 from .errors import TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
-from .exitcodes import RD_SUCCESS, RD_INCOMPLETE, RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
+from .exitcodes import RD_SUCCESS, RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
 from .io import OutputFileNameGenerator
 from .streamflavor import FailedFlavor
 
@@ -125,7 +125,7 @@ class YleDlDownloader:
             # Try the next backend.
             self.remove_retry_file(output_file)
             return self.download_stream(valid_streams[1:], clip, io)
-        elif latest_result in [RD_FAILED, RD_INCOMPLETE]:
+        elif latest_result == RD_FAILED:
             # The stream started to download but there was an error.
             # Retrying might help.
             # TODO: sort out transient (retryable) and non-transient errors
