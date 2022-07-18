@@ -7,8 +7,8 @@ import platform
 import signal
 import shlex
 import subprocess
-from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE, \
-    RD_SUBPROCESS_EXECUTE_FAILED
+from .errors import ExternalApplicationNotFoundError
+from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
@@ -184,7 +184,7 @@ class Subprocess:
         except OSError as exc:
             logger.error(f'Failed to execute {shell_command_string}')
             logger.error(exc.strerror)
-            return RD_SUBPROCESS_EXECUTE_FAILED
+            raise ExternalApplicationNotFoundError(f'Failed to execute {shell_command_string}')
 
     def combine_envs(self, extra_environment):
         env = None

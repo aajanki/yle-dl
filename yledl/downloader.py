@@ -5,7 +5,8 @@ from attr import asdict
 from .errors import TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
-from .exitcodes import RD_SUCCESS, RD_FAILED, RD_SUBPROCESS_EXECUTE_FAILED
+from .errors import ExternalApplicationNotFoundError
+from .exitcodes import RD_SUCCESS, RD_FAILED
 from .io import OutputFileNameGenerator
 from .streamflavor import FailedFlavor
 
@@ -110,28 +111,29 @@ class YleDlDownloader:
         return self.download_stream(valid_streams, clip, io)
 
     def download_stream(self, valid_streams, clip, io):
-        if not valid_streams:
-            return RD_FAILED
+        for stream in valid_streams:
+            logger.debug(f'Now trying downloader {stream.name}')
 
-        stream = valid_streams[0]
+            output_file = self.generate_output_name(clip.title, stream, io)
+            try:
+                latest_result = self.save_to_file(clip, stream, io, output_file)
+            except ExternalApplicationNotFoundError:
+                # The downloader subprocess failed to start (a missing application?).
+                # Try the next backend.
+                self.remove_retry_file(output_file)
+                continue
 
-        logger.debug(f'Now trying downloader {stream.name}')
+            if latest_result == RD_FAILED:
+                # The stream started to download but there was an error.
+                # Retrying might help.
+                # TODO: sort out transient (retryable) and non-transient errors
+                raise TransientDownloadError(output_file)
 
-        output_file = self.generate_output_name(clip.title, stream, io)
-        latest_result = self.save_to_file(clip, stream, io, output_file)
-
-        if latest_result == RD_SUBPROCESS_EXECUTE_FAILED:
-            # The downloader subprocess failed to start (a missing application?).
-            # Try the next backend.
-            self.remove_retry_file(output_file)
-            return self.download_stream(valid_streams[1:], clip, io)
-        elif latest_result == RD_FAILED:
-            # The stream started to download but there was an error.
-            # Retrying might help.
-            # TODO: sort out transient (retryable) and non-transient errors
-            raise TransientDownloadError(output_file)
-        else:
+            # The backend finished successfully or failed
             return latest_result
+
+        # All backends failed
+        return RD_FAILED
 
     def save_to_file(self, clip, downloader, io, outputfile):
         downloader.warn_on_unsupported_feature(io)
@@ -167,22 +169,20 @@ class YleDlDownloader:
         return self.pipe_stream(valid_streams, clip, io)
 
     def pipe_stream(self, valid_streams, clip, io):
-        if not valid_streams:
-            return RD_FAILED
+        for stream in valid_streams:
+            logger.debug(f'Now trying downloader {stream.name}')
 
-        stream = valid_streams[0]
+            stream.warn_on_unsupported_feature(io)
 
-        logger.debug(f'Now trying downloader {stream.name}')
+            try:
+                return stream.pipe(io)
+            except ExternalApplicationNotFoundError:
+                # The downloader subprocess failed to start (a missing application?).
+                # Try the next backend.
+                continue
 
-        stream.warn_on_unsupported_feature(io)
-        res = stream.pipe(io)
-
-        if res == RD_SUBPROCESS_EXECUTE_FAILED:
-            # The downloader subprocess failed to start (a missing application?).
-            # Try the next backend.
-            return self.pipe_stream(valid_streams[1:], clip, io)
-        else:
-            return res
+        # All backends failed
+        return RD_FAILED
 
     def should_skip_downloading(self, outputfile, downloader, clip, io):
         limits = io.download_limits
