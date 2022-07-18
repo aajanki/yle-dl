@@ -170,8 +170,8 @@ class Subprocess:
         logger.debug(shell_command_string)
 
         env = self.combine_envs(extra_environment)
+        process = self.start_process(commands, env)
         try:
-            process = self.start_process(commands, env)
             return self.exit_code_to_rd(process.wait())
         except KeyboardInterrupt:
             try:
