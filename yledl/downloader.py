@@ -6,7 +6,7 @@ from .errors import TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
 from .errors import ExternalApplicationNotFoundError
-from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
+from .exitcodes import RD_SUCCESS, RD_FAILED
 from .io import OutputFileNameGenerator
 from .streamflavor import FailedFlavor
 
