@@ -85,7 +85,7 @@ class YleDlDownloader:
                 valid_stream = next(s for s in streams if s.is_valid())
                 yield valid_stream.stream_url()
 
-    def get_titles(self, base_url, latest_only, io):
+    def get_titles(self, base_url, io, latest_only):
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
                                            self.httpclient, self.title_formatter, io.ffprobe())
         if not extractor:
@@ -95,7 +95,7 @@ class YleDlDownloader:
         clips = extractor.extract(base_url, latest_only)
         return (sane_filename(clip.title or '', io.excludechars) for clip in clips)
 
-    def get_metadata(self, base_url, latest_only, io):
+    def get_metadata(self, base_url, io, latest_only):
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
                                            self.httpclient, self.title_formatter, io.ffprobe())
         if not extractor:

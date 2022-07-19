@@ -313,7 +313,7 @@ def test_print_titles(simple):
         ('b', successful_clip(titles[1])),
     ]))
 
-    assert list(dl.get_titles('', False, simple.io)) == titles
+    assert list(dl.get_titles('', simple.io, False)) == titles
 
 
 def test_print_titles_replaces_whitespace(simple):
@@ -321,12 +321,12 @@ def test_print_titles_replaces_whitespace(simple):
     expected_titles = ['Title with all kinds of whitespace characters']
     dl = downloader({'a': successful_clip(titles[0])})
 
-    assert list(dl.get_titles('', False, simple.io)) == expected_titles
+    assert list(dl.get_titles('', simple.io, False)) == expected_titles
 
 
 def test_print_metadata(simple):
     dl = downloader({'a': successful_clip()})
-    metadata = dl.get_metadata('', False, simple.io)
+    metadata = dl.get_metadata('', simple.io, False)
 
     assert len(metadata) == 1
 
@@ -395,7 +395,7 @@ def test_print_metadata(simple):
 
 def test_print_metadata_incomplete(simple):
     dl = downloader({'a': incomplete_flavors_clip()})
-    metadata = dl.get_metadata('', False, simple.io)
+    metadata = dl.get_metadata('', simple.io, False)
 
     assert len(metadata) == 1
 
@@ -450,7 +450,7 @@ def test_download_failed_stream(simple):
 
 def test_print_metadata_failed_clip(simple):
     dl = downloader({'a': failed_clip()})
-    metadata = dl.get_metadata('', False, simple.io)
+    metadata = dl.get_metadata('', simple.io, False)
 
     assert metadata == [
         {

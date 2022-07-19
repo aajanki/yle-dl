@@ -270,10 +270,10 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
         print_lines(dl.get_urls(url, io, stream_filters))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_STREAM_TITLE:
-        print_lines(dl.get_titles(url, stream_filters.latest_only, io))
+        print_lines(dl.get_titles(url, io, stream_filters.latest_only))
         return RD_SUCCESS
     elif action == StreamAction.PRINT_METADATA:
-        metadata = dl.get_metadata(url, stream_filters.latest_only, io)
+        metadata = dl.get_metadata(url, io, stream_filters.latest_only)
         print_enc(json.dumps(metadata, indent=2, ensure_ascii=False))
         return RD_SUCCESS
     elif action == StreamAction.PIPE:
