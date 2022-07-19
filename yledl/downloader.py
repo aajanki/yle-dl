@@ -7,6 +7,8 @@ from .utils import sane_filename
 from .backends import Subprocess
 from .errors import ExternalApplicationNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
+from .extractors import extractor_factory, url_language
+from .localization import TranslationChooser
 from .io import OutputFileNameGenerator
 from .streamflavor import FailedFlavor
 
@@ -15,21 +17,29 @@ logger = logging.getLogger('yledl')
 
 
 class YleDlDownloader:
-    def __init__(self, extractor, geolocation):
-        self.extractor = extractor
+    def __init__(self, geolocation, title_formatter, httpclient, _extractor_factory=extractor_factory):
         self.geolocation = geolocation
+        self.title_formatter = title_formatter
+        self.httpclient = httpclient
+        self.extractor_factory = _extractor_factory
 
     def download_clips(self, base_url, io, filters):
-        playlist = self.extractor.get_playlist(base_url, filters.latest_only)
+        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
+                                           self.httpclient, self.title_formatter, io.ffprobe())
+        if not extractor:
+            self.log_unsupported_url_error(base_url)
+            return RD_FAILED
+
+        playlist = extractor.get_playlist(base_url, filters.latest_only)
 
         if len(playlist) > 1 and io.outputfilename is not None:
             logger.error('The source is a playlist with multiple clips, '
                          'but only one output file specified')
             return RD_FAILED
-        elif len(playlist) > 1 and self.extractor.title_formatter.is_constant_pattern():
+        elif len(playlist) > 1 and extractor.title_formatter.is_constant_pattern():
             logger.error('The source is a playlist with multiple clips, '
                          'but --output-template is a literal: '
-                         f'{self.extractor.title_formatter.template}')
+                         f'{extractor.title_formatter.template}')
             return RD_FAILED
 
         if len(playlist) == 0:
@@ -37,14 +47,20 @@ class YleDlDownloader:
 
         overall_status = RD_SUCCESS
         for clip_url in playlist:
-            res = self.download_with_retry(clip_url, filters, io, max_retry_count=3)
+            res = self.download_with_retry(clip_url, extractor, filters, io, max_retry_count=3)
             if res != RD_SUCCESS and overall_status != RD_FAILED:
                 overall_status = res
 
         return overall_status
 
     def pipe(self, base_url, io, filters):
-        playlist = self.extractor.get_playlist(base_url)
+        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
+                                           self.httpclient, self.title_formatter, io.ffprobe())
+        if not extractor:
+            self.log_unsupported_url_error(base_url)
+            return RD_FAILED
+
+        playlist = extractor.get_playlist(base_url)
 
         if len(playlist) == 0:
             logger.error('No streams found')
@@ -52,11 +68,17 @@ class YleDlDownloader:
 
         # Can pipe one stream only. Drop other streams if there are more than one.
         clip_url = playlist[0]
-        clip = self.extractor.extract_clip(clip_url)
+        clip = extractor.extract_clip(clip_url)
         return self.pipe_first_available_stream(clip, filters, io)
 
-    def get_urls(self, base_url, filters):
-        clips = self.extractor.extract(base_url, filters.latest_only)
+    def get_urls(self, base_url, io, filters):
+        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
+                                           self.httpclient, self.title_formatter, io.ffprobe())
+        if not extractor:
+            self.log_unsupported_url_error(base_url)
+            return []
+
+        clips = extractor.extract(base_url, filters.latest_only)
         for clip in clips:
             streams = self.select_streams(clip.flavors, filters)
             if streams and any(s.is_valid() for s in streams):
@@ -64,14 +86,35 @@ class YleDlDownloader:
                 yield valid_stream.stream_url()
 
     def get_titles(self, base_url, latest_only, io):
-        clips = self.extractor.extract(base_url, latest_only)
+        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
+                                           self.httpclient, self.title_formatter, io.ffprobe())
+        if not extractor:
+            self.log_unsupported_url_error(base_url)
+            return []
+
+        clips = extractor.extract(base_url, latest_only)
         return (sane_filename(clip.title or '', io.excludechars) for clip in clips)
 
     def get_metadata(self, base_url, latest_only, io):
-        clips = self.extractor.extract(base_url, latest_only)
+        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
+                                           self.httpclient, self.title_formatter, io.ffprobe())
+        if not extractor:
+            self.log_unsupported_url_error(base_url)
+            return []
+
+        clips = extractor.extract(base_url, latest_only)
         return list(clip.metadata(io) for clip in clips)
 
-    def download_with_retry(self, clip_url, filters, io, max_retry_count):
+    def get_playlist(self, base_url, io):
+        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
+                                           self.httpclient, self.title_formatter, io.ffprobe())
+        if not extractor:
+            self.log_unsupported_url_error(base_url)
+            return []
+
+        return extractor.get_playlist(base_url)
+
+    def download_with_retry(self, clip_url, extractor, filters, io, max_retry_count):
         attempt = 0
         if max_retry_count < 0:
             max_retry_count = 0
@@ -81,7 +124,7 @@ class YleDlDownloader:
             if attempt > 0:
                 logger.info(f'Retry attempt {attempt} of {max_retry_count}')
 
-            clip = self.extractor.extract_clip(clip_url)
+            clip = extractor.extract_clip(clip_url)
             try:
                 latest_result = self.download_first_available_stream(clip, filters, io)
             except TransientDownloadError as ex:
@@ -332,3 +375,15 @@ class YleDlDownloader:
             args = [postprocess_command, videofile]
             args.extend(subtitlefiles)
             return Subprocess().execute([args], None)
+
+    def log_unsupported_url_error(self, url):
+        logger.error(f'Unsupported URL {url}.')
+        logger.error('If you think yle-dl should support this page, open a '
+                     'bug report at https://github.com/aajanki/yle-dl/issues')
+
+    def language_chooser(self, url, io):
+        if io.metadata_language:
+            preferred_lang = io.metadata_language
+        else:
+            preferred_lang = url_language(url)
+        return TranslationChooser([preferred_lang])

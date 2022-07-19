@@ -1,7 +1,7 @@
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import Backends, FailingBackend
-from yledl.extractors import ClipExtractor
 from yledl.streamflavor import StreamFlavor, FailedFlavor
+from yledl.titleformatter import TitleFormatter
 
 
 class MockBackend:
@@ -39,7 +39,7 @@ flavors = [
 
 
 def yle_dl_downloader():
-    return YleDlDownloader(ClipExtractor(None), MockGeoLocation())
+    return YleDlDownloader(MockGeoLocation(), TitleFormatter(), None)
 
 
 def video_flavor(streams):

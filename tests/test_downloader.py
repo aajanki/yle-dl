@@ -201,7 +201,10 @@ def simple():
 
 
 def downloader(clips_by_url):
-    return YleDlDownloader(MockExtractor(clips_by_url), MockGeoLocation())
+    def extractor_factory(*args):
+        return MockExtractor(clips_by_url)
+
+    return YleDlDownloader(MockGeoLocation(), TitleFormatter(), None, extractor_factory)
 
 
 def stream_by_partial_url_match(clip, url_contains):
@@ -295,7 +298,7 @@ def test_print_urls(simple):
         ('a', successful_clip()),
         ('b', successful_clip()),
     ]))
-    urls = list(dl.get_urls('', simple.filters))
+    urls = list(dl.get_urls('', simple.io, simple.filters))
 
     assert urls == [
         'https://example.com/video/high_quality.mp4',
@@ -497,8 +500,7 @@ def test_download_successful_after_retry(simple):
             streams=[backend]
         )
     ]
-    extractor = MockExtractor({'a': create_clip(flavors)})
-    dl = YleDlDownloader(extractor, MockGeoLocation())
+    dl = downloader({'a': create_clip(flavors)})
 
     res = dl.download_clips('', simple.io, simple.filters)
 
@@ -517,8 +519,7 @@ def test_download_fails_if_too_many_failures(simple):
             streams=[backend]
         )
     ]
-    extractor = MockExtractor({'a': create_clip(flavors)})
-    dl = YleDlDownloader(extractor, MockGeoLocation())
+    dl = downloader({'a': create_clip(flavors)})
 
     res = dl.download_clips('', simple.io, simple.filters)
 
@@ -537,8 +538,7 @@ def test_pipe_does_not_retry(simple):
             streams=[backend]
         )
     ]
-    extractor = MockExtractor({'a': create_clip(flavors)})
-    dl = YleDlDownloader(extractor, MockGeoLocation())
+    dl = downloader({'a': create_clip(flavors)})
 
     res = dl.pipe('', simple.io, simple.filters)
 
