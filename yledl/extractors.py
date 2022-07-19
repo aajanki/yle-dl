@@ -692,8 +692,7 @@ class AreenaExtractor(ClipExtractor):
         if media_id:
             flavors2.extend(
                 self.flavors_by_media_id(
-                    media_id, hls_manifest_url, kaltura_flavors,
-                    media_type, ffprobe))
+                    media_id, hls_manifest_url, kaltura_flavors, ffprobe))
 
         if not flavors2 and hls_manifest_url:
             flavors2.extend(self.hls_flavors(hls_manifest_url, media_type))
@@ -702,20 +701,17 @@ class AreenaExtractor(ClipExtractor):
 
         return flavors or None
 
-    def flavors_by_media_id(self, media_id, hls_manifest_url, kaltura_flavors,
-                            media_type, ffprobe):
+    def flavors_by_media_id(self, media_id, hls_manifest_url, kaltura_flavors, ffprobe):
         is_live = self.is_live_media(media_id)
         if self.is_full_hd_media(media_id) or is_live:
             logger.debug('Detected a full-HD media')
-            flavors = self.hls_probe_flavors(hls_manifest_url, media_type,
-                                             is_live, ffprobe)
+            flavors = self.hls_probe_flavors(hls_manifest_url, is_live, ffprobe)
             error = [FailedFlavor('Manifest URL is missing')]
             return flavors or error
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
             return (kaltura_flavors or
-                    self.hls_probe_flavors(hls_manifest_url, media_type,
-                                           False, ffprobe))
+                    self.hls_probe_flavors(hls_manifest_url, False, ffprobe))
         elif self.is_media_67(media_id):
             return []
         else:
@@ -748,7 +744,7 @@ class AreenaExtractor(ClipExtractor):
 
         return [StreamFlavor(media_type=media_type, streams=[backend])]
 
-    def hls_probe_flavors(self, hls_manifest_url, media_type, is_live, ffprobe):
+    def hls_probe_flavors(self, hls_manifest_url, is_live, ffprobe):
         if not hls_manifest_url:
             return []
 
