@@ -34,7 +34,9 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: pip install -e .[test]
+          command: |
+            pip install --upgrade pip
+            pip install -e .[test]
       - run:
           name: Unit and integration tests
           command: |
