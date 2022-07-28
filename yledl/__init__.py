@@ -3,10 +3,11 @@ from .downloader import YleDlDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .io import IOContext, DownloadLimits
 from .streamfilters import StreamFilters
-from .version import version
+from .version import __version__
 from .yledl import execute_action, StreamAction
 
 __all__ = [
+    '__version__',
     'execute_action',
     'YleDlDownloader',
     'StreamFilters',
@@ -14,7 +15,6 @@ __all__ = [
     'IOContext',
     'Backends',
     'StreamAction',
-    'version',
     'RD_SUCCESS',
     'RD_FAILED',
     'RD_INCOMPLETE'

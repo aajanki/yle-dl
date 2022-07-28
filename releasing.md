@@ -10,8 +10,8 @@ git push
 git tag 20211203
 git push --tags
 
-rm -rf dist build
-python3 setup.py sdist bdist_wheel --universal
+rm -rf dist
+python3 -m build
 twine upload dist/*
 ```
 

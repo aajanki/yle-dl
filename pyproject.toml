@@ -1,0 +1,51 @@
+[project]
+name = "yle-dl"
+description = "Download videos from Yle servers"
+readme = "README.md"
+authors = [
+    {name = "Antti Ajanki", email = "antti.ajanki@iki.fi"}
+]
+license = {text = "GPLv3+"}
+dependencies = [
+    "requests",
+    "lxml",
+    "attrs >= 20.1.0",
+    "ConfigArgParse >= 0.13.0",
+]
+requires-python = ">=3.6"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Internet",
+    "Topic :: Multimedia :: Video",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
+
+[project.scripts]
+yle-dl = "yledl.yledl:main"
+
+[project.urls]
+Home = "https://aajanki.github.io/yle-dl/"
+Source = "https://github.com/aajanki/yle-dl/"
+
+[tool.flit.module]
+name = "yledl"
+
+[build-system]
+requires = ["flit_core >=3.4,<4"]
+build-backend = "flit_core.buildapi"

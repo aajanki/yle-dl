@@ -41,7 +41,7 @@ from .io import IOContext, DownloadLimits, random_elisa_ipv4
 from .streamfilters import StreamFilters
 from .titleformatter import TitleFormatter
 from .utils import print_enc
-from .version import version
+from .version import __version__
 
 
 class PlainInfoFormatter(logging.Formatter):
@@ -83,7 +83,7 @@ def arg_parser():
                 print_enc(message, file, False)
 
     description = (
-        f'yle-dl {version}: Download media files from Yle Areena and Elävä Arkisto\n'
+        f'yle-dl {__version__}: Download media files from Yle Areena and Elävä Arkisto\n'
         'Copyright (C) 2009-2022 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
     )
 

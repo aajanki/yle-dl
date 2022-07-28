@@ -31,7 +31,6 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 * Python 3.6+
 * pip
 * ffmpeg (subtitles fully supported only on ffmpeg 4.1 or later)
-* setuptools (when installing from the sources)
 
 Optionally for few rare streams:
 
@@ -44,10 +43,10 @@ Easier way (installation without downloading the source codes):
 pip3 install --user --upgrade yle-dl
 ```
 
-Installation from sources. Download the sources and run the following
-on the source directory:
+Installing the source distribution in the editable mode: Download the sources
+and run the following in the source directory:
 ```
-python3 setup.py install --user
+pip3 install --user -e .
 ```
 
 ### 3. Fix the search path if necessary ###

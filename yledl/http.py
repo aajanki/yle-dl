@@ -6,7 +6,7 @@ import requests
 import sys
 from requests.adapters import HTTPAdapter
 from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
-from .version import version
+from .version import __version__
 
 logger = logging.getLogger('yledl')
 
@@ -121,7 +121,7 @@ class HttpClient:
 
 
 def yledl_user_agent():
-    major = version.split(' ')[0]
+    major = __version__.split(' ')[0]
     return f'yle-dl/{major}'
 
 
