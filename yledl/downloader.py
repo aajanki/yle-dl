@@ -17,7 +17,8 @@ logger = logging.getLogger('yledl')
 
 
 class YleDlDownloader:
-    def __init__(self, geolocation, title_formatter, httpclient, _extractor_factory=extractor_factory):
+    def __init__(self, geolocation, title_formatter, httpclient,
+                 _extractor_factory=extractor_factory):
         self.geolocation = geolocation
         self.title_formatter = title_formatter
         self.httpclient = httpclient
