@@ -289,13 +289,16 @@ class DASHHLSBackend(ExternalDownloader):
         else:
             return []
 
-    def _metadata_args(self, clip, io):
+    def _metadata_args(self, clip, io, description_on_video_stream=True):
         if not clip:
             return []
 
         metadata = []
         if clip.description:
-            metadata_spec = '' if self._is_mp4(io) else ':s:v:0'
+            if description_on_video_stream and not self._is_mp4(io):
+                metadata_spec = ':s:v:0'
+            else:
+                metadata_spec = ''
             metadata += [
                 f'-metadata{metadata_spec}',
                 f'description={clip.description}',
@@ -441,7 +444,7 @@ class HLSAudioBackend(DASHHLSBackend):
     def output_args_file(self, clip, io, output_name):
         return (
             self._duration_arg(io.download_limits) +
-            self._metadata_args(clip, io) +
+            self._metadata_args(clip, io, description_on_video_stream=False) +
             ['-acodec', 'copy',
              '-f', 'mp3',
              f'file:{output_name}']
