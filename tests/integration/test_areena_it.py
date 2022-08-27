@@ -105,6 +105,7 @@ def test_areena_html5_clip_stream_url():
     assert '/a.m3u8?' in streamurl[0]
 
 
+@pytest.mark.xfail(reason='This video has been broken in Areena since July 2022')
 def test_areena_awsmpodamdipv4_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-50875269')
 
@@ -112,6 +113,7 @@ def test_areena_awsmpodamdipv4_stream_url():
     assert '/index.m3u8?' in streamurl[0]
 
 
+@pytest.mark.xfail(reason='This video has been broken in Areena since July 2022')
 def test_areena_awsmpodamdipv4_metadata():
     metadata = fetch_metadata('https://areena.yle.fi/1-50875269')
 
