@@ -220,13 +220,13 @@ def arg_parser():
                           '"ffmpeg"')
     dl_group.add_argument('--ffmpeg', metavar='PATH',
                           type=str,
-                          help='Set path to the ffmpeg binary')
+                          help='Set the path of the ffmpeg executable')
     dl_group.add_argument('--ffprobe', metavar='PATH',
                           type=str,
-                          help='Set path to the ffprobe binary')
+                          help='Set the path of the ffprobe executable')
     dl_group.add_argument('--wget', metavar='PATH',
                           type=str, default='',
-                          help='Set path to wget binary')
+                          help='Set the path of the wget executable')
 
     return parser
 
@@ -455,8 +455,9 @@ def main(argv=sys.argv):
                 exit_status = res
     except FfmpegNotFoundError:
         logger.error('ffmpeg or ffprobe not found on PATH.')
-        logger.error('Install ffmpeg, use "--ffmpeg" to set ffmpeg location or '
-                     'use "--backend wget".')
+        logger.error('Install ffmpeg, and use "--ffmpeg" and "--ffprobe" '
+                     'to set the ffmpeg and ffprobe locations')
+        logger.error('or use "--backend wget".')
         exit_status = RD_FAILED
 
     return exit_status
