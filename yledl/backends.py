@@ -29,6 +29,7 @@ from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
+from .ffprobe import full_stream_already_downloaded
 
 
 logger = logging.getLogger('yledl')
@@ -123,25 +124,8 @@ class BaseDownloader:
         return None
 
     def full_stream_already_downloaded(self, filename, clip, io):
-        ffprobe = io.ffprobe()
-        if not ffprobe or not os.path.exists(filename):
-            return False
-
-        logger.info(f'{filename} already exists.\nChecking if the stream is complete...')
-
-        expected_duration = clip.duration_seconds
-        if expected_duration is None or expected_duration <= 0:
-            return False
-
-        try:
-            downloaded_duration = ffprobe.duration_seconds_file(filename)
-        except ValueError as ex:
-            logger.warning(f'Failed to get duration for the file{filename}: {ex}')
-            return False
-
-        logger.debug(f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s')
-
-        return downloaded_duration >= 0.98 * expected_duration
+        """Override on backends that are able to check if a file is complete."""
+        return False
 
 
 ### Base class for downloading a stream to a file using an external program ###
@@ -450,6 +434,9 @@ class DASHHLSBackend(ExternalDownloader):
         return ((io.outputfilename and io.outputfilename.endswith('.mp4')) or
                 io.preferred_format in ('mp4', '.mp4'))
 
+    def full_stream_already_downloaded(self, filename, clip, io):
+        return full_stream_already_downloaded(filename, clip, io)
+
 
 class HLSAudioBackend(DASHHLSBackend):
     def __init__(self, url):
@@ -474,6 +461,9 @@ class HLSAudioBackend(DASHHLSBackend):
              '-f', 'mp3',
              'pipe:1']
         )
+
+    def full_stream_already_downloaded(self, filename, clip, io):
+        return full_stream_already_downloaded(filename, clip, io)
 
 
 ### Download a plain HTTP file ###
