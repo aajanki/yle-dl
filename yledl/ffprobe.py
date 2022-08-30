@@ -82,31 +82,30 @@ class Ffprobe:
         return (float(m.group(1)) * 60 * 60 + float(m.group(2)) * 60 +
                 float(m.group(3)) + float(m.group(4)) / 100)
 
+    def full_stream_already_downloaded(self, filename, clip):
+        """Returns True if a stream file called "filename" exists and is complete.
 
-def full_stream_already_downloaded(filename, clip, io):
-    """Returns True if a stream file called "filename" exists and is complete.
+        This calls ffprobe to analyze the file (or returns False if ffprobe is not
+        available).
+        """
+        if not os.path.exists(filename):
+            return False
 
-    This calls ffprobe to analyze the file (or returns False if ffprobe is not
-    available).
-    """
-    ffprobe = io.ffprobe()
-    if not ffprobe or not os.path.exists(filename):
-        return False
+        logger.info(f'{filename} already exists.\nChecking if the stream is complete...')
 
-    logger.info(f'{filename} already exists.\nChecking if the stream is complete...')
+        expected_duration = clip.duration_seconds
+        if expected_duration is None or expected_duration <= 0:
+            return False
 
-    expected_duration = clip.duration_seconds
-    if expected_duration is None or expected_duration <= 0:
-        return False
+        try:
+            downloaded_duration = self.duration_seconds_file(filename)
+        except ValueError as ex:
+            logger.warning(f'Failed to get duration for the file {filename}: {ex}')
+            return False
+        except FfmpegNotFoundError:
+            logger.warning('ffmpeg not found on path')
+            return False
 
-    try:
-        downloaded_duration = ffprobe.duration_seconds_file(filename)
-    except ValueError as ex:
-        logger.warning(f'Failed to get duration for the file{filename}: {ex}')
-        return False
-    except FfmpegNotFoundError:
-        return False
+        logger.debug(f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s')
 
-    logger.debug(f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s')
-
-    return downloaded_duration >= 0.98 * expected_duration
+        return downloaded_duration >= 0.98 * expected_duration

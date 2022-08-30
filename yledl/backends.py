@@ -29,7 +29,6 @@ from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
-from .ffprobe import full_stream_already_downloaded
 
 
 logger = logging.getLogger('yledl')
@@ -435,7 +434,8 @@ class DASHHLSBackend(ExternalDownloader):
                 io.preferred_format in ('mp4', '.mp4'))
 
     def full_stream_already_downloaded(self, filename, clip, io):
-        return full_stream_already_downloaded(filename, clip, io)
+        ffprobe = io.ffprobe()
+        return ffprobe and ffprobe.full_stream_already_downloaded(filename, clip)
 
 
 class HLSAudioBackend(DASHHLSBackend):
@@ -463,7 +463,8 @@ class HLSAudioBackend(DASHHLSBackend):
         )
 
     def full_stream_already_downloaded(self, filename, clip, io):
-        return full_stream_already_downloaded(filename, clip, io)
+        ffprobe = io.ffprobe()
+        return ffprobe and ffprobe.full_stream_already_downloaded(filename, clip)
 
 
 ### Download a plain HTTP file ###
