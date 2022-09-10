@@ -37,7 +37,7 @@ pip3 install --user --upgrade yle-dl
 tai lataamalla lähdekoodit ja ajamalla seuraava komento
 lähdekoodihakemistossa:
 
-python3 setup.py install --user
+pip3 install --user .
 
 ### 3. Lisää tarvittaessa hakemisto hakupolulle
 

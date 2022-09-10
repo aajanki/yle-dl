@@ -31,7 +31,7 @@ sudo apt-get install git wget ffmpeg python3-dev python3-setuptools \
     python3-requests python3-lxml
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
-python3 setup.py install --user
+pip3 install --user .
 ```
 
 
@@ -68,7 +68,7 @@ sudo apt-get install git wget ffmpeg python3-dev python3-setuptools \
     python3-requests python3-lxml
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
-python3 setup.py install --user
+pip3 install --user .
 ```
 
 

@@ -46,7 +46,7 @@ pip3 install --user --upgrade yle-dl
 Installing the source distribution in the editable mode: Download the sources
 and run the following in the source directory:
 ```
-pip3 install --user -e .
+pip3 install --user .
 ```
 
 ### 3. Fix the search path if necessary ###
