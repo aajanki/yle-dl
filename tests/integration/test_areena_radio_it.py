@@ -140,3 +140,10 @@ def test_radio_latest():
 
     publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
     assert publish_date >= datetime(2021, 1, 1)
+
+
+def test_radio_return_empty_list_if_there_are_no_episodes():
+    # This series has no published episodes
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-3114806')
+
+    assert len(metadata) == 0

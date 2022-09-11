@@ -356,7 +356,6 @@ class AreenaPlaylistParser:
         return None
 
     def _parse_radio_playlist(self, html_tree):
-        playlist = []
         state_tag = html_tree.xpath('//script[contains(., "window.STORE_STATE_FROM_SERVER")]')
         if state_tag:
             state_str = state_tag[0].text
@@ -369,7 +368,7 @@ class AreenaPlaylistParser:
                     uri = all_content[0].get('source', {}).get('uri')
                     return PlaylistData(uri, {})
 
-        return playlist
+        return None
 
     def _download_playlist_or_latest(self, playlist_data, latest_only):
         season_urls = list(enumerate(playlist_data.season_playlist_urls(), start=1))
