@@ -60,7 +60,7 @@ def test_radio_metadata_hls():
 
 @pytest.mark.geoblocked
 def test_radio_live_url():
-    url = fetch_stream_url('https://areena.yle.fi/audio/ohjelmat/57-kpDBBz8Pz')
+    url = fetch_stream_url('https://areena.yle.fi/podcastit/ohjelmat/57-kpDBBz8Pz')
 
     assert len(url) == 1
     assert '.m3u8' in url[0]
@@ -69,7 +69,7 @@ def test_radio_live_url():
 @pytest.mark.geoblocked
 def test_radio_live_url2():
     url = fetch_stream_url(
-        'https://areena.yle.fi/audio/ohjelmat/57-3gO4bl7J6?'
+        'https://areena.yle.fi/podcastit/ohjelmat/57-3gO4bl7J6?'
         '_c=yle-radio-suomi-oulu')
 
     assert len(url) == 1
@@ -78,7 +78,7 @@ def test_radio_live_url2():
 
 @pytest.mark.geoblocked
 def test_radio_live_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/audio/ohjelmat/57-kpDBBz8Pz')
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/ohjelmat/57-kpDBBz8Pz')
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
@@ -87,20 +87,28 @@ def test_radio_live_metadata():
 
 
 def test_radio_series_2020():
-    urls = fetch_stream_url('https://areena.yle.fi/audio/1-50198109')
+    urls = fetch_stream_url('https://areena.yle.fi/podcastit/1-50198109')
 
     assert len(urls) >= 6
 
 
 def test_radio_series_redirect():
-    # Will get redicted to https://areena.yle.fi/audio/1-61070264
+    # Will get redirected to https://areena.yle.fi/podcastit/1-61070264
     urls = fetch_stream_url('https://areena.yle.fi/1-61070264')
 
     assert len(urls) >= 10
 
 
+def test_radio_series_redirect_from_old_audio_url():
+    # The address for radio programs was changed from /audio/ to /podcastit/
+    # in September 2022. Test that the old address is redirected to the new.
+    urls = fetch_stream_url('https://areena.yle.fi/audio/1-61070264')
+
+    assert len(urls) >= 10
+
+
 def test_radio_metadata_2020():
-    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50198110')
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-50198110')
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
@@ -111,7 +119,7 @@ def test_radio_metadata_2020():
 
 def test_radio_episodes_sort_order_latest_last_source():
     # This page lists episodes in the latest-last order
-    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50375734')
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-50375734')
 
     # Should be sorted from oldest to newest
     timestamps = [x['publish_timestamp'] for x in metadata]
@@ -121,7 +129,7 @@ def test_radio_episodes_sort_order_latest_last_source():
 
 def test_radio_episodes_sort_order_latest_first_source():
     # This page lists episodes in the latest-first order
-    metadata = fetch_metadata('https://areena.yle.fi/audio/1-50438875')
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-50438875')
 
     # Should be sorted from oldest to newest
     timestamps = [x['publish_timestamp'] for x in metadata]
@@ -134,7 +142,7 @@ def test_radio_latest():
     # getting the latest episode is fast even though there are
     # hundreds of news episodes.
     filters = StreamFilters(latest_only=True)
-    metadata = fetch_metadata('https://areena.yle.fi/audio/1-1440981', filters)
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-1440981', filters)
 
     assert len(metadata) == 1
 

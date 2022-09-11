@@ -45,6 +45,7 @@ def extractor_factory(url, language_chooser, httpclient, title_formatter, ffprob
         logger.debug(f'{url} is an Elävä Arkisto URL')
         return ElavaArkistoExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
+          re.match(r'^https?://areena\.yle\.fi/podcastit/ohjelmat/[-a-zA-Z0-9]+', url) or
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         logger.debug(f'{url} is a live radio URL')
         return AreenaLiveRadioExtractor(language_chooser, httpclient, title_formatter, ffprobe)
