@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="stylesheets/stylesheet.css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="stylesheets/pygment_trac.css"
+      media="screen"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="stylesheets/print.css"
+      media="print"
+    />
+
+    <title>yle-dl</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="container">
+        <h1>yle-dl</h1>
+        <h2>Ladda ner videor från Yle Arenan</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/aajanki/yle-dl" class="btn btn-github"
+            ><span class="icon"></span>Koden på Github</a
+          >
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <div style="font-size: small"><a href="index.html">Suomeksi</a></div>
+        <div style="font-size: small">
+          <a href="index-en.html">In English</a>
+        </div>
+
+        <p>
+          yle-dl är ett verktyg för att ladda ner mediefiler från
+          <a href="https://arenan.yle.fi">Yle Arenan</a>,
+          <a href="https://svenska.yle.fi/arkivet">Yle arkivet</a> och
+          <a href="https://svenska.yle.fi/">Yle nyheter</a>. Dessutom kan du med
+          yle-dl ladda ner Arenans
+          <a href="https://arenan.yle.fi/poddar">internetradior</a> och
+          <a href="https://arenan.yle.fi/tv/direkt">direkt TV sändningar</a>.
+        </p>
+        <p>
+          Du kan se program som laddas ner till din dator även om de redan har
+          lämnat Arenan. När du spelar upp från din egen dator stammar videorna
+          inte heller som när du spelar över en långsam internetanslutning.
+        </p>
+
+        <p>
+          De nedladdade programmen sparas i Matroska (.mkv) eller MP4 format. De
+          kan sedan spelas upp med till exempel
+          <a href="http://www.videolan.org/vlc/">VLC</a>.
+        </p>
+        <p>
+          Du kan endast ladda ner videor för eget bruk. Spridning av Arenans
+          program utan tillstånd från upphovsrättsinnehavaren är förbjudet.
+        </p>
+
+        <h2>Installation</h2>
+
+        <p><code>pip3 install --user --upgrade yle-dl</code></p>
+
+        <p>Nödvändiga bibliotek och program: Python 3.6+, ffmpeg 4.1+</p>
+
+        <p>För att ladda ner vissa Arena program behövs också wget.</p>
+
+        <h2>Användning</h2>
+
+        <p><code>yle-dl [alternativ] URL</code></p>
+
+        <p>Några av alternativen:</p>
+
+        <dl>
+          <dt>-o filename</dt>
+          <dd>Spara streamen till namngivna filen</dd>
+          <dt>--destdir dir</dt>
+          <dd>Spara filer till en mapp</dd>
+          <dt>--latestepisode</dt>
+          <dd>Ladda ner senaste avsnitten från sidan</dd>
+          <dt>--showmetadata</dt>
+          <dd>Skriv ut streamens metadata, ladda inte ner</dd>
+          <dt>--proxy uri</dt>
+          <dd>
+            Använd ett SOCKS-proxy för att ladda ner streamens metadata.
+            Exempel:
+            <code>--proxy socks5://localhost:7777</code>
+          </dd>
+        </dl>
+
+        <p>
+          Använd kommandot <code>yle-dl --help</code> för att se alla
+          alternativ.
+        </p>
+
+        <p>Till exempel:</p>
+
+        <p><code>yle-dl http://areena.yle.fi/tv/1515302</code></p>
+
+        <p>eller</p>
+
+        <p>
+          <code
+            >yle-dl http://areena.yle.fi/tv/1515302 -o
+            /your/video/dir/video.mp4</code
+          >
+        </p>
+
+        <h2>Källkod</h2>
+
+        <p>
+          <a
+            href="https://github.com/aajanki/yle-dl/archive/refs/tags/20220830.tar.gz"
+            >Stabil version: yle-dl 20220830</a
+          ><br />
+          <a
+            href="https://raw.githubusercontent.com/aajanki/yle-dl/master/ChangeLog"
+            >Ändringslogg</a
+          >
+        </p>
+
+        <p>
+          <a href="https://github.com/aajanki/yle-dl/tarball/master"
+            >Utvecklingsversion</a
+          >
+        </p>
+
+        <p>
+          Källkoden är tillgänglig under
+          <a href="http://www.gnu.org/licenses/gpl-3.0.html"
+            >GNU GPLv3 licensen</a
+          >.
+        </p>
+
+        <h2 id="packages">
+          Installationspaket och hjälpverktyg skapade av andra
+        </h2>
+
+        <h3>Linux</h3>
+
+        <ul>
+          <li>
+            <a href="https://aur.archlinux.org/packages/yle-dl/">Arch Linux</a>
+          </li>
+          <li>
+            <a href="https://packages.fedoraproject.org/pkgs/yle-dl/yle-dl/"
+              >Fedora</a
+            >
+          </li>
+          <li>Gentoo: <code>emerge -av yle-dl</code></li>
+          <li>
+            <a href="https://slackbuilds.org/result/?search=yle-dl&sv="
+              >Slackware</a
+            >
+          </li>
+        </ul>
+
+        <h3>macOS</h3>
+
+        <ul>
+          <li>
+            1. <a href="https://brew.sh/">Installera Homebrew</a>, 2. Kör
+            <code>brew install yle-dl</code>
+          </li>
+          <li>
+            <a href="https://simopot.github.io/areena/"
+              >https://simopot.github.io/areena/</a
+            >
+            (innehåller ett grafiskt användargränssnitt)
+          </li>
+        </ul>
+
+        <h3>Docker</h3>
+
+        <ul>
+          <li>
+            <a href="https://hub.docker.com/r/taskinen/yle-dl/"
+              >yle-dl i en Docker container</a
+            >
+          </li>
+        </ul>
+
+        <h3>Andra verktyg</h3>
+
+        <ul>
+          <li>
+            <a href="https://github.com/an7oine/vhs"
+              >vhs.sh - ett skript för automatisk inspelning</a
+            >
+          </li>
+          <li>
+            <a href="https://github.com/pekkarr/mpv-yledl"
+              >insticksprogram för att se på Arena videor i mpv</a
+            >
+          </li>
+        </ul>
+      </section>
+    </div>
+  </body>
+</html>
