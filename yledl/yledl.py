@@ -148,8 +148,16 @@ def arg_parser():
                               help='Print web page for each episode')
     action_group.add_argument('--showmetadata', action='store_true',
                               help='Print metadata about available streams')
+    io_group.add_argument('--restrict-filename-no-spaces', action='store_true',
+                          dest='filenames_no_spaces',
+                          help='Replace spaces by underscores in generated filenames')
+    io_group.add_argument('--restrict-filename-no-specials', action='store_true',
+                          dest='filenames_no_specials',
+                          help='Generate Windows-compatible filenames by avoiding '
+                               'certain reserved characters')
     io_group.add_argument('--vfat', action='store_true',
-                          help='Output Windows-compatible filenames')
+                          dest='filenames_no_specials',
+                          help='Alias for --restrict-filename-no-specials')
     resume_group = io_group.add_mutually_exclusive_group()
     # --resume is the new default, the option is still accepted but
     # doesn't do anything
@@ -387,7 +395,10 @@ def main(argv=sys.argv):
         parser.print_help()
         sys.exit(RD_SUCCESS)
 
-    excludechars = '\"*/:<>?|' if args.vfat else '*/|'
+    excludechars = '\"*/:<>?|' if args.filenames_no_specials else '*/|'
+    if args.filenames_no_spaces:
+        excludechars += ' '
+
     dl_limits = DownloadLimits(args.startposition, args.duration, args.ratelimit)
     output_template, template_ext = os.path.splitext(args.output_template)
     preferformat = template_ext.strip('.') or args.preferformat
