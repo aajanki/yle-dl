@@ -395,7 +395,7 @@ def main(argv=sys.argv):
         parser.print_help()
         sys.exit(RD_SUCCESS)
 
-    excludechars = '\"*/:<>?|' if args.filenames_no_specials else '*/|'
+    excludechars = r'\"*/:<>?|' if args.filenames_no_specials else '*/|'
     if args.filenames_no_spaces:
         excludechars += ' '
 
