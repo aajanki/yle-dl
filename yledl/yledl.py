@@ -131,6 +131,10 @@ def arg_parser():
                           '$$ is an escape and will be replaced by a literal $. '
                           '/ specifies a subdirectory. '
                           'Everything else will appear as-is.')
+    io_group.add_argument('--output-na-placeholder', metavar='PLACEHOLDER',
+                          help='Placeholder value for unavailable meta fields '
+                               'in output filename template '
+                               '(default is an empty string)')
     io_group.add_argument('--pipe', action='store_true',
                           help='Dump stream to stdout for piping to media '
                           'player. E.g. "yle-dl --pipe URL | vlc -"')
@@ -402,7 +406,7 @@ def main(argv=sys.argv):
     dl_limits = DownloadLimits(args.startposition, args.duration, args.ratelimit)
     output_template, template_ext = os.path.splitext(args.output_template)
     preferformat = template_ext.strip('.') or args.preferformat
-    title_formatter = TitleFormatter(output_template)
+    title_formatter = TitleFormatter(output_template, args.output_na_placeholder)
     io = IOContext(args.outputfile, preferformat, args.destdir,
                    args.resume, args.overwrite, dl_limits, excludechars,
                    args.proxy, random_elisa_ipv4(), args.sublang,

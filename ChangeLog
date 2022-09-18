@@ -7,6 +7,7 @@ Version <unreleased>
 - Support new live radio URLs containing /podcastit/
 - --restrict-filename-no-spaces avoids spaces in generated filenames
 - --restrict-filename-no-specials generates Windows-compatible filenames (alias for --vfat)
+- --output-na-placeholder Placeholder value for unavailable fields in filenames
 
 Version 20220830
 

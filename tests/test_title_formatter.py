@@ -31,7 +31,7 @@ def pasila():
             2018, 4, 12, 16, 30, 45,
             tzinfo=FixedOffset(2)),
         'series_title': 'Pasila',
-        'subheading':'tekstitys englanniksi',
+        'subheading': 'tekstitys englanniksi',
         'program_id': '1-86743',
         'season': 1,
         'episode': 3,
@@ -256,3 +256,43 @@ def test_unclosed_template(pasila):
 def test_template_incorrectly_balanced_brackets(pasila):
     fmt = TitleFormatter('${series}: ${title: ${timestamp}}')
     assert fmt.format(**pasila) == 'Pasila: ${title: 2018-04-12T16:30}'
+
+
+def test_title_and_date_placeholder():
+    fmt = TitleFormatter(placeholder='NA')
+    title = fmt.format('test', publish_timestamp=datetime(2018, 1, 2, 3, 4, 5))
+    assert title == 'NA: test: NA-2018-01-02T03:04'
+
+
+def test_series_title_placeholder():
+    fmt = TitleFormatter(placeholder='NA')
+    title = fmt.format(title='pe 1.1.2021', series_title='Isänmaan toivot', season=2, episode=6, publish_timestamp=date(2021, 1, 1))
+    assert title == 'Isänmaan toivot: pe 1.1.2021: S02E06-2021-01-01'
+
+
+def test_title_only_placeholder():
+    fmt = TitleFormatter(placeholder='NA')
+    title = fmt.format('Kerblam!', series_title='Doctor Who', season=11, episode=7)
+    assert title == 'Doctor Who: Kerblam!: S11E07-NA'
+
+
+def test_template_variables_placeholder():
+    fmt = TitleFormatter('${series}-${program_id}', placeholder='NA')
+    title = fmt.format('Kerblam!', series_title='Doctor Who')
+    assert title == 'Doctor Who-NA'
+
+    fmt = TitleFormatter('${series}-${date}', placeholder='NA')
+    title = fmt.format('Kerblam!', series_title='Doctor Who')
+    assert title == 'Doctor Who-NA'
+
+    fmt = TitleFormatter('${title}-${episode}-${date}', placeholder='NA')
+    title = fmt.format('Kerblam!', series_title='Doctor Who')
+    assert title == 'Kerblam!-NA-NA'
+
+
+def test_no_repeated_series_title_placeholder():
+    title = tf.format('Solsidan', series_title='Solsidan',
+                      season=6,
+                      episode=3,
+                      publish_timestamp=date(2021, 1, 1))
+    assert title == 'Solsidan: S06E03-2021-01-01'

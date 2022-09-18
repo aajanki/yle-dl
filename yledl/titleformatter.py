@@ -20,9 +20,12 @@ from datetime import datetime
 
 
 class TitleFormatter:
-    def __init__(self, template='${series_separator}${title}: ${episode_separator}${timestamp}'):
+    def __init__(self,
+                 template='${series_separator}${title}: ${episode_separator}${timestamp}',
+                 placeholder=None):
         self.template = template
         self.tokens = self._parse_template(template)
+        self.placeholder = placeholder
 
     def format(self, title, publish_timestamp=None, series_title=None,
                subheading=None, season=None, episode=None, program_id=None):
@@ -38,16 +41,19 @@ class TitleFormatter:
         if not main_title and series_title:
             main_title = series_title
             series_title = None
+        series_title = series_title or self.placeholder
+
+        episode_number = self._episode_number(season, episode) or self.placeholder
 
         values = {
             'series': series_title or '',
-            'series_separator': self._series_separator(series_title),
-            'title': main_title,
-            'episode': self._episode_number(season, episode),
-            'episode_separator': self._episode_number_separator(season, episode),
-            'timestamp': self._timestamp_string(publish_timestamp),
-            'date': self._date_string(publish_timestamp),
-            'program_id': program_id,
+            'series_separator': self._concatenate_if_not_empty(series_title, ': '),
+            'title': main_title or self.placeholder,
+            'episode': episode_number,
+            'episode_separator': self._concatenate_if_not_empty(episode_number, '-'),
+            'timestamp': self._timestamp_string(publish_timestamp) or self.placeholder,
+            'date': self._date_string(publish_timestamp) or self.placeholder,
+            'program_id': program_id or self.placeholder,
         }
 
         return self._substitute(values)
@@ -133,24 +139,17 @@ class TitleFormatter:
                 return title[len(prefix):].strip()
         return title
 
-    def _series_separator(self, series_title):
-        if series_title:
-            return f'{series_title}: '
+    def _concatenate_if_not_empty(self, first, second):
+        if first:
+            return first + second
         else:
-            return ''
+            return first
 
     def _episode_number(self, season, episode):
         if season and episode:
             return f'S{season:02d}E{episode:02d}'
         elif episode:
             return f'E{episode:02d}'
-        else:
-            return ''
-
-    def _episode_number_separator(self, season, episode):
-        value = self._episode_number(season, episode)
-        if value:
-            return f'{value}-'
         else:
             return ''
 
