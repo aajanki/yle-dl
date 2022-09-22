@@ -49,3 +49,20 @@ def strptime_or_none(timestamp, format):
         return datetime.strptime(timestamp, format)
     except ValueError:
         return None
+
+
+def format_finnish_short_weekday_and_date(d):
+    """Format a datetime object as Finnish weekday and date ("pe 9.9.2022")."""
+    short_weekday_names = {
+        '1': 'ma',
+        '2': 'ti',
+        '3': 'ke',
+        '4': 'to',
+        '5': 'pe',
+        '6': 'la',
+        '7': 'su',
+    }
+
+    weekday_name = short_weekday_names[d.strftime('%u')]
+    short_date = f'{d.strftime("%d").lstrip("0")}.{d.strftime("%m").lstrip("0")}.{d.strftime("%Y")}'
+    return f'{weekday_name} {short_date}'

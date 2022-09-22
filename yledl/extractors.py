@@ -30,7 +30,7 @@ from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
-from .timestamp import parse_areena_timestamp
+from .timestamp import parse_areena_timestamp, format_finnish_short_weekday_and_date
 from .subtitles import Subtitle, EmbeddedSubtitle
 from .http import update_url_query
 
@@ -526,6 +526,22 @@ class AreenaPreviewApiParser:
         series_title_object = ongoing.get('series', {}).get('title', {})
         if series_title_object:
             title['series_title'] = language_chooser.choose_long_form(series_title_object).strip()
+
+        # If title['title'] does not equal title['episode_title'], then
+        # the episode title is title['title'].
+        #
+        # If title['title'] equals title['episode_title'], then either
+        # 1. the episode title is the publication date ("pe 16.9.2022"), or
+        # 2. the episode title is title['title']
+        #
+        # It seem impossible to decide which of the cases 1. or 2. should apply
+        # based on the preview API response only. We will always use the date
+        # (case 1.) because that is the more common case.
+        if title.get('title') is not None and title.get('title') == title.get('series_title'):
+            title_timestamp = parse_areena_timestamp(ongoing.get('start_time'))
+            if title_timestamp:
+                # Should be localized (Finnish or Swedish) based on language_chooser
+                title['title'] = format_finnish_short_weekday_and_date(title_timestamp)
 
         return title
 
