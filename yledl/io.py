@@ -91,6 +91,7 @@ class IOContext:
     ffprobe_binary: str = attr.field(default='ffprobe', converter=ffprobe_default)
     wget_binary: str = attr.field(default='wget', converter=wget_default)
     create_dirs: bool = attr.field(default=False)
+    xattr: bool = attr.field(default=False)
 
     def ffprobe(self):
         if self.ffprobe_binary is None:

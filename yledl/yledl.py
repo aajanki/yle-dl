@@ -186,6 +186,8 @@ def arg_parser():
                           help='Execute the command CMD after a successful '
                           'download. CMD is called with two arguments: '
                           'video, subtitle')
+    io_group.add_argument('--xattrs', action='store_true',
+                          help="Write metadata to the video file's xattrs")
 
     qual_group = parser.add_argument_group('Stream type and quality')
     qual_group.add_argument('--sublang', metavar='LANG',
@@ -407,12 +409,27 @@ def main(argv=sys.argv):
     output_template, template_ext = os.path.splitext(args.output_template)
     preferformat = template_ext.strip('.') or args.preferformat
     title_formatter = TitleFormatter(output_template, args.output_na_placeholder)
-    io = IOContext(args.outputfile, preferformat, args.destdir,
-                   args.resume, args.overwrite, dl_limits, excludechars,
-                   args.proxy, random_elisa_ipv4(), args.sublang,
-                   args.metadatalang, args.postprocess,
-                   args.ffmpeg, args.ffprobe, args.wget,
-                   args.create_dirs)
+    if args.xattrs and sys.platform in ['win32', 'cygwin']:
+        logger.warning('--xattrs not supported on Windows')
+        args.xattrs = False
+    io = IOContext(
+        outputfilename=args.outputfile,
+        preferred_format=preferformat,
+        destdir=args.destdir,
+        resume=args.resume,
+        overwrite=args.overwrite,
+        download_limits=dl_limits,
+        excludechars=excludechars,
+        proxy=args.proxy,
+        x_forwarded_for=random_elisa_ipv4(),
+        subtitles=args.sublang,
+        metadata_language=args.metadatalang,
+        postprocess_command=args.postprocess,
+        ffmpeg_binary=args.ffmpeg,
+        ffprobe_binary=args.ffprobe,
+        wget_binary=args.wget,
+        create_dirs=args.create_dirs,
+        xattr=args.xattrs)
 
     if args.showurl:
         action = StreamAction.PRINT_STREAM_URL

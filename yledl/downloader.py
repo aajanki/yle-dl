@@ -205,6 +205,8 @@ class YleDlDownloader:
 
         if dl_result == RD_SUCCESS:
             self.log_output_file(outputfile, True)
+            if io.xattr:
+                self.set_extended_file_attributes(outputfile, clip.metadata(io))
             self.postprocess(io.postprocess_command, outputfile, [])
 
         return dl_result
@@ -405,3 +407,23 @@ class YleDlDownloader:
         else:
             preferred_lang = url_language(url)
         return TranslationChooser([preferred_lang])
+
+    def set_extended_file_attributes(self, filename, metadata):
+        def xset(name, value_str):
+            xa.set(name, value_str.encode('utf-8')[:64*1024])
+
+        try:
+            from xattr import xattr
+        except ImportError:
+            logger.warning("xattr not installed. Extended file attributes won't be set")
+            return
+
+        xa = xattr(filename)
+        if metadata.get('description'):
+            xset('user.dublincore.description', metadata['description'])
+        if metadata.get('publish_timestamp'):
+            xset('user.dublincore.date', metadata['publish_timestamp'][:10])
+        if metadata.get('title'):
+            xset('user.dublincore.title', metadata['title'])
+        if metadata.get('webpage'):
+            xset('user.xdg.referrer.url', metadata['webpage'])
