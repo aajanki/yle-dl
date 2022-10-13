@@ -355,6 +355,7 @@ def test_print_metadata(simple):
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
             'title': 'Test clip: S01E01-2018-07-01T00:00',
+            'episode_title': '',
             'flavors': [
                 {
                     'media_type': 'video',
@@ -425,6 +426,7 @@ def test_print_metadata_incomplete(simple):
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
             'title': 'Test clip: S01E01-2018-07-01T00:00',
+            'episode_title': '',
             'flavors': [
                 {
                     'media_type': 'video',
@@ -477,6 +479,7 @@ def test_print_metadata_failed_clip(simple):
                     'error': failed_clip().flavors[0].streams[0].error_message
                 }
             ],
+            'episode_title': '',
             'embedded_subtitles': [],
             'subtitles': []
         }

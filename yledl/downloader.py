@@ -423,7 +423,7 @@ class YleDlDownloader:
             xset('user.dublincore.description', metadata['description'])
         if metadata.get('publish_timestamp'):
             xset('user.dublincore.date', metadata['publish_timestamp'][:10])
-        if metadata.get('title'):
-            xset('user.dublincore.title', metadata['title'])
+        if metadata.get('episode_title'):
+            xset('user.dublincore.title', metadata['episode_title'])
         if metadata.get('webpage'):
             xset('user.xdg.referrer.url', metadata['webpage'])

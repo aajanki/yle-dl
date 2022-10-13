@@ -26,13 +26,14 @@ from requests import HTTPError
 from typing import List, Optional
 from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
+from .http import update_url_query
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, FailedFlavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp, format_finnish_short_weekday_and_date
+from .titleformatter import TitleFormatter
 from .subtitles import Subtitle, EmbeddedSubtitle
-from .http import update_url_query
 
 
 logger = logging.getLogger('yledl')
@@ -94,6 +95,7 @@ class Clip:
     webpage: str
     flavors: list = attr.field(factory=list)
     title: str = attr.field(default='')
+    episode_title: str = attr.field(default='')
     description: Optional[str] = attr.field(default=None)
     duration_seconds: Optional[int] = attr.field(default=None,
                                                  converter=attr.converters.optional(int))
@@ -112,6 +114,7 @@ class Clip:
             ('program_id', self.program_id),
             ('webpage', self.webpage),
             ('title', self.title),
+            ('episode_title', self.episode_title),
             ('description', self.description),
             ('filename', self.meta_file_name(self.flavors, io)),
             ('flavors', flavors_meta),
@@ -207,6 +210,7 @@ class FailedClip(Clip):
 class AreenaApiProgramInfo:
     media_id: str
     title: str
+    episode_title: str
     description: Optional[str]
     flavors: List[StreamFlavor]
     embedded_subtitles: List[EmbeddedSubtitle]
@@ -704,6 +708,7 @@ class AreenaExtractor(ClipExtractor):
                 webpage=pageurl,
                 flavors=program_info.flavors,
                 title=program_info.title,
+                episode_title=program_info.episode_title,
                 description=program_info.description,
                 duration_seconds=program_info.duration_seconds,
                 region=program_info.available_at_region,
@@ -833,6 +838,8 @@ class AreenaExtractor(ClipExtractor):
             season_and_episode.update(self.extract_season_number(pageurl))
         title_params.update(season_and_episode)
         title = title_formatter.format(**title_params) or 'areena'
+        simple_formatter = TitleFormatter('${series_separator}${title}')
+        episode_title = simple_formatter.format(**title_params)
         media_id = preview.media_id()
         download_url = self.ignore_invalid_download_url(preview.media_url())
         if self.is_html5_media(media_id):
@@ -851,6 +858,7 @@ class AreenaExtractor(ClipExtractor):
         return AreenaApiProgramInfo(
             media_id=media_id,
             title=title,
+            episode_title=episode_title,
             description=preview.description(self.language_chooser),
             flavors=self.media_flavors(media_id, preview.manifest_url(),
                                        download_url, kaltura_flavors,
