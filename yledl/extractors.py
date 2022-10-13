@@ -190,20 +190,8 @@ class Clip:
 
 
 class FailedClip(Clip):
-    def __init__(self, webpage, error_message, title=None, description=None,
-                 duration_seconds=None, region=None, publish_timestamp=None,
-                 expiration_timestamp=None, program_id=None):
-        Clip.__init__(
-            self,
-            webpage=webpage,
-            flavors=[FailedFlavor(error_message)],
-            title=title,
-            description=description,
-            duration_seconds=duration_seconds,
-            region=region,
-            publish_timestamp=publish_timestamp,
-            expiration_timestamp=expiration_timestamp,
-            program_id=program_id)
+    def __init__(self, webpage, error_message, **kwargs):
+        super().__init__(webpage=webpage, flavors=[FailedFlavor(error_message)], **kwargs)
 
 
 @attr.frozen

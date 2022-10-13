@@ -479,6 +479,8 @@ def test_print_metadata_failed_clip(simple):
                     'error': failed_clip().flavors[0].streams[0].error_message
                 }
             ],
+            'region': 'Finland',
+            'title': '',
             'episode_title': '',
             'embedded_subtitles': [],
             'subtitles': []
