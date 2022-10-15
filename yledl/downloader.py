@@ -65,7 +65,8 @@ class YleDlDownloader:
 
         overall_status = RD_SUCCESS
         for clip_url in playlist:
-            res = self.download_with_retry(clip_url, extractor, filters, io, max_retry_count=3)
+            res = self.download_with_retry(
+                clip_url, base_url, extractor, filters, io, max_retry_count=3)
             if res != RD_SUCCESS and overall_status != RD_FAILED:
                 overall_status = res
 
@@ -86,7 +87,7 @@ class YleDlDownloader:
 
         # Can pipe one stream only. Drop other streams if there are more than one.
         clip_url = playlist[0]
-        clip = extractor.extract_clip(clip_url)
+        clip = extractor.extract_clip(clip_url, base_url)
         return self.pipe_first_available_stream(clip, filters, io)
 
     def get_urls(self, base_url, io, filters):
@@ -132,7 +133,7 @@ class YleDlDownloader:
 
         return extractor.get_playlist(base_url)
 
-    def download_with_retry(self, clip_url, extractor, filters, io, max_retry_count):
+    def download_with_retry(self, clip_url, base_url, extractor, filters, io, max_retry_count):
         attempt = 0
         if max_retry_count < 0:
             max_retry_count = 0
@@ -142,7 +143,7 @@ class YleDlDownloader:
             if attempt > 0:
                 logger.info(f'Retry attempt {attempt} of {max_retry_count}')
 
-            clip = extractor.extract_clip(clip_url)
+            clip = extractor.extract_clip(clip_url, base_url)
             try:
                 latest_result = self.download_first_available_stream(clip, filters, io)
             except TransientDownloadError as ex:
@@ -206,7 +207,7 @@ class YleDlDownloader:
         if dl_result == RD_SUCCESS:
             self.log_output_file(outputfile, True)
             if io.xattr:
-                self.set_extended_file_attributes(outputfile, clip.metadata(io))
+                self.set_extended_file_attributes(outputfile, clip.metadata(io), clip.origin_url)
             self.postprocess(io.postprocess_command, outputfile, [])
 
         return dl_result
@@ -408,7 +409,7 @@ class YleDlDownloader:
             preferred_lang = url_language(url)
         return TranslationChooser([preferred_lang])
 
-    def set_extended_file_attributes(self, filename, metadata):
+    def set_extended_file_attributes(self, filename, metadata, referrer_url):
         def xset(name, value_str):
             xa.set(name, value_str.encode('utf-8')[:64*1024])
 
@@ -425,5 +426,9 @@ class YleDlDownloader:
             xset('user.dublincore.date', metadata['publish_timestamp'][:10])
         if metadata.get('episode_title'):
             xset('user.dublincore.title', metadata['episode_title'])
+        if referrer_url:
+            # the requested URL
+            xset('user.xdg.referrer.url', referrer_url)
         if metadata.get('webpage'):
-            xset('user.xdg.referrer.url', metadata['webpage'])
+            # the final URL
+            xset('user.xdg.origin.url', metadata['webpage'])

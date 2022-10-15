@@ -105,6 +105,7 @@ class Clip:
     embedded_subtitles: List = attr.field(factory=list)
     subtitles: List = attr.field(factory=list)
     program_id: Optional[str] = attr.field(default=None)
+    origin_url: Optional[str] = attr.field(default=None)
 
     def metadata(self, io):
         flavors_meta = sorted(
@@ -245,12 +246,12 @@ class ClipExtractor:
 
     def extract(self, url, latest_only):
         playlist = self.get_playlist(url, latest_only)
-        return (self.extract_clip(clipurl) for clipurl in playlist)
+        return (self.extract_clip(clipurl, url) for clipurl in playlist)
 
     def get_playlist(self, url, latest_only=False):
         return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
 
-    def extract_clip(self, url):
+    def extract_clip(self, url, origin_url):
         raise NotImplementedError("extract_clip must be overridden")
 
 
@@ -633,11 +634,11 @@ class AreenaExtractor(ClipExtractor):
         self.title_formatter = title_formatter
         self.ffprobe = ffprobe
 
-    def extract_clip(self, clip_url):
+    def extract_clip(self, clip_url, origin_url):
         pid = self.program_id_from_url(clip_url)
         program_info = self.program_info_for_pid(
             pid, clip_url, self.title_formatter, self.ffprobe)
-        return self.create_clip_or_failure(pid, program_info, clip_url)
+        return self.create_clip_or_failure(pid, program_info, clip_url, origin_url)
 
     def program_id_from_url(self, url):
         parsed = urlparse(url)
@@ -648,16 +649,16 @@ class AreenaExtractor(ClipExtractor):
         else:
             return parsed.path.split('/')[-1]
 
-    def create_clip_or_failure(self, pid, program_info, url):
+    def create_clip_or_failure(self, pid, program_info, url, origin_url):
         if not pid:
             return FailedClip(url, 'Failed to parse a program ID')
 
         if not program_info:
             return FailedClip(url, 'Failed to download program data', program_id=pid)
 
-        return self.create_clip(pid, program_info, url)
+        return self.create_clip(pid, program_info, url, origin_url)
 
-    def create_clip(self, program_id, program_info, pageurl):
+    def create_clip(self, program_id, program_info, pageurl, origin_url):
         if program_info.flavors:
             all_streams = list(itertools.chain.from_iterable(
                 fl.streams for fl in program_info.flavors))
@@ -704,7 +705,8 @@ class AreenaExtractor(ClipExtractor):
                 expiration_timestamp=program_info.expiration_timestamp,
                 embedded_subtitles=program_info.embedded_subtitles,
                 subtitles=program_info.subtitles,
-                program_id=program_id)
+                program_id=program_id,
+                origin_url=origin_url)
 
     def media_flavors(self, media_id, hls_manifest_url,
                       download_url, kaltura_flavors,

@@ -49,7 +49,7 @@ class MockExtractor:
     def get_playlist(self, url, latest_only=False):
         return list(self.clips_by_url.keys())
 
-    def extract_clip(self, url):
+    def extract_clip(self, url, origin_url):
         return self.clips_by_url[url]
 
 
