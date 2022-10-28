@@ -1,13 +1,15 @@
-Apuohjelma videoiden lataamiseen Yle Areenasta
-Copyright (C) 2010-2022 Antti Ajanki, antti.ajanki@iki.fi
-Ohjelmistolisenssi: GPL v3 tai myöhempi
-Kotisivu: https://aajanki.github.io/yle-dl/
-Lähdekoodi: https://github.com/aajanki/yle-dl
+yle-dl on apuohjelma tiedostojen lataamiseen
+[Yle Areenasta](https://areena.yle.fi),
+[Elävästä arkistosta](http://yle.fi/aihe/elava-arkisto) ja
+[Ylen uutissivustolta](http://yle.fi/uutiset/).
 
-yle-dl on apuohjelma tiedostojen lataamiseen Yle Areenasta
-(https://areena.yle.fi), Elävästä arkistosta
-(http://yle.fi/aihe/elava-arkisto) ja Ylen uutissivustolta
-(http://yle.fi/uutiset/).
+Copyright (C) 2010-2022 Antti Ajanki, antti.ajanki@iki.fi
+
+Ohjelmistolisenssi: GPL v3 tai myöhempi
+
+Kotisivu: https://aajanki.github.io/yle-dl/
+
+Lähdekoodi: https://github.com/aajanki/yle-dl
 
 Asennusohjeet
 -------------
@@ -32,12 +34,16 @@ Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
 Asenna seuraavaksi yle-dl joko asentamalla esikäännetty paketti (ei
 vaadi lähdekoodien lataamista):
 
+```shell
 pip3 install --user --upgrade yle-dl
+```
 
 tai lataamalla lähdekoodit ja ajamalla seuraava komento
 lähdekoodihakemistossa:
 
+```shell
 pip3 install --user .
+```
 
 ### 3. Lisää tarvittaessa hakemisto hakupolulle
 
@@ -55,11 +61,15 @@ echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 Käyttö
 ------
 
+```
 yle-dl [valitsimet] URL
+```
 
 tai
 
+```
 yle-dl [valitsimet] -i tiedosto
+```
 
 
 Korvaa URL webbi-osoitteella, missä ladatavaa ohjelmaa voisi katsoa
@@ -68,28 +78,24 @@ arkiston osoite.
 
 Valitsimet:
 
--o filename     Tallenna striimi nimettyyn tiedostoon
--i filename     Lue käsiteltävät URLit tiedostosta, yksi URL per rivi
---latestepisode Lataa viimeisimmän jakson sivulta
---showurl       Tulostaa videon URL, ei lataa tiedostoa
---showtitle     Tulostaa ohjelman nimen, ei lataa tiedostoa
---showmetadata  Tulostaa metatietoja ohjelmasta. Katso docs/metadata.md
---vfat          Tuota Windows-yhteensopivia tiedoston nimiä
---sublang lan   Jätä tekstitykset lataamatta, jos lang on "none"
---resolution r  Rajoita ladattavan striimin pystyresoluutiota
---maxbitrate br Rajoita ladattavan striimin bittinopeutta (kB/s)
---postprocess c Suorita ohjelma c onnistuneen latauksen jälkeen.
-                Ohjelmalle c annetaan parametriksi ladatun videotiedoston nimi
-                ja mahdollisten tekstitystiedostojen nimet.
---proxy uri     Käytä HTTP(S)-proxyä. Esimerkki: --proxy localhost:8118
---destdir dir   Aseta hakemisto mihin tiedostot tallennetaan
---pipe          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
--V, --verbose   Tulosta enemmän tietoja latauksen etenemisestä
+* `-o filename`     Tallenna striimi nimettyyn tiedostoon
+* `-i filename`     Lue käsiteltävät URLit tiedostosta, yksi URL per rivi
+* `--latestepisode` Lataa viimeisimmän jakson sivulta
+* `--showurl`       Tulostaa videon URL, ei lataa tiedostoa
+* `--showtitle`     Tulostaa ohjelman nimen, ei lataa tiedostoa
+* `--showmetadata`  Tulostaa metatietoja ohjelmasta. Katso docs/metadata.md
+* `--vfat`          Tuota Windows-yhteensopivia tiedoston nimiä
+* `--sublang lan`   Jätä tekstitykset lataamatta, jos lang on "none"
+* `--resolution r`  Rajoita ladattavan striimin pystyresoluutiota
+* `--maxbitrate br` Rajoita ladattavan striimin bittinopeutta (kB/s)
+* `--postprocess c` Suorita ohjelma c onnistuneen latauksen jälkeen. Ohjelmalle c annetaan parametriksi ladatun videotiedoston nimi ja mahdollisten tekstitystiedostojen nimet.
+* `--proxy uri`     Käytä HTTP(S)-proxyä. Esimerkki: --proxy localhost:8118
+* `--destdir dir`   Aseta hakemisto mihin tiedostot tallennetaan
+* `--pipe`          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
+* `-V`, `--verbose` Tulosta enemmän tietoja latauksen etenemisestä
 
 Luettelon mahdollisista valitsimista (englanniksi) näkee
-komentamalla
-
-yle-dl --help
+komentamalla `yle-dl --help`.
 
 Lataaminen SOCKS5-proxyn kautta on mahdollista käyttämällä
 tsocks-ohjelmaa.
@@ -98,22 +104,32 @@ tsocks-ohjelmaa.
 Suorien TV-lähetysten tallentaminen
 -----------------------------------
 
+```
 yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+```
 
+```
 yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+```
 
+```
 yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+```
 
 
 Tallenna tunti (eli 3600 sekuntia) sitten TV1:llä näytettyä lähetystä:
 
+```
 yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
+```
 
 
 libav:n käyttö ffmpegin sijaan
 ------------------------------
 
+```
 yle-dl --ffmpeg avconv --ffprobe avprobe ...
+```
 
 
 Asetustiedosto
@@ -139,14 +155,18 @@ https://aajanki.github.io/yle-dl/#packages
 Integraatiotestien ajaminen
 ---------------------------
 
+```
 pytest-3
+```
 
 Jotkin testit onnistuvat vain suomalaisesta IP-osoitteesta, koska osa
 Areenan videoista on saatavilla vain Suomessa. Oletuksena tällaiset
 testit jätetään suorittamatta. Ajaaksesi myös nämä testit käytä
 "--geoblocked"-vipua:
 
+```
 pytest-3 --geoblocked
+```
 
 
 Esimerkkejä
@@ -154,21 +174,31 @@ Esimerkkejä
 
 Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
 
-  yle-dl https://areena.yle.fi/1-787136
+```
+yle-dl https://areena.yle.fi/1-787136
+```
 
 Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 
-  yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
+```
+yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
+```
 
 Ohjelman lataaminen tiedostoon rikos_ja_rakkaus.mkv:
 
-  yle-dl https://areena.yle.fi/1-1907797 -o rikos_ja_rakkaus.mkv
+```
+yle-dl https://areena.yle.fi/1-1907797 -o rikos_ja_rakkaus.mkv
+```
 
 Toistaminen suoraan videotoistimessa:
 
-  yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache=1000 --slang=fi -
+```
+yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache=1000 --slang=fi -
+```
 
 Ladatun tiedoston jatkokäsitteleminen skriptillä (katso esimerkki
 scripts/muxmp4-tiedostossa):
 
-  yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
+```
+yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
+```
