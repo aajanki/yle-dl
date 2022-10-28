@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   lint:
     docker:
-      - image: cimg/python:3.10
+      - image: cimg/python:3.11
     steps:
       - checkout
       - run:
@@ -57,4 +57,4 @@ workflows:
             - lint
           matrix:
               parameters:
-                  pyversion: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+                  pyversion: ["3.6", "3.7", "3.8", "3.9", "3.10", "3.11"]
