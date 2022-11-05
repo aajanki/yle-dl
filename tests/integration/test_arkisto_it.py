@@ -38,7 +38,7 @@ def test_arkisto_a_stream_url():
     streamurl = fetch_stream_url('https://yle.fi/aihe/a/20-10001712')
 
     assert len(streamurl) >= 2
-    assert all(('/a.m3u8' in url or '/a.mp3' in url) for url in streamurl)
+    assert all(('.m3u8' in url or '.mp3' in url) for url in streamurl)
 
 
 def test_arkisto_regression():
