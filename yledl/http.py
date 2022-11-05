@@ -132,8 +132,6 @@ class HttpClient:
     def yledl_headers(self):
         headers = requests.utils.default_headers()
         headers.update({'User-Agent': yledl_user_agent()})
-        if self.x_forwarded_for:
-            headers.update({'X-Forwarded-For': self.x_forwarded_for})
         return headers
 
 
