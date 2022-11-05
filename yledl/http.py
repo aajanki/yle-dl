@@ -31,7 +31,6 @@ logger = logging.getLogger('yledl')
 class HttpClient:
     def __init__(self, io):
         self._session = self._create_session(io.proxy)
-        self.x_forwarded_for = io.x_forwarded_for
 
     def _create_session(self, proxy):
         session = requests.Session()
@@ -89,7 +88,7 @@ class HttpClient:
         encoded_filename = destination_filename.encode(enc, 'replace')
         logger.debug(f'HTTP GET {url}')
         with open(encoded_filename, 'wb') as output:
-            r = requests.get(url, headers=self.yledl_headers(), stream=True, timeout=20)
+            r = requests.get(url, headers=yledl_headers(), stream=True, timeout=20)
             r.raise_for_status()
             for chunk in r.iter_content(chunk_size=4096):
                 output.write(chunk)
@@ -100,7 +99,7 @@ class HttpClient:
         if '#' in url:
             url = url[:url.find('#')]
 
-        headers = self.yledl_headers()
+        headers = yledl_headers()
         if extra_headers:
             headers.update(extra_headers)
 
@@ -115,7 +114,7 @@ class HttpClient:
         return r
 
     def post(self, url, json_data, extra_headers=None):
-        headers = self.yledl_headers()
+        headers = yledl_headers()
         if extra_headers:
             headers.update(extra_headers)
 
@@ -129,10 +128,11 @@ class HttpClient:
 
         return r
 
-    def yledl_headers(self):
-        headers = requests.utils.default_headers()
-        headers.update({'User-Agent': yledl_user_agent()})
-        return headers
+
+def yledl_headers():
+    headers = requests.utils.default_headers()
+    headers.update({'User-Agent': yledl_user_agent()})
+    return headers
 
 
 def yledl_user_agent():
