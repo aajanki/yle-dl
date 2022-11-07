@@ -138,16 +138,14 @@ def test_radio_episodes_sort_order_latest_first_source():
 
 
 def test_radio_latest():
-    # Test fetching the latest radio episode and also implicitly that
-    # getting the latest episode is fast even though there are
-    # hundreds of news episodes.
+    # Test fetching the latest radio episode.
     filters = StreamFilters(latest_only=True)
-    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-1440981', filters)
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-4442351', filters)
 
     assert len(metadata) == 1
 
     publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
-    assert publish_date >= datetime(2021, 1, 1)
+    assert publish_date >= datetime(2022, 8, 7)
 
 
 def test_radio_return_empty_list_if_there_are_no_episodes():
