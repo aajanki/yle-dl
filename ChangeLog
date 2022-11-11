@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20221111
 
 - Fixed some geo-blocking related failures
 
