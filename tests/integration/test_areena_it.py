@@ -135,6 +135,13 @@ def test_areena_episode_pages():
     assert len(episodes) > 20
 
 
+def test_areena_episode_pages_swedish():
+    # Regression test for #336
+    episodes = fetch_episode_pages('https://arenan.yle.fi/1-4583749')
+
+    assert len(episodes) > 20
+
+
 def test_areena_season_id():
     # An Areena TV URL can point to either a series or a season.
     #
@@ -199,7 +206,7 @@ def test_areena_latest_episode_no_seasons():
     assert publish_date >= datetime(2022, 7, 12)
 
 
-def test_package_page():
+def test_areena_package_page():
     # This is a "package" type page
     episodes = fetch_episode_pages('https://areena.yle.fi/tv/ohjelmat/30-1774')
 

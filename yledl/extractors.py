@@ -319,7 +319,7 @@ class AreenaPlaylistParser:
         if next_data_tag:
             next_data = json.loads(next_data_tag[0].text)
             tabs = next_data.get('props', {}).get('pageProps', {}).get('view', {}).get('tabs', [])
-            episodes_tab = [tab for tab in tabs if tab.get('title') == 'Jaksot']
+            episodes_tab = [tab for tab in tabs if tab.get('title') in ['Jaksot', 'Avsnitt']]
             if episodes_tab:
                 episodes_content = episodes_tab[0].get('content', [])
                 if episodes_content:
@@ -355,7 +355,7 @@ class AreenaPlaylistParser:
             state_str = state_tag[0].text
             data = json.loads(state_str.split('=', 1)[-1].strip())
             tabs = data.get('viewStore', {}).get('viewPageView', {}).get('tabs', [])
-            tabs = [t for t in tabs if t.get('title') == 'Jaksot']
+            tabs = [t for t in tabs if t.get('title') in ['Jaksot', 'Avsnitt']]
             if tabs:
                 all_content = tabs[0].get('allContent')
                 if all_content:
