@@ -156,11 +156,23 @@ def test_areena_season_id():
     assert len(episodes) > 20
 
 
-def test_areena_episodes_sort_order():
+def test_areena_sort_by_season_episode():
+    # These clips have season and episode numbers
     metadata = fetch_metadata('https://areena.yle.fi/1-4530023')
 
     # Should be sorted from oldest to newest
     timestamps = [x['publish_timestamp'] for x in metadata]
+    assert len(timestamps) > 1
+    assert timestamps == sorted(timestamps)
+
+
+def test_areena_sort_by_timestamp():
+    # These clips do not have episode numbers but do not timestamps
+    metadata = fetch_metadata('https://areena.yle.fi/1-3863205')
+
+    # Should be sorted from oldest to newest
+    timestamps = [x['publish_timestamp'] for x in metadata]
+
     assert len(timestamps) > 1
     assert timestamps == sorted(timestamps)
 

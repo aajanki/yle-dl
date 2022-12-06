@@ -372,7 +372,16 @@ class AreenaPlaylistParser:
 
         playlist = self._download_playlist(season_urls)
 
-        # The Areena API might return episodes in wrong order
+        # We can't control whether Areena API returns episodes in
+        # ascending or descending order. Additionally, metadata
+        # contains only the date (not hours or minutes) so it's not
+        # possible to sort intra-day episodes properly. This is a hack
+        # that tries to sort intra-day episodes in ascending order.
+        # For example: https://areena.yle.fi/1-3863205
+        if self._is_descending_date_based_playlist(playlist):
+            playlist = reversed(playlist)
+
+        # Sort in ascending order: first by episode number, then by date
         playlist = sorted(playlist, key=lambda x: x.sort_key())
 
         # The episode API doesn't seem to have any way to download only the
@@ -382,6 +391,19 @@ class AreenaPlaylistParser:
             playlist = playlist[-1:]
 
         return [x.uri for x in playlist]
+
+    def _is_descending_date_based_playlist(self, playlist):
+        if not all(p.episode_number is None for p in playlist):
+            return False
+
+        prev_ts = None
+        for p in playlist:
+            if prev_ts is not None and p.release_date is not None and p.release_date < prev_ts:
+                return True
+
+            prev_ts = p.release_date
+
+        return False
 
     def _download_playlist(self, season_urls):
         playlist = []
