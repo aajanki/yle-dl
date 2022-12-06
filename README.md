@@ -16,8 +16,8 @@ services of the Finnish national broadcasting company Yle: [Yle
 Areena], [Elävä Arkisto] and [Yle news].
 
 [Yle Areena]:https://areena.yle.fi/
-[Elävä arkisto]:http://yle.fi/aihe/elava-arkisto
-[Yle news]:http://yle.fi/uutiset/
+[Elävä arkisto]:https://yle.fi/aihe/elava-arkisto
+[Yle news]:https://yle.fi/
 
 Installation
 ------------
@@ -183,7 +183,7 @@ yle-dl https://areena.yle.fi/1-787136
 or from Elävä Arkisto:
 
 ```
-yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
+yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
 Save a stream to a file called video.mkv:

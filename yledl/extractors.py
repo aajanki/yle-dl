@@ -50,7 +50,7 @@ def extractor_factory(url, language_chooser, httpclient, title_formatter, ffprob
           re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
         logger.debug(f'{url} is a live radio URL')
         return AreenaLiveRadioExtractor(language_chooser, httpclient, title_formatter, ffprobe)
-    elif re.match(r'^https?://yle\.fi/(uutiset|urheilu|saa)/', url):
+    elif re.match(r'^https?://yle\.fi/(a|uutiset|urheilu|saa)/', url):
         logger.debug(f'{url} is a news URL')
         return YleUutisetExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or

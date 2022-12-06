@@ -1,7 +1,7 @@
 yle-dl on apuohjelma tiedostojen lataamiseen
 [Yle Areenasta](https://areena.yle.fi),
-[Elävästä arkistosta](http://yle.fi/aihe/elava-arkisto) ja
-[Ylen uutissivustolta](http://yle.fi/uutiset/).
+[Elävästä arkistosta](https://yle.fi/aihe/elava-arkisto) ja
+[Ylen uutissivustolta](https://yle.fi/).
 
 Copyright (C) 2010-2022 Antti Ajanki, antti.ajanki@iki.fi
 
@@ -181,7 +181,7 @@ yle-dl https://areena.yle.fi/1-787136
 Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
 
 ```
-yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
+yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
 Ohjelman lataaminen tiedostoon rikos_ja_rakkaus.mkv:

@@ -118,7 +118,7 @@ yle-dl https://areena.yle.fi/1-787136
 eller samma från arkivet:
 
 ```
-yle-dl http://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
+yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
 Spara en stream till en videofil med namn video.mkv:
