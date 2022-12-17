@@ -419,16 +419,20 @@ class YleDlDownloader:
             logger.warning("xattr not installed. Extended file attributes won't be set")
             return
 
-        xa = xattr(filename)
-        if metadata.get('description'):
-            xset('user.dublincore.description', metadata['description'])
-        if metadata.get('publish_timestamp'):
-            xset('user.dublincore.date', metadata['publish_timestamp'][:10])
-        if metadata.get('episode_title'):
-            xset('user.dublincore.title', metadata['episode_title'])
-        if referrer_url:
-            # the requested URL
-            xset('user.xdg.referrer.url', referrer_url)
-        if metadata.get('webpage'):
-            # the final URL
-            xset('user.xdg.origin.url', metadata['webpage'])
+        try:
+            xa = xattr(filename)
+            if metadata.get('description'):
+                xset('user.dublincore.description', metadata['description'])
+            if metadata.get('publish_timestamp'):
+                xset('user.dublincore.date', metadata['publish_timestamp'][:10])
+            if metadata.get('episode_title'):
+                xset('user.dublincore.title', metadata['episode_title'])
+            if referrer_url:
+                # the requested URL
+                xset('user.xdg.referrer.url', referrer_url)
+            if metadata.get('webpage'):
+                # the final URL
+                xset('user.xdg.origin.url', metadata['webpage'])
+        except OSError as exc:
+            logger.warning("File system doesn't seem to support extended attributes")
+            logger.debug(f'OSError while setting xattr: {exc.strerror}')
