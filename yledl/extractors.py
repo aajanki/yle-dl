@@ -239,6 +239,9 @@ class EpisodeMetadata:
             self.release_date or datetime(1970, 1, 1, 0, 0, 0)
         )
 
+    def with_episode_number(self, ep):
+        return EpisodeMetadata(self.uri, self.season_number, ep, self.release_date)
+
 
 class ClipExtractor:
     def __init__(self, httpclient):
@@ -372,6 +375,11 @@ class AreenaPlaylistParser:
 
         playlist = self._download_playlist(season_urls)
 
+        # Heuristics: If most episodes do not have an episode number,
+        # use time-based sorting.
+        if self._episode_numbers_are_rare(playlist) and self._timestamps_are_common(playlist):
+            playlist = [x.with_episode_number(None) for x in playlist]
+
         # We can't control whether Areena API returns episodes in
         # ascending or descending order. Additionally, metadata
         # contains only the date (not hours or minutes) so it's not
@@ -391,6 +399,14 @@ class AreenaPlaylistParser:
             playlist = playlist[-1:]
 
         return [x.uri for x in playlist]
+
+    def _episode_numbers_are_rare(self, playlist):
+        num_has_episode = sum(p.episode_number is not None for p in playlist)
+        return num_has_episode < 0.5 * len(playlist)
+
+    def _timestamps_are_common(self, playlist):
+        num_has_timestamp = sum(p.release_date is not None for p in playlist)
+        return num_has_timestamp > 0.8 * len(playlist)
 
     def _is_descending_date_based_playlist(self, playlist):
         if not all(p.episode_number is None for p in playlist):

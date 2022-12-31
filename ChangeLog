@@ -6,7 +6,7 @@ Distributed under the GPL v3 or later
 
 - Full series download on Swedish language arenan.yle.fi fixed
 - Downloading news clips from yle.fi (in addition to yle.fi/uutiset/)
-- Episodes were sometimes sorted incorrectly
+- Improved episode sorting when several episodes are published on the same day
 
 Version 20221111
 

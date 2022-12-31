@@ -167,7 +167,8 @@ def test_areena_sort_by_season_episode():
 
 
 def test_areena_sort_by_timestamp():
-    # These clips do not have episode numbers but do not timestamps
+    # Most of these clips have a timestamp (but not all do).
+    # Most clips do not have an episode number (but some do).
     metadata = fetch_metadata('https://areena.yle.fi/1-3863205')
 
     # Should be sorted from oldest to newest
