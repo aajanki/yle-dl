@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2022 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20221231
 
 - Full series download on Swedish language arenan.yle.fi fixed
 - Downloading news clips from yle.fi (in addition to yle.fi/uutiset/)
