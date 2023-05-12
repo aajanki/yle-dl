@@ -1038,9 +1038,9 @@ class YleUutisetExtractor(AreenaExtractor):
             return []
 
         data_ids = []
-        article = state.get('article', {}).get('article', {})
+        article = state.get('pageData', {}).get('article', {})
         if article.get('mainMedia') is not None:
-            medias = article.get('mainMedia', [])
+            medias = article['mainMedia']
             data_ids = [m.get('id') for m in medias if m.get('type') == 'VideoBlock']
         else:
             headline_video_id = article.get('headline', {}).get('video', {}).get('id')

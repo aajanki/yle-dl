@@ -46,7 +46,7 @@ def test_uutiset_headline_metadata():
 
     assert len(metadata) == 1
     assert metadata[0]['webpage'] == 'https://areena.yle.fi/1-61842917'
-    assert metadata[0]['title'].startswith('Uutisvideot: Presidentti Sauli Niinistö')
+    assert metadata[0]['title'].startswith('Uutisvideot 2022: Presidentti Sauli Niinistö')
     assert metadata[0]['duration_seconds'] == 49
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2022-02-22T14:36:36+02:00'
