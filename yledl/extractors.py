@@ -778,7 +778,7 @@ class AreenaExtractor(ClipExtractor):
             logger.debug('Detected an HTML5 media')
             return (kaltura_flavors or
                     self.hls_probe_flavors(hls_manifest_url, False, ffprobe))
-        elif self.is_media_67(media_id):
+        elif self.is_media_67(media_id) or self.is_media_78(media_id):
             return []
         else:
             return [FailedFlavor('Unknown stream flavor')]
@@ -792,6 +792,10 @@ class AreenaExtractor(ClipExtractor):
     def is_media_67(self, media_id):
         # A new hosting alternative (June 2021)? Hosted on yleawsmpodamdipv4.akamaized.net
         return media_id and media_id.startswith('67-')
+
+    def is_media_78(self, media_id):
+        # Podcast streams (Spring 2023). Prefer download_url, no extra flavors here.
+        return media_id and media_id.startswith('78-')
 
     def is_live_media(self, media_id):
         return media_id and media_id.startswith('10-')

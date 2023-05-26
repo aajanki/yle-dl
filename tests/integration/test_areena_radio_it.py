@@ -117,6 +117,18 @@ def test_radio_metadata_2020():
     assert len(metadata[0]['description']) > 150
 
 
+def test_radio_metadata_media_id_78():
+    # This has a media_id starting with 78-
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-65772446')
+
+    assert len(metadata) == 1
+    assert len(metadata[0]['flavors']) >= 1
+    assert not any('error' in fl for fl in metadata[0]['flavors'])
+    assert metadata[0]['flavors'][0]['media_type'] == 'audio'
+    assert metadata[0]['duration_seconds'] == 1769
+    assert len(metadata[0]['description']) > 150
+
+
 def test_radio_episodes_sort_order_latest_last_source():
     # This page lists episodes in the latest-last order
     metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-50375734')
