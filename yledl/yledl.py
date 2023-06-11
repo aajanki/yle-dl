@@ -3,7 +3,7 @@
 """
 yle-dl - download videos from Yle servers
 
-Copyright (C) 2010-2022 Antti Ajanki <antti.ajanki@iki.fi>
+Copyright (C) 2010-2023 Antti Ajanki <antti.ajanki@iki.fi>
 
 This script downloads video and audio streams from Yle Areena
 (https://areena.yle.fi) and Elävä Arkisto
@@ -84,7 +84,7 @@ def arg_parser():
 
     description = (
         f'yle-dl {__version__}: Download media files from Yle Areena and Elävä Arkisto\n'
-        'Copyright (C) 2009-2022 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
+        'Copyright (C) 2009-2023 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
     )
 
     parser = ArgumentParserEncoded(

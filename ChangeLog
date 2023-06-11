@@ -1,10 +1,11 @@
 yle-dl - download videos from Yle servers
-Copyright 2009-2022 Antti Ajanki
+Copyright 2009-2023 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20230611
 
 - Fixed news clip downloading after changes to the Yle news site
+- The download URL for a new flavor of podcasts was incorrect
 
 Version 20221231
 
