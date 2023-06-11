@@ -20,7 +20,7 @@ Link the new release on the gh-pages:
 ```
 git checkout gh-pages
 
-# Edit index.html and index-en.html
+# Edit index.html, index-en.html and index-sv.html
 
 git commit -a
 git push
