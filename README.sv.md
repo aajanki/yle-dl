@@ -23,7 +23,7 @@ finns i filen OS-install-instructions.md.
 
 ## 1. Insatallera besittningar:
 
-* Python 3.6+
+* Python 3.7+
 * pip
 * ffmpeg (undertexter fungerar endast med ffmpeg 4.1 eller senare)
 * setuptools (om du installerar från källkoden)

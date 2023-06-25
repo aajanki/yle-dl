@@ -28,7 +28,7 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 
 ### 1. Install the dependencies ###
 
-* Python 3.6+
+* Python 3.7+
 * pip
 * ffmpeg (subtitles fully supported only on ffmpeg 4.1 or later)
 

@@ -20,7 +20,7 @@ löytyvät tiedostosta OS-install-instructions.md.
 
 ### 1. Asenna riippuvuudet:
 
-* Python 3.6+
+* Python 3.7+
 * pip
 * ffmpeg (tekstitys toimii vain ffmpegin versiolla 4.1 tai sitä uudemmilla)
 * setuptools (jos asennat lähdekoodeista)
