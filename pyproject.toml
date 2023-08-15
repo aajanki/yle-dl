@@ -43,6 +43,8 @@ yle-dl = "yledl.yledl:main"
 [project.urls]
 Home = "https://aajanki.github.io/yle-dl/"
 Source = "https://github.com/aajanki/yle-dl/"
+changelog = "https://raw.githubusercontent.com/aajanki/yle-dl/master/ChangeLog"
+issues = "https://github.com/aajanki/yle-dl/issues"
 
 [tool.flit.module]
 name = "yledl"
