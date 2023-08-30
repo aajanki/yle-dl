@@ -11,6 +11,7 @@ dependencies = [
     "lxml",
     "attrs >= 20.1.0",
     "ConfigArgParse >= 0.13.0",
+    "psutil",
     "xattr;sys_platform != \"win32\"",
 ]
 requires-python = ">=3.7"

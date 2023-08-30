@@ -28,6 +28,7 @@ import re
 import codecs
 import json
 import logging
+import os
 import os.path
 import configargparse
 from urllib.parse import urlparse, urlunparse, parse_qs, quote
@@ -37,7 +38,7 @@ from .errors import FfmpegNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .geolocation import AreenaGeoLocation
 from .http import HttpClient
-from .io import IOContext, DownloadLimits, random_elisa_ipv4
+from .io import IOContext, DownloadLimits, random_elisa_ipv4, get_filesystem_type
 from .streamfilters import StreamFilters
 from .titleformatter import TitleFormatter
 from .utils import print_enc
@@ -400,6 +401,15 @@ def main(argv=sys.argv):
     if not urls:
         parser.print_help()
         sys.exit(RD_SUCCESS)
+
+    if not args.filenames_no_specials:
+        destdir = args.destdir or os.getcwd()
+        if destdir:
+            fstype = get_filesystem_type(destdir).upper()
+            if fstype in ['VFAT', 'NTFS']:
+                logger.info(f'Automatically enabling --restrict-filename-no-specials '
+                            f'because the destination is a {fstype} filesystem')
+                args.filenames_no_specials = True
 
     excludechars = r'\"*/:<>?|' if args.filenames_no_specials else '*/|'
     if args.filenames_no_spaces:

@@ -19,9 +19,11 @@ import attr
 import ipaddress
 import logging
 import os
+import psutil
 import random
 import re
 import subprocess
+from pathlib import Path
 from typing import Optional
 from .errors import FfmpegNotFoundError
 from .ffprobe import Ffprobe
@@ -187,3 +189,32 @@ class OutputFileNameGenerator:
             return os.path.join(head, filename)
         else:
             return path
+
+
+def get_filesystem_type(dir: str) -> str:
+    """Return the name of filesystem of a directory path.
+
+    The result might be inaccurate, for example symlinks or nested mountpoints.
+
+    Sample return values: 'ext4', 'NTFS', 'vfat'. Return an empty string if
+    can't infer the filesystem.
+    """
+    parts = psutil.disk_partitions(all=True)
+    parts = sorted(parts, key=lambda p: -len(p.mountpoint))
+    for p in parts:
+        if Path(dir).is_relative_to(Path(p.mountpoint)):
+            return p.fstype
+
+    return ''
+
+
+def a_is_relative_to_b(a: Path, b: Path) -> bool:
+    """Return whether a is relative to b.
+
+    Equivalent to a.is_relative_to(b) on Python 3.9 and later.
+    """
+    try:
+        a.relative_to(b)
+        return True
+    except ValueError:
+        return False

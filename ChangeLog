@@ -5,6 +5,7 @@ Distributed under the GPL v3 or later
 <unreleased>
 
 - Require Python 3.7+
+- Try to detect if the destination filesystem requires a restricted character set
 
 Version 20230611
 
