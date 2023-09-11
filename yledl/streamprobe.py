@@ -17,7 +17,7 @@
 
 import logging
 from .backends import DASHHLSBackend
-from .streamflavor import StreamFlavor, FailedFlavor
+from .streamflavor import StreamFlavor, failed_flavor
 
 logger = logging.getLogger('yledl')
 
@@ -27,7 +27,7 @@ class FullHDFlavorProber:
         try:
             programs = ffprobe.show_programs_for_url(manifest_url)
         except ValueError as ex:
-            return [FailedFlavor(f'Failed to probe stream: {str(ex)}')]
+            return [failed_flavor(f'Failed to probe stream: {str(ex)}')]
 
         return self.programs_to_stream_flavors(programs, manifest_url, is_live)
 

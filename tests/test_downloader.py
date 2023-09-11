@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import attr
 import copy
 import logging
 import unittest.mock
 import pytest
 from collections import OrderedDict
+from dataclasses import dataclass
 from datetime import datetime
 from unittest.mock import Mock
 from utils import FixedOffset
@@ -203,10 +203,10 @@ def create_clip(flavors, title='Test clip: S01E01-2018-07-01T00:00'):
     )
 
 
-@attr.frozen
+@dataclass(frozen=True)
 class DownloaderParametersFixture:
-    io = attr.field()
-    filters = attr.field()
+    io: IOContext
+    filters: StreamFilters
 
 
 @pytest.fixture

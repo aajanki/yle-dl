@@ -17,7 +17,7 @@
 
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import Backends, FailingBackend
-from yledl.streamflavor import StreamFlavor, FailedFlavor
+from yledl.streamflavor import StreamFlavor, failed_flavor
 from yledl.titleformatter import TitleFormatter
 
 
@@ -87,16 +87,25 @@ def test_empty_input():
 
 def test_only_failed_flavors():
     failed_flavors = [
-        FailedFlavor('First failure'),
-        FailedFlavor('Second failure'),
-        FailedFlavor('Third failure')
+        failed_flavor('First failure'),
+        failed_flavor('Second failure'),
+        failed_flavor('Third failure')
     ]
 
-    assert isinstance(filter_flavors(failed_flavors), FailedFlavor)
-    assert isinstance(filter_flavors(failed_flavors, max_height=720),
-                      FailedFlavor)
-    assert isinstance(filter_flavors(failed_flavors, max_bitrate=2000),
-                      FailedFlavor)
+    res1 = filter_flavors(failed_flavors)
+    assert res1 is not None
+    assert len(res1.streams) == 1
+    assert isinstance(res1.streams[0], FailingBackend)
+
+    res2 = filter_flavors(failed_flavors, max_height=720)
+    assert res2 is not None
+    assert len(res2.streams) == 1
+    assert isinstance(res2.streams[0], FailingBackend)
+
+    res3 = filter_flavors(failed_flavors, max_bitrate=2000)
+    assert res3 is not None
+    assert len(res3.streams) == 1
+    assert isinstance(res3.streams[0], FailingBackend)
 
 
 def test_no_filters():
@@ -135,12 +144,12 @@ def test_combined_filters():
 
 def test_combined_filter_with_some_failed_flavors():
     test_flavors = [
-        FailedFlavor('Failure'),
+        failed_flavor('Failure'),
         StreamFlavor(streams=[MockBackend('ffmpeg', 2)], bitrate=190,
                      width=224, height=126, media_type=''),
         StreamFlavor(streams=[MockBackend('ffmpeg', 3)], bitrate=469,
                      width=640, height=360, media_type=''),
-        FailedFlavor('Second failure'),
+        failed_flavor('Second failure'),
         StreamFlavor(streams=[MockBackend('ffmpeg', 5)], bitrate=1506,
                      width=1280, height=720, media_type='')
     ]
@@ -154,10 +163,10 @@ def test_combined_filter_with_some_failed_flavors():
 
 def test_combined_filter_bitrate_only_and_some_failures():
     test_flavors = [
-        FailedFlavor('Failure'),
+        failed_flavor('Failure'),
         StreamFlavor(streams=[MockBackend('ffmpeg', 1)], bitrate=517,
                      media_type='video'),
-        FailedFlavor('Second failure')
+        failed_flavor('Second failure')
     ]
 
     assert backend_data(filter_flavors(test_flavors)) == [1]

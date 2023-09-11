@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import attr
 import itertools
 import json
 import logging
 import os.path
 import re
+from dataclasses import dataclass, field
 from datetime import datetime
 from requests import HTTPError
 from typing import List, Optional
@@ -29,7 +29,7 @@ from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .http import update_url_query
 from .io import OutputFileNameGenerator
 from .kaltura import YleKalturaApiClient
-from .streamflavor import StreamFlavor, FailedFlavor
+from .streamflavor import StreamFlavor, failed_flavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp, format_finnish_short_weekday_and_date
 from .titleformatter import TitleFormatter
@@ -90,22 +90,21 @@ class Flavors:
 ## Clip
 
 
-@attr.define
+@dataclass
 class Clip:
     webpage: str
-    flavors: list = attr.field(factory=list)
-    title: str = attr.field(default='')
-    episode_title: str = attr.field(default='')
-    description: Optional[str] = attr.field(default=None)
-    duration_seconds: Optional[int] = attr.field(default=None,
-                                                 converter=attr.converters.optional(int))
-    region: str = attr.field(default='Finland')
-    publish_timestamp: Optional[datetime] = attr.field(default=None)
-    expiration_timestamp: Optional[datetime] = attr.field(default=None)
-    embedded_subtitles: List = attr.field(factory=list)
-    subtitles: List = attr.field(factory=list)
-    program_id: Optional[str] = attr.field(default=None)
-    origin_url: Optional[str] = attr.field(default=None)
+    flavors: list = field(default_factory=list)
+    title: str = ''
+    episode_title: str = ''
+    description: Optional[str] = None
+    duration_seconds: Optional[int] = None
+    region: str = 'Finland'
+    publish_timestamp: Optional[datetime] = None
+    expiration_timestamp: Optional[datetime] = None
+    embedded_subtitles: List = field(default_factory=list)
+    subtitles: List = field(default_factory=list)
+    program_id: Optional[str] = None
+    origin_url: Optional[str] = None
 
     def metadata(self, io):
         flavors_meta = sorted(
@@ -192,10 +191,10 @@ class Clip:
 
 class FailedClip(Clip):
     def __init__(self, webpage, error_message, **kwargs):
-        super().__init__(webpage=webpage, flavors=[FailedFlavor(error_message)], **kwargs)
+        super().__init__(webpage=webpage, flavors=[failed_flavor(error_message)], **kwargs)
 
 
-@attr.frozen
+@dataclass(frozen=True)
 class AreenaApiProgramInfo:
     media_id: str
     title: str
@@ -212,7 +211,7 @@ class AreenaApiProgramInfo:
     expired: bool
 
 
-@attr.frozen
+@dataclass(frozen=True)
 class PlaylistData:
     base_url: str
     season_parameters: dict
@@ -225,7 +224,7 @@ class PlaylistData:
             yield self.base_url
 
 
-@attr.frozen
+@dataclass(frozen=True)
 class EpisodeMetadata:
     uri: str
     season_number: Optional[int]
@@ -772,7 +771,7 @@ class AreenaExtractor(ClipExtractor):
         if self.is_full_hd_media(media_id) or is_live:
             logger.debug('Detected a full-HD media')
             flavors = self.hls_probe_flavors(hls_manifest_url, is_live, ffprobe)
-            error = [FailedFlavor('Manifest URL is missing')]
+            error = [failed_flavor('Manifest URL is missing')]
             return flavors or error
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
@@ -781,7 +780,7 @@ class AreenaExtractor(ClipExtractor):
         elif self.is_media_67(media_id) or self.is_media_78(media_id):
             return []
         else:
-            return [FailedFlavor('Unknown stream flavor')]
+            return [failed_flavor('Unknown stream flavor')]
 
     def is_html5_media(self, media_id):
         return media_id and media_id.startswith('29-')

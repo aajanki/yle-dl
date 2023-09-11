@@ -435,9 +435,9 @@ def main(argv=sys.argv):
         subtitles=args.sublang,
         metadata_language=args.metadatalang,
         postprocess_command=args.postprocess,
-        ffmpeg_binary=args.ffmpeg,
-        ffprobe_binary=args.ffprobe,
-        wget_binary=args.wget,
+        ffmpeg_binary=args.ffmpeg or 'ffmpeg',
+        ffprobe_binary=args.ffprobe or 'ffprobe',
+        wget_binary=args.wget or 'wget',
         create_dirs=args.create_dirs,
         xattr=args.xattrs)
 

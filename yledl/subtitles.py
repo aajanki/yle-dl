@@ -15,17 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import attr
+from dataclasses import dataclass
 
 
-@attr.frozen
+@dataclass(frozen=True)
 class Subtitle:
     url: str
     lang: str
     category: str
 
 
-@attr.frozen
+@dataclass(frozen=True)
 class EmbeddedSubtitle:
     language: str
     category: str

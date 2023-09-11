@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import attr
 import logging
 import json
 import base64
+from dataclasses import dataclass
 from .backends import DASHHLSBackend, HLSAudioBackend, WgetBackend
-from .streamflavor import StreamFlavor, FailedFlavor
+from .streamflavor import StreamFlavor, failed_flavor
 from .subtitles import EmbeddedSubtitle
 
 
@@ -132,7 +132,7 @@ class YleKalturaApiClient(KalturaApiClient):
 
     def parse_stream_flavors(self, playback_context, referrer):
         if playback_context is None:
-            return [FailedFlavor('No Kaltura playback context')]
+            return [failed_flavor('No Kaltura playback context')]
 
         flavor_assets = playback_context.get('flavorAssets', {})
         sources = playback_context.get('sources', [])
@@ -234,7 +234,7 @@ class YleKalturaApiClient(KalturaApiClient):
         return profiles_filtered
 
 
-@attr.frozen
+@dataclass(frozen=True)
 class DeliveryProfile:
     flavor_id: str
     stream_format: str

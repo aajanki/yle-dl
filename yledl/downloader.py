@@ -18,7 +18,7 @@
 import copy
 import logging
 import os
-from attr import asdict
+from dataclasses import asdict
 from .errors import TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
@@ -27,7 +27,7 @@ from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory, url_language
 from .localization import TranslationChooser
 from .io import OutputFileNameGenerator
-from .streamflavor import FailedFlavor
+from .streamflavor import failed_flavor
 
 
 logger = logging.getLogger('yledl')
@@ -359,13 +359,13 @@ class YleDlDownloader:
         else:
             msg = 'Stream not found'
 
-        return FailedFlavor(msg)
+        return failed_flavor(msg)
 
     def error_flavor(self, flavors):
         for fl in flavors:
             for s in fl.streams:
                 if not s.is_valid():
-                    return FailedFlavor(s.error_message)
+                    return failed_flavor(s.error_message)
 
         return None
 
@@ -411,7 +411,7 @@ class YleDlDownloader:
 
     def set_extended_file_attributes(self, filename, metadata, referrer_url):
         def xset(name, value_str):
-            xa.set(name, value_str.encode('utf-8')[:64*1024])
+            xa.set(name, value_str.encode('utf-8')[:64 * 1024])
 
         try:
             from xattr import xattr

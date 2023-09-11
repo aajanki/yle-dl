@@ -15,24 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import attr
-from .backends import FailingBackend
+from dataclasses import dataclass, field
+from typing import List, Optional
+from .backends import BaseDownloader, FailingBackend
 
 
-@attr.define
+@dataclass
 class StreamFlavor:
-    media_type = attr.field()
-    height = attr.field(default=None, converter=attr.converters.optional(int))
-    width = attr.field(default=None, converter=attr.converters.optional(int))
-    bitrate = attr.field(default=None, converter=attr.converters.optional(int))
-    streams = attr.field(factory=list)
+    media_type: str
+    height: Optional[int] = None
+    width: Optional[int] = None
+    bitrate: Optional[int] = None
+    streams: List[BaseDownloader] = field(default_factory=list)
 
 
-class FailedFlavor(StreamFlavor):
-    def __init__(self, error_message):
-        StreamFlavor.__init__(self,
-                              media_type='unknown',
-                              height=None,
-                              width=None,
-                              bitrate=None,
-                              streams=[FailingBackend(error_message)])
+def failed_flavor(error_message: str) -> StreamFlavor:
+    return StreamFlavor(media_type='unknown', streams=[FailingBackend(error_message)])

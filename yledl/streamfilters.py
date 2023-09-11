@@ -15,18 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import attr
+from dataclasses import dataclass, field
+from typing import List, Optional
 from .backends import Backends
 
 
-@attr.frozen
+def default_backends():
+    return list(Backends.default_order)
+
+
+@dataclass(frozen=True)
 class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
-    latest_only = attr.field(default=False)
-    maxbitrate = attr.field(default=None)
-    maxheight = attr.field(default=None)
-    enabled_backends = attr.field(default=attr.Factory(
-        lambda: list(Backends.default_order)
-    ))
+    latest_only: bool = False
+    maxbitrate: Optional[int] = None
+    maxheight: Optional[int] = None
+    enabled_backends: List[str] = field(default_factory=default_backends)

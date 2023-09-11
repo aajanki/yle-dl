@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import attr
 import ipaddress
 import logging
 import os
@@ -23,6 +22,7 @@ import psutil
 import random
 import re
 import subprocess
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 from .errors import FfmpegNotFoundError
@@ -30,22 +30,6 @@ from .ffprobe import Ffprobe
 from .utils import sane_filename
 
 logger = logging.getLogger('yledl')
-
-
-def convert_download_limits(arg):
-    return arg or DownloadLimits()
-
-
-def ffmpeg_default(arg):
-    return arg or 'ffmpeg'
-
-
-def ffprobe_default(arg):
-    return arg or 'ffprobe'
-
-
-def wget_default(arg):
-    return arg or 'wget'
 
 
 def random_elisa_ipv4():
@@ -60,40 +44,35 @@ def random_ip(ip_network):
     return ipaddress.ip_address(random.choice(int_ip_range))
 
 
-@attr.define
+@dataclass
 class DownloadLimits:
     # Seek to this position (seconds) before starting the recording
-    start_position = attr.field(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(int)))
+    start_position: Optional[int] = None
     # Limit the duration of the recorded stream (seconds)
-    duration = attr.field(
-        default=None,
-        validator=attr.validators.optional(attr.validators.instance_of(int)))
+    duration: Optional[int] = None
     # Maximum download rate (int in kb/s or "best" or "worst")
-    ratelimit = attr.field(default=None)
+    ratelimit: Optional[int] = None
 
 
-@attr.define
+@dataclass
 class IOContext:
-    outputfilename: Optional[str] = attr.field(default=None)
-    preferred_format: Optional[str] = attr.field(default=None)
-    destdir: Optional[str] = attr.field(default=None)
-    resume: bool = attr.field(default=False)
-    overwrite: bool = attr.field(default=True)
-    download_limits: Optional[DownloadLimits] = attr.field(default=None,
-                                                           converter=convert_download_limits)
-    excludechars: str = attr.field(default='*/|')
-    proxy: Optional[str] = attr.field(default=None)
-    x_forwarded_for: Optional[str] = attr.field(default=None)
-    subtitles: str = attr.field(default='all')
-    metadata_language: Optional[str] = attr.field(default=None)
-    postprocess_command: Optional[str] = attr.field(default=None)
-    ffmpeg_binary: str = attr.field(default='ffmpeg', converter=ffmpeg_default)
-    ffprobe_binary: str = attr.field(default='ffprobe', converter=ffprobe_default)
-    wget_binary: str = attr.field(default='wget', converter=wget_default)
-    create_dirs: bool = attr.field(default=False)
-    xattr: bool = attr.field(default=False)
+    outputfilename: Optional[str] = None
+    preferred_format: Optional[str] = None
+    destdir: Optional[str] = None
+    resume: bool = False
+    overwrite: bool = True
+    download_limits: DownloadLimits = field(default_factory=DownloadLimits)
+    excludechars: str = '*/|'
+    proxy: Optional[str] = None
+    x_forwarded_for: Optional[str] = None
+    subtitles: str = 'all'
+    metadata_language: Optional[str] = None
+    postprocess_command: Optional[str] = None
+    ffmpeg_binary: str = 'ffmpeg'
+    ffprobe_binary: str = 'ffprobe'
+    wget_binary: str = 'wget'
+    create_dirs: bool = False
+    xattr: bool = False
 
     def ffprobe(self):
         if self.ffprobe_binary is None:
