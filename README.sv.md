@@ -24,9 +24,7 @@ finns i filen OS-install-instructions.md.
 ## 1. Insatallera besittningar:
 
 * Python 3.7+
-* pip
 * ffmpeg (undertexter fungerar endast med ffmpeg 4.1 eller senare)
-* setuptools (om du installerar från källkoden)
 
 För att ladda ner några program behövs dessutom:
 
@@ -34,32 +32,19 @@ För att ladda ner några program behövs dessutom:
 
 ## 2. Installera yle-dl
 
-Installera sedan yle-dl antingen genom att installera python paketet (kräver
-inte nerladdning av källkoden)
+1. [Installera pipx](https://pypa.github.io/pipx/)
+2. Installera yle-dl:
 
-```
-pip3 install --user --upgrade yle-dl
+```shell
+pipx install yle-dl
 ```
 
-eller genom att ladda ner källkoden och köra följande kommando:
+Ett annat alternativ är att installera från källkoden. Ladda ner
+källkoden och kör följande kommando:
 
-```
+```shell
 pip3 install --user .
 ```
-
-## 3. Lägg vid behov till installationsvägen till PATH
-
-Ifall skalet klagar på att det inte kan hitta yle-dl när du kör programmet, lägg
-till installationsvägen till din $PATH:
-
-```sh
-# Endast för aktuella sessionen
-export PATH=$PATH:$HOME/.local/bin
-
-# Gör ändringen permanent. Justera vid behov om du inte använder bash
-echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
-```
-
 
 # Användning
 

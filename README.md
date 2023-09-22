@@ -29,7 +29,6 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 ### 1. Install the dependencies ###
 
 * Python 3.7+
-* pip
 * ffmpeg (subtitles fully supported only on ffmpeg 4.1 or later)
 
 Optionally for few rare streams:
@@ -38,26 +37,16 @@ Optionally for few rare streams:
 
 ### 2. Install yle-dl ###
 
-Easier way (installation without downloading the source codes):
+1. [Install pipx](https://pypa.github.io/pipx/)
+2. Install yle-dl:
 ```
-pip3 install --user --upgrade yle-dl
+pipx install yle-dl
 ```
 
-Installing the source distribution in the editable mode: Download the sources
+Alternatively, installing the source distribution in the editable mode: Download the sources
 and run the following in the source directory:
 ```
 pip3 install --user .
-```
-
-### 3. Fix the search path if necessary ###
-
-If the command line shell complains that it can't find yle-dl when you try to execute it, add the installation location onto your $PATH:
-```
-# Set the path for the current terminal session
-export PATH=$PATH:$HOME/.local/bin
-
-# Make the change permanent. Adjust as needed if you are not using bash
-echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
 ```
 
 Usage

@@ -21,9 +21,7 @@ löytyvät tiedostosta OS-install-instructions.md.
 ### 1. Asenna riippuvuudet:
 
 * Python 3.7+
-* pip
 * ffmpeg (tekstitys toimii vain ffmpegin versiolla 4.1 tai sitä uudemmilla)
-* setuptools (jos asennat lähdekoodeista)
 
 Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
 
@@ -31,32 +29,19 @@ Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
 
 ### 2. Asenna yle-dl
 
-Asenna seuraavaksi yle-dl joko asentamalla esikäännetty paketti (ei
-vaadi lähdekoodien lataamista):
+1. [Asenna pipx](https://pypa.github.io/pipx/)
+2. Asenna yle-dl kirjoittamalla:
 
 ```shell
-pip3 install --user --upgrade yle-dl
+pipx install yle-dl
 ```
 
-tai lataamalla lähdekoodit ja ajamalla seuraava komento
-lähdekoodihakemistossa:
+Toinen vaihtoehto on asentaa lähdekoodeista. Lataa lähdekoodit ja aja
+seuraava komento lähdekoodihakemistossa:
 
 ```shell
 pip3 install --user .
 ```
-
-### 3. Lisää tarvittaessa hakemisto hakupolulle
-
-Jos komentotulkki valittaa, ettei se löydä yle-dl:ää yrittäessäsi suorittaa ohjelmaa, lisää asennushakemisto hakupolulle näille komennoilla:
-```
-# Lisää polun komentotulkkin tämänhetkiseen sessioon
-export PATH=$PATH:$HOME/.local/bin
-
-# Tekee muutoksesta pysyvän. Tämä vaatii muokkaamista, jos käytät
-# jotain muuta komentotulkkia kuin bash.
-echo export PATH=$PATH:\$HOME/.local/bin >> ~/.bashrc
-```
-
 
 Käyttö
 ------
