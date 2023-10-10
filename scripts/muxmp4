@@ -2,12 +2,14 @@
 
 # Remux a video into a mp4 container and delete the original.
 #
-# This is part of yle-dl. This is an example of a postprocessing
-# script.
+# This is an example of an yle-dl postprocessing script. To use this
+# as postprocessing step, call yle-dl with:
 #
-# Usage:
+# yle-dl --postprocess muxmp4 https://areena.yle.fi/1-65174150
 #
-# muxmp4 videofile.flv subtitlefile.srt
+# To run this directly on the command line, run:
+#
+# muxmp4 videofile.mkv subtitlefile.srt
 
 absolute_path() {
     case "$1" in
@@ -16,9 +18,12 @@ absolute_path() {
     esac
 }
 
+# The two input parameters for a yle-dl postprocessing script are the
+# video file name and the subtitle file name (may be missing).
 INPUTVIDEOFILE="$1"
 SUBTITLEFILE="$2"
-OUTPUTFILE=$(echo "$INPUTVIDEOFILE" | sed 's/.flv$//').mp4
+
+OUTPUTFILE=$(echo "$INPUTVIDEOFILE" | sed 's/.mkv$//').mp4
 ABS_INPUT=$(absolute_path "$INPUTVIDEOFILE")
 ABS_OUTPUT=$(absolute_path "$OUTPUTFILE")
 
