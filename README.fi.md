@@ -120,10 +120,10 @@ yle-dl --ffmpeg avconv --ffprobe avprobe ...
 Asetustiedosto
 --------------
 
-Kahdella viivalla (--) alkavien valitsimien arvot voi asettaa myös
-asetustiedostossa. Asetukset luetaan tiedostosta ~/.yledl.conf tai
-tiedostosta, jonka nimi annetaan --config-valitsimella. Lähdekoodien
-mukana tulee esimerkkitiedosto yledl.conf.sample.
+Kahdella viivalla (--) alkavien valitsimien arvot voi asettaa myös asetustiedostossa.
+Asetukset luetaan tiedostosta `~/.yledl.conf` (tai vaihtoehtoisesti `~/.config/yledl.conf`)
+tai tiedostosta, jonka nimi annetaan `--config`-valitsimella. Lähdekoodien mukana tulee
+esimerkkitiedosto `yledl.conf.sample`.
 
 Asetustiedoston syntaksi: avain=arvo, avain=true.
 Komentorivivalitsimet ohittavat asetustiedostossa annetut arvot, jos
