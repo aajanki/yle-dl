@@ -70,6 +70,12 @@ yle-dl alternativ:
 
 Använd kommandot `yle-dl --help` för att se alla alternativ.
 
+## Konfigurationfil
+
+Argument kan också anges i en konfigurationsfil. Standardkonfigurationsfilen är
+`~/.yledl.conf` (eller alternativt `~/.config/yledl.conf`). En konfigurationsfil
+kan anges via --config. Filen yledl.conf.sample innehåller ett exempel på
+konfiguration.
 
 ## Inspelning av direkt TV sändningar
 
