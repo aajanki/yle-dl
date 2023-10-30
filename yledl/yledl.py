@@ -88,8 +88,9 @@ def arg_parser():
         'Copyright (C) 2009-2023 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
     )
 
+    xdg_config_home = os.getenv('XDG_CONFIG_HOME') or '~/.config'
     parser = ArgumentParserEncoded(
-        default_config_files=['~/.yledl.conf'],
+        default_config_files=['~/.yledl.conf', f'{xdg_config_home}/yledl.conf'],
         description=description,
         formatter_class=configargparse.RawDescriptionHelpFormatter)
     parser.add_argument('-V', '--verbose',

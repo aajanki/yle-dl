@@ -1,6 +1,6 @@
 # Sample configuration file for yle-dl.
 #
-# Edit and copy this file to ~/.yledl.conf
+# Edit and copy this file to either ~/.yledl.conf or ~/.config/yledl.conf
 #
 # See 'yle-dl --help' for all arguments that can be configured here.
 
