@@ -125,7 +125,7 @@ def arg_parser():
                           '${title} is replaced by the title of the episode, '
                           '${series} is the series title, '
                           '${series_separator} is the series title followed by ": ", '
-                          '${season_dir} is the string "Season XX/" where XX is the season, '
+                          '${season} is the string "Season XX" where XX is the season, '
                           '${episode} is the season and episode number ("S02E12"), '
                           '${episode_separator} is the season and episode followed by "-", '
                           '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
@@ -133,7 +133,7 @@ def arg_parser():
                           '${episode_or_date} is the same as "episode", or "date" if the episode number is unavailable, '
                           '${program_id} is an unique ID, '
                           '$$ is an escape and will be replaced by a literal $. '
-                          '/ specifies a subdirectory. '
+                          '/ specifies a subdirectory, but any / in the beginning is removed. '
                           'Everything else will appear as-is.')
     io_group.add_argument('--output-na-placeholder', metavar='PLACEHOLDER',
                           help='Placeholder value for unavailable meta fields '

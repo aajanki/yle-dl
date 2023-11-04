@@ -49,7 +49,7 @@ class TitleFormatter:
             'series': series_title or '',
             'series_separator': self._concatenate_if_not_empty(series_title, ': '),
             'title': main_title or self.placeholder,
-            'season_dir': self._season_dir(season),
+            'season': self._season(season),
             'episode': episode_number,
             'episode_separator': self._concatenate_if_not_empty(episode_number, '-'),
             'timestamp': self._timestamp_string(publish_timestamp) or self.placeholder,
@@ -98,7 +98,7 @@ class TitleFormatter:
             if subst:
                 res.append(subst)
 
-        return ''.join(res)
+        return ''.join(res).lstrip('/')
 
     def _main_title(self, title, subheading, series_title):
         episode_title = self._remove_genre_prefix(self._remove_repeated_main_title(title))
@@ -147,9 +147,9 @@ class TitleFormatter:
         else:
             return first
 
-    def _season_dir(self, season):
+    def _season(self, season):
         if season:
-            return f'Season {season:02d}/'
+            return f'Season {season:02d}'
         else:
             return ''
 
@@ -186,10 +186,7 @@ class Substitution:
     def substitute(self, values):
         key = self.variable_name[2:-1]
         val = values.get(key, self.variable_name)
-        if key == "season_dir":
-            return val or ''
-        else:
-            return val.replace('/', '_') if val else ''
+        return val.replace('/', '_') if val else ''
 
 
 class Literal:
