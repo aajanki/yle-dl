@@ -49,10 +49,12 @@ class TitleFormatter:
             'series': series_title or '',
             'series_separator': self._concatenate_if_not_empty(series_title, ': '),
             'title': main_title or self.placeholder,
+            'season': self._season(season),
             'episode': episode_number,
             'episode_separator': self._concatenate_if_not_empty(episode_number, '-'),
             'timestamp': self._timestamp_string(publish_timestamp) or self.placeholder,
             'date': self._date_string(publish_timestamp) or self.placeholder,
+            'episode_or_date': episode_number or self._date_string(publish_timestamp) or self.placeholder,
             'program_id': program_id or self.placeholder,
         }
 
@@ -96,7 +98,7 @@ class TitleFormatter:
             if subst:
                 res.append(subst)
 
-        return ''.join(res)
+        return ''.join(res).lstrip('/')
 
     def _main_title(self, title, subheading, series_title):
         episode_title = self._remove_genre_prefix(self._remove_repeated_main_title(title))
@@ -144,6 +146,12 @@ class TitleFormatter:
             return first + second
         else:
             return first
+
+    def _season(self, season):
+        if season:
+            return f'Season {season:02d}'
+        else:
+            return ''
 
     def _episode_number(self, season, episode):
         if season and episode:
