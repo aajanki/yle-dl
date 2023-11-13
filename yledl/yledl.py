@@ -83,6 +83,18 @@ def arg_parser():
                     file = sys.stderr
                 print_enc(message, file, False)
 
+    def open_config_file_and_remember_opened(filename: str, mode: str = 'r'):
+        f = open(filename, mode=mode)
+
+        # Track only if the file was opened successfully
+        if mode == 'r':
+            if hasattr(parser, 'yledl_read_config_files'):
+                parser.yledl_read_config_files.append(filename)
+            else:
+                parser.yledl_read_config_files = [filename]
+
+        return f
+
     description = (
         f'yle-dl {__version__}: Download media files from Yle Areena and Elävä Arkisto\n'
         'Copyright (C) 2009-2023 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
@@ -91,6 +103,7 @@ def arg_parser():
     xdg_config_home = os.getenv('XDG_CONFIG_HOME') or '~/.config'
     parser = ArgumentParserEncoded(
         default_config_files=['~/.yledl.conf', f'{xdg_config_home}/yledl.conf'],
+        config_file_open_func=open_config_file_and_remember_opened,
         description=description,
         formatter_class=configargparse.RawDescriptionHelpFormatter)
     parser.add_argument('-V', '--verbose',
@@ -399,6 +412,10 @@ def main(argv=sys.argv):
     parser = arg_parser()
     args = parser.parse_args(argv[1:])
     set_log_level(args)
+
+    config_files = getattr(parser, 'yledl_read_config_files', [])
+    if config_files:
+        logger.debug(f'Parsed config files: {", ".join(config_files)}')
 
     urls = get_urls(args)
     if not urls:
