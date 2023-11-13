@@ -18,7 +18,6 @@
 import ipaddress
 import logging
 import os
-import psutil
 import random
 import re
 import subprocess
@@ -178,6 +177,12 @@ def get_filesystem_type(dir: str) -> str:
     Sample return values: 'ext4', 'NTFS', 'vfat'. Return an empty string if
     can't infer the filesystem.
     """
+    try:
+        import psutil
+    except ImportError:
+        # give up, psutil is not installed
+        return ''
+
     parts = psutil.disk_partitions(all=True)
     parts = sorted(parts, key=lambda p: -len(p.mountpoint))
     for p in parts:

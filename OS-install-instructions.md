@@ -9,7 +9,7 @@
 sudo pip uninstall yle-dl
 
 sudo apt-get install wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml
+    python3-pip python3-requests python3-lxml python3-xattr python3-psutil
 pip3 install --user --upgrade yle-dl
 
 # If you get "command not found" message when you try to run yle-dl, append
@@ -28,7 +28,7 @@ pip3 install --user --upgrade yle-dl
 sudo pip uninstall yle-dl
 
 sudo apt-get install git wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml
+    python3-pip python3-requests python3-lxml python3-xattr python3-psutil
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
 pip3 install --user .

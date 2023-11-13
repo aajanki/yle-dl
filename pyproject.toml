@@ -10,8 +10,6 @@ dependencies = [
     "requests",
     "lxml",
     "ConfigArgParse >= 0.13.0",
-    "psutil",
-    "xattr;sys_platform != \"win32\"",
 ]
 requires-python = ">=3.7"
 classifiers = [
@@ -36,6 +34,10 @@ dynamic = ["version"]
 [project.optional-dependencies]
 test = [
     "pytest",
+]
+extra = [
+    "psutil",
+    "xattr;sys_platform != \"win32\"",
 ]
 
 [project.scripts]

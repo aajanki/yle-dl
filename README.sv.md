@@ -33,11 +33,9 @@ För att ladda ner några program behövs dessutom:
 ## 2. Installera yle-dl
 
 1. [Installera pipx](https://pypa.github.io/pipx/)
-2. Installera yle-dl:
+2. Installera yle-dl: `pipx install yle-dl`
 
-```shell
-pipx install yle-dl
-```
+Kommandot `pipx install yle-dl[extra]` aktiverade alla optinalfunktioner.
 
 Ett annat alternativ är att installera från källkoden. Ladda ner
 källkoden och kör följande kommando:

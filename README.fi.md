@@ -30,11 +30,11 @@ Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
 ### 2. Asenna yle-dl
 
 1. [Asenna pipx](https://pypa.github.io/pipx/)
-2. Asenna yle-dl kirjoittamalla:
+2. Asenna yle-dl kirjoittamalla: `pipx install yle-dl`
 
-```shell
-pipx install yle-dl
-```
+Komennolla `pipx install yle-dl[extra]` saat käyttöösi myös valinnaiset
+ominaisuudet: videon metadatan tallentamisen tiedoston xattr-attribuuteiksi ja
+automaattinen rajatun merkistön vaativien levyjen tunnistamisen.
 
 Toinen vaihtoehto on asentaa lähdekoodeista. Lataa lähdekoodit ja aja
 seuraava komento lähdekoodihakemistossa:

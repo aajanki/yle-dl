@@ -38,16 +38,14 @@ Optionally for few rare streams:
 ### 2. Install yle-dl ###
 
 1. [Install pipx](https://pypa.github.io/pipx/)
-2. Install yle-dl:
-```
-pipx install yle-dl
-```
+2. Install yle-dl: `pipx install yle-dl`
+
+Installing yle-dl with all optional dependencies (`pipx install yle-dl[extra]`)
+enables storing video metadata as extended file attributes and automatically
+detecting filesystems that require restricted character sets.
 
 Alternatively, installing the source distribution in the editable mode: Download the sources
-and run the following in the source directory:
-```
-pip3 install --user .
-```
+and run the following in the source directory: `pip3 install --user .`
 
 Usage
 -----
