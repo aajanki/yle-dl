@@ -639,8 +639,21 @@ class AreenaPreviewApiParser:
         sobj = self.ongoing().get('subtitles', [])
         subtitles = []
         for s in sobj:
+            # Areena has two subtitle objects. The newer object has "language"
+            # and "kind" properties. "language" is a three-letter language code.
+            lcode_longform = s.get('language', None)
+            # The older (not used anymore as of Nov 2023?) format has "lang",
+            # which is a two-letter language code with a possible third letter
+            # "h" indicating hard-of-hearing subtitles.
             lcode = s.get('lang', None)
-            if lcode:
+
+            if lcode_longform:
+                lang = lcode_longform
+                if s.get('kind', None) == 'hardOfHearing':
+                    category = 'ohjelmatekstitys'
+                else:
+                    category = 'käännöstekstitys'
+            elif lcode:
                 lang = langname2to3.get(lcode, lcode)
                 if lcode in hearing_impaired_langs:
                     category = 'ohjelmatekstitys'

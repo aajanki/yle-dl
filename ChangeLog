@@ -5,7 +5,10 @@ Distributed under the GPL v3 or later
 <unreleased>
 
 - Require Python 3.7+
-- Try to detect if the destination filesystem requires a restricted character set
+- Try to detect if the destination filesystem requires a restricted character
+  set if an optional dependency python-psutil is installed.
+- The metadata contains only subtitles, not embedded_subtitles
+- The subtitle language code in the metadata is correct instead of "unk"
 
 Version 20230611
 
