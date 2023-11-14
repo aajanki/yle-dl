@@ -32,7 +32,7 @@ from .streamflavor import StreamFlavor, failed_flavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp, format_finnish_short_weekday_and_date
 from .titleformatter import TitleFormatter
-from .subtitles import Subtitle, EmbeddedSubtitle
+from .subtitles import Subtitle
 
 
 logger = logging.getLogger('yledl')
@@ -100,7 +100,6 @@ class Clip:
     region: str = 'Finland'
     publish_timestamp: Optional[datetime] = None
     expiration_timestamp: Optional[datetime] = None
-    embedded_subtitles: List = field(default_factory=list)
     subtitles: List = field(default_factory=list)
     program_id: Optional[str] = None
     origin_url: Optional[str] = None
@@ -118,9 +117,6 @@ class Clip:
             ('filename', self.meta_file_name(self.flavors, io)),
             ('flavors', flavors_meta),
             ('duration_seconds', self.duration_seconds),
-            ('embedded_subtitles',
-             [{'language': x.language, 'category': x.category}
-              for x in self.embedded_subtitles]),
             ('subtitles',
              [{'language': x.lang, 'url': x.url, 'category': x.category}
               for x in self.subtitles]),
@@ -200,7 +196,6 @@ class AreenaApiProgramInfo:
     episode_title: str
     description: Optional[str]
     flavors: List[StreamFlavor]
-    embedded_subtitles: List[EmbeddedSubtitle]
     subtitles: List[Subtitle]
     duration_seconds: Optional[int]
     available_at_region: str
@@ -739,7 +734,6 @@ class AreenaExtractor(ClipExtractor):
                 region=program_info.available_at_region,
                 publish_timestamp=program_info.publish_timestamp,
                 expiration_timestamp=program_info.expiration_timestamp,
-                embedded_subtitles=program_info.embedded_subtitles,
                 subtitles=program_info.subtitles,
                 program_id=program_id,
                 origin_url=origin_url)
@@ -878,7 +872,6 @@ class AreenaExtractor(ClipExtractor):
             description=preview.description(self.language_chooser),
             flavors=self.media_flavors(media_id, preview.manifest_url(),
                                        download_url, preview.media_type(), ffprobe),
-            embedded_subtitles=[],
             subtitles=preview_subtitles,
             duration_seconds=preview.duration_seconds(),
             available_at_region=preview.available_at_region() or 'Finland',

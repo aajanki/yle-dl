@@ -32,12 +32,6 @@ Example output:
         "url": "https://...",
         "category": "käännöstekstitys"
       }
-    ],
-    "embedded_subtitles": [
-      {
-        "language": "fin",
-        "category": "k\u00e4\u00e4nn\u00f6stekstitys"
-      }
     ]
   }
 ]
@@ -53,9 +47,6 @@ The following fields may be present in the metadata. Any of the fields may be mi
   * `height`: The vertical resolution in pixels.
   * `media_type`: Either "video" or "audio".
   * `backends`: A list of downloader backends which can download this stream (--backend option)
-* `embedded_subtitles`: A list of subtitles embedded on the video file. Each subtitle is described by the following keys:
-  * `language`: Three-letter language code
-  * `category`: "käännöstekstitys" or "ohjelmatekstitys"
 * `subtitles`: Subtitles of the stream
   * `url`: Download location of the subtitle. Usually the subtitles are also embedded in the stream, so downloading this file is not necessary. Yle-dl doesn't download this file, just the embedded subtitles.
   * `language`: Three-letter language code

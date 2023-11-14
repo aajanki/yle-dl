@@ -29,7 +29,6 @@ from yledl.backends import BaseDownloader, FailingBackend
 from yledl.downloader import YleDlDownloader
 from yledl.errors import TransientDownloadError
 from yledl.extractors import Clip, FailedClip, StreamFlavor
-from yledl.subtitles import EmbeddedSubtitle
 from yledl.titleformatter import TitleFormatter
 
 
@@ -196,7 +195,6 @@ def create_clip(flavors, title='Test clip: S01E01-2018-07-01T00:00'):
         region='Finland',
         publish_timestamp=datetime(2018, 7, 1, tzinfo=FixedOffset(3)),
         expiration_timestamp=datetime(2019, 1, 1, tzinfo=FixedOffset(3)),
-        embedded_subtitles=[]
     )
 
 
@@ -396,7 +394,6 @@ def test_print_metadata(simple):
                 }
             ],
             'duration_seconds': 950,
-            'embedded_subtitles': [],
             'subtitles': [],
             'region': 'Finland',
             'publish_timestamp': '2018-07-01T00:00:00+03:00',
@@ -441,7 +438,6 @@ def test_print_metadata_incomplete(simple):
                 }
             ],
             'region': 'Finland',
-            'embedded_subtitles': [],
             'subtitles': []
         }
     ]
@@ -476,7 +472,6 @@ def test_print_metadata_failed_clip(simple):
             'region': 'Finland',
             'title': '',
             'episode_title': '',
-            'embedded_subtitles': [],
             'subtitles': []
         }
     ]

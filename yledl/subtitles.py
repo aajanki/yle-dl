@@ -23,9 +23,3 @@ class Subtitle:
     url: str
     lang: str
     category: str
-
-
-@dataclass(frozen=True)
-class EmbeddedSubtitle:
-    language: str
-    category: str
