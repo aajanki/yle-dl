@@ -28,7 +28,6 @@ from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .http import update_url_query
 from .io import OutputFileNameGenerator
-from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, failed_flavor
 from .streamprobe import FullHDFlavorProber
 from .timestamp import parse_areena_timestamp, format_finnish_short_weekday_and_date
@@ -746,8 +745,7 @@ class AreenaExtractor(ClipExtractor):
                 origin_url=origin_url)
 
     def media_flavors(self, media_id, hls_manifest_url,
-                      download_url, kaltura_flavors,
-                      media_type, ffprobe):
+                      download_url, media_type, ffprobe):
         flavors = []
 
         if download_url:
@@ -756,8 +754,7 @@ class AreenaExtractor(ClipExtractor):
         flavors2 = []
         if media_id:
             flavors2.extend(
-                self.flavors_by_media_id(
-                    media_id, hls_manifest_url, kaltura_flavors, ffprobe))
+                self.flavors_by_media_id(media_id, hls_manifest_url, ffprobe))
 
         if not flavors2 and hls_manifest_url:
             flavors2.extend(self.hls_flavors(hls_manifest_url, media_type))
@@ -766,7 +763,7 @@ class AreenaExtractor(ClipExtractor):
 
         return flavors or None
 
-    def flavors_by_media_id(self, media_id, hls_manifest_url, kaltura_flavors, ffprobe):
+    def flavors_by_media_id(self, media_id, hls_manifest_url, ffprobe):
         is_live = self.is_live_media(media_id)
         if self.is_full_hd_media(media_id) or is_live:
             logger.debug('Detected a full-HD media')
@@ -775,8 +772,7 @@ class AreenaExtractor(ClipExtractor):
             return flavors or error
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
-            return (kaltura_flavors or
-                    self.hls_probe_flavors(hls_manifest_url, False, ffprobe))
+            return self.hls_probe_flavors(hls_manifest_url, False, ffprobe)
         elif self.is_media_67(media_id) or self.is_media_78(media_id):
             return []
         else:
@@ -798,9 +794,6 @@ class AreenaExtractor(ClipExtractor):
 
     def is_live_media(self, media_id):
         return media_id and media_id.startswith('10-')
-
-    def kaltura_entry_id(self, mediaid):
-        return mediaid.split('-', 1)[-1]
 
     def hls_flavors(self, hls_manifest_url, media_type):
         if not hls_manifest_url:
@@ -874,16 +867,8 @@ class AreenaExtractor(ClipExtractor):
         media_id = preview.media_id()
         download_url = self.ignore_invalid_download_url(preview.media_url())
         if self.is_html5_media(media_id):
-            entry_id = self.kaltura_entry_id(media_id)
-            kapi_client = YleKalturaApiClient(self.httpclient)
-            playback_context = kapi_client.playback_context(entry_id, pageurl)
-            kaltura_flavors = kapi_client.parse_stream_flavors(
-                playback_context, pageurl)
-            kaltura_embedded_subtitles = kapi_client.parse_embedded_subtitles(playback_context)
             preview_subtitles = preview.subtitles()
         else:
-            kaltura_flavors = None
-            kaltura_embedded_subtitles = []
             preview_subtitles = []
 
         return AreenaApiProgramInfo(
@@ -892,9 +877,8 @@ class AreenaExtractor(ClipExtractor):
             episode_title=episode_title,
             description=preview.description(self.language_chooser),
             flavors=self.media_flavors(media_id, preview.manifest_url(),
-                                       download_url, kaltura_flavors,
-                                       preview.media_type(), ffprobe),
-            embedded_subtitles=kaltura_embedded_subtitles,
+                                       download_url, preview.media_type(), ffprobe),
+            embedded_subtitles=[],
             subtitles=preview_subtitles,
             duration_seconds=preview.duration_seconds(),
             available_at_region=preview.available_at_region() or 'Finland',

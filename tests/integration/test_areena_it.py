@@ -26,7 +26,7 @@ def test_areena_html5_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-787136')
 
     assert len(streamurl) == 1
-    assert '/a.m3u8?' in streamurl[0]
+    assert '.m3u8?' in streamurl[0]
 
 
 def test_areena_html5_metadata():
@@ -34,7 +34,7 @@ def test_areena_html5_metadata():
 
     assert len(metadata) == 1
     flavors = metadata[0]['flavors']
-    assert len(flavors) >= 5
+    assert len(flavors) >= 4
     assert all(f.get('media_type') == 'video' for f in flavors)
     assert all('bitrate' in f and
                'height' in f and
@@ -70,7 +70,7 @@ def test_areena_series_urls():
     urls = fetch_stream_url('https://areena.yle.fi/1-3826480')
 
     assert len(urls) == 10
-    assert all(['a.m3u8' in url for url in urls])
+    assert all(['.m3u8' in url for url in urls])
 
 
 @pytest.mark.geoblocked
@@ -102,7 +102,7 @@ def test_areena_html5_clip_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-3523087')
 
     assert len(streamurl) == 1
-    assert '/a.m3u8?' in streamurl[0]
+    assert '.m3u8?' in streamurl[0]
 
 
 @pytest.mark.xfail(reason='This video has been broken in Areena since July 2022')

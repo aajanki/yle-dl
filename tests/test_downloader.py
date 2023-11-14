@@ -196,10 +196,7 @@ def create_clip(flavors, title='Test clip: S01E01-2018-07-01T00:00'):
         region='Finland',
         publish_timestamp=datetime(2018, 7, 1, tzinfo=FixedOffset(3)),
         expiration_timestamp=datetime(2019, 1, 1, tzinfo=FixedOffset(3)),
-        embedded_subtitles=[
-            EmbeddedSubtitle('fin', 'käännöstekstitys'),
-            EmbeddedSubtitle('swe', 'käännöstekstitys')
-        ]
+        embedded_subtitles=[]
     )
 
 
@@ -399,10 +396,7 @@ def test_print_metadata(simple):
                 }
             ],
             'duration_seconds': 950,
-            'embedded_subtitles': [
-                {'language': 'fin', 'category': 'käännöstekstitys'},
-                {'language': 'swe', 'category': 'käännöstekstitys'}
-            ],
+            'embedded_subtitles': [],
             'subtitles': [],
             'region': 'Finland',
             'publish_timestamp': '2018-07-01T00:00:00+03:00',

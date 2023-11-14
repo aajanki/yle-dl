@@ -17,6 +17,7 @@
 
 from utils import fetch_title, fetch_stream_url, fetch_metadata
 
+
 def test_arkivet_title():
     title = fetch_title('https://svenska.yle.fi/artikel/2014/06/13'
                         '/halla-det-ar-naturvaktarna')
@@ -29,7 +30,7 @@ def test_arkivet_stream_url():
     streamurl = fetch_stream_url('https://svenska.yle.fi/artikel/2014/06/13'
                                  '/halla-det-ar-naturvaktarna')
     assert streamurl
-    assert '/a.m3u8' in streamurl[0]
+    assert '.m3u8' in streamurl[0]
 
 
 def test_arkivet_metadata():
@@ -52,7 +53,7 @@ def test_arkivet_audio_stream_url():
 
     assert len(streamurl) == 11
     for url in streamurl:
-        assert '/a.mp3' in url
+        assert '.mp3' in url
 
 
 def test_arkivet_audio_metadata():
@@ -70,7 +71,7 @@ def test_arkivet_a__stream_url():
     streamurl = fetch_stream_url('https://svenska.yle.fi/a/7-884297')
     assert streamurl
     for url in streamurl:
-        assert '/manifest.mpd' in url or '/a.m3u8' in url or '/a.mp3' in url
+        assert '/manifest.mpd' in url or '.m3u8' in url or '.mp3' in url
 
 
 def test_arkivet_a_metadata():
