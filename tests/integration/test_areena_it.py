@@ -185,8 +185,7 @@ def test_areena_season_and_episode_number():
         for episode in range(1, 12 + 1):
             expected_episodes.append(f'S{season:02d}E{episode:02d}')
 
-    metadata = fetch_metadata('https://areena.yle.fi/1-4530023')
-    titles = [x['title'] for x in metadata]
+    titles = fetch_title('https://areena.yle.fi/1-4530023')
 
     assert len(titles) == len(expected_episodes)
     for title, substring in zip(titles, expected_episodes):
