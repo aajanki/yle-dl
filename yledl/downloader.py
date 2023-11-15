@@ -28,6 +28,7 @@ from .extractors import extractor_factory, url_language
 from .localization import TranslationChooser
 from .io import OutputFileNameGenerator
 from .streamflavor import failed_flavor
+from .ffprobe import NullProbe
 
 
 logger = logging.getLogger('yledl')
@@ -106,7 +107,7 @@ class YleDlDownloader:
 
     def get_titles(self, base_url, io, latest_only):
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, io.ffprobe())
+                                           self.httpclient, self.title_formatter, NullProbe())
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []

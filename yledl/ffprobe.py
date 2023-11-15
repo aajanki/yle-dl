@@ -109,3 +109,19 @@ class Ffprobe:
         logger.debug(f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s')
 
         return downloaded_duration >= 0.98 * expected_duration
+
+
+class NullProbe:
+    """Null probe that doesn't do anything.
+
+    Faster than Ffprobe for cases where stream data is not needed.
+    """
+
+    def show_programs_for_url(self, _url):
+        return {}
+
+    def duration_seconds_file(self, _filename):
+        return 0
+
+    def full_stream_already_downloaded(self, _filename, _clip):
+        return True
