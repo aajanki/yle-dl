@@ -180,12 +180,28 @@ def test_areena_sort_by_timestamp():
 
 def test_areena_season_and_episode_number():
     # The episode titles should include S01E01, S01E02, etc.
+    # These episodes have season number in their description, e.g. "Kausi 1"
     expected_episodes = []
     for season in range(1, 3 + 1):
         for episode in range(1, 12 + 1):
             expected_episodes.append(f'S{season:02d}E{episode:02d}')
 
     titles = fetch_title('https://areena.yle.fi/1-4530023')
+
+    assert len(titles) == len(expected_episodes)
+    for title, substring in zip(titles, expected_episodes):
+        assert substring in title
+
+
+def test_areena_season_number_in_webpage():
+    # These episode don't have the season number in their description but do
+    # have it as part of the web page HTML
+    expected_episodes = []
+    season = 1
+    for episode in range(1, 7 + 1):
+        expected_episodes.append(f'S{season:02d}E{episode:02d}')
+
+    titles = fetch_title('https://areena.yle.fi/1-50831169')
 
     assert len(titles) == len(expected_episodes)
     for title, substring in zip(titles, expected_episodes):

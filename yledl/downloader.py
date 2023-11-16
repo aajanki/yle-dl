@@ -106,6 +106,8 @@ class YleDlDownloader:
                 yield valid_stream.stream_url()
 
     def get_titles(self, base_url, io, latest_only):
+        # Use NullProbe to avoid slow probe because we don't need stream data,
+        # only the title
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
                                            self.httpclient, self.title_formatter, NullProbe())
         if not extractor:

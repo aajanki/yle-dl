@@ -28,11 +28,12 @@ from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .http import update_url_query
 from .io import OutputFileNameGenerator
+from .localization import TranslationChooser
 from .streamflavor import StreamFlavor, failed_flavor
 from .streamprobe import FullHDFlavorProber
+from .subtitles import Subtitle
 from .timestamp import parse_areena_timestamp, format_finnish_short_weekday_and_date
 from .titleformatter import TitleFormatter
-from .subtitles import Subtitle
 
 
 logger = logging.getLogger('yledl')
@@ -576,9 +577,19 @@ class AreenaPreviewApiParser:
 
         return language_chooser.choose_long_form(description_object).strip()
 
-    def episode_number(self):
+    def season_and_episode(self):
+        res = {}
         episode = self.ongoing().get('episode_number')
-        return {'episode': episode} if episode is not None else {}
+        if episode is not None:
+            res = {'episode': episode}
+
+            desc_object = self.ongoing().get('description', {})
+            desc = TranslationChooser(['fin']).choose_long_form(desc_object).strip()
+            m = re.match(r'Kausi (\d+)\b', desc)
+            if m:
+                res.update({'season': int(m.group(1))})
+
+        return res
 
     def available_at_region(self):
         return self.ongoing().get('region')
@@ -864,8 +875,9 @@ class AreenaExtractor(ClipExtractor):
             'publish_timestamp': publish_timestamp,
         }
         title_params.update(titles)
-        season_and_episode = preview.episode_number()
-        if season_and_episode:
+        season_and_episode = preview.season_and_episode()
+        if season_and_episode and 'season' not in season_and_episode:
+            logger.debug('Checking the webpage for a season number')
             season_and_episode.update(self.extract_season_number(pageurl))
         title_params.update(season_and_episode)
         title = title_formatter.format(**title_params) or 'areena'
