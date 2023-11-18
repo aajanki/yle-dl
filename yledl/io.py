@@ -121,7 +121,8 @@ class OutputFileNameGenerator:
                 logger.error(
                     f'Directory "{dir}" does not exist. Use --create-dirs to automatically create.'
                 )
-                return path
+                raise RuntimeError(f'Directory "${dir}" does not exist')
+
             logger.info(f'Creating directory "{dir}"')
             os.makedirs(dir)
 

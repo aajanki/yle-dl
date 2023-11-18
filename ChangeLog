@@ -9,6 +9,8 @@ Distributed under the GPL v3 or later
   set if an optional dependency python-psutil is installed.
 - The metadata contains only subtitles, not embedded_subtitles
 - The subtitle language code in the metadata is correct instead of "unk"
+- Create directories by default. Use --no-create-dirs to stop if directory does
+  not exists (which was the previous default)
 
 Version 20230611
 

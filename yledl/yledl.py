@@ -159,7 +159,11 @@ def arg_parser():
                           type=str,
                           help='Save files to DIR')
     io_group.add_argument('--create-dirs', action='store_true',
-                          help='Create directories automatically.')
+                          default=True,
+                          help='Create directories automatically (this is the default)')
+    io_group.add_argument('--no-create-dirs', action='store_false',
+                          dest='create_dirs',
+                          help='Stop if an output directory does not exist')
     action_group = io_group.add_mutually_exclusive_group()
     action_group.add_argument('--showurl', action='store_true',
                               help="Print URL, don't download")
