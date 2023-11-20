@@ -2,15 +2,17 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2023 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20231120
 
-- Require Python 3.7+
+- Requires Python 3.7+
 - Try to detect if the destination filesystem requires a restricted character
-  set if an optional dependency python-psutil is installed.
-- The metadata contains only subtitles, not embedded_subtitles
+  set. Only if an optional dependency python-psutil is installed.
+- The metadata now contains just subtitles, not embedded_subtitles
 - The subtitle language code in the metadata is correct instead of "unk"
 - Create directories by default. Use --no-create-dirs to stop if directory does
-  not exists (which was the previous default)
+  not exist. (This was the previous default.)
+- Read configuration from ~/.config/yledl.conf in addition to ~/.yledl.conf
+- New output template variables: ${season} and ${episode_or_date}
 
 Version 20230611
 
