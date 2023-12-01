@@ -533,10 +533,10 @@ class AreenaPreviewApiParser:
         self.preview = data or {}
 
     def media_id(self):
-        if self.is_live():
-            return self.ongoing().get('adobe', {}).get('yle_media_id')
-        else:
-            return self.ongoing().get('media_id')
+        ongoing = self.ongoing()
+        mid1 = ongoing.get('media_id')
+        mid2 = ongoing.get('adobe', {}).get('yle_media_id')
+        return mid1 or mid2
 
     def duration_seconds(self):
         return self.ongoing().get('duration', {}).get('duration_in_seconds')
@@ -617,7 +617,7 @@ class AreenaPreviewApiParser:
 
     def is_live(self):
         data = self.preview.get('data', {})
-        return data.get('ongoing_channel') is not None
+        return 'ongoing_channel' in data or 'ongoing_event' in data
 
     def is_pending(self):
         data = self.preview.get('data', {})
@@ -763,7 +763,7 @@ class AreenaExtractor(ClipExtractor):
                 origin_url=origin_url)
 
     def media_flavors(self, media_id, hls_manifest_url,
-                      download_url, media_type, ffprobe):
+                      download_url, media_type, is_live, ffprobe):
         flavors = []
 
         if download_url:
@@ -772,7 +772,7 @@ class AreenaExtractor(ClipExtractor):
         flavors2 = []
         if media_id:
             flavors2.extend(
-                self.flavors_by_media_id(media_id, hls_manifest_url, ffprobe))
+                self.flavors_by_media_id(media_id, hls_manifest_url, is_live, ffprobe))
 
         if not flavors2 and hls_manifest_url:
             flavors2.extend(self.hls_flavors(hls_manifest_url, media_type))
@@ -781,8 +781,7 @@ class AreenaExtractor(ClipExtractor):
 
         return flavors or None
 
-    def flavors_by_media_id(self, media_id, hls_manifest_url, ffprobe):
-        is_live = self.is_live_media(media_id)
+    def flavors_by_media_id(self, media_id, hls_manifest_url, is_live, ffprobe):
         if self.is_full_hd_media(media_id) or is_live:
             logger.debug('Detected a full-HD media')
             flavors = self.hls_probe_flavors(hls_manifest_url, is_live, ffprobe)
@@ -884,6 +883,7 @@ class AreenaExtractor(ClipExtractor):
         simple_formatter = TitleFormatter('${series_separator}${title}')
         episode_title = simple_formatter.format(**title_params)
         media_id = preview.media_id()
+        is_live = self.is_live_media(media_id) or preview.is_live()
         download_url = self.ignore_invalid_download_url(preview.media_url())
         if self.is_html5_media(media_id):
             preview_subtitles = preview.subtitles()
@@ -896,7 +896,7 @@ class AreenaExtractor(ClipExtractor):
             episode_title=episode_title,
             description=preview.description(self.language_chooser),
             flavors=self.media_flavors(media_id, preview.manifest_url(),
-                                       download_url, preview.media_type(), ffprobe),
+                                       download_url, preview.media_type(), is_live, ffprobe),
             subtitles=preview_subtitles,
             duration_seconds=preview.duration_seconds(),
             available_at_region=preview.available_at_region() or 'Finland',
