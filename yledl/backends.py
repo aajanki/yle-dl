@@ -270,7 +270,7 @@ class DASHHLSBackend(ExternalDownloader):
 
     def _seek_position_arg(self, download_limits):
         seekpos = download_limits.start_position
-        if seekpos:
+        if seekpos is not None:
             if self.live:
                 # Areena seem to have 6 secs/fragment. Can we trust
                 # that this is a constant?

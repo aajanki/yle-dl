@@ -506,8 +506,11 @@ def main(argv=sys.argv):
                 logger.info('')
                 logger.info(f'Now downloading from URL {i + 1}/{len(urls)}: {url}')
 
-            io.download_limits.start_position = \
-                args.startposition or start_position_from_url(url)
+            if args.startposition is not None:
+                io.download_limits.start_position = args.startposition
+            elif start_position_from_url(url) is not None:
+                io.download_limits.start_position = start_position_from_url(url)
+
             res = execute_action(
                 url,
                 action=action,
