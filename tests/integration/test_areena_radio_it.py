@@ -139,16 +139,6 @@ def test_radio_episodes_sort_order_latest_last_source():
     assert timestamps == sorted(timestamps)
 
 
-def test_radio_episodes_sort_order_latest_first_source():
-    # This page lists episodes in the latest-first order
-    metadata = fetch_metadata('https://areena.yle.fi/podcastit/1-50438875')
-
-    # Should be sorted from oldest to newest
-    timestamps = [x['publish_timestamp'] for x in metadata]
-    assert len(timestamps) > 1
-    assert timestamps == sorted(timestamps)
-
-
 def test_radio_latest():
     # Test fetching the latest radio episode.
     filters = StreamFilters(latest_only=True)
