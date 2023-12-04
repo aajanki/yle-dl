@@ -1046,18 +1046,16 @@ class YleUutisetExtractor(AreenaExtractor):
         article = state.get('pageData', {}).get('article', {})
         if article.get('mainMedia') is not None:
             medias = article['mainMedia']
-            data_ids = []
-            for m in medias:
-                if m.get('type') in ['VideoBlock', 'video'] and 'id' in m:
-                    data_ids.append(m['id'])
+            data_ids = [media['id'] for media in medias
+                        if media.get('type') in ['VideoBlock', 'video'] and 'id' in media]
         else:
             headline_video_id = article.get('headline', {}).get('video', {}).get('id')
             if headline_video_id:
                 data_ids = [headline_video_id]
 
         content = article.get('content', [])
-        data_ids.extend(block.get('id') for block in content
-                        if block.get('type') == 'AudioBlock' and block.get('id'))
+        data_ids.extend(block['id'] for block in content
+                        if block.get('type') in ['AudioBlock', 'audio'] and 'id' in block)
 
         logger.debug(f"Found Areena data IDs: {','.join(data_ids)}")
 
