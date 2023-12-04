@@ -102,9 +102,10 @@ def test_radio_series_redirect():
 def test_radio_series_redirect_from_old_audio_url():
     # The address for radio programs was changed from /audio/ to /podcastit/
     # in September 2022. Test that the old address is redirected to the new.
-    urls = fetch_stream_url('https://areena.yle.fi/audio/1-61070264')
+    urls = fetch_stream_url('https://areena.yle.fi/audio/1-61070277')
 
-    assert len(urls) >= 10
+    assert len(urls) == 1
+    assert '.mp3' in urls[0]
 
 
 def test_radio_metadata_2020():
