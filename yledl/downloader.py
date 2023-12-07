@@ -92,8 +92,10 @@ class YleDlDownloader:
         return self.pipe_first_available_stream(clip, filters, io)
 
     def get_urls(self, base_url, io, filters):
+        # Use NullProbe to avoid slow probe because we don't need stream data,
+        # only the url
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, io.ffprobe())
+                                           self.httpclient, self.title_formatter, NullProbe())
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
