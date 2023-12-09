@@ -397,7 +397,7 @@ def warn_on_obsolete_ffmpeg(backends, io):
                 logger.warning(
                     f'Your version of ffmpeg ({formatted_ffmpeg_version}) '
                     'might not download all streams correctly.\n'
-                    'Please upgrade ffmpeg to version 4.1.0 or later.'
+                    'Please upgrade ffmpeg to version 4.1 or later.'
                 )
 
 

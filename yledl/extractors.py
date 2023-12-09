@@ -28,6 +28,7 @@ from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .http import update_url_query
 from .io import OutputFileNameGenerator
+from .kaltura import YleKalturaApiClient
 from .localization import TranslationChooser
 from .streamflavor import StreamFlavor, failed_flavor
 from .streamprobe import FullHDFlavorProber
@@ -763,7 +764,7 @@ class AreenaExtractor(ClipExtractor):
                 origin_url=origin_url)
 
     def media_flavors(self, media_id, hls_manifest_url,
-                      download_url, media_type, is_live, ffprobe):
+                      download_url, media_type, is_live, pageurl, ffprobe):
         flavors = []
 
         if download_url:
@@ -778,6 +779,11 @@ class AreenaExtractor(ClipExtractor):
             flavors2.extend(self.hls_flavors(hls_manifest_url, media_type))
 
         flavors.extend(flavors2)
+
+        if self.is_html5_media(media_id):
+            # Get mp4 streams (for wget support) from Kaltura if available.
+            # Web Areena no longer uses Kaltura, so this may break (Dec 2023).
+            flavors.extend(self.kaltura_mp4_flavors(media_id, pageurl))
 
         return flavors or None
 
@@ -795,6 +801,15 @@ class AreenaExtractor(ClipExtractor):
         else:
             return [failed_flavor('Unknown stream flavor')]
 
+    def kaltura_mp4_flavors(self, media_id, pageurl):
+        entry_id = self.kaltura_entry_id(media_id)
+        kapi_client = YleKalturaApiClient(self.httpclient)
+        playback_context = kapi_client.playback_context(entry_id, pageurl)
+        if playback_context:
+            return kapi_client.parse_stream_flavors(playback_context, pageurl)
+        else:
+            return []
+
     def is_html5_media(self, media_id):
         return media_id and media_id.startswith('29-')
 
@@ -811,6 +826,9 @@ class AreenaExtractor(ClipExtractor):
 
     def is_live_media(self, media_id):
         return media_id and media_id.startswith('10-')
+
+    def kaltura_entry_id(self, mediaid):
+        return mediaid.split('-', 1)[-1]
 
     def hls_flavors(self, hls_manifest_url, media_type):
         if not hls_manifest_url:
@@ -896,7 +914,8 @@ class AreenaExtractor(ClipExtractor):
             episode_title=episode_title,
             description=preview.description(self.language_chooser),
             flavors=self.media_flavors(media_id, preview.manifest_url(),
-                                       download_url, preview.media_type(), is_live, ffprobe),
+                                       download_url, preview.media_type(),
+                                       is_live, pageurl, ffprobe),
             subtitles=preview_subtitles,
             duration_seconds=preview.duration_seconds(),
             available_at_region=preview.available_at_region() or 'Finland',

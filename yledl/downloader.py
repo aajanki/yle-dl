@@ -270,10 +270,11 @@ class YleDlDownloader:
             return None
 
         logger.debug('Available flavors:')
-        for fl in flavors:
+        for fl in sorted(flavors, key=sortkey_max_resolution_max_bitrate({})):
+            backends = ', '.join(stream.name for stream in fl.streams)
             logger.debug('bitrate: {bitrate}, height: {height}, '
-                         'width: {width}'
-                         .format(**asdict(fl)))
+                         'width: {width}, backends: {backends}'
+                         .format(**asdict(fl), backends=backends))
         logger.debug('max_height: {maxheight}, max_bitrate: {maxbitrate}'
                      .format(**asdict(filters)))
 
@@ -314,15 +315,6 @@ class YleDlDownloader:
             return []
 
     def apply_resolution_filters(self, flavors, filters):
-        def sort_max_bitrate(x):
-            return x.bitrate or 0
-
-        def sort_max_resolution_min_bitrate(x):
-            return (x.height or 0, -(x.bitrate or 0))
-
-        def sort_max_resolution_max_bitrate(x):
-            return (x.height or 0, x.bitrate or 0)
-
         filtered = [
             fl for fl in flavors
             if (filters.maxbitrate is None or
@@ -338,12 +330,15 @@ class YleDlDownloader:
             acceptable_flavors = flavors
             reverse = filters.maxheight is not None or filters.maxbitrate is not None
 
-        if filters.maxheight is not None and filters.maxbitrate is not None:
-            keyfunc = sort_max_resolution_max_bitrate
-        elif filters.maxheight is not None:
-            keyfunc = sort_max_resolution_min_bitrate
+        backend_preference = {
+            backend: i
+            for (i, backend) in enumerate(reversed(filters.enabled_backends))
+        }
+
+        if filters.maxheight is not None and filters.maxbitrate is None:
+            keyfunc = sortkey_max_resolution_min_bitrate(backend_preference)
         else:
-            keyfunc = sort_max_bitrate
+            keyfunc = sortkey_max_resolution_max_bitrate(backend_preference)
 
         return sorted(acceptable_flavors, key=keyfunc, reverse=reverse)
 
@@ -441,3 +436,24 @@ class YleDlDownloader:
         except OSError as exc:
             logger.warning("File system doesn't seem to support extended attributes")
             logger.debug(f'OSError while setting xattr: {exc.strerror}')
+
+
+def sortkey_max_resolution_max_bitrate(backend_preference):
+    def sortkey(x):
+        backend_score = max(
+            backend_preference.get(stream.name, -1)
+            for stream in x.streams
+        )
+        return (x.height or 0, backend_score, x.bitrate or 0)
+
+    return sortkey
+
+def sortkey_max_resolution_min_bitrate(backend_preference):
+    def sortkey(x):
+        backend_score = max(
+            backend_preference.get(stream.name, -1)
+            for stream in x.streams
+        )
+        return (x.height or 0, backend_score, -(x.bitrate or 0))
+
+    return sortkey
