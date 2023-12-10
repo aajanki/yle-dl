@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2023 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -43,8 +43,9 @@ class YleDlDownloader:
         self.extractor_factory = _extractor_factory
 
     def download_clips(self, base_url, io, filters):
+        prober = self.create_prober(io, filters)
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, io.ffprobe())
+                                           self.httpclient, self.title_formatter, prober)
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return RD_FAILED
@@ -74,8 +75,9 @@ class YleDlDownloader:
         return overall_status
 
     def pipe(self, base_url, io, filters):
+        prober = self.create_prober(io, filters)
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, io.ffprobe())
+                                           self.httpclient, self.title_formatter, prober)
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return RD_FAILED
@@ -92,8 +94,9 @@ class YleDlDownloader:
         return self.pipe_first_available_stream(clip, filters, io)
 
     def get_urls(self, base_url, io, filters):
+        prober = self.create_prober(io, filters)
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, io.ffprobe())
+                                           self.httpclient, self.title_formatter, prober)
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
@@ -129,7 +132,7 @@ class YleDlDownloader:
 
     def get_playlist(self, base_url, io):
         extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, io.ffprobe())
+                                           self.httpclient, self.title_formatter, NullProbe())
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
@@ -434,6 +437,14 @@ class YleDlDownloader:
         except OSError as exc:
             logger.warning("File system doesn't seem to support extended attributes")
             logger.debug(f'OSError while setting xattr: {exc.strerror}')
+
+    def create_prober(self, io, filters):
+        logger.info(filters.enabled_backends)
+        if 'ffmpeg' in filters.enabled_backends:
+            return io.ffprobe()
+        else:
+            logger.info('ffmpeg not enabled - nullprobe')
+            return NullProbe()
 
 
 def sortkey_max_resolution_max_bitrate(backend_preference):
