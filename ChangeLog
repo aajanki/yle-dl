@@ -4,9 +4,9 @@ Distributed under the GPL v3 or later
 
 <unreleased>
 
-- --startposition for not working on live streams
-- "--startposition 0" now starts live streams from the beginning
+- --startposition was not working properly on live streams
 - Fixed yle.fi video extraction
+- The wget backend works on many streams again
 
 Version 20231120
 
