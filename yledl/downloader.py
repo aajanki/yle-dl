@@ -272,7 +272,7 @@ class YleDlDownloader:
 
         logger.debug('Available flavors:')
         for fl in sorted(flavors, key=sortkey_max_resolution_max_bitrate({})):
-            backends = ', '.join(stream.name for stream in fl.streams)
+            backends = ', '.join(stream.name or '???' for stream in fl.streams)
             logger.debug('bitrate: {bitrate}, height: {height}, '
                          'width: {width}, backends: {backends}'
                          .format(**asdict(fl), backends=backends))

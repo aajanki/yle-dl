@@ -242,7 +242,11 @@ def test_download_incomplete_metadata(simple):
     dl = downloader({'a': clip})
     res = dl.download_clips('', simple.io, simple.filters)
 
-    clip.flavors[2].streams[0].save_stream.assert_called_once()
+    # flavors[1] is expected to be downloaded because it is the only flavor that
+    # has height and width metadata
+    clip.flavors[0].streams[0].save_stream.assert_not_called()
+    clip.flavors[1].streams[0].save_stream.assert_called_once()
+    clip.flavors[2].streams[0].save_stream.assert_not_called()
     assert res == RD_SUCCESS
 
 
