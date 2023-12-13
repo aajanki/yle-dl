@@ -439,11 +439,9 @@ class YleDlDownloader:
             logger.debug(f'OSError while setting xattr: {exc.strerror}')
 
     def create_prober(self, io, filters):
-        logger.info(filters.enabled_backends)
         if 'ffmpeg' in filters.enabled_backends:
             return io.ffprobe()
         else:
-            logger.info('ffmpeg not enabled - nullprobe')
             return NullProbe()
 
 
