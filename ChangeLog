@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2023 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20231214
 
 - --startposition was not working properly on live streams
 - Fixed yle.fi video extraction
