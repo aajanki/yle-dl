@@ -187,8 +187,12 @@ def get_filesystem_type(dir: str) -> str:
     parts = psutil.disk_partitions(all=True)
     parts = sorted(parts, key=lambda p: -len(p.mountpoint))
     for p in parts:
-        if Path(dir).is_relative_to(Path(p.mountpoint)):
-            return p.fstype
+        try:
+            if Path(dir).is_relative_to(Path(p.mountpoint)):
+                return p.fstype
+        except AttributeError:
+            if a_is_relative_to_b(Path(dir), Path(p.mountpoint)):
+                return p.fstype
 
     return ''
 
