@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -187,12 +187,11 @@ def get_filesystem_type(dir: str) -> str:
     parts = psutil.disk_partitions(all=True)
     parts = sorted(parts, key=lambda p: -len(p.mountpoint))
     for p in parts:
-        try:
-            if Path(dir).is_relative_to(Path(p.mountpoint)):
-                return p.fstype
-        except AttributeError:
-            if a_is_relative_to_b(Path(dir), Path(p.mountpoint)):
-                return p.fstype
+        # TODO: replace this function call with
+        # Path(dir).is_relative_to(Path(p.mountpoint))
+        # when the support for Python 3.8 is dropped.
+        if a_is_relative_to_b(Path(dir), Path(p.mountpoint)):
+            return p.fstype
 
     return ''
 

@@ -5,6 +5,7 @@ Distributed under the GPL v3 or later
 <unreleased>
 
 - Fix live download links for Yle Sámi radio, Puhe and Vega radio channels
+- Downloading was broken on Python 3.8 since a few releases ago
 
 Version 20231214
 
