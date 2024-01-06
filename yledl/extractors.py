@@ -985,7 +985,11 @@ class AreenaLiveRadioExtractor(AreenaExtractor):
             '57-kpDBBz8Pz': 'yle-puhe',
             '57-md5vJP6a2': 'yle-x3m',
             '57-llL6Y4blL': 'yle-klassinen',
-            '30-698': 'yle-sami-radio',
+            '57-bN8gjw7AY': 'yle-sami-radio',
+            # Radio Suomi and Vega have regional channels selected by the query
+            # parameter _c. If _c is missing, use these hard coded values.
+            '57-3gO4bl7J6': 'yle-radio-suomi-helsinki',
+            '57-P3mO0mdm6': 'radio-vega-huvudstadsregionen',
         }
 
         parsed = urlparse(url)
