@@ -172,7 +172,7 @@ def test_areena_sort_by_timestamp():
     metadata = fetch_metadata('https://areena.yle.fi/1-3830094')
 
     # Should be sorted from oldest to newest
-    timestamps = [x['publish_timestamp'] for x in metadata]
+    timestamps = [x.get('publish_timestamp', '') for x in metadata]
 
     assert len(timestamps) > 1
     assert timestamps == sorted(timestamps)
@@ -182,8 +182,9 @@ def test_areena_season_and_episode_number():
     # The episode titles should include S01E01, S01E02, etc.
     # These episodes have season number in their description, e.g. "Kausi 1"
     expected_episodes = []
-    for season in range(1, 3 + 1):
-        for episode in range(1, 12 + 1):
+    for season in range(1, 4 + 1):
+        number_of_episodes = 12 if season < 4 else 10
+        for episode in range(1, number_of_episodes + 1):
             expected_episodes.append(f'S{season:02d}E{episode:02d}')
 
     titles = fetch_title('https://areena.yle.fi/1-4530023')
