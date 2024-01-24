@@ -58,6 +58,21 @@ def test_uutiset_headline_metadata():
     assert all(f.get('media_type') == 'video' for f in flavors)
 
 
+def test_uutiset_inline_video_block_metadata():
+    # This page has two videos embedded as inline blocks
+    metadata = fetch_metadata('https://yle.fi/a/74-20036911')
+
+    assert len(metadata) == 2
+    assert metadata[0]['title'].startswith('Minuutin uutisvideot: Kymmenien ihmisten ryhmissä kuljetaan pummilla')
+    assert metadata[0]['duration_seconds'] == 48
+    assert metadata[1]['title'].startswith('Uutisvideot: Raitiovaunuliikennettä Helsingin Hakaniemessä')
+    assert metadata[1]['duration_seconds'] == 14
+
+    flavors = metadata[0]['flavors'] + metadata[1]['flavors']
+    assert len(flavors) >= 1
+    assert all(f.get('media_type') == 'video' for f in flavors)
+
+
 def test_uutiset_inline_audio_block_metadata():
     # This page has an inline AudioBlock
     metadata = fetch_metadata('https://yle.fi/a/3-11843834')
