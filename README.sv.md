@@ -75,6 +75,38 @@ Argument kan också anges i en konfigurationsfil. Standardkonfigurationsfilen ä
 kan anges via --config. Filen yledl.conf.sample innehåller ett exempel på
 konfiguration.
 
+## Användning av libav istället för ffmpeg
+
+```
+yle-dl --ffmpeg avconv --ffprobe avprobe ...
+```
+
+# Exempel
+
+### Arenan
+
+Spara en stream från Arenan till en fil med ett automatiskt genererat namn:
+```
+yle-dl https://areena.yle.fi/1-787136
+```
+
+Spara en stream till en videofil med namn video.mkv:
+```
+yle-dl https://areena.yle.fi/1-787136 -o video.mkv
+```
+
+Spela i mpv (eller i VLC eller i någon annan videospelare) utan att ladda ner först:
+
+```
+yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --slang=fi -
+```
+
+Kör ett skript för att efterbehandla en nedladdad video (se exemplet efterbearbetningsskript i scripts/muxmp4):
+
+```
+yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-787136
+```
+
 ## Inspelning av direkt TV sändningar
 
 ```
@@ -91,38 +123,14 @@ Spela in sändningen som visades för en timme (3600 sekunder) sedan:
 yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
 ```
 
-## Användning av libav istället för ffmpeg
-
-```
-yle-dl --ffmpeg avconv --ffprobe avprobe ...
-```
-
-# Exempel
-
-Spara en stream från Arenan till en fil med ett automatiskt genererat namn:
-```
-yle-dl https://areena.yle.fi/1-787136
-```
-
-eller samma från arkivet:
+### Arkivet
 
 ```
 yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
-Spara en stream till en videofil med namn video.mkv:
-```
-yle-dl https://areena.yle.fi/1-787136 -o video.mkv
-```
-
-Spela i mpv (eller i VLC eller i någon annan videospelare) utan att ladda ner först:
+### Videor på nyhetsartiklar från yle.fi
 
 ```
-yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache-secs=1000 --slang=fi -
-```
-
-Kör ett skript för att efterbehandla en nedladdad video (se exemplet efterbearbetningsskript i scripts/muxmp4):
-
-```
-yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-787136
+yle-dl https://yle.fi/a/74-20036911
 ```

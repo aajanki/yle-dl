@@ -86,29 +86,6 @@ Lataaminen SOCKS5-proxyn kautta on mahdollista käyttämällä
 tsocks-ohjelmaa.
 
 
-Suorien TV-lähetysten tallentaminen
------------------------------------
-
-```
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
-```
-
-```
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
-```
-
-```
-yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
-```
-
-
-Tallenna tunti (eli 3600 sekuntia) sitten TV1:llä näytettyä lähetystä:
-
-```
-yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
-```
-
-
 libav:n käyttö ffmpegin sijaan
 ------------------------------
 
@@ -157,16 +134,12 @@ pytest-3 --geoblocked
 Esimerkkejä
 -----------
 
+### Areena
+
 Areenan ohjelman lataaminen automaattisesti nimettävään tiedostoon:
 
 ```
 yle-dl https://areena.yle.fi/1-787136
-```
-
-Elävän arkiston ohjelman kaikkien jaksojen lataaminen:
-
-```
-yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
 Ohjelman lataaminen tiedostoon rikos_ja_rakkaus.mkv:
@@ -178,7 +151,7 @@ yle-dl https://areena.yle.fi/1-1907797 -o rikos_ja_rakkaus.mkv
 Toistaminen suoraan videotoistimessa:
 
 ```
-yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache=1000 --slang=fi -
+yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --slang=fi -
 ```
 
 Ladatun tiedoston jatkokäsitteleminen skriptillä (katso esimerkki
@@ -186,4 +159,32 @@ scripts/muxmp4-tiedostossa):
 
 ```
 yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
+```
+
+### Suorat TV-lähetykset
+
+```
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+```
+
+Tallenna tunti (eli 3600 sekuntia) sitten TV1:llä näytettyä lähetystä:
+
+```
+yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
+```
+
+### Elävä arkisto
+
+```
+yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
+```
+
+### Upotetut videot yle.fi-sivustolla
+
+```
+yle-dl https://yle.fi/a/74-20036911
 ```

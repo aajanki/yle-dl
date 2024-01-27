@@ -99,22 +99,6 @@ Type `yle-dl --help` to see the full list of options.
 
 To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/) or a similar wrapper.
 
-### Addresses for live TV broadcasts
-
-```
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
-
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
-
-yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
-```
-
-Record the broadcast shown an hour (3600 seconds) ago:
-
-```
-yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
-```
-
 ### Using with libav instead of ffmpeg
 
 ```
@@ -162,15 +146,11 @@ pytest-3 tests/integration/test_areena_radio_it.py
 Examples
 --------
 
+### Yle Areena
+
 Save an Areena stream to a file with an automatically generated name:
 ```
 yle-dl https://areena.yle.fi/1-787136
-```
-
-or from Elävä Arkisto:
-
-```
-yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
 ```
 
 Save a stream to a file called video.mkv:
@@ -181,13 +161,41 @@ yle-dl https://areena.yle.fi/1-787136 -o video.mkv
 Playing in mpv (or in vlc or in any other video player) without downloading first:
 
 ```
-yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --cache-secs=1000 --slang=fi -
+yle-dl --pipe https://areena.yle.fi/1-787136 | mpv --slang=fi -
 ```
 
 Executing a script to postprocess a downloaded video (see the example postprocessing script at scripts/muxmp4):
 
 ```
 yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-787136
+```
+
+### Areena live TV broadcasts
+
+```
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+
+yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+```
+
+Record the broadcast shown an hour (3600 seconds) ago:
+
+```
+yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
+```
+
+### Elävä Arkisto
+
+```
+yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon
+```
+
+### Embedded videos on the yle.fi news articles
+
+```
+yle-dl https://yle.fi/a/74-20036911
 ```
 
 Creating a new release
