@@ -107,7 +107,7 @@ Kör ett skript för att efterbehandla en nedladdad video (se exemplet efterbear
 yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-787136
 ```
 
-## Inspelning av direkt TV sändningar
+### Inspelning av direkt TV sändningar
 
 ```
 yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
