@@ -52,6 +52,10 @@ issues = "https://github.com/aajanki/yle-dl/issues"
 [tool.flit.module]
 name = "yledl"
 
+[tool.flit.sdist]
+include = ["*.md", "COPYING", "ChangeLog", "setup.py", "yledl.conf.sample", "tests/**/*.py"]
+exclude = ["**/*~"]
+
 [build-system]
-requires = ["flit_core >=3.4,<4"]
+requires = ["flit_core >=3.9,<4"]
 build-backend = "flit_core.buildapi"

@@ -1,4 +1,0 @@
-include README*
-include COPYING
-include ChangeLog
-recursive-include tests *.py
