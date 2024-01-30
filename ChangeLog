@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2024 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20240130
 
 - Fix live download links for Yle Sámi radio, Puhe and Vega radio channels
 - Extract inline videos embedded on yle.fi news pages

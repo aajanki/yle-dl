@@ -3,7 +3,7 @@
 """
 yle-dl - download videos from Yle servers
 
-Copyright (C) 2010-2023 Antti Ajanki <antti.ajanki@iki.fi>
+Copyright (C) 2010-2024 Antti Ajanki <antti.ajanki@iki.fi>
 
 This script downloads video and audio streams from Yle Areena
 (https://areena.yle.fi) and Elävä Arkisto
@@ -97,7 +97,7 @@ def arg_parser():
 
     description = (
         f'yle-dl {__version__}: Download media files from Yle Areena and Elävä Arkisto\n'
-        'Copyright (C) 2009-2023 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
+        'Copyright (C) 2009-2024 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
     )
 
     xdg_config_home = os.getenv('XDG_CONFIG_HOME') or '~/.config'

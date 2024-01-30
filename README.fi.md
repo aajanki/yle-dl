@@ -3,7 +3,7 @@ yle-dl on apuohjelma tiedostojen lataamiseen
 [Elävästä arkistosta](https://yle.fi/aihe/elava-arkisto) ja
 [Ylen uutissivustolta](https://yle.fi/).
 
-Copyright (C) 2010-2023 Antti Ajanki, antti.ajanki@iki.fi
+Copyright (C) 2010-2024 Antti Ajanki, antti.ajanki@iki.fi
 
 Ohjelmistolisenssi: GPL v3 tai myöhempi
 
