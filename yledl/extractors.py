@@ -798,6 +798,10 @@ class AreenaExtractor(ClipExtractor):
             return self.hls_probe_flavors(hls_manifest_url, False, ffprobe)
         elif self.is_media_67(media_id) or self.is_media_78(media_id):
             return []
+        elif hls_manifest_url:
+            # Fall-back options for new media_id types
+            logger.debug('Detected a possible HLS media')
+            return self.hls_probe_flavors(hls_manifest_url, False, ffprobe)
         else:
             return [failed_flavor('Unknown stream flavor')]
 
@@ -811,7 +815,9 @@ class AreenaExtractor(ClipExtractor):
             return []
 
     def is_html5_media(self, media_id):
-        return media_id and media_id.startswith('29-')
+        # 29- is the most common media ID
+        # 84-, hosted on yleawsmpondemand-04.akamaized.net, April 2024
+        return media_id and media_id.startswith('29-') or media_id.startswith('84-')
 
     def is_full_hd_media(self, media_id):
         return media_id and media_id.startswith('55-')
