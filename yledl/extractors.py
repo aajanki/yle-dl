@@ -817,7 +817,7 @@ class AreenaExtractor(ClipExtractor):
     def is_html5_media(self, media_id):
         # 29- is the most common media ID
         # 84-, hosted on yleawsmpondemand-04.akamaized.net, April 2024
-        return media_id and media_id.startswith('29-') or media_id.startswith('84-')
+        return media_id and (media_id.startswith('29-') or media_id.startswith('84-'))
 
     def is_full_hd_media(self, media_id):
         return media_id and media_id.startswith('55-')
