@@ -63,15 +63,6 @@ def extractor_factory(url, language_chooser, httpclient, title_formatter, ffprob
         return None
 
 
-def url_language(url):
-    arenan = re.match(r'^https?://arenan\.yle\.fi/', url) is not None
-    arkivet = re.match(r'^https?://svenska\.yle\.fi/artikel/', url) is not None
-    if arenan or arkivet:
-        return 'swe'
-    else:
-        return 'fin'
-
-
 ## Flavors
 
 

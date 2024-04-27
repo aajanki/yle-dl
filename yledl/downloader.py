@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2023 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -18,13 +18,14 @@
 import copy
 import logging
 import os
+import re
 from dataclasses import asdict
 from .errors import TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
 from .errors import ExternalApplicationNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
-from .extractors import extractor_factory, url_language
+from .extractors import extractor_factory
 from .localization import TranslationChooser
 from .io import OutputFileNameGenerator
 from .streamflavor import failed_flavor
@@ -455,6 +456,7 @@ def sortkey_max_resolution_max_bitrate(backend_preference):
 
     return sortkey
 
+
 def sortkey_max_resolution_min_bitrate(backend_preference):
     def sortkey(x):
         backend_score = max(
@@ -464,3 +466,12 @@ def sortkey_max_resolution_min_bitrate(backend_preference):
         return (x.height or 0, backend_score, -(x.bitrate or 0))
 
     return sortkey
+
+
+def url_language(url):
+    arenan = re.match(r'^https?://arenan\.yle\.fi/', url) is not None
+    arkivet = re.match(r'^https?://svenska\.yle\.fi/artikel/', url) is not None
+    if arenan or arkivet:
+        return 'swe'
+    else:
+        return 'fin'
