@@ -339,15 +339,16 @@ class AreenaPlaylistParser:
             episodes_content = episodes_tab[0].get('content', [])
             if episodes_content:
                 playlist_data = episodes_content[0]
-                uri = playlist_data.get('source', {}).get('uri')
+                if playlist_data.get('title') not in ['Katso myös', 'Kuuntele myös']:
+                    uri = playlist_data.get('source', {}).get('uri')
 
-                series_parameters = {}
-                filters = playlist_data.get('filters', [])
-                if filters:
-                    options = filters[0].get('options', [])
-                    series_parameters = [x['parameters'] for x in options]
+                    series_parameters = {}
+                    filters = playlist_data.get('filters', [])
+                    if filters:
+                        options = filters[0].get('options', [])
+                        series_parameters = [x['parameters'] for x in options]
 
-                return PlaylistData(uri, series_parameters)
+                    return PlaylistData(uri, series_parameters)
 
         return None
 

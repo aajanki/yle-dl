@@ -5,6 +5,7 @@ Distributed under the GPL v3 or later
 <unreleased>
 
 - Support for a new stream type
+- Series page downloading was partly broken after changes in Areena
 
 Version 20240130
 
