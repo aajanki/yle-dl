@@ -209,8 +209,12 @@ class AreenaApiProgramInfo:
 
 @dataclass(frozen=True)
 class PlaylistData:
+    # The base URL from which to download a playlist
     base_url: str
-    season_parameters: dict
+    # List of query parameters. Each item is a dictionary of query
+    # parameters for one season. If empty, a playlist is downloaded
+    # from the plain base_url.
+    season_parameters: list[dict]
 
     def season_playlist_urls(self):
         if self.season_parameters:
@@ -317,20 +321,33 @@ class AreenaPlaylistParser:
         if next_data_tag:
             next_data = json.loads(next_data_tag[0].text)
             tabs = next_data.get('props', {}).get('pageProps', {}).get('view', {}).get('tabs', [])
-            episodes_tab = [tab for tab in tabs if tab.get('title') in ['Jaksot', 'Avsnitt']]
-            if episodes_tab:
-                episodes_content = episodes_tab[0].get('content', [])
-                if episodes_content:
-                    playlist_data = episodes_content[0]
-                    uri = playlist_data.get('source', {}).get('uri')
+            return self._parse_episodes_tab(tabs, True) or self._parse_episodes_tab(tabs, False)
 
-                    series_parameters = {}
-                    filters = playlist_data.get('filters', [])
-                    if filters:
-                        options = filters[0].get('options', [])
-                        series_parameters = [x['parameters'] for x in options]
+        return None
 
-                    return PlaylistData(uri, series_parameters)
+    def _parse_episodes_tab(self, next_data_tabs, titled_tab):
+        if titled_tab:
+            episodes_tab = [
+                tab for tab in next_data_tabs if tab.get('title') in ['Jaksot', 'Avsnitt']
+            ]
+        else:
+            episodes_tab = [
+                tab for tab in next_data_tabs if tab.get('type') == 'tab' and 'title' not in tab
+            ]
+
+        if episodes_tab:
+            episodes_content = episodes_tab[0].get('content', [])
+            if episodes_content:
+                playlist_data = episodes_content[0]
+                uri = playlist_data.get('source', {}).get('uri')
+
+                series_parameters = {}
+                filters = playlist_data.get('filters', [])
+                if filters:
+                    options = filters[0].get('options', [])
+                    series_parameters = [x['parameters'] for x in options]
+
+                return PlaylistData(uri, series_parameters)
 
         return None
 
@@ -343,7 +360,7 @@ class AreenaPlaylistParser:
                 content = tabs[0].get('content', [])
                 if content:
                     uri = content[0].get('source', {}).get('uri')
-                    return PlaylistData(uri, {})
+                    return PlaylistData(uri, [])
 
         return None
 
@@ -358,7 +375,7 @@ class AreenaPlaylistParser:
                 all_content = tabs[0].get('allContent')
                 if all_content:
                     uri = all_content[0].get('source', {}).get('uri')
-                    return PlaylistData(uri, {})
+                    return PlaylistData(uri, [])
 
         return None
 
