@@ -1023,16 +1023,16 @@ class ElavaArkistoExtractor(AreenaExtractor):
     def get_playlist(self, url, latest_only=False):
         ids = self.get_dataids(url)
 
-        if not ids:
-            # Fallback to Yle news parser because sometimes Elävä
-            # arkisto pages are published using the same article type
-            # as news articles.
-            ids = parse_playlist_from_yle_article(url, self.httpclient, latest_only)
-
         if latest_only:
             ids = ids[-1:]
 
-        return [f'https://areena.yle.fi/{x}' for x in ids]
+        if ids:
+            return [f'https://areena.yle.fi/{x}' for x in ids]
+        else:
+            # Fallback to Yle news parser because sometimes Elävä
+            # arkisto pages are published using the same article type
+            # as news articles.
+            return parse_playlist_from_yle_article(url, self.httpclient, latest_only)
 
     def get_dataids(self, url):
         tree = self.httpclient.download_html_tree(url)
