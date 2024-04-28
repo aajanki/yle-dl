@@ -999,21 +999,14 @@ class AreenaLiveTVExtractor(AreenaExtractor):
     def get_playlist(self, url, latest_only=False):
         return [url]
 
-    def extract_clip(self, clip_url, origin_url):
-        pageurl = 'https://areena.yle.fi/'
-        pids = {
+    def program_id_from_url(self, url):
+        known_channels = {
             'tv1': 'yle-tv1',
             'tv2': 'yle-tv2',
             'teema': 'yle-teema-fem',
         }
-        pid = pids.get(clip_url.lower())
-        if not pid:
-            return FailedClip(pageurl, f'"{clip_url}" is not a live TV channel')
 
-        program_info = self.program_info_for_pid(
-            pid, pageurl, self.title_formatter, self.ffprobe)
-        return self.create_clip_or_failure(pid, program_info, clip_url, origin_url)
-
+        return known_channels.get(url.lower())
 
 
 ### Areena live radio ###
