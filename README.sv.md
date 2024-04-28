@@ -110,17 +110,17 @@ yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-787136
 ### Inspelning av direkt TV sändningar
 
 ```
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+yle-dl tv1
 
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+yle-dl tv2
 
-yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+yle-dl teema
 ```
 
 Spela in sändningen som visades för en timme (3600 sekunder) sedan:
 
 ```
-yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
+yle-dl --startposition -3600 tv1
 ```
 
 ### Arkivet

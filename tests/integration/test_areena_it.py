@@ -75,7 +75,7 @@ def test_areena_series_urls():
 
 @pytest.mark.geoblocked
 def test_areena_live_url():
-    streamurl = fetch_stream_url('https://areena.yle.fi/tv/suorat/yle-tv1')
+    streamurl = fetch_stream_url('tv1')
 
     assert len(streamurl) == 1
     assert '.m3u8' in streamurl[0]
@@ -83,7 +83,7 @@ def test_areena_live_url():
 
 @pytest.mark.geoblocked
 def test_areena_live_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/tv/suorat/yle-tv1')
+    metadata = fetch_metadata('tv1')
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1

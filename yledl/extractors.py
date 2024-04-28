@@ -58,6 +58,9 @@ def extractor_factory(url, language_chooser, httpclient, title_formatter, ffprob
           re.match(r'^https?://yle\.fi/', url)):
         logger.debug(f'{url} is an Areena URL')
         return AreenaExtractor(language_chooser, httpclient, title_formatter, ffprobe)
+    elif url.lower() in ['tv1', 'tv2', 'teema']:
+        logger.debug(f'{url} is a live TV channel')
+        return AreenaLiveTVExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     else:
         logger.debug(f'{url} is an unrecognized URL')
         return None
@@ -988,6 +991,30 @@ class AreenaExtractor(ClipExtractor):
                 return {'season': int(m.group(1))}
 
         return {}
+
+
+### Areena live TV ###
+
+class AreenaLiveTVExtractor(AreenaExtractor):
+    def get_playlist(self, url, latest_only=False):
+        return [url]
+
+    def extract_clip(self, clip_url, origin_url):
+        pids = {
+            'tv1': 'yle-tv1',
+            'tv2': 'yle-tv2',
+            'teema': 'yle-teema-fem',
+        }
+
+        pid = pids.get(clip_url.lower())
+        if not pid:
+            return FailedClip(url, f'"{clip_url}" is not a live TV channel')
+
+        pageurl = 'https://areena.yle.fi/'
+        program_info = self.program_info_for_pid(
+            pid, pageurl, self.title_formatter, self.ffprobe)
+        return self.create_clip_or_failure(pid, program_info, clip_url, origin_url)
+
 
 
 ### Areena live radio ###

@@ -4,7 +4,8 @@ Distributed under the GPL v3 or later
 
 <unreleased>
 
-- Support for a new stream type
+- New command for recording live TV, the old URL stopped working: yle-dl tv1
+- Support for a new stream type introduced by Areena
 - Series page downloading was partly broken after changes in Areena
 - Some Elävä arkisto/Arkivet pages were broken
 

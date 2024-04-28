@@ -173,17 +173,17 @@ yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-787136
 ### Areena live TV broadcasts
 
 ```
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+yle-dl tv1
 
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+yle-dl tv2
 
-yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+yle-dl teema
 ```
 
 Record the broadcast shown an hour (3600 seconds) ago:
 
 ```
-yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
+yle-dl --startposition -3600 tv1
 ```
 
 ### Elävä Arkisto

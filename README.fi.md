@@ -163,17 +163,17 @@ yle-dl --postprocess scripts/muxmp4 https://areena.yle.fi/1-1864726
 ### Suorat TV-lähetykset
 
 ```
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv1
+yle-dl tv1
 
-yle-dl https://areena.yle.fi/tv/suorat/yle-tv2
+yle-dl tv2
 
-yle-dl https://areena.yle.fi/tv/suorat/yle-teema-fem
+yle-dl teema
 ```
 
 Tallenna tunti (eli 3600 sekuntia) sitten TV1:llä näytettyä lähetystä:
 
 ```
-yle-dl --startposition -3600 https://areena.yle.fi/tv/suorat/yle-tv1
+yle-dl --startposition -3600 tv1
 ```
 
 ### Elävä arkisto
