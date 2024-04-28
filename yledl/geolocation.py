@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -28,19 +28,15 @@ class AreenaGeoLocation:
         self.httpclient = httpclient
 
     def located_in_finland(self, referrer):
-        endpoint = 'https://locations.api.yle.fi/v1/address/current?'\
-            'app_id=player_static_prod&'\
-            'app_key=8930d72170e48303cf5f3867780d549b'
-        extra_headers = {
-            'Referer': referrer,
-            'TE': 'Trailers',
-        }
+        endpoint = 'https://locations.api.yle.fi/v3/address/current?' \
+            'app_id=areena-web-items&' \
+            'app_key=wlTs5D9OjIdeS9krPzRQR4I1PYVzoazN'
+        extra_headers = { 'Referer': referrer }
         try:
             r = self.httpclient.get(endpoint, extra_headers)
         except requests.RequestException:
             logger.warning('Failed to check geo restrictions.')
-            logger.warning('Continuing as if no restrictions apply. '
-                           'This may fail later.')
+            logger.warning('Assuming that no restrictions apply. This may fail later.')
             return True
 
         response = r.json()

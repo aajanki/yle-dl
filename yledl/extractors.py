@@ -442,7 +442,7 @@ class AreenaPlaylistParser:
                     'offset': str(offset),
                     'limit': str(page_size),
                     'app_id': 'areena-web-items',
-                    'app_key': 'v9No1mV0omg2BppmDkmDL6tGKw1pRFZt',
+                    'app_key': 'wlTs5D9OjIdeS9krPzRQR4I1PYVzoazN',
                 }
                 playlist_page_url = update_url_query(season_url, params)
                 page = self._parse_series_episode_data(playlist_page_url, season_num)
@@ -961,9 +961,13 @@ class AreenaExtractor(ClipExtractor):
     def preview_url(self, program_id):
         return (
             f'https://player.api.yle.fi/v1/preview/{program_id}.json?'
-            'language=fin&ssl=true&countryCode=FI&host=areenaylefi'
+            'language=fin'
+            '&ssl=true'
+            '&countryCode=FI'
+            '&host=areenaylefi'
             '&app_id=player_static_prod'
             '&app_key=8930d72170e48303cf5f3867780d549b'
+            '&isPortabilityRegion=true'
         )
 
     def publish_event_is_current(self, event):
