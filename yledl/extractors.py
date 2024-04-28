@@ -23,7 +23,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from requests import HTTPError
-from typing import List, Optional
+from typing import Dict, List, Optional
 from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .http import update_url_query
@@ -205,7 +205,7 @@ class PlaylistData:
     # List of query parameters. Each item is a dictionary of query
     # parameters for one season. If empty, a playlist is downloaded
     # from the plain base_url.
-    season_parameters: list[dict]
+    season_parameters: List[Dict]
 
     def season_playlist_urls(self):
         if self.season_parameters:
