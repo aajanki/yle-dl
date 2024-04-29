@@ -8,7 +8,13 @@ jobs:
       - checkout
       - run:
           name: Install linters
-          command: pip install pycodestyle pyflakes
+          command: pip install pycodestyle pyflakes mypy
+      - run:
+          name: Install dependencies
+          command: pip install -e .[extra]
+      - run:
+          name: mypy
+          command: mypy --disable-error-code=import-untyped yledl/*.py
       - run:
           name: pyflakes
           command: pyflakes yledl/*.py
@@ -36,11 +42,7 @@ jobs:
           name: Install dependencies
           command: |
             pip install --upgrade pip
-            pip install -e .[test,extra]
-            pip install mypy
-      - run:
-          name: mypy
-          command: mypy --disable-error-code=import-untyped yledl/*.py
+            pip install -e .[test]
       - run:
           name: Unit and integration tests
           command: |
