@@ -2,10 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2024 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20240429
 
 - New command for recording live TV, the old URL stopped working: yle-dl tv1
-- Support for a new stream type introduced by Areena
+- Support for a new stream type introduced in Areena
 - Series page downloading was partly broken after changes in Areena
 - Some Elävä arkisto/Arkivet pages were broken
 
