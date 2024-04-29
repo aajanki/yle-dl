@@ -36,7 +36,7 @@ jobs:
           name: Install dependencies
           command: |
             pip install --upgrade pip
-            pip install -e .[test]
+            pip install -e .[test,extra]
             pip install mypy
       - run:
           name: mypy
