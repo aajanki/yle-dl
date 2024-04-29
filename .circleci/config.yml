@@ -8,10 +8,7 @@ jobs:
       - checkout
       - run:
           name: Install linters
-          command: pip install pycodestyle pyflakes mypy
-      - run:
-          name: mypy
-          command: mypy --disable-error-code=import-untyped yledl/*.py
+          command: pip install pycodestyle pyflakes
       - run:
           name: pyflakes
           command: pyflakes yledl/*.py
@@ -29,17 +26,21 @@ jobs:
     docker:
       - image: cimg/python:<< parameters.pyversion >>
     steps:
+      - checkout
       - run:
           name: Install ffmpeg
           command: |
             sudo apt update
             sudo apt install -y ffmpeg
-      - checkout
       - run:
           name: Install dependencies
           command: |
             pip install --upgrade pip
             pip install -e .[test]
+            pip install mypy
+      - run:
+          name: mypy
+          command: mypy --disable-error-code=import-untyped yledl/*.py
       - run:
           name: Unit and integration tests
           command: |
