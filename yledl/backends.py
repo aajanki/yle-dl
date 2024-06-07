@@ -354,9 +354,12 @@ class DASHHLSBackend(ExternalDownloader):
             return ['-scodec', scodec,
                     '-map', f'0:p:{pid}:s?']
         else:
+            # Sometimes the subtitles are labelled with a two-letter
+            # code, sometimes with a three-letter code. Try both.
             short_code = two_letter_language_code(io.subtitles) or io.subtitles
             return ['-scodec', scodec,
-                    '-map', f'0:p:{pid}:s:m:language:{short_code}?']
+                    '-map', f'0:s:m:language:{short_code}?',
+                    '-map', f'0:s:m:language:{io.subtitles}?']
 
     def _map_video_and_audio_streams(self, io):
         pid = self._program_id(io)
