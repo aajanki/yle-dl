@@ -792,7 +792,7 @@ class AreenaExtractor(ClipExtractor):
 
         flavors.extend(flavors2)
 
-        if self.is_html5_media(media_id):
+        if self.is_kaltura_media(media_id):
             # Get mp4 streams (for wget support) from Kaltura if available.
             # Web Areena no longer uses Kaltura, so this may break (Dec 2023).
             flavors.extend(self.kaltura_mp4_flavors(media_id, pageurl))
@@ -830,6 +830,9 @@ class AreenaExtractor(ClipExtractor):
         # 29- is the most common media ID
         # 84-, hosted on yleawsmpondemand-04.akamaized.net, April 2024
         return media_id and (media_id.startswith('29-') or media_id.startswith('84-'))
+
+    def is_kaltura_media(self, media_id):
+        return media_id and media_id.startswith('29-')
 
     def is_full_hd_media(self, media_id):
         return media_id and media_id.startswith('55-')
