@@ -588,7 +588,8 @@ class AreenaPreviewApiParser:
         if not description_object:
             return None
 
-        return language_chooser.choose_long_form(description_object).strip()
+        description_text = language_chooser.choose_long_form(description_object) or ''
+        return description_text.strip()
 
     def season_and_episode(self):
         res = {}
@@ -597,7 +598,8 @@ class AreenaPreviewApiParser:
             res = {'episode': episode}
 
             desc_object = self.ongoing().get('description', {})
-            desc = TranslationChooser(['fin']).choose_long_form(desc_object).strip()
+            translated = TranslationChooser(['fin']).choose_long_form(desc_object) or ''
+            desc = translated.strip()
             m = re.match(r'Kausi (\d+)\b', desc)
             if m:
                 res.update({'season': int(m.group(1))})
