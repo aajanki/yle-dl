@@ -597,9 +597,7 @@ class AreenaPreviewApiParser:
         if episode is not None:
             res = {'episode': episode}
 
-            desc_object = self.ongoing().get('description', {})
-            translated = TranslationChooser(['fin']).choose_long_form(desc_object) or ''
-            desc = translated.strip()
+            desc = self.description(TranslationChooser(['fin'])) or ''
             m = re.match(r'Kausi (\d+)\b', desc)
             if m:
                 res.update({'season': int(m.group(1))})
