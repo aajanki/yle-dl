@@ -5,6 +5,7 @@ Distributed under the GPL v3 or later
 <unreleased>
 
 - Subtitles were not downloaded in some cases
+- Fixed downloading in cases when video description is not available
 
 Version 20240429
 
