@@ -808,7 +808,7 @@ class AreenaExtractor(ClipExtractor):
         elif self.is_html5_media(media_id):
             logger.debug('Detected an HTML5 media')
             return self.hls_probe_flavors(hls_manifest_url, False, ffprobe)
-        elif self.is_media_67(media_id) or self.is_media_78(media_id):
+        elif self.is_media_67(media_id) or self.is_mp3_podcast(media_id):
             return []
         elif hls_manifest_url:
             # Fall-back options for new media_id types
@@ -841,9 +841,10 @@ class AreenaExtractor(ClipExtractor):
         # A new hosting alternative (June 2021)? Hosted on yleawsmpodamdipv4.akamaized.net
         return media_id and media_id.startswith('67-')
 
-    def is_media_78(self, media_id):
-        # Podcast streams (Spring 2023). Prefer download_url, no extra flavors here.
-        return media_id and media_id.startswith('78-')
+    def is_mp3_podcast(self, media_id):
+        # Podcast streams ("78-" seen on Spring 2023, "85-" seen on Summer 2024).
+        # Prefer download_url, no extra flavors here.
+        return media_id and (media_id.startswith('78-') or media_id.startswith('85-'))
 
     def is_live_media(self, media_id):
         return media_id and media_id.startswith('10-')

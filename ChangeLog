@@ -6,6 +6,7 @@ Distributed under the GPL v3 or later
 
 - Subtitles were not downloaded in some cases
 - Fixed downloading in cases when video description is not available
+- New types of podcast streams were showing up as "Unknown stream flavor"
 
 Version 20240429
 
