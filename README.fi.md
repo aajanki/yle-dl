@@ -192,6 +192,6 @@ Bugiraportit ja ideat uusiksi ominaisuuksiksi
 ---------------------------------------------
 
 Raportit bugeista ja ehdotuksia uusista ominaisuuksista voi lähettää
-[https://github.com/aajanki/yle-dl/issues](Githubin
-bugiraportointisivun) kautta. Voit kirjoittaa suomeksi tai
-englanniksi.
+[Githubin
+bugiraportointisivun](https://github.com/aajanki/yle-dl/issues)
+kautta. Voit kirjoittaa suomeksi tai englanniksi.

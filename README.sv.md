@@ -138,5 +138,6 @@ yle-dl https://yle.fi/a/74-20036911
 # Felrapporter och önskemål om nya funktioner
 
 Om du stöter på en bugg eller har en idé om en ny funktion kan du
-skicka den till [https://github.com/aajanki/yle-dl/issues](sida för
-problemspårning). Du kan skriva på finska, svenska eller engelska.
+skicka den till [sida för
+problemspårning](https://github.com/aajanki/yle-dl/issues). Du kan
+skriva på finska, svenska eller engelska.
