@@ -203,6 +203,13 @@ Creating a new release
 
 [Release instructions](releasing.md)
 
+Bug reports and feature suggestions
+-----------------------------------
+
+If you encounter a bug or have an idea for a new feature, please post
+it to [https://github.com/aajanki/yle-dl/issues](Github issue
+tracker). You can write in English or in Finnish.
+
 Known problems
 --------------
 

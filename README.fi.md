@@ -187,3 +187,11 @@ yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuu
 ```
 yle-dl https://yle.fi/a/74-20036911
 ```
+
+Bugiraportit ja ideat uusiksi ominaisuuksiksi
+---------------------------------------------
+
+Raportit bugeista ja ehdotuksia uusista ominaisuuksista voi lähettää
+[https://github.com/aajanki/yle-dl/issues](Githubin
+bugiraportointisivun) kautta. Voit kirjoittaa suomeksi tai
+englanniksi.

@@ -134,3 +134,9 @@ yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuu
 ```
 yle-dl https://yle.fi/a/74-20036911
 ```
+
+# Felrapporter och önskemål om nya funktioner
+
+Om du stöter på en bugg eller har en idé om en ny funktion kan du
+skicka den till [https://github.com/aajanki/yle-dl/issues](sida för
+problemspårning). Du kan skriva på finska, svenska eller engelska.
