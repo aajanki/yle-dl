@@ -25,10 +25,7 @@ finns i filen OS-install-instructions.md.
 
 * Python 3.7+
 * ffmpeg (undertexter fungerar endast med ffmpeg 4.1 eller senare)
-
-För att ladda ner några program behövs dessutom:
-
-* wget
+* wget (krävs för podcasts)
 
 ## 2. Installera yle-dl
 

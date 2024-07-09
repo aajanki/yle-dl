@@ -30,10 +30,7 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 
 * Python 3.7+
 * ffmpeg (subtitles fully supported only on ffmpeg 4.1 or later)
-
-Optionally for few rare streams:
-
-* wget
+* wget (required for podcasts)
 
 ### 2. Install yle-dl ###
 

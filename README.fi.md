@@ -22,10 +22,7 @@ löytyvät tiedostosta OS-install-instructions.md.
 
 * Python 3.7+
 * ffmpeg (tekstitys toimii vain ffmpegin versiolla 4.1 tai sitä uudemmilla)
-
-Joidenkin harvojen ohjelmien lataamiseen tarvitaan lisäksi:
-
-* wget
+* wget (radio-ohjelmien ja podcastien lataamiseen)
 
 ### 2. Asenna yle-dl
 
