@@ -240,3 +240,12 @@ def test_areena_package_page():
     episodes = fetch_episode_pages('https://areena.yle.fi/tv/ohjelmat/30-1774')
 
     assert len(episodes) > 10
+
+
+def test_areena_uusimmat_tab_page():
+    # This is a "TVView" page, for example MOT or Perjantai.
+    # The page has multiple tabs listing the same episodes in different ways.
+    # Should download the episodes from the "Uusimmat" tab.
+    episodes = fetch_episode_pages('https://areena.yle.fi/tv/ohjelmat/57-4Nj71REaB')
+
+    assert len(episodes) > 10

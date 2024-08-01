@@ -299,7 +299,7 @@ class AreenaPlaylistParser:
                  .get('item', {})
                  .get('type'))
 
-        return ptype in ['TVSeries', 'TVSeason', 'RadioSeries', 'Package']
+        return ptype in ['TVSeries', 'TVSeason', 'TVView', 'RadioSeries', 'Package']
 
     def _is_radio_series_page(self, tree):
         is_radio_page = len(tree.xpath('//div[contains(@class, "RadioPlayer")]')) > 0
@@ -322,7 +322,7 @@ class AreenaPlaylistParser:
     def _parse_episodes_tab(self, next_data_tabs, titled_tab):
         if titled_tab:
             episodes_tab = [
-                tab for tab in next_data_tabs if tab.get('title') in ['Jaksot', 'Avsnitt']
+                tab for tab in next_data_tabs if tab.get('title') in ['Jaksot', 'Avsnitt', 'Uusimmat']
             ]
         else:
             episodes_tab = [
