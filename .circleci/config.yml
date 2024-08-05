@@ -11,7 +11,7 @@ jobs:
           command: pip install ruff mypy
       - run:
           name: Install dependencies
-          command: pip install -e .[extra]
+          command: pip install .[extra]
       - run:
           name: mypy
           command: mypy yledl tests
@@ -36,7 +36,7 @@ jobs:
           name: Install dependencies
           command: |
             pip install --upgrade pip
-            pip install -e .[test]
+            pip install .[test]
       - run:
           name: Unit and integration tests
           command: |
