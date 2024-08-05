@@ -11,7 +11,7 @@ jobs:
           command: pip install ruff mypy
       - run:
           name: Install dependencies
-          command: pip install .[extra]
+          command: pip install .[test,extra]
       - run:
           name: mypy
           command: mypy yledl tests
