@@ -119,27 +119,6 @@ Contributed packages for various distros
 
 [A list of contributed packages](https://aajanki.github.io/yle-dl/index-en.html#packages)
 
-Integration tests
------------------
-
-```
-pytest-3
-```
-
-Some tests succeed only when run on a Finnish IP address because some
-Areena streams are available only in Finland. By default these tests
-are skipped. To run all tests, include the "--geoblocked" flag:
-
-```
-pytest-3 --geoblocked
-```
-
-Running only a single test file:
-
-```
-pytest-3 tests/integration/test_areena_radio_it.py
-```
-
 Examples
 --------
 
@@ -195,14 +174,41 @@ yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuu
 yle-dl https://yle.fi/a/74-20036911
 ```
 
-Linting and code formatting
----------------------------
+Development
+-----------
+
+Install yle-dl in editable mode:
 
 ```
-pipx install ruff
+pip install --break-system-packages --user -e .[test,extra]
+```
 
-ruff check
-ruff format
+Install the pre-commit hooks for linting and type checking:
+
+```
+pipx install pre-commit
+
+pre-commit install
+```
+
+### Unit and integration tests
+
+```
+pytest-3
+```
+
+Some tests succeed only when run on a Finnish IP address because some
+Areena streams are available only in Finland. By default, these tests
+are skipped. To run all tests, include the "--geoblocked" flag:
+
+```
+pytest-3 --geoblocked
+```
+
+Running only a single test file:
+
+```
+pytest-3 tests/integration/test_areena_radio_it.py
 ```
 
 Creating a new release

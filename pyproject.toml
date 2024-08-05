@@ -69,6 +69,9 @@ max-line-length = 100
 [tool.ruff.format]
 quote-style = "single"
 
+[tool.mypy]
+disable_error_code = "import-untyped"
+
 [build-system]
 requires = ["flit_core >=3.9,<4"]
 build-backend = "flit_core.buildapi"
