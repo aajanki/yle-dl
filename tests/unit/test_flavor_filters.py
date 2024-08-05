@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -16,13 +16,14 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 from yledl import YleDlDownloader, StreamFilters
-from yledl.backends import Backends, FailingBackend
+from yledl.backends import BaseDownloader, Backends, FailingBackend
 from yledl.streamflavor import StreamFlavor, failed_flavor
 from yledl.titleformatter import TitleFormatter
 
 
-class MockBackend:
+class MockBackend(BaseDownloader):
     def __init__(self, name, data=None):
+        super().__init__()
         self.name = name
         self.data = data
 
