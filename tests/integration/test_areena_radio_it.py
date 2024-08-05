@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ def test_radio_title():
 
     assert len(title) == 1
     assert title[0].startswith(
-        'Tiedeykkönen: '
-        'Suorat aurinkobiopolttoaineet mullistavat energiantuotannon')
+        'Tiedeykkönen: Suorat aurinkobiopolttoaineet mullistavat energiantuotannon'
+    )
 
 
 def test_radio_stream_url_hls():
@@ -59,7 +59,8 @@ def test_radio_live_url():
 def test_radio_live_url2():
     url = fetch_stream_url(
         'https://areena.yle.fi/podcastit/ohjelmat/57-3gO4bl7J6?'
-        '_c=yle-radio-suomi-oulu')
+        '_c=yle-radio-suomi-oulu'
+    )
 
     assert len(url) == 1
     assert '.m3u8' in url[0]

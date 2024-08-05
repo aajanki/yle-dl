@@ -17,8 +17,7 @@
 
 import pytest
 from datetime import datetime
-from utils import fetch_title, fetch_stream_url, fetch_episode_pages, \
-    fetch_metadata
+from utils import fetch_title, fetch_stream_url, fetch_episode_pages, fetch_metadata
 from yledl import StreamFilters
 
 
@@ -36,10 +35,7 @@ def test_areena_html5_metadata():
     flavors = metadata[0]['flavors']
     assert len(flavors) >= 4
     assert all(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f and
-               'height' in f and
-               'width' in f
-               for f in flavors)
+    assert all('bitrate' in f and 'height' in f and 'width' in f for f in flavors)
     assert metadata[0]['duration_seconds'] == 907
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2021-04-01T00:01:00+03:00'
@@ -48,13 +44,11 @@ def test_areena_html5_metadata():
 
 
 def test_metadata_language():
-    meta_fin = fetch_metadata(
-        'https://areena.yle.fi/1-403848', meta_language='fin')
+    meta_fin = fetch_metadata('https://areena.yle.fi/1-403848', meta_language='fin')
     title_fin = meta_fin[0].get('title')
     assert title_fin.startswith('Suomen tie jatkosotaan')
 
-    meta_swe = fetch_metadata(
-        'https://areena.yle.fi/1-403848', meta_language='swe')
+    meta_swe = fetch_metadata('https://areena.yle.fi/1-403848', meta_language='swe')
     title_swe = meta_swe[0].get('title')
     assert title_swe.startswith('Finlands väg till fortsättningskriget')
 

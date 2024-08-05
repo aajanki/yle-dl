@@ -40,8 +40,9 @@ def parse_areena_timestamp_py3(timestamp):
     if re.search(r'\d\d:\d\d$', timestamp):
         timestamp = timestamp[:-3] + timestamp[-2:]
 
-    return (strptime_or_none(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z') or
-            strptime_or_none(timestamp, '%Y-%m-%dT%H:%M:%S%z'))
+    return strptime_or_none(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z') or strptime_or_none(
+        timestamp, '%Y-%m-%dT%H:%M:%S%z'
+    )
 
 
 def strptime_or_none(timestamp, format):

@@ -53,9 +53,9 @@ class MockExtractor:
 
 
 def mock_backend(
-        status=RD_SUCCESS,
-        name='ffmpeg',
-        stream_url='https://areena.example.com/video/areena.mp4'
+    status=RD_SUCCESS,
+    name='ffmpeg',
+    stream_url='https://areena.example.com/video/areena.mp4',
 ):
     backend = BaseDownloader()
     backend.name = name
@@ -75,7 +75,7 @@ def backend_that_fails_n_times(n):
     """
     backend = BaseDownloader()
     backend.name = 'ffmpeg'
-    return_values = [TransientDownloadError('Failed!')]*n + [RD_SUCCESS]
+    return_values = [TransientDownloadError('Failed!')] * n + [RD_SUCCESS]
     backend.save_stream = Mock(side_effect=return_values)
     backend.pipe = Mock(side_effect=return_values)
     return backend
@@ -89,36 +89,48 @@ def successful_clip(title='Test clip: S01E01-2018-07-01T00:00'):
             height=1080,
             width=1920,
             bitrate=2808,
-            streams=[mock_backend(stream_url='https://example.com/video/high_quality.mp4')]
+            streams=[
+                mock_backend(stream_url='https://example.com/video/high_quality.mp4')
+            ],
         ),
         StreamFlavor(
             media_type='video',
             height=360,
             width=640,
             bitrate=880,
-            streams=[mock_backend(stream_url='https://example.com/video/low_quality.mp4')]
+            streams=[
+                mock_backend(stream_url='https://example.com/video/low_quality.mp4')
+            ],
         ),
         StreamFlavor(
             media_type='video',
             height=480,
             width=640,
             bitrate=964,
-            streams=[mock_backend(stream_url='https://example.com/video/low_quality_2.mp4')],
+            streams=[
+                mock_backend(stream_url='https://example.com/video/low_quality_2.mp4')
+            ],
         ),
         StreamFlavor(
             media_type='video',
             height=720,
             width=1280,
             bitrate=1412,
-            streams=[mock_backend(stream_url='https://example.com/video/medium_quality.mp4')]
+            streams=[
+                mock_backend(stream_url='https://example.com/video/medium_quality.mp4')
+            ],
         ),
         StreamFlavor(
             media_type='video',
             height=720,
             width=1280,
             bitrate=1872,
-            streams=[mock_backend(stream_url='https://example.com/video/medium_quality_high_bitrate.mp4')]
-        )
+            streams=[
+                mock_backend(
+                    stream_url='https://example.com/video/medium_quality_high_bitrate.mp4'
+                )
+            ],
+        ),
     ]
     return create_clip(flavors, title)
 
@@ -129,42 +141,48 @@ def incomplete_flavors_clip():
         flavors=[
             StreamFlavor(
                 media_type='video',
-                streams=[mock_backend(stream_url='https://example.com/video/1.mp4')]
+                streams=[mock_backend(stream_url='https://example.com/video/1.mp4')],
             ),
             StreamFlavor(
                 media_type='video',
                 height=360,
                 width=640,
-                streams=[mock_backend(stream_url='https://example.com/video/2.mp4')]
+                streams=[mock_backend(stream_url='https://example.com/video/2.mp4')],
             ),
             StreamFlavor(
                 media_type='video',
-                streams=[mock_backend(stream_url='https://example.com/video/3.mp4')]
-            )
+                streams=[mock_backend(stream_url='https://example.com/video/3.mp4')],
+            ),
         ],
         title='Test clip: S01E01-2018-07-01T00:00',
         duration_seconds=None,
         region='Finland',
         publish_timestamp=None,
-        expiration_timestamp=None
+        expiration_timestamp=None,
     )
 
 
 def multistream_clip():
-    return create_clip([
-        StreamFlavor(
-            media_type='video',
-            height=360,
-            width=640,
-            bitrate=964,
-            streams=[
-                FailingBackend('Invalid stream'),
-                FailingBackend('Invalid stream'),
-                mock_backend(name='wget', stream_url='https://example.com/video/3.mp4'),
-                mock_backend(name='ffmpeg', stream_url='https://example.com/video/4.mp4'),
-            ]
-        )
-    ])
+    return create_clip(
+        [
+            StreamFlavor(
+                media_type='video',
+                height=360,
+                width=640,
+                bitrate=964,
+                streams=[
+                    FailingBackend('Invalid stream'),
+                    FailingBackend('Invalid stream'),
+                    mock_backend(
+                        name='wget', stream_url='https://example.com/video/3.mp4'
+                    ),
+                    mock_backend(
+                        name='ffmpeg', stream_url='https://example.com/video/4.mp4'
+                    ),
+                ],
+            )
+        ]
+    )
 
 
 def failed_clip():
@@ -172,18 +190,20 @@ def failed_clip():
 
 
 def failed_stream_clip():
-    return create_clip([
-        StreamFlavor(
-            media_type='video',
-            height=360,
-            width=640,
-            bitrate=964,
-            streams=[
-                FailingBackend('Invalid stream'),
-                FailingBackend('Invalid stream')
-            ]
-        )
-    ])
+    return create_clip(
+        [
+            StreamFlavor(
+                media_type='video',
+                height=360,
+                width=640,
+                bitrate=964,
+                streams=[
+                    FailingBackend('Invalid stream'),
+                    FailingBackend('Invalid stream'),
+                ],
+            )
+        ]
+    )
 
 
 def create_clip(flavors, title='Test clip: S01E01-2018-07-01T00:00'):
@@ -207,8 +227,7 @@ class DownloaderParametersFixture:
 @pytest.fixture
 def simple():
     return DownloaderParametersFixture(
-        io=IOContext(destdir='/tmp/'),
-        filters=StreamFilters()
+        io=IOContext(destdir='/tmp/'), filters=StreamFilters()
     )
 
 
@@ -286,7 +305,9 @@ def test_download_filter_bitrate2(simple):
     dl = downloader({'a': clip})
     res = dl.download_clips('', simple.io, filters)
 
-    stream_by_partial_url_match(clip, 'medium_quality_high_bitrate').save_stream.assert_called_once()
+    stream_by_partial_url_match(
+        clip, 'medium_quality_high_bitrate'
+    ).save_stream.assert_called_once()
     assert res == RD_SUCCESS
 
 
@@ -310,24 +331,32 @@ def test_pipe_success(simple):
 
 
 def test_print_urls(simple):
-    dl = downloader(OrderedDict([
-        ('a', successful_clip()),
-        ('b', successful_clip()),
-    ]))
+    dl = downloader(
+        OrderedDict(
+            [
+                ('a', successful_clip()),
+                ('b', successful_clip()),
+            ]
+        )
+    )
     urls = list(dl.get_urls('', simple.io, simple.filters))
 
     assert urls == [
         'https://example.com/video/high_quality.mp4',
-        'https://example.com/video/high_quality.mp4'
+        'https://example.com/video/high_quality.mp4',
     ]
 
 
 def test_print_titles(simple):
     titles = ['Uutiset', 'Pasila: S01E01-2018-07-01T00:00']
-    dl = downloader(OrderedDict([
-        ('a', successful_clip(titles[0])),
-        ('b', successful_clip(titles[1])),
-    ]))
+    dl = downloader(
+        OrderedDict(
+            [
+                ('a', successful_clip(titles[0])),
+                ('b', successful_clip(titles[1])),
+            ]
+        )
+    )
 
     assert list(dl.get_titles('', simple.io, False)) == titles
 
@@ -362,7 +391,7 @@ def test_print_metadata(simple):
                     'width': 640,
                     'bitrate': 880,
                     'url': 'https://example.com/video/low_quality.mp4',
-                    'backends': ['ffmpeg']
+                    'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
@@ -370,7 +399,7 @@ def test_print_metadata(simple):
                     'width': 640,
                     'bitrate': 964,
                     'url': 'https://example.com/video/low_quality_2.mp4',
-                    'backends': ['ffmpeg']
+                    'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
@@ -378,7 +407,7 @@ def test_print_metadata(simple):
                     'width': 1280,
                     'bitrate': 1412,
                     'url': 'https://example.com/video/medium_quality.mp4',
-                    'backends': ['ffmpeg']
+                    'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
@@ -386,7 +415,7 @@ def test_print_metadata(simple):
                     'width': 1280,
                     'bitrate': 1872,
                     'url': 'https://example.com/video/medium_quality_high_bitrate.mp4',
-                    'backends': ['ffmpeg']
+                    'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
@@ -394,14 +423,14 @@ def test_print_metadata(simple):
                     'width': 1920,
                     'bitrate': 2808,
                     'url': 'https://example.com/video/high_quality.mp4',
-                    'backends': ['ffmpeg']
-                }
+                    'backends': ['ffmpeg'],
+                },
             ],
             'duration_seconds': 950,
             'subtitles': [],
             'region': 'Finland',
             'publish_timestamp': '2018-07-01T00:00:00+03:00',
-            'expiration_timestamp': '2019-01-01T00:00:00+03:00'
+            'expiration_timestamp': '2019-01-01T00:00:00+03:00',
         }
     ]
 
@@ -426,23 +455,23 @@ def test_print_metadata_incomplete(simple):
                 {
                     'media_type': 'video',
                     'url': 'https://example.com/video/1.mp4',
-                    'backends': ['ffmpeg']
+                    'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
                     'height': 360,
                     'width': 640,
                     'url': 'https://example.com/video/2.mp4',
-                    'backends': ['ffmpeg']
+                    'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
                     'url': 'https://example.com/video/3.mp4',
-                    'backends': ['ffmpeg']
-                }
+                    'backends': ['ffmpeg'],
+                },
             ],
             'region': 'Finland',
-            'subtitles': []
+            'subtitles': [],
         }
     ]
 
@@ -468,15 +497,11 @@ def test_print_metadata_failed_clip(simple):
     assert metadata == [
         {
             'webpage': 'https://areena.yle.fi/1-1234567',
-            'flavors': [
-                {
-                    'error': failed_clip().flavors[0].streams[0].error_message
-                }
-            ],
+            'flavors': [{'error': failed_clip().flavors[0].streams[0].error_message}],
             'region': 'Finland',
             'title': '',
             'episode_title': '',
-            'subtitles': []
+            'subtitles': [],
         }
     ]
 
@@ -508,11 +533,7 @@ def test_download_successful_after_retry(simple):
     backend = backend_that_fails_n_times(2)
     flavors = [
         StreamFlavor(
-            media_type='video',
-            height=1080,
-            width=1920,
-            bitrate=2808,
-            streams=[backend]
+            media_type='video', height=1080, width=1920, bitrate=2808, streams=[backend]
         )
     ]
     dl = downloader({'a': create_clip(flavors)})
@@ -527,11 +548,7 @@ def test_download_fails_if_too_many_failures(simple):
     backend = backend_that_fails_n_times(10)
     flavors = [
         StreamFlavor(
-            media_type='video',
-            height=1080,
-            width=1920,
-            bitrate=2808,
-            streams=[backend]
+            media_type='video', height=1080, width=1920, bitrate=2808, streams=[backend]
         )
     ]
     dl = downloader({'a': create_clip(flavors)})
@@ -546,11 +563,7 @@ def test_pipe_does_not_retry(simple):
     backend = backend_that_fails_n_times(1)
     flavors = [
         StreamFlavor(
-            media_type='video',
-            height=1080,
-            width=1920,
-            bitrate=2808,
-            streams=[backend]
+            media_type='video', height=1080, width=1920, bitrate=2808, streams=[backend]
         )
     ]
     dl = downloader({'a': create_clip(flavors)})

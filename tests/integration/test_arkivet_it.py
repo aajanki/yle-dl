@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-204 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -19,23 +19,26 @@ from utils import fetch_title, fetch_stream_url, fetch_metadata
 
 
 def test_arkivet_title():
-    title = fetch_title('https://svenska.yle.fi/artikel/2014/06/13'
-                        '/halla-det-ar-naturvaktarna')
+    title = fetch_title(
+        'https://svenska.yle.fi/artikel/2014/06/13/halla-det-ar-naturvaktarna'
+    )
 
     assert title
     assert title[0].startswith('Seportage om Naturväktarna')
 
 
 def test_arkivet_stream_url():
-    streamurl = fetch_stream_url('https://svenska.yle.fi/artikel/2014/06/13'
-                                 '/halla-det-ar-naturvaktarna')
+    streamurl = fetch_stream_url(
+        'https://svenska.yle.fi/artikel/2014/06/13/halla-det-ar-naturvaktarna'
+    )
     assert streamurl
     assert '.m3u8' in streamurl[0]
 
 
 def test_arkivet_metadata():
-    metadata = fetch_metadata('https://svenska.yle.fi/artikel/2014/06/13'
-                              '/halla-det-ar-naturvaktarna')
+    metadata = fetch_metadata(
+        'https://svenska.yle.fi/artikel/2014/06/13/halla-det-ar-naturvaktarna'
+    )
 
     assert len(metadata) == 1
     assert metadata[0].get('title').startswith('Seportage om Naturväktarna')
@@ -48,8 +51,8 @@ def test_arkivet_metadata():
 
 def test_arkivet_audio_stream_url():
     streamurl = fetch_stream_url(
-        'https://svenska.yle.fi/artikel/2014/01/28'
-        '/tove-jansson-laser-noveller-ur-dockskapet')
+        'https://svenska.yle.fi/artikel/2014/01/28/tove-jansson-laser-noveller-ur-dockskapet'
+    )
 
     assert len(streamurl) == 11
     for url in streamurl:
@@ -58,8 +61,8 @@ def test_arkivet_audio_stream_url():
 
 def test_arkivet_audio_metadata():
     metadata = fetch_metadata(
-        'https://svenska.yle.fi/artikel/2014/01/28'
-        '/tove-jansson-laser-noveller-ur-dockskapet')
+        'https://svenska.yle.fi/artikel/2014/01/28/tove-jansson-laser-noveller-ur-dockskapet'
+    )
 
     assert len(metadata) == 11
     assert metadata[0].get('title').startswith('Apan ur Dockskåpet')

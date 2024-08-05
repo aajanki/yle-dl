@@ -35,7 +35,7 @@ class KalturaApiClient:
         return {
             'service': 'session',
             'action': 'startWidgetSession',
-            'widgetId': widget_id
+            'widgetId': widget_id,
         }
 
     def list_base_entry(self, entry_id, ks):
@@ -43,15 +43,15 @@ class KalturaApiClient:
             'service': 'baseEntry',
             'action': 'list',
             'ks': ks,
-            'filter': {
-                'redirectFromEntryId': entry_id
-            },
+            'filter': {'redirectFromEntryId': entry_id},
             'responseProfile': {
-                'fields': ('id,name,description,thumbnailUrl,dataUrl,duration,'
-                           'msDuration,flavorParamsIds,mediaType,type,tags,'
-                           'dvrStatus'),
-                'type': 1
-            }
+                'fields': (
+                    'id,name,description,thumbnailUrl,dataUrl,duration,'
+                    'msDuration,flavorParamsIds,mediaType,type,tags,'
+                    'dvrStatus'
+                ),
+                'type': 1,
+            },
         }
 
     def list_metadata(self, entry_id, ks):
@@ -61,9 +61,9 @@ class KalturaApiClient:
             'filter': {
                 'objectType': 'KalturaMetadataFilter',
                 'objectIdEqual': entry_id,
-                'metadataObjectTypeEqual': '1'
+                'metadataObjectTypeEqual': '1',
             },
-            'ks': ks
+            'ks': ks,
         }
 
     def get_playback_context(self, entry_id, ks):
@@ -74,8 +74,8 @@ class KalturaApiClient:
             'ks': ks,
             'contextDataParams': {
                 'objectType': 'KalturaContextDataParams',
-                'flavorTags': 'all'
-            }
+                'flavorTags': 'all',
+            },
         }
 
     def multi_request(self, subrequests, client_tag, partner_id):
@@ -84,7 +84,7 @@ class KalturaApiClient:
             'format': 1,
             'ks': '',
             'clientTag': client_tag,
-            'partnerId': partner_id
+            'partnerId': partner_id,
         }
         mrequest.update({str(i + 1): req for i, req in enumerate(subrequests)})
         return mrequest
@@ -94,7 +94,7 @@ class KalturaApiClient:
         extra_headers = {
             'Referer': referrer,
             'Origin': origin,
-            'Cache-Control': 'max-age=0'
+            'Cache-Control': 'max-age=0',
         }
         r = self.httpclient.post(endpoint, request, extra_headers)
         return r.json()
@@ -115,21 +115,23 @@ class YleKalturaApiClient(KalturaApiClient):
             self.start_widget_session(self.widget_id),
             self.list_base_entry(entry_id, '{1:result:ks}'),
             self.get_playback_context('{2:result:objects:0:id}', '{1:result:ks}'),
-            self.list_metadata('{2:result:objects:0:id}', '{1:result:ks}')
+            self.list_metadata('{2:result:objects:0:id}', '{1:result:ks}'),
         ]
         mreq = self.multi_request(subrequests, self.client_tag, self.partner_id)
 
-        logger.debug('Sending Kaltura API flavors request:\n' +
-                     json.dumps(mreq, indent=2))
+        logger.debug(
+            'Sending Kaltura API flavors request:\n' + json.dumps(mreq, indent=2)
+        )
 
         response = self.perform_request(mreq, referrer, self.http_origin)
 
-        logger.debug('Kaltura API response:\n' +
-                     json.dumps(response, indent=2))
+        logger.debug('Kaltura API response:\n' + json.dumps(response, indent=2))
 
         return response[2] if len(response) > 2 else None
 
-    def parse_stream_flavors(self, playback_context, referrer, accepted_stream_formats=None):
+    def parse_stream_flavors(
+        self, playback_context, referrer, accepted_stream_formats=None
+    ):
         if accepted_stream_formats is None:
             accepted_stream_formats = ['url']
 
@@ -139,10 +141,10 @@ class YleKalturaApiClient(KalturaApiClient):
         flavor_assets = playback_context.get('flavorAssets', {})
         sources = playback_context.get('sources', [])
         delivery_profiles = self.delivery_profiles_by_flavor_id(
-            sources, accepted_stream_formats)
+            sources, accepted_stream_formats
+        )
 
-        filtered_flavors = [fl for fl in flavor_assets
-                            if self.is_web_stream(fl)]
+        filtered_flavors = [fl for fl in flavor_assets if self.is_web_stream(fl)]
         num_non_web = len(flavor_assets) - len(filtered_flavors)
         if num_non_web:
             logger.debug(f'Ignored {num_non_web:d} non-web flavors')
@@ -160,24 +162,36 @@ class YleKalturaApiClient(KalturaApiClient):
 
             backends = []
             for profile in delivery_profiles.get(flavor_id, []):
-                backends.extend(profile.backends(
-                    entry_id, media_type, is_live, ext, self.partner_id,
-                    self.client_tag, referrer))
+                backends.extend(
+                    profile.backends(
+                        entry_id,
+                        media_type,
+                        is_live,
+                        ext,
+                        self.partner_id,
+                        self.client_tag,
+                        referrer,
+                    )
+                )
 
             if backends:
-                res.append(StreamFlavor(
-                    media_type=media_type,
-                    height=flavor.get('height') or None,
-                    width=flavor.get('width') or None,
-                    bitrate=flavor.get('bitrate'),
-                    streams=backends
-                ))
+                res.append(
+                    StreamFlavor(
+                        media_type=media_type,
+                        height=flavor.get('height') or None,
+                        width=flavor.get('width') or None,
+                        bitrate=flavor.get('bitrate'),
+                        streams=backends,
+                    )
+                )
 
         return res
 
     def flavor_media_type(self, flavor):
-        audio_stream = ('audio_only' in self.flavor_tags(flavor) or
-                        flavor.get('containerFormat') == 'mpeg audio')
+        audio_stream = (
+            'audio_only' in self.flavor_tags(flavor)
+            or flavor.get('containerFormat') == 'mpeg audio'
+        )
         return 'audio' if audio_stream else 'video'
 
     def flavor_tags(self, flavor):
@@ -210,8 +224,7 @@ class YleKalturaApiClient(KalturaApiClient):
         profiles_filtered = {}
         for flavor_id, profiles_for_flavor in profiles.items():
             profiles_filtered[flavor_id] = [
-                p for p in profiles_for_flavor
-                if p.stream_format in accepted_formats
+                p for p in profiles_for_flavor if p.stream_format in accepted_formats
             ]
 
         return profiles_filtered
@@ -233,21 +246,24 @@ class DeliveryProfile:
             f'&playSessionId=11111111-1111-1111-1111-111111111111&clientTag={client_tag}'
         )
 
-    def backends(self, entry_id, media_type, is_live, file_ext, partner_id, client_tag, referrer):
+    def backends(
+        self, entry_id, media_type, is_live, file_ext, partner_id, client_tag, referrer
+    ):
         backends = []
-        manifest_url = self.manifest_url(entry_id, partner_id,
-                                         client_tag, referrer)
+        manifest_url = self.manifest_url(entry_id, partner_id, client_tag, referrer)
 
         if media_type == 'audio':
-            backends.extend([
-                HLSAudioBackend(manifest_url),
-                WgetBackend(manifest_url, file_ext)
-            ])
+            backends.extend(
+                [HLSAudioBackend(manifest_url), WgetBackend(manifest_url, file_ext)]
+            )
         elif self.stream_format == 'url':
             backends.append(WgetBackend(manifest_url, file_ext))
         elif self.stream_format == 'applehttp':
-            backends.append(DASHHLSBackend(
-                manifest_url, is_live=is_live, experimental_subtitles=True))
+            backends.append(
+                DASHHLSBackend(
+                    manifest_url, is_live=is_live, experimental_subtitles=True
+                )
+            )
         else:  # DASH
             backends.append(DASHHLSBackend(manifest_url, is_live=is_live))
 

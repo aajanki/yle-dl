@@ -29,6 +29,7 @@ class StreamFilters:
     """Parameters for deciding which of potentially multiple available stream
     versions to download.
     """
+
     latest_only: bool = False
     maxbitrate: Optional[int] = None
     maxheight: Optional[int] = None

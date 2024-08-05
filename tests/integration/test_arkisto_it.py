@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -19,15 +19,17 @@ from utils import fetch_title, fetch_stream_url, fetch_metadata
 
 
 def test_arkisto_title():
-    title = fetch_title('https://yle.fi/aihe/artikkeli/2010/10/28'
-                        '/studio-julmahuvi-roudasta-rospuuttoon')
+    title = fetch_title(
+        'https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon'
+    )
 
     assert 'Roudasta rospuuttoon' in title[0]
 
 
 def test_arkisto_stream_url():
-    streamurls = fetch_stream_url('https://yle.fi/aihe/artikkeli/2010/10/28'
-                                 '/studio-julmahuvi-roudasta-rospuuttoon')
+    streamurls = fetch_stream_url(
+        'https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuuttoon'
+    )
 
     assert len(streamurls) >= 1
     for url in streamurls:
@@ -43,7 +45,8 @@ def test_arkisto_a_stream_url():
 
 def test_arkisto_regression():
     # There was a regression (#168) related to an invalid downloadUrl
-    meta = fetch_metadata('https://yle.fi/aihe/artikkeli/2013/04/11'
-                          '/aanien-illoissa-kuunnellaan-kadonneitakin-aania')
+    meta = fetch_metadata(
+        'https://yle.fi/aihe/artikkeli/2013/04/11/aanien-illoissa-kuunnellaan-kadonneitakin-aania'
+    )
     # 12 streams in the article body, possibly more in the footer
     assert len(meta) >= 12

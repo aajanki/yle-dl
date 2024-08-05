@@ -41,26 +41,39 @@ logger = logging.getLogger('yledl')
 
 
 def extractor_factory(url, language_chooser, httpclient, title_formatter, ffprobe):
-    if re.match(r'^https?://yle\.fi/aihe/', url) or \
-       re.match(r'^https?://svenska\.yle\.fi/artikel/', url) or \
-       re.match(r'^https?://svenska\.yle\.fi/a/', url):
+    if (
+        re.match(r'^https?://yle\.fi/aihe/', url)
+        or re.match(r'^https?://svenska\.yle\.fi/artikel/', url)
+        or re.match(r'^https?://svenska\.yle\.fi/a/', url)
+    ):
         logger.debug(f'{url} is an Elävä Arkisto URL')
-        return ElavaArkistoExtractor(language_chooser, httpclient, title_formatter, ffprobe)
-    elif (re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url) or
-          re.match(r'^https?://areena\.yle\.fi/podcastit/ohjelmat/[-a-zA-Z0-9]+', url) or
-          re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)):
+        return ElavaArkistoExtractor(
+            language_chooser, httpclient, title_formatter, ffprobe
+        )
+    elif (
+        re.match(r'^https?://areena\.yle\.fi/audio/ohjelmat/[-a-zA-Z0-9]+', url)
+        or re.match(r'^https?://areena\.yle\.fi/podcastit/ohjelmat/[-a-zA-Z0-9]+', url)
+        or re.match(r'^https?://areena\.yle\.fi/radio/suorat/[-a-zA-Z0-9]+', url)
+    ):
         logger.debug(f'{url} is a live radio URL')
-        return AreenaLiveRadioExtractor(language_chooser, httpclient, title_formatter, ffprobe)
+        return AreenaLiveRadioExtractor(
+            language_chooser, httpclient, title_formatter, ffprobe
+        )
     elif re.match(r'^https?://yle\.fi/(a|uutiset|urheilu|saa)/', url):
         logger.debug(f'{url} is a news URL')
-        return YleUutisetExtractor(language_chooser, httpclient, title_formatter, ffprobe)
-    elif (re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or
-          re.match(r'^https?://yle\.fi/', url)):
+        return YleUutisetExtractor(
+            language_chooser, httpclient, title_formatter, ffprobe
+        )
+    elif re.match(r'^https?://(areena|arenan)\.yle\.fi/', url) or re.match(
+        r'^https?://yle\.fi/', url
+    ):
         logger.debug(f'{url} is an Areena URL')
         return AreenaExtractor(language_chooser, httpclient, title_formatter, ffprobe)
     elif url.lower() in ['tv1', 'tv2', 'teema']:
         logger.debug(f'{url} is a live TV channel')
-        return AreenaLiveTVExtractor(language_chooser, httpclient, title_formatter, ffprobe)
+        return AreenaLiveTVExtractor(
+            language_chooser, httpclient, title_formatter, ffprobe
+        )
     else:
         logger.debug(f'{url} is an unrecognized URL')
         return None
@@ -73,9 +86,8 @@ class Flavors:
     @staticmethod
     def media_type(media):
         mtype = media.get('type')
-        if (
-            mtype == 'AudioObject' or
-            (mtype is None and media.get('containerFormat') == 'mpeg audio')
+        if mtype == 'AudioObject' or (
+            mtype is None and media.get('containerFormat') == 'mpeg audio'
         ):
             return 'audio'
         else:
@@ -103,7 +115,8 @@ class Clip:
     def metadata(self, io):
         flavors_meta = sorted(
             (self.flavor_meta(f) for f in self.flavors),
-            key=lambda x: x.get('bitrate', 0))
+            key=lambda x: x.get('bitrate', 0),
+        )
         meta = [
             ('program_id', self.program_id),
             ('webpage', self.webpage),
@@ -113,27 +126,28 @@ class Clip:
             ('filename', self.meta_file_name(self.flavors, io)),
             ('flavors', flavors_meta),
             ('duration_seconds', self.duration_seconds),
-            ('subtitles',
-             [{'language': x.lang, 'url': x.url, 'category': x.category}
-              for x in self.subtitles]),
+            (
+                'subtitles',
+                [
+                    {'language': x.lang, 'url': x.url, 'category': x.category}
+                    for x in self.subtitles
+                ],
+            ),
             ('region', self.region),
-            ('publish_timestamp',
-             self.format_timestamp(self.publish_timestamp)),
-            ('expiration_timestamp',
-             self.format_timestamp(self.expiration_timestamp))
+            ('publish_timestamp', self.format_timestamp(self.publish_timestamp)),
+            ('expiration_timestamp', self.format_timestamp(self.expiration_timestamp)),
         ]
         return self.ignore_none_values(meta)
 
     def meta_file_name(self, flavors, io):
         flavors = sorted(flavors, key=lambda x: x.bitrate or 0)
-        flavors = [fl for fl in flavors
-                   if any(s.is_valid() for s in fl.streams)]
+        flavors = [fl for fl in flavors if any(s.is_valid() for s in fl.streams)]
         if flavors:
-            extensions = [s.file_extension('mkv') for s in flavors[-1].streams
-                          if s.is_valid()]
+            extensions = [
+                s.file_extension('mkv') for s in flavors[-1].streams if s.is_valid()
+            ]
             if extensions:
-                return (OutputFileNameGenerator()
-                        .filename(self.title, extensions[0], io))
+                return OutputFileNameGenerator().filename(self.title, extensions[0], io)
 
         return None
 
@@ -162,13 +176,16 @@ class Clip:
             ('width', flavor.width),
             ('bitrate', flavor.bitrate),
             ('backends', backends),
-            ('url', url)
+            ('url', url),
         ]
         return self.ignore_none_values(meta)
 
     def error_flavor_meta(self, flavor):
-        error_messages = [s.error_message for s in flavor.streams
-                          if not s.is_valid() and s.error_message]
+        error_messages = [
+            s.error_message
+            for s in flavor.streams
+            if not s.is_valid() and s.error_message
+        ]
         if error_messages:
             msg = error_messages[0]
         else:
@@ -182,7 +199,9 @@ class Clip:
 
 class FailedClip(Clip):
     def __init__(self, webpage, error_message, **kwargs):
-        super().__init__(webpage=webpage, flavors=[failed_flavor(error_message)], **kwargs)
+        super().__init__(
+            webpage=webpage, flavors=[failed_flavor(error_message)], **kwargs
+        )
 
 
 @dataclass(frozen=True)
@@ -229,7 +248,7 @@ class EpisodeMetadata:
         return (
             self.season_number or 99999,
             self.episode_number or 99999,
-            self.release_date or datetime(1970, 1, 1, 0, 0, 0)
+            self.release_date or datetime(1970, 1, 1, 0, 0, 0),
         )
 
     def with_episode_number(self, ep):
@@ -248,7 +267,7 @@ class ClipExtractor:
         return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
 
     def extract_clip(self, url, origin_url):
-        raise NotImplementedError("extract_clip must be overridden")
+        raise NotImplementedError('extract_clip must be overridden')
 
 
 class AreenaPlaylistParser:
@@ -256,6 +275,7 @@ class AreenaPlaylistParser:
 
     Reference: https://docs.api.yle.fi/api/programs-api-v3
     """
+
     def __init__(self, httpclient):
         self.httpclient = httpclient
 
@@ -293,11 +313,13 @@ class AreenaPlaylistParser:
             return False
 
         next_data = json.loads(next_data_tag[0].text)
-        ptype = (next_data.get('props', {})
-                 .get('pageProps', {})
-                 .get('meta', {})
-                 .get('item', {})
-                 .get('type'))
+        ptype = (
+            next_data.get('props', {})
+            .get('pageProps', {})
+            .get('meta', {})
+            .get('item', {})
+            .get('type')
+        )
 
         return ptype in ['TVSeries', 'TVSeason', 'TVView', 'RadioSeries', 'Package']
 
@@ -305,7 +327,9 @@ class AreenaPlaylistParser:
         is_radio_page = len(tree.xpath('//div[contains(@class, "RadioPlayer")]')) > 0
         if is_radio_page:
             episode_modal = tree.xpath('//div[starts-with(@class, "EpisodeModal")]')
-            play_button = tree.xpath('//main//button[starts-with(@class, "PlayButton")]')
+            play_button = tree.xpath(
+                '//main//button[starts-with(@class, "PlayButton")]'
+            )
             return not episode_modal and not play_button
         else:
             return False
@@ -314,21 +338,30 @@ class AreenaPlaylistParser:
         next_data_tag = html_tree.xpath('//script[@id="__NEXT_DATA__"]')
         if next_data_tag:
             next_data = json.loads(next_data_tag[0].text)
-            tabs = next_data.get('props', {}).get('pageProps', {}).get('view', {}).get('tabs', [])
-            return self._parse_episodes_tab(tabs, True) or self._parse_episodes_tab(tabs, False)
+            tabs = (
+                next_data.get('props', {})
+                .get('pageProps', {})
+                .get('view', {})
+                .get('tabs', [])
+            )
+            return self._parse_episodes_tab(tabs, True) or self._parse_episodes_tab(
+                tabs, False
+            )
 
         return None
 
     def _parse_episodes_tab(self, next_data_tabs, titled_tab):
         if titled_tab:
             episodes_tab = [
-                tab for tab in next_data_tabs if tab.get('title') in [
-                    'Jaksot', 'Avsnitt', 'Uusimmat'
-                ]
+                tab
+                for tab in next_data_tabs
+                if tab.get('title') in ['Jaksot', 'Avsnitt', 'Uusimmat']
             ]
         else:
             episodes_tab = [
-                tab for tab in next_data_tabs if tab.get('type') == 'tab' and 'title' not in tab
+                tab
+                for tab in next_data_tabs
+                if tab.get('type') == 'tab' and 'title' not in tab
             ]
 
         if episodes_tab:
@@ -362,7 +395,9 @@ class AreenaPlaylistParser:
         return None
 
     def _parse_radio_playlist(self, html_tree):
-        state_tag = html_tree.xpath('//script[contains(., "window.STORE_STATE_FROM_SERVER")]')
+        state_tag = html_tree.xpath(
+            '//script[contains(., "window.STORE_STATE_FROM_SERVER")]'
+        )
         if state_tag:
             state_str = state_tag[0].text
             data = json.loads(state_str.split('=', 1)[-1].strip())
@@ -386,7 +421,9 @@ class AreenaPlaylistParser:
 
         # Heuristics: If most episodes do not have an episode number,
         # use time-based sorting.
-        if self._episode_numbers_are_rare(playlist) and self._timestamps_are_common(playlist):
+        if self._episode_numbers_are_rare(playlist) and self._timestamps_are_common(
+            playlist
+        ):
             playlist = [x.with_episode_number(None) for x in playlist]
 
         # We can't control whether Areena API returns episodes in
@@ -423,7 +460,11 @@ class AreenaPlaylistParser:
 
         prev_ts = None
         for p in playlist:
-            if prev_ts is not None and p.release_date is not None and p.release_date < prev_ts:
+            if (
+                prev_ts is not None
+                and p.release_date is not None
+                and p.release_date < prev_ts
+            ):
                 return True
 
             prev_ts = p.release_date
@@ -441,7 +482,8 @@ class AreenaPlaylistParser:
             while has_next_page:
                 logger.debug(
                     f'Getting a playlist page, season = {season_num}, '
-                    f'size = {page_size}, offset = {offset}')
+                    f'size = {page_size}, offset = {offset}'
+                )
 
                 params = {
                     'offset': str(offset),
@@ -454,7 +496,8 @@ class AreenaPlaylistParser:
 
                 if page is None:
                     logger.warning(
-                        f'Playlist failed at offset {offset}. Some episodes may be missing!')
+                        f'Playlist failed at offset {offset}. Some episodes may be missing!'
+                    )
                     break
 
                 playlist.extend(page)
@@ -516,12 +559,12 @@ class AreenaPlaylistParser:
         generics = self._label_by_type(labels, 'generic', 'formatted')
         for val in generics:
             # Look for a label that matches the format "pe 15.3.2019"
-            m = re.match(r'[a-z]{2} (?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4})', val)
+            m = re.match(
+                r'[a-z]{2} (?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4})', val
+            )
             if m:
                 return datetime(
-                    int(m.group('year')),
-                    int(m.group('month')),
-                    int(m.group('day'))
+                    int(m.group('year')), int(m.group('month')), int(m.group('day'))
                 )
 
         return None
@@ -565,7 +608,9 @@ class AreenaPreviewApiParser:
 
         series_title_object = ongoing.get('series', {}).get('title', {})
         if series_title_object:
-            title['series_title'] = language_chooser.choose_long_form(series_title_object).strip()
+            title['series_title'] = language_chooser.choose_long_form(
+                series_title_object
+            ).strip()
 
         # If title['title'] does not equal title['episode_title'], then
         # the episode title is title['title'].
@@ -577,7 +622,9 @@ class AreenaPreviewApiParser:
         # It seem impossible to decide which of the cases 1. or 2. should apply
         # based on the preview API response only. We will always use the date
         # (case 1.) because that is the more common case.
-        if title.get('title') is not None and title.get('title') == title.get('series_title'):
+        if title.get('title') is not None and title.get('title') == title.get(
+            'series_title'
+        ):
             title_timestamp = parse_areena_timestamp(ongoing.get('start_time'))
             if title_timestamp:
                 # Should be localized (Finnish or Swedish) based on language_chooser
@@ -645,11 +692,13 @@ class AreenaPreviewApiParser:
 
     def ongoing(self):
         data = self.preview.get('data', {})
-        return (data.get('ongoing_ondemand') or
-                data.get('ongoing_event', {}) or
-                data.get('ongoing_channel', {}) or
-                data.get('pending_event') or
-                {})
+        return (
+            data.get('ongoing_ondemand')
+            or data.get('ongoing_event', {})
+            or data.get('ongoing_channel', {})
+            or data.get('pending_event')
+            or {}
+        )
 
     def subtitles(self):
         langname2to3 = {
@@ -707,7 +756,8 @@ class AreenaExtractor(ClipExtractor):
     def extract_clip(self, clip_url, origin_url):
         pid = self.program_id_from_url(clip_url)
         program_info = self.program_info_for_pid(
-            pid, clip_url, self.title_formatter, self.ffprobe)
+            pid, clip_url, self.title_formatter, self.ffprobe
+        )
         return self.create_clip_or_failure(pid, program_info, clip_url, origin_url)
 
     def program_id_from_url(self, url):
@@ -730,8 +780,9 @@ class AreenaExtractor(ClipExtractor):
 
     def create_clip(self, program_id, program_info, pageurl, origin_url):
         if program_info.flavors:
-            all_streams = list(itertools.chain.from_iterable(
-                fl.streams for fl in program_info.flavors))
+            all_streams = list(
+                itertools.chain.from_iterable(fl.streams for fl in program_info.flavors)
+            )
         else:
             all_streams = []
 
@@ -761,7 +812,8 @@ class AreenaExtractor(ClipExtractor):
                 region=program_info.available_at_region,
                 publish_timestamp=program_info.publish_timestamp,
                 expiration_timestamp=program_info.expiration_timestamp,
-                program_id=program_id)
+                program_id=program_id,
+            )
         else:
             return Clip(
                 webpage=pageurl,
@@ -775,10 +827,19 @@ class AreenaExtractor(ClipExtractor):
                 expiration_timestamp=program_info.expiration_timestamp,
                 subtitles=program_info.subtitles,
                 program_id=program_id,
-                origin_url=origin_url)
+                origin_url=origin_url,
+            )
 
-    def media_flavors(self, media_id, hls_manifest_url,
-                      download_url, media_type, is_live, pageurl, ffprobe):
+    def media_flavors(
+        self,
+        media_id,
+        hls_manifest_url,
+        download_url,
+        media_type,
+        is_live,
+        pageurl,
+        ffprobe,
+    ):
         flavors = []
 
         if download_url:
@@ -787,7 +848,8 @@ class AreenaExtractor(ClipExtractor):
         flavors2 = []
         if media_id:
             flavors2.extend(
-                self.flavors_by_media_id(media_id, hls_manifest_url, is_live, ffprobe))
+                self.flavors_by_media_id(media_id, hls_manifest_url, is_live, ffprobe)
+            )
 
         if not flavors2 and hls_manifest_url:
             flavors2.extend(self.hls_flavors(hls_manifest_url, media_type))
@@ -870,8 +932,7 @@ class AreenaExtractor(ClipExtractor):
             return []
 
         logger.debug('Probing for stream flavors')
-        return FullHDFlavorProber().probe_flavors(
-            hls_manifest_url, is_live, ffprobe)
+        return FullHDFlavorProber().probe_flavors(hls_manifest_url, is_live, ffprobe)
 
     def download_flavors(self, download_url, media_type):
         path = urlparse(download_url)[2]
@@ -880,21 +941,21 @@ class AreenaExtractor(ClipExtractor):
         return [StreamFlavor(media_type=media_type, streams=[backend])]
 
     def publish_event(self, program_info):
-        events = (program_info or {}).get('data', {}) \
-                                     .get('publicationEvent', [])
-        areena_events = [e for e in events
-                         if e.get('service', {}).get('id') == 'yle-areena']
-        has_current = any(self.publish_event_is_current(e)
-                          for e in areena_events)
+        events = (program_info or {}).get('data', {}).get('publicationEvent', [])
+        areena_events = [
+            e for e in events if e.get('service', {}).get('id') == 'yle-areena'
+        ]
+        has_current = any(self.publish_event_is_current(e) for e in areena_events)
         if has_current:
-            areena_events = [e for e in areena_events
-                             if self.publish_event_is_current(e)]
+            areena_events = [
+                e for e in areena_events if self.publish_event_is_current(e)
+            ]
 
         with_media = [e for e in areena_events if e.get('media')]
         if with_media:
-            sorted_events = sorted(with_media,
-                                   key=lambda e: e.get('startTime'),
-                                   reverse=True)
+            sorted_events = sorted(
+                with_media, key=lambda e: e.get('startTime'), reverse=True
+            )
             return sorted_events[0]
         else:
             return {}
@@ -937,9 +998,15 @@ class AreenaExtractor(ClipExtractor):
             title=title,
             episode_title=episode_title,
             description=preview.description(self.language_chooser),
-            flavors=self.media_flavors(media_id, preview.manifest_url(),
-                                       download_url, preview.media_type(),
-                                       is_live, pageurl, ffprobe),
+            flavors=self.media_flavors(
+                media_id,
+                preview.manifest_url(),
+                download_url,
+                preview.media_type(),
+                is_live,
+                pageurl,
+                ffprobe,
+            ),
             subtitles=preview_subtitles,
             duration_seconds=preview.duration_seconds(),
             available_at_region=preview.available_at_region() or 'Finland',
@@ -950,10 +1017,7 @@ class AreenaExtractor(ClipExtractor):
         )
 
     def preview_parser(self, pid, pageurl):
-        preview_headers = {
-            'Referer': pageurl,
-            'Origin': 'https://areena.yle.fi'
-        }
+        preview_headers = {'Referer': pageurl, 'Origin': 'https://areena.yle.fi'}
         url = self.preview_url(pid)
         try:
             preview_json = self.httpclient.download_json(url, preview_headers)
@@ -1000,6 +1064,7 @@ class AreenaExtractor(ClipExtractor):
 
 
 ### Areena live TV ###
+
 
 class AreenaLiveTVExtractor(AreenaExtractor):
     def get_playlist(self, url, latest_only=False):
@@ -1114,9 +1179,12 @@ def parse_playlist_from_yle_article(url, httpclient, latest_only):
     state_script_nodes = tree.xpath(
         '//script[@type="text/javascript" and '
         '(contains(text(), "window.__INITIAL__STATE__") or '
-        ' contains(text(), "window.__INITIAL_STATE__"))]/text()')
+        ' contains(text(), "window.__INITIAL_STATE__"))]/text()'
+    )
     if len(state_script_nodes) > 0:
-        state_json = re.sub(r'^window\.__INITIAL__?STATE__\s*=\s*', '', state_script_nodes[0])
+        state_json = re.sub(
+            r'^window\.__INITIAL__?STATE__\s*=\s*', '', state_script_nodes[0]
+        )
         state = json.loads(state_json)
 
     if state is None:
@@ -1131,8 +1199,11 @@ def parse_playlist_from_yle_article(url, httpclient, latest_only):
     article = state.get('pageData', {}).get('article', {})
     if article.get('mainMedia') is not None:
         medias = article['mainMedia']
-        data_ids = [media['id'] for media in medias
-                    if media.get('type') in ['VideoBlock', 'video'] and 'id' in media]
+        data_ids = [
+            media['id']
+            for media in medias
+            if media.get('type') in ['VideoBlock', 'video'] and 'id' in media
+        ]
     else:
         headline_video_id = article.get('headline', {}).get('video', {}).get('id')
         if headline_video_id:
@@ -1140,8 +1211,10 @@ def parse_playlist_from_yle_article(url, httpclient, latest_only):
 
     content = article.get('content', [])
     inline_media = [
-        block['id'] for block in content
-        if block.get('type') in ['AudioBlock', 'audio', 'VideoBlock', 'video'] and 'id' in block
+        block['id']
+        for block in content
+        if block.get('type') in ['AudioBlock', 'audio', 'VideoBlock', 'video']
+        and 'id' in block
     ]
     for id in inline_media:
         if id not in data_ids:

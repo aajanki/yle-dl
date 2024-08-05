@@ -66,6 +66,9 @@ ignore = [
 [tool.ruff.lint.pycodestyle]
 max-line-length = 100
 
+[tool.ruff.format]
+quote-style = "single"
+
 [build-system]
 requires = ["flit_core >=3.9,<4"]
 build-backend = "flit_core.buildapi"

@@ -36,22 +36,55 @@ class MockGeoLocation:
 
 
 flavors = [
-    StreamFlavor(streams=[MockBackend('ffmpeg', 1)],
-                 bitrate=190, width=224, height=126, media_type=''),
-
-    StreamFlavor(streams=[MockBackend('ffmpeg', 5)],
-                 bitrate=1506, width=1280, height=720, media_type=''),
-    StreamFlavor(streams=[MockBackend('ffmpeg', 6)],
-                 bitrate=2628, width=1280, height=720, media_type=''),
-    StreamFlavor(streams=[MockBackend('ffmpeg', 7)],
-                 bitrate=4128, width=1920, height=1080, media_type=''),
-
-    StreamFlavor(streams=[MockBackend('ffmpeg', 4)],
-                 bitrate=964, width=640, height=360, media_type=''),
-    StreamFlavor(streams=[MockBackend('ffmpeg', 3)],
-                 bitrate=668, width=640, height=360, media_type=''),
-    StreamFlavor(streams=[MockBackend('ffmpeg', 2)],
-                 bitrate=469, width=640, height=360, media_type='')
+    StreamFlavor(
+        streams=[MockBackend('ffmpeg', 1)],
+        bitrate=190,
+        width=224,
+        height=126,
+        media_type='',
+    ),
+    StreamFlavor(
+        streams=[MockBackend('ffmpeg', 5)],
+        bitrate=1506,
+        width=1280,
+        height=720,
+        media_type='',
+    ),
+    StreamFlavor(
+        streams=[MockBackend('ffmpeg', 6)],
+        bitrate=2628,
+        width=1280,
+        height=720,
+        media_type='',
+    ),
+    StreamFlavor(
+        streams=[MockBackend('ffmpeg', 7)],
+        bitrate=4128,
+        width=1920,
+        height=1080,
+        media_type='',
+    ),
+    StreamFlavor(
+        streams=[MockBackend('ffmpeg', 4)],
+        bitrate=964,
+        width=640,
+        height=360,
+        media_type='',
+    ),
+    StreamFlavor(
+        streams=[MockBackend('ffmpeg', 3)],
+        bitrate=668,
+        width=640,
+        height=360,
+        media_type='',
+    ),
+    StreamFlavor(
+        streams=[MockBackend('ffmpeg', 2)],
+        bitrate=469,
+        width=640,
+        height=360,
+        media_type='',
+    ),
 ]
 
 
@@ -63,14 +96,13 @@ def video_flavor(streams):
     return StreamFlavor(media_type='video', streams=streams)
 
 
-def filter_flavors(flavors, max_height=None, max_bitrate=None,
-                   enabled_backends=None):
+def filter_flavors(flavors, max_height=None, max_bitrate=None, enabled_backends=None):
     if enabled_backends is None:
         enabled_backends = list(Backends.default_order)
 
-    filters = StreamFilters(maxheight=max_height,
-                            maxbitrate=max_bitrate,
-                            enabled_backends=enabled_backends)
+    filters = StreamFilters(
+        maxheight=max_height, maxbitrate=max_bitrate, enabled_backends=enabled_backends
+    )
     return yle_dl_downloader().select_flavor(flavors, filters)
 
 
@@ -89,7 +121,7 @@ def test_only_failed_flavors():
     failed_flavors = [
         failed_flavor('First failure'),
         failed_flavor('Second failure'),
-        failed_flavor('Third failure')
+        failed_flavor('Third failure'),
     ]
 
     res1 = filter_flavors(failed_flavors)
@@ -145,43 +177,62 @@ def test_combined_filters():
 def test_combined_filter_with_some_failed_flavors():
     test_flavors = [
         failed_flavor('Failure'),
-        StreamFlavor(streams=[MockBackend('ffmpeg', 2)], bitrate=190,
-                     width=224, height=126, media_type=''),
-        StreamFlavor(streams=[MockBackend('ffmpeg', 3)], bitrate=469,
-                     width=640, height=360, media_type=''),
+        StreamFlavor(
+            streams=[MockBackend('ffmpeg', 2)],
+            bitrate=190,
+            width=224,
+            height=126,
+            media_type='',
+        ),
+        StreamFlavor(
+            streams=[MockBackend('ffmpeg', 3)],
+            bitrate=469,
+            width=640,
+            height=360,
+            media_type='',
+        ),
         failed_flavor('Second failure'),
-        StreamFlavor(streams=[MockBackend('ffmpeg', 5)], bitrate=1506,
-                     width=1280, height=720, media_type='')
+        StreamFlavor(
+            streams=[MockBackend('ffmpeg', 5)],
+            bitrate=1506,
+            width=1280,
+            height=720,
+            media_type='',
+        ),
     ]
 
     assert backend_data(filter_flavors(test_flavors)) == [5]
-    assert backend_data(filter_flavors(test_flavors, max_height=720,
-                                       max_bitrate=200)) == [2]
-    assert backend_data(filter_flavors(test_flavors, max_height=400,
-                                       max_bitrate=2000)) == [3]
+    assert backend_data(
+        filter_flavors(test_flavors, max_height=720, max_bitrate=200)
+    ) == [2]
+    assert backend_data(
+        filter_flavors(test_flavors, max_height=400, max_bitrate=2000)
+    ) == [3]
 
 
 def test_combined_filter_bitrate_only_and_some_failures():
     test_flavors = [
         failed_flavor('Failure'),
-        StreamFlavor(streams=[MockBackend('ffmpeg', 1)], bitrate=517,
-                     media_type='video'),
-        failed_flavor('Second failure')
+        StreamFlavor(
+            streams=[MockBackend('ffmpeg', 1)], bitrate=517, media_type='video'
+        ),
+        failed_flavor('Second failure'),
     ]
 
     assert backend_data(filter_flavors(test_flavors)) == [1]
     assert backend_data(filter_flavors(test_flavors, max_height=720)) == [1]
     assert backend_data(filter_flavors(test_flavors, max_bitrate=200)) == [1]
-    assert backend_data(filter_flavors(
-        test_flavors, max_height=720, max_bitrate=200)) == [1]
+    assert backend_data(
+        filter_flavors(test_flavors, max_height=720, max_bitrate=200)
+    ) == [1]
 
 
 def test_backend_filter_first_preferred():
-    test_flavors = [video_flavor([
-        MockBackend('ffmpeg'),
-        MockBackend('wget'),
-        MockBackend('youtubedl')
-    ])]
+    test_flavors = [
+        video_flavor(
+            [MockBackend('ffmpeg'), MockBackend('wget'), MockBackend('youtubedl')]
+        )
+    ]
     enabled = ['wget', 'ffmpeg', 'youtubedl', 'rtmpdump']
     flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
@@ -197,11 +248,11 @@ def test_backend_filter_first_preferred_2():
 
 
 def test_backend_filter_no_match():
-    test_flavors = [video_flavor([
-        MockBackend('ffmpeg'),
-        MockBackend('wget'),
-        MockBackend('youtubedl')
-    ])]
+    test_flavors = [
+        video_flavor(
+            [MockBackend('ffmpeg'), MockBackend('wget'), MockBackend('youtubedl')]
+        )
+    ]
     enabled = ['rtmpdump']
     flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
@@ -217,11 +268,15 @@ def test_backend_filter_no_streams():
 
 
 def test_backend_filter_failed_stream():
-    test_flavors = [video_flavor([
-        MockBackend('ffmpeg'),
-        FailingBackend('wget stream failed'),
-        MockBackend('youtubedl')
-    ])]
+    test_flavors = [
+        video_flavor(
+            [
+                MockBackend('ffmpeg'),
+                FailingBackend('wget stream failed'),
+                MockBackend('youtubedl'),
+            ]
+        )
+    ]
     enabled = ['wget']
     flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 
@@ -230,11 +285,15 @@ def test_backend_filter_failed_stream():
 
 
 def test_backend_filter_failed_fallback():
-    test_flavors = [video_flavor([
-        MockBackend('ffmpeg'),
-        FailingBackend('wget stream failed'),
-        MockBackend('youtubedl')
-    ])]
+    test_flavors = [
+        video_flavor(
+            [
+                MockBackend('ffmpeg'),
+                FailingBackend('wget stream failed'),
+                MockBackend('youtubedl'),
+            ]
+        )
+    ]
     enabled = ['wget', 'youtubedl', 'ffmpeg']
     flavor = filter_flavors(test_flavors, enabled_backends=enabled)
 

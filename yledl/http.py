@@ -37,17 +37,14 @@ class HttpClient:
         session.timeout = 20
 
         if proxy:
-            session.proxies = {
-                'http': proxy,
-                'https': proxy
-            }
+            session.proxies = {'http': proxy, 'https': proxy}
 
         try:
             from requests.packages.urllib3.util.retry import Retry
 
-            retry = Retry(total=3,
-                          backoff_factor=0.5,
-                          status_forcelist=[500, 502, 503, 504])
+            retry = Retry(
+                total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504]
+            )
             session.mount('http://', HTTPAdapter(max_retries=retry))
             session.mount('https://', HTTPAdapter(max_retries=retry))
         except ImportError:
@@ -97,7 +94,7 @@ class HttpClient:
         if url.find('://') == -1:
             url = f'http://{url}'
         if '#' in url:
-            url = url[:url.find('#')]
+            url = url[: url.find('#')]
 
         headers = yledl_headers()
         if extra_headers:
@@ -141,7 +138,7 @@ def yledl_user_agent():
 
 
 def html_meta_charset(html_bytes):
-    metacharset = re.search(br'<meta [^>]*?charset="(.*?)"', html_bytes)
+    metacharset = re.search(rb'<meta [^>]*?charset="(.*?)"', html_bytes)
     if metacharset:
         return metacharset.group(1).decode('ASCII')
     else:

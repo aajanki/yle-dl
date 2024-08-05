@@ -17,7 +17,7 @@ jobs:
           command: mypy --disable-error-code=import-untyped yledl/*.py
       - run:
           name: ruff check
-          command: ruff check yledl
+          command: ruff check
 
   test:
     parameters:

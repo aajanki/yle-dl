@@ -36,8 +36,13 @@ logger = logging.getLogger('yledl')
 
 
 class YleDlDownloader:
-    def __init__(self, geolocation, title_formatter, httpclient,
-                 _extractor_factory=extractor_factory):
+    def __init__(
+        self,
+        geolocation,
+        title_formatter,
+        httpclient,
+        _extractor_factory=extractor_factory,
+    ):
         self.geolocation = geolocation
         self.title_formatter = title_formatter
         self.httpclient = httpclient
@@ -45,8 +50,13 @@ class YleDlDownloader:
 
     def download_clips(self, base_url, io, filters):
         prober = self.create_prober(io, filters)
-        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, prober)
+        extractor = self.extractor_factory(
+            base_url,
+            self.language_chooser(base_url, io),
+            self.httpclient,
+            self.title_formatter,
+            prober,
+        )
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return RD_FAILED
@@ -54,13 +64,17 @@ class YleDlDownloader:
         playlist = extractor.get_playlist(base_url, filters.latest_only)
 
         if len(playlist) > 1 and io.outputfilename is not None:
-            logger.error('The source is a playlist with multiple clips, '
-                         'but only one output file specified')
+            logger.error(
+                'The source is a playlist with multiple clips, '
+                'but only one output file specified'
+            )
             return RD_FAILED
         elif len(playlist) > 1 and extractor.title_formatter.is_constant_pattern():
-            logger.error('The source is a playlist with multiple clips, '
-                         'but --output-template is a literal: '
-                         f'{extractor.title_formatter.template}')
+            logger.error(
+                'The source is a playlist with multiple clips, '
+                'but --output-template is a literal: '
+                f'{extractor.title_formatter.template}'
+            )
             return RD_FAILED
 
         if len(playlist) == 0:
@@ -69,7 +83,8 @@ class YleDlDownloader:
         overall_status = RD_SUCCESS
         for clip_url in playlist:
             res = self.download_with_retry(
-                clip_url, base_url, extractor, filters, io, max_retry_count=3)
+                clip_url, base_url, extractor, filters, io, max_retry_count=3
+            )
             if res != RD_SUCCESS and overall_status != RD_FAILED:
                 overall_status = res
 
@@ -77,8 +92,13 @@ class YleDlDownloader:
 
     def pipe(self, base_url, io, filters):
         prober = self.create_prober(io, filters)
-        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, prober)
+        extractor = self.extractor_factory(
+            base_url,
+            self.language_chooser(base_url, io),
+            self.httpclient,
+            self.title_formatter,
+            prober,
+        )
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return RD_FAILED
@@ -96,8 +116,13 @@ class YleDlDownloader:
 
     def get_urls(self, base_url, io, filters):
         prober = self.create_prober(io, filters)
-        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, prober)
+        extractor = self.extractor_factory(
+            base_url,
+            self.language_chooser(base_url, io),
+            self.httpclient,
+            self.title_formatter,
+            prober,
+        )
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
@@ -112,8 +137,13 @@ class YleDlDownloader:
     def get_titles(self, base_url, io, latest_only):
         # Use NullProbe to avoid slow probe because we don't need stream data,
         # only the title
-        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, NullProbe())
+        extractor = self.extractor_factory(
+            base_url,
+            self.language_chooser(base_url, io),
+            self.httpclient,
+            self.title_formatter,
+            NullProbe(),
+        )
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
@@ -122,8 +152,13 @@ class YleDlDownloader:
         return (sane_filename(clip.title or '', io.excludechars) for clip in clips)
 
     def get_metadata(self, base_url, io, latest_only):
-        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, io.ffprobe())
+        extractor = self.extractor_factory(
+            base_url,
+            self.language_chooser(base_url, io),
+            self.httpclient,
+            self.title_formatter,
+            io.ffprobe(),
+        )
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
@@ -132,15 +167,22 @@ class YleDlDownloader:
         return list(clip.metadata(io) for clip in clips)
 
     def get_playlist(self, base_url, io):
-        extractor = self.extractor_factory(base_url, self.language_chooser(base_url, io),
-                                           self.httpclient, self.title_formatter, NullProbe())
+        extractor = self.extractor_factory(
+            base_url,
+            self.language_chooser(base_url, io),
+            self.httpclient,
+            self.title_formatter,
+            NullProbe(),
+        )
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
 
         return extractor.get_playlist(base_url)
 
-    def download_with_retry(self, clip_url, base_url, extractor, filters, io, max_retry_count):
+    def download_with_retry(
+        self, clip_url, base_url, extractor, filters, io, max_retry_count
+    ):
         attempt = 0
         if max_retry_count < 0:
             max_retry_count = 0
@@ -214,7 +256,9 @@ class YleDlDownloader:
         if dl_result == RD_SUCCESS:
             self.log_output_file(outputfile, True)
             if io.xattr:
-                self.set_extended_file_attributes(outputfile, clip.metadata(io), clip.origin_url)
+                self.set_extended_file_attributes(
+                    outputfile, clip.metadata(io), clip.origin_url
+                )
             self.postprocess(io.postprocess_command, outputfile, [])
 
         return dl_result
@@ -258,9 +302,10 @@ class YleDlDownloader:
         limits = io.download_limits
         slicing_active = limits.start_position or 0 > 0 or limits.duration
 
-        return ((not io.overwrite and os.path.exists(outputfile)) or
-                (not slicing_active and
-                 downloader.full_stream_already_downloaded(outputfile, clip, io)))
+        return (not io.overwrite and os.path.exists(outputfile)) or (
+            not slicing_active
+            and downloader.full_stream_already_downloaded(outputfile, clip, io)
+        )
 
     def generate_output_name(self, title, downloader, io):
         generator = OutputFileNameGenerator()
@@ -274,11 +319,17 @@ class YleDlDownloader:
         logger.debug('Available flavors:')
         for fl in sorted(flavors, key=sortkey_max_resolution_max_bitrate({})):
             backends = ', '.join(stream.name or '???' for stream in fl.streams)
-            logger.debug('bitrate: {bitrate}, height: {height}, '
-                         'width: {width}, backends: {backends}'
-                         .format(**asdict(fl), backends=backends))
-        logger.debug('max_height: {maxheight}, max_bitrate: {maxbitrate}'
-                     .format(**asdict(filters)))
+            logger.debug(
+                'bitrate: {bitrate}, height: {height}, '
+                'width: {width}, backends: {backends}'.format(
+                    **asdict(fl), backends=backends
+                )
+            )
+        logger.debug(
+            'max_height: {maxheight}, max_bitrate: {maxbitrate}'.format(
+                **asdict(filters)
+            )
+        )
 
         filtered = self.apply_backend_filter(flavors, filters)
         filtered = self.apply_resolution_filters(filtered, filters)
@@ -318,11 +369,10 @@ class YleDlDownloader:
 
     def apply_resolution_filters(self, flavors, filters):
         filtered = [
-            fl for fl in flavors
-            if (filters.maxbitrate is None or
-                (fl.bitrate or 0) <= filters.maxbitrate) and
-            (filters.maxheight is None or
-             (fl.height or 0) <= filters.maxheight)
+            fl
+            for fl in flavors
+            if (filters.maxbitrate is None or (fl.bitrate or 0) <= filters.maxbitrate)
+            and (filters.maxheight is None or (fl.height or 0) <= filters.maxheight)
         ]
 
         if filtered:
@@ -333,8 +383,7 @@ class YleDlDownloader:
             reverse = filters.maxheight is not None or filters.maxbitrate is not None
 
         backend_preference = {
-            backend: i
-            for (i, backend) in enumerate(reversed(filters.enabled_backends))
+            backend: i for (i, backend) in enumerate(reversed(filters.enabled_backends))
         }
 
         if filters.maxheight is not None and filters.maxbitrate is None:
@@ -347,12 +396,11 @@ class YleDlDownloader:
     def backend_not_enabled_flavor(self, flavors):
         supported_backends = set()
         for fl in flavors:
-            supported_backends.update(
-                s.name for s in fl.streams if s.is_valid())
+            supported_backends.update(s.name for s in fl.streams if s.is_valid())
 
-        error_messages = [s.error_message
-                          for fl in flavors
-                          for s in fl.streams if not s.is_valid()]
+        error_messages = [
+            s.error_message for fl in flavors for s in fl.streams if not s.is_valid()
+        ]
 
         if supported_backends:
             msg = f'Required backend not enabled. Try: --backend {",".join(supported_backends)}'
@@ -379,12 +427,13 @@ class YleDlDownloader:
             return None
 
     def print_geo_warning(self, clip):
-        if (
-            clip.region in ['Finland', None] and
-            not self.geolocation.located_in_finland(clip.webpage)
+        if clip.region in ['Finland', None] and not self.geolocation.located_in_finland(
+            clip.webpage
         ):
-            logger.error('This clip is only available in Finland '
-                         'and according to Yle you are located abroad')
+            logger.error(
+                'This clip is only available in Finland '
+                'and according to Yle you are located abroad'
+            )
 
     def log_output_file(self, outputfile, done=False):
         if outputfile and outputfile != '-':
@@ -401,8 +450,10 @@ class YleDlDownloader:
 
     def log_unsupported_url_error(self, url):
         logger.error(f'Unsupported URL {url}.')
-        logger.error('If you think yle-dl should support this page, open a '
-                     'bug report at https://github.com/aajanki/yle-dl/issues')
+        logger.error(
+            'If you think yle-dl should support this page, open a '
+            'bug report at https://github.com/aajanki/yle-dl/issues'
+        )
 
     def language_chooser(self, url, io):
         if io.metadata_language:
@@ -413,7 +464,7 @@ class YleDlDownloader:
 
     def set_extended_file_attributes(self, filename, metadata, referrer_url):
         def xset(name, value_str):
-            xa.set(name, value_str.encode('utf-8')[:64 * 1024])
+            xa.set(name, value_str.encode('utf-8')[: 64 * 1024])
 
         try:
             from xattr import xattr
@@ -449,8 +500,7 @@ class YleDlDownloader:
 def sortkey_max_resolution_max_bitrate(backend_preference):
     def sortkey(x):
         backend_score = max(
-            backend_preference.get(stream.name, -1)
-            for stream in x.streams
+            backend_preference.get(stream.name, -1) for stream in x.streams
         )
         return (x.height or 0, backend_score, x.bitrate or 0)
 
@@ -460,8 +510,7 @@ def sortkey_max_resolution_max_bitrate(backend_preference):
 def sortkey_max_resolution_min_bitrate(backend_preference):
     def sortkey(x):
         backend_score = max(
-            backend_preference.get(stream.name, -1)
-            for stream in x.streams
+            backend_preference.get(stream.name, -1) for stream in x.streams
         )
         return (x.height or 0, backend_score, -(x.bitrate or 0))
 

@@ -34,5 +34,5 @@ __all__ = [
     'StreamAction',
     'RD_SUCCESS',
     'RD_FAILED',
-    'RD_INCOMPLETE'
+    'RD_INCOMPLETE',
 ]

@@ -83,7 +83,9 @@ class IOContext:
         if self.ffmpeg_binary:
             args = [self.ffmpeg_binary, '-loglevel', 'quiet', '-version']
             try:
-                p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
+                p = subprocess.run(
+                    args, stdout=subprocess.PIPE, universal_newlines=True
+                )
                 if p.returncode == 0:
                     first_line = p.stdout.splitlines()[0]
                     m = re.match(r'ffmpeg version (\d+)\.(\d+)\.(\d+)', first_line)
@@ -101,8 +103,7 @@ class OutputFileNameGenerator:
         destdir = io.destdir
 
         if forced_name:
-            path = self._filename_from_template(
-                forced_name, destdir, extension)
+            path = self._filename_from_template(forced_name, destdir, extension)
         else:
             if '/' in title:
                 # Title contains a subdirectory
@@ -111,8 +112,7 @@ class OutputFileNameGenerator:
                 for subdir in path.split('/'):
                     destdir = os.path.join(destdir, subdir)
             sanitized_title = sane_filename(title, io.excludechars)
-            path = self._filename_from_title(
-                sanitized_title, destdir, extension)
+            path = self._filename_from_title(sanitized_title, destdir, extension)
             path = self._impose_maximum_filename_length(path)
 
         dir, _ = os.path.split(path)

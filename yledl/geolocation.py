@@ -28,10 +28,12 @@ class AreenaGeoLocation:
         self.httpclient = httpclient
 
     def located_in_finland(self, referrer):
-        endpoint = 'https://locations.api.yle.fi/v3/address/current?' \
-            'app_id=areena-web-items&' \
+        endpoint = (
+            'https://locations.api.yle.fi/v3/address/current?'
+            'app_id=areena-web-items&'
             'app_key=wlTs5D9OjIdeS9krPzRQR4I1PYVzoazN'
-        extra_headers = { 'Referer': referrer }
+        )
+        extra_headers = {'Referer': referrer}
         try:
             r = self.httpclient.get(endpoint, extra_headers)
         except requests.RequestException:

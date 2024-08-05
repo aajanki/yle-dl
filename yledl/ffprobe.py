@@ -36,19 +36,24 @@ class Ffprobe:
     def show_programs_for_url(self, url):
         args = [
             self.ffprobe_binary,
-            '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-            '-headers', f'X-Forwarded-For: {self.x_forwarded_for}\r\n',
+            '-loglevel',
+            ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-headers',
+            f'X-Forwarded-For: {self.x_forwarded_for}\r\n',
             '-show_programs',
-            '-print_format', 'json=c=1',
-            '-analyzeduration', '10000000',  # 10 seconds
-            '-probesize', '80000000',  # bytes
-            '-i', url,
+            '-print_format',
+            'json=c=1',
+            '-analyzeduration',
+            '10000000',  # 10 seconds
+            '-probesize',
+            '80000000',  # bytes
+            '-i',
+            url,
         ]
         try:
             return json.loads(subprocess.check_output(args).decode('utf-8'))
         except subprocess.CalledProcessError as ex:
-            raise ValueError(
-                f'Stream probing failed with status {ex.returncode}')
+            raise ValueError(f'Stream probing failed with status {ex.returncode}')
         except FileNotFoundError:
             raise FfmpegNotFoundError()
 
@@ -56,9 +61,12 @@ class Ffprobe:
         args = [
             self.ffmpeg_binary,
             '-stats',
-            '-loglevel', 'fatal',
-            '-i', f'file:{filename}',
-            '-f', 'null',
+            '-loglevel',
+            'fatal',
+            '-i',
+            f'file:{filename}',
+            '-f',
+            'null',
             '-',
         ]
 
@@ -66,10 +74,10 @@ class Ffprobe:
             decoding_result = (
                 subprocess.check_output(args, stderr=subprocess.STDOUT)
                 .decode('utf-8')
-                .rsplit('\r', 1)[-1])
+                .rsplit('\r', 1)[-1]
+            )
         except subprocess.CalledProcessError as ex:
-            raise ValueError(
-                f'Stream probing failed with status {ex.returncode}')
+            raise ValueError(f'Stream probing failed with status {ex.returncode}')
         except UnicodeDecodeError:
             raise ValueError('Unexpected encoding on stream probing response')
         except FileNotFoundError:
@@ -79,8 +87,12 @@ class Ffprobe:
         if not m:
             raise ValueError('Failed to parse duration in the ffmpeg output')
 
-        return (float(m.group(1)) * 60 * 60 + float(m.group(2)) * 60 +
-                float(m.group(3)) + float(m.group(4)) / 100)
+        return (
+            float(m.group(1)) * 60 * 60
+            + float(m.group(2)) * 60
+            + float(m.group(3))
+            + float(m.group(4)) / 100
+        )
 
     def full_stream_already_downloaded(self, filename, clip):
         """Returns True if a stream file called "filename" exists and is complete.
@@ -91,7 +103,9 @@ class Ffprobe:
         if not os.path.exists(filename):
             return False
 
-        logger.info(f'{filename} already exists.\nChecking if the stream is complete...')
+        logger.info(
+            f'{filename} already exists.\nChecking if the stream is complete...'
+        )
 
         expected_duration = clip.duration_seconds
         if expected_duration is None or expected_duration <= 0:
@@ -106,7 +120,9 @@ class Ffprobe:
             logger.warning('ffmpeg not found on path')
             return False
 
-        logger.debug(f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s')
+        logger.debug(
+            f'Downloaded duration {downloaded_duration} s, expected {expected_duration} s'
+        )
 
         return downloaded_duration >= 0.98 * expected_duration
 

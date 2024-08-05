@@ -80,19 +80,26 @@ class BaseDownloader:
 
     def warn_on_unsupported_feature(self, io):
         if io.proxy and IOCapability.PROXY not in self.io_capabilities:
-            logger.warning('Proxy not supported on this stream. '
-                           'Trying to continue anyway')
+            logger.warning(
+                'Proxy not supported on this stream. ' 'Trying to continue anyway'
+            )
 
-        if io.download_limits.ratelimit and \
-           IOCapability.RATELIMIT not in self.io_capabilities:
+        if (
+            io.download_limits.ratelimit
+            and IOCapability.RATELIMIT not in self.io_capabilities
+        ):
             logger.warning('Rate limiting not supported on this stream')
 
-        if io.download_limits.duration and \
-           IOCapability.SLICE not in self.io_capabilities:
+        if (
+            io.download_limits.duration
+            and IOCapability.SLICE not in self.io_capabilities
+        ):
             logger.warning('--duration will be ignored on this stream')
 
-        if io.download_limits.start_position and \
-           IOCapability.SLICE not in self.io_capabilities:
+        if (
+            io.download_limits.start_position
+            and IOCapability.SLICE not in self.io_capabilities
+        ):
             logger.warning('--startposition will be ignored on this stream')
 
         # IOCapability.RESUME will be checked later when we know if we
@@ -100,10 +107,10 @@ class BaseDownloader:
 
     def warn_on_unsupported_resume(self, filename, clip, io):
         if (
-            io.resume and
-            IOCapability.RESUME not in self.io_capabilities and
-            filename != '-' and
-            os.path.isfile(filename)
+            io.resume
+            and IOCapability.RESUME not in self.io_capabilities
+            and filename != '-'
+            and os.path.isfile(filename)
         ):
             logger.warning('Resume not supported on this stream')
 
@@ -188,7 +195,9 @@ class Subprocess:
         except OSError as exc:
             logger.error(f'Failed to execute {shell_command_string}')
             logger.error(exc.strerror)
-            raise ExternalApplicationNotFoundError(f'Failed to execute {shell_command_string}')
+            raise ExternalApplicationNotFoundError(
+                f'Failed to execute {shell_command_string}'
+            )
 
     def combine_envs(self, extra_environment):
         env = None
@@ -210,9 +219,11 @@ class Subprocess:
 
             stdin = processes[-1].stdout if processes else None
             stdout = None if i == len(commands) - 1 else subprocess.PIPE
-            processes.append(subprocess.Popen(
-                args, stdin=stdin, stdout=stdout,
-                env=env, preexec_fn=preexec_fn))
+            processes.append(
+                subprocess.Popen(
+                    args, stdin=stdin, stdout=stdout, env=env, preexec_fn=preexec_fn
+                )
+            )
 
         # Causes the first process to receive SIGPIPE if the seconds
         # process exists
@@ -238,18 +249,21 @@ class Subprocess:
 
 
 class DASHHLSBackend(ExternalDownloader):
-    def __init__(self, url, long_probe=False, program_id=None,
-                 is_live=False, experimental_subtitles=False):
+    def __init__(
+        self,
+        url,
+        long_probe=False,
+        program_id=None,
+        is_live=False,
+        experimental_subtitles=False,
+    ):
         ExternalDownloader.__init__(self)
         self.url = url
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
         self.experimental_subtitles = experimental_subtitles
-        self.io_capabilities = frozenset([
-            IOCapability.SLICE,
-            IOCapability.PROXY
-        ])
+        self.io_capabilities = frozenset([IOCapability.SLICE, IOCapability.PROXY])
         self.name = Backends.FFMPEG
 
     def file_extension(self, preferred):
@@ -283,8 +297,10 @@ class DASHHLSBackend(ExternalDownloader):
     def _probe_args(self):
         if self.long_probe:
             return [
-                '-analyzeduration', '10000000',  # 10 seconds
-                '-probesize', '80000000',  # bytes
+                '-analyzeduration',
+                '10000000',  # 10 seconds
+                '-probesize',
+                '80000000',  # bytes
             ]
         else:
             return []
@@ -317,7 +333,9 @@ class DASHHLSBackend(ExternalDownloader):
             ffprobe = io.ffprobe()
             programs = ffprobe.show_programs_for_url(self.url)
             if programs.get('programs'):
-                self.program_id = self._select_max_bitrate_video_audio_pid(programs['programs'])
+                self.program_id = self._select_max_bitrate_video_audio_pid(
+                    programs['programs']
+                )
             else:
                 self.program_id = 0
 
@@ -329,7 +347,8 @@ class DASHHLSBackend(ExternalDownloader):
 
         # Find programs that have both video and audio streams
         video_audio_programs = [
-            p for p in programs
+            p
+            for p in programs
             if {'video', 'audio'}.issubset({s.get('codec_type') for s in p['streams']})
         ]
 
@@ -340,7 +359,11 @@ class DASHHLSBackend(ExternalDownloader):
         # latter programs have higher quality.)
         best = max(
             programs,
-            key=lambda p: (int(p.get('tags', {}).get('variant_bitrate', 0)), p.get('program_id')))
+            key=lambda p: (
+                int(p.get('tags', {}).get('variant_bitrate', 0)),
+                p.get('program_id'),
+            ),
+        )
 
         return best.get('program_id', 0)
 
@@ -351,32 +374,33 @@ class DASHHLSBackend(ExternalDownloader):
         if io.subtitles == 'none':
             return ['-sn']
         elif io.subtitles == 'all':
-            return ['-scodec', scodec,
-                    '-map', f'0:p:{pid}:s?']
+            return ['-scodec', scodec, '-map', f'0:p:{pid}:s?']
         else:
             # Sometimes the subtitles are labelled with a two-letter
             # code, sometimes with a three-letter code. Try both.
             short_code = two_letter_language_code(io.subtitles) or io.subtitles
-            return ['-scodec', scodec,
-                    '-map', f'0:s:m:language:{short_code}?',
-                    '-map', f'0:s:m:language:{io.subtitles}?']
+            return [
+                '-scodec',
+                scodec,
+                '-map',
+                f'0:s:m:language:{short_code}?',
+                '-map',
+                f'0:s:m:language:{io.subtitles}?',
+            ]
 
     def _map_video_and_audio_streams(self, io):
         pid = self._program_id(io)
-        return [
-            '-map', f'0:p:{pid}:v?',
-            '-map', f'0:p:{pid}:a?'
-        ]
+        return ['-map', f'0:p:{pid}:v?', '-map', f'0:p:{pid}:a?']
 
     def build_args(self, output_name, clip, io):
-        return ([io.ffmpeg_binary] +
-                self.input_args(io) +
-                self.output_args_file(clip, io, output_name))
+        return (
+            [io.ffmpeg_binary]
+            + self.input_args(io)
+            + self.output_args_file(clip, io, output_name)
+        )
 
     def build_pipe_args(self, io):
-        return ([io.ffmpeg_binary] +
-                self.input_args(io) +
-                self.output_args_pipe(io))
+        return [io.ffmpeg_binary] + self.input_args(io) + self.output_args_pipe(io)
 
     def pipe(self, io):
         commands = [self.build_pipe_args(io)]
@@ -386,10 +410,14 @@ class DASHHLSBackend(ExternalDownloader):
     def input_args(self, io):
         args = [
             '-y',
-            '-headers', f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
-            '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-            '-thread_queue_size', '2048',
-            '-seekable', '0',  # needed for media ID 67-xxxx streams
+            '-headers',
+            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
+            '-loglevel',
+            ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-thread_queue_size',
+            '2048',
+            '-seekable',
+            '0',  # needed for media ID 67-xxxx streams
         ]
         if not (io.subtitles == 'none' or self.live) and self.experimental_subtitles:
             # Needed for decoding webvtt subtitles on HLS streams
@@ -407,34 +435,37 @@ class DASHHLSBackend(ExternalDownloader):
 
     def output_args_pipe(self, io):
         return (
-            self._duration_arg(io.download_limits) +
-            self._map_video_and_audio_streams(io) +
-            self._subtitle_args(io) +
-            ['-vcodec', 'copy',
-             '-acodec', 'aac',
-             '-dn',
-             '-f', 'matroska', 'pipe:1']
+            self._duration_arg(io.download_limits)
+            + self._map_video_and_audio_streams(io)
+            + self._subtitle_args(io)
+            + ['-vcodec', 'copy', '-acodec', 'aac', '-dn', '-f', 'matroska', 'pipe:1']
         )
 
     def output_args_file(self, clip, io, output_name):
         return (
-            self._duration_arg(io.download_limits) +
-            self._metadata_args(clip, io) +
-            self._map_video_and_audio_streams(io) +
-            self._subtitle_args(io) +
-            ['-bsf:a', 'aac_adtstoasc',
-             '-vcodec', 'copy',
-             '-acodec', 'copy',
-             '-dn',
-             f'file:{output_name}']
+            self._duration_arg(io.download_limits)
+            + self._metadata_args(clip, io)
+            + self._map_video_and_audio_streams(io)
+            + self._subtitle_args(io)
+            + [
+                '-bsf:a',
+                'aac_adtstoasc',
+                '-vcodec',
+                'copy',
+                '-acodec',
+                'copy',
+                '-dn',
+                f'file:{output_name}',
+            ]
         )
 
     def stream_url(self):
         return self.url
 
     def _is_mp4(self, io):
-        return ((io.outputfilename and io.outputfilename.endswith('.mp4')) or
-                io.preferred_format in ('mp4', '.mp4'))
+        return (
+            io.outputfilename and io.outputfilename.endswith('.mp4')
+        ) or io.preferred_format in ('mp4', '.mp4')
 
     def full_stream_already_downloaded(self, filename, clip, io):
         ffprobe = io.ffprobe()
@@ -450,20 +481,19 @@ class HLSAudioBackend(DASHHLSBackend):
 
     def output_args_file(self, clip, io, output_name):
         return (
-            self._duration_arg(io.download_limits) +
-            self._metadata_args(clip, io, description_on_video_stream=False) +
-            ['-acodec', 'copy',
-             '-f', 'mp3',
-             f'file:{output_name}']
+            self._duration_arg(io.download_limits)
+            + self._metadata_args(clip, io, description_on_video_stream=False)
+            + ['-acodec', 'copy', '-f', 'mp3', f'file:{output_name}']
         )
 
     def output_args_pipe(self, io):
-        return (
-            self._duration_arg(io.download_limits) +
-            ['-acodec', 'copy',
-             '-f', 'mp3',
-             'pipe:1']
-        )
+        return self._duration_arg(io.download_limits) + [
+            '-acodec',
+            'copy',
+            '-f',
+            'mp3',
+            'pipe:1',
+        ]
 
     def full_stream_already_downloaded(self, filename, clip, io):
         ffprobe = io.ffprobe()
@@ -481,11 +511,9 @@ class WgetBackend(ExternalDownloader):
         if not file_extension:
             logger.warning(f'Mandatory file extension is missing for URL {url}')
         self._file_extension = MandatoryFileExtension(file_extension or '')
-        self.io_capabilities = frozenset([
-            IOCapability.RESUME,
-            IOCapability.RATELIMIT,
-            IOCapability.PROXY
-        ])
+        self.io_capabilities = frozenset(
+            [IOCapability.RESUME, IOCapability.RATELIMIT, IOCapability.PROXY]
+        )
         self.name = Backends.WGET
 
     def file_extension(self, preferred):
@@ -517,11 +545,7 @@ class WgetBackend(ExternalDownloader):
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io, output_name)
-        args.extend([
-            '--progress=bar',
-            '--tries=1',
-            '--random-wait'
-        ])
+        args.extend(['--progress=bar', '--tries=1', '--random-wait'])
         if logger.getEffectiveLevel() >= logging.ERROR:
             # This will hide also errors.
             #
@@ -551,22 +575,27 @@ class WgetBackend(ExternalDownloader):
         # see the issue #206
         spoofed_user_agent = (
             'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:67.0) '
-            'Gecko/20100101 Firefox/67.0')
+            'Gecko/20100101 Firefox/67.0'
+        )
 
         return [
             io.wget_binary,
-            '-O', output_filename,
+            '-O',
+            output_filename,
             '--no-use-server-timestamps',
             f'--user-agent={spoofed_user_agent}',
-            '--header', f'X-Forwarded-For: {io.x_forwarded_for}',
-            '--timeout=20'
+            '--header',
+            f'X-Forwarded-For: {io.x_forwarded_for}',
+            '--timeout=20',
         ]
 
     def extra_environment(self, io):
         env = None
         if io.proxy:
             if 'https_proxy' in os.environ:
-                logger.warning('--proxy ignored because https_proxy environment variable exists')
+                logger.warning(
+                    '--proxy ignored because https_proxy environment variable exists'
+                )
             else:
                 env = {'https_proxy': io.proxy}
         return env

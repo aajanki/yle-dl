@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -20,21 +20,30 @@ from datetime import datetime
 
 
 class TitleFormatter:
-    def __init__(self,
-                 template='${series_separator}${title}: ${episode_separator}${timestamp}',
-                 placeholder=None):
+    def __init__(
+        self,
+        template='${series_separator}${title}: ${episode_separator}${timestamp}',
+        placeholder=None,
+    ):
         self.template = template
         self.tokens = self._parse_template(template)
         self.placeholder = placeholder
 
-    def format(self, title, publish_timestamp=None, series_title=None,
-               subheading=None, season=None, episode=None, program_id=None):
+    def format(
+        self,
+        title,
+        publish_timestamp=None,
+        series_title=None,
+        subheading=None,
+        season=None,
+        episode=None,
+        program_id=None,
+    ):
         if title is None:
             return None
 
         title = title.strip()
-        series_title = \
-            series_title.strip() if series_title is not None else None
+        series_title = series_title.strip() if series_title is not None else None
         subheading = subheading.strip() if subheading is not None else None
 
         main_title = self._main_title(title, subheading, series_title)
@@ -55,9 +64,9 @@ class TitleFormatter:
             'timestamp': self._timestamp_string(publish_timestamp) or self.placeholder,
             'date': self._date_string(publish_timestamp) or self.placeholder,
             'episode_or_date': (
-                    episode_number or
-                    self._date_string(publish_timestamp) or
-                    self.placeholder
+                episode_number
+                or self._date_string(publish_timestamp)
+                or self.placeholder
             ),
             'program_id': program_id or self.placeholder,
         }
@@ -69,9 +78,9 @@ class TitleFormatter:
 
     def maybe_missing_separators(self):
         return (
-            len(self.tokens) > 1 and
-            not any(isinstance(t, Literal) for t in self.tokens) and
-            "_separator" not in self.template
+            len(self.tokens) > 1
+            and not any(isinstance(t, Literal) for t in self.tokens)
+            and '_separator' not in self.template
         )
 
     def _parse_template(self, template):
@@ -80,7 +89,7 @@ class TitleFormatter:
         last_pos = 0
         for m in re.finditer(r'\$(:?{[a-zA-Z_]+?}|\$)', template):
             if m.start() != last_pos:
-                res.append(Literal(template[last_pos:m.start()]))
+                res.append(Literal(template[last_pos : m.start()]))
 
             if m.group() == '$$':
                 res.append(Literal('$'))
@@ -105,7 +114,9 @@ class TitleFormatter:
         return ''.join(res).lstrip('/')
 
     def _main_title(self, title, subheading, series_title):
-        episode_title = self._remove_genre_prefix(self._remove_repeated_main_title(title))
+        episode_title = self._remove_genre_prefix(
+            self._remove_repeated_main_title(title)
+        )
         ageless_title = self._remove_age_limit(episode_title)
 
         if series_title and series_title == ageless_title:
@@ -114,7 +125,7 @@ class TitleFormatter:
             series_prefix = f'{re.escape(series_title)}: *'
             series_prefix_match = re.match(series_prefix, ageless_title, re.IGNORECASE)
             if series_prefix_match:
-                episode_title = ageless_title[series_prefix_match.end():]
+                episode_title = ageless_title[series_prefix_match.end() :]
 
         if subheading and not episode_title:
             return subheading
@@ -137,12 +148,20 @@ class TitleFormatter:
         return title
 
     def _remove_genre_prefix(self, title):
-        genre_prefixes = ['Elokuva:', 'Kino:', 'Kino Klassikko:',
-                          'Kino Suomi:', 'Kotikatsomo:', 'Uusi Kino:', 'Dok:',
-                          'Dokumenttiprojekti:', 'Historia:']
+        genre_prefixes = [
+            'Elokuva:',
+            'Kino:',
+            'Kino Klassikko:',
+            'Kino Suomi:',
+            'Kotikatsomo:',
+            'Uusi Kino:',
+            'Dok:',
+            'Dokumenttiprojekti:',
+            'Historia:',
+        ]
         for prefix in genre_prefixes:
             if title.startswith(prefix):
-                return title[len(prefix):].strip()
+                return title[len(prefix) :].strip()
         return title
 
     def _concatenate_if_not_empty(self, first, second):

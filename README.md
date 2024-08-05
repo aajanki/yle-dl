@@ -195,6 +195,16 @@ yle-dl https://yle.fi/aihe/artikkeli/2010/10/28/studio-julmahuvi-roudasta-rospuu
 yle-dl https://yle.fi/a/74-20036911
 ```
 
+Linting and code formatting
+---------------------------
+
+```
+pipx install ruff
+
+ruff check
+ruff format
+```
+
 Creating a new release
 ----------------------
 

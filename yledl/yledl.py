@@ -55,7 +55,9 @@ class PlainInfoFormatter(logging.Formatter):
 
 def yledl_logger():
     logger = logging.getLogger('yledl')
-    if not logger.handlers:  # If this logger already has a local handler, don't add another.
+    if (
+        not logger.handlers
+    ):  # If this logger already has a local handler, don't add another.
         handler = logging.StreamHandler()
         formatter = PlainInfoFormatter('%(levelname)s: %(message)s')
         handler.setFormatter(formatter)
@@ -105,164 +107,283 @@ def arg_parser():
         default_config_files=['~/.yledl.conf', f'{xdg_config_home}/yledl.conf'],
         config_file_open_func=open_config_file_and_remember_opened,
         description=description,
-        formatter_class=configargparse.RawDescriptionHelpFormatter)
-    parser.add_argument('-V', '--verbose',
-                        action='count', dest='verbosity', default=0,
-                        help='Increase output verbosity. -VV is really verbose.')
-    parser.add_argument('--debug', action='store_const', const=2,
-                        dest='verbosity',
-                        help='Really verbose output, same as -VV')
-    parser.add_argument('-q', action='count', dest='quietness', default=0,
-                        help='Reduce output verbosity. -qq prints only errors.')
-    parser.add_argument('-c', '--config', metavar='FILENAME',
-                        is_config_file=True, help='config file path')
+        formatter_class=configargparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        '-V',
+        '--verbose',
+        action='count',
+        dest='verbosity',
+        default=0,
+        help='Increase output verbosity. -VV is really verbose.',
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_const',
+        const=2,
+        dest='verbosity',
+        help='Really verbose output, same as -VV',
+    )
+    parser.add_argument(
+        '-q',
+        action='count',
+        dest='quietness',
+        default=0,
+        help='Reduce output verbosity. -qq prints only errors.',
+    )
+    parser.add_argument(
+        '-c',
+        '--config',
+        metavar='FILENAME',
+        is_config_file=True,
+        help='config file path',
+    )
 
     io_group = parser.add_argument_group('Input and output')
     url_group = io_group.add_mutually_exclusive_group()
-    url_group.add_argument('url', nargs='?', type=str,
-                           help='Address of an Areena, Elävä Arkisto, '
-                           'or Yle news web page')
-    url_group.add_argument('-i', metavar='FILENAME', dest='inputfile',
-                           type=str,
-                           help='Read input URLs to process from the named '
-                           'file, one URL per line')
-    io_group.add_argument('-o', metavar='FILENAME', dest='outputfile',
-                          type=str,
-                          help='Save stream to the named file')
-    io_group.add_argument('--output-template', metavar='TEMPLATE',
-                          default='${series_separator}${title}: ${episode_separator}${timestamp}',
-                          help='Template for generating an output file name '
-                          'when not using -o. Put the argument in single quotes: '
-                          '--output-template \'${title}\'. '
-                          'The template supports following substitutions: '
-                          '${title} is replaced by the title of the episode, '
-                          '${series} is the series title, '
-                          '${series_separator} is the series title followed by ": ", '
-                          '${season} is the string "Season XX" where XX is the season, '
-                          '${episode} is the season and episode number ("S02E12"), '
-                          '${episode_separator} is the season and episode followed by "-", '
-                          '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
-                          '${date} is the stream publish date ("2018-12-01"), '
-                          '${episode_or_date} is the same as "episode", or "date" if the episode '
-                          'number is unavailable, '
-                          '${program_id} is an unique ID, '
-                          '$$ is an escape and will be replaced by a literal $. '
-                          '/ specifies a subdirectory, but any / in the beginning is removed. '
-                          'Everything else will appear as-is.')
-    io_group.add_argument('--output-na-placeholder', metavar='PLACEHOLDER',
-                          help='Placeholder value for unavailable meta fields '
-                               'in output filename template '
-                               '(default is an empty string)')
-    io_group.add_argument('--pipe', action='store_true',
-                          help='Dump stream to stdout for piping to media '
-                          'player. E.g. "yle-dl --pipe URL | vlc -"')
-    io_group.add_argument('--destdir', metavar='DIR',
-                          type=str,
-                          help='Save files to DIR')
-    io_group.add_argument('--create-dirs', action='store_true',
-                          default=True,
-                          help='Create directories automatically (this is the default)')
-    io_group.add_argument('--no-create-dirs', action='store_false',
-                          dest='create_dirs',
-                          help='Stop if an output directory does not exist')
+    url_group.add_argument(
+        'url',
+        nargs='?',
+        type=str,
+        help='Address of an Areena, Elävä Arkisto, ' 'or Yle news web page',
+    )
+    url_group.add_argument(
+        '-i',
+        metavar='FILENAME',
+        dest='inputfile',
+        type=str,
+        help='Read input URLs to process from the named ' 'file, one URL per line',
+    )
+    io_group.add_argument(
+        '-o',
+        metavar='FILENAME',
+        dest='outputfile',
+        type=str,
+        help='Save stream to the named file',
+    )
+    io_group.add_argument(
+        '--output-template',
+        metavar='TEMPLATE',
+        default='${series_separator}${title}: ${episode_separator}${timestamp}',
+        help='Template for generating an output file name '
+        'when not using -o. Put the argument in single quotes: '
+        "--output-template '${title}'. "
+        'The template supports following substitutions: '
+        '${title} is replaced by the title of the episode, '
+        '${series} is the series title, '
+        '${series_separator} is the series title followed by ": ", '
+        '${season} is the string "Season XX" where XX is the season, '
+        '${episode} is the season and episode number ("S02E12"), '
+        '${episode_separator} is the season and episode followed by "-", '
+        '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
+        '${date} is the stream publish date ("2018-12-01"), '
+        '${episode_or_date} is the same as "episode", or "date" if the episode '
+        'number is unavailable, '
+        '${program_id} is an unique ID, '
+        '$$ is an escape and will be replaced by a literal $. '
+        '/ specifies a subdirectory, but any / in the beginning is removed. '
+        'Everything else will appear as-is.',
+    )
+    io_group.add_argument(
+        '--output-na-placeholder',
+        metavar='PLACEHOLDER',
+        help='Placeholder value for unavailable meta fields '
+        'in output filename template '
+        '(default is an empty string)',
+    )
+    io_group.add_argument(
+        '--pipe',
+        action='store_true',
+        help='Dump stream to stdout for piping to media '
+        'player. E.g. "yle-dl --pipe URL | vlc -"',
+    )
+    io_group.add_argument(
+        '--destdir', metavar='DIR', type=str, help='Save files to DIR'
+    )
+    io_group.add_argument(
+        '--create-dirs',
+        action='store_true',
+        default=True,
+        help='Create directories automatically (this is the default)',
+    )
+    io_group.add_argument(
+        '--no-create-dirs',
+        action='store_false',
+        dest='create_dirs',
+        help='Stop if an output directory does not exist',
+    )
     action_group = io_group.add_mutually_exclusive_group()
-    action_group.add_argument('--showurl', action='store_true',
-                              help="Print URL, don't download")
-    action_group.add_argument('--showtitle', action='store_true',
-                              help="Print stream title, don't download")
-    action_group.add_argument('--showepisodepage', action='store_true',
-                              help='Print web page for each episode')
-    action_group.add_argument('--showmetadata', action='store_true',
-                              help='Print metadata about available streams')
-    io_group.add_argument('--restrict-filename-no-spaces', action='store_true',
-                          dest='filenames_no_spaces',
-                          help='Replace spaces by underscores in generated filenames')
-    io_group.add_argument('--restrict-filename-no-specials', action='store_true',
-                          dest='filenames_no_specials',
-                          help='Generate Windows-compatible filenames by avoiding '
-                               'certain reserved characters')
-    io_group.add_argument('--vfat', action='store_true',
-                          dest='filenames_no_specials',
-                          help='Alias for --restrict-filename-no-specials')
+    action_group.add_argument(
+        '--showurl', action='store_true', help="Print URL, don't download"
+    )
+    action_group.add_argument(
+        '--showtitle', action='store_true', help="Print stream title, don't download"
+    )
+    action_group.add_argument(
+        '--showepisodepage', action='store_true', help='Print web page for each episode'
+    )
+    action_group.add_argument(
+        '--showmetadata',
+        action='store_true',
+        help='Print metadata about available streams',
+    )
+    io_group.add_argument(
+        '--restrict-filename-no-spaces',
+        action='store_true',
+        dest='filenames_no_spaces',
+        help='Replace spaces by underscores in generated filenames',
+    )
+    io_group.add_argument(
+        '--restrict-filename-no-specials',
+        action='store_true',
+        dest='filenames_no_specials',
+        help='Generate Windows-compatible filenames by avoiding '
+        'certain reserved characters',
+    )
+    io_group.add_argument(
+        '--vfat',
+        action='store_true',
+        dest='filenames_no_specials',
+        help='Alias for --restrict-filename-no-specials',
+    )
     resume_group = io_group.add_mutually_exclusive_group()
     # --resume is the new default, the option is still accepted but
     # doesn't do anything
-    resume_group.add_argument('--resume', action='store_true',
-                              dest='resume', default=True,
-                              help=configargparse.SUPPRESS)
-    resume_group.add_argument('--no-resume', action='store_false',
-                              dest='resume',
-                              help='Don\'t resume partial files, '
-                              'download the whole stream again')
-    io_group.add_argument('--no-overwrite', action='store_false',
-                          dest='overwrite',
-                          help='Quit if a file already exists')
-    io_group.add_argument('--ratelimit', metavar='BR', type=int,
-                          help='Maximum bandwidth consumption, '
-                          'integer in kB/s')
-    io_group.add_argument('--proxy', metavar='URI',
-                          type=str,
-                          help='HTTP(S) proxy to use. Example: --proxy localhost:8118')
-    io_group.add_argument('--postprocess', metavar='CMD',
-                          type=str,
-                          help='Execute the command CMD after a successful '
-                          'download. CMD is called with two arguments: '
-                          'video, subtitle')
-    io_group.add_argument('--xattrs', action='store_true',
-                          help="Write metadata to the video file's xattrs")
+    resume_group.add_argument(
+        '--resume',
+        action='store_true',
+        dest='resume',
+        default=True,
+        help=configargparse.SUPPRESS,
+    )
+    resume_group.add_argument(
+        '--no-resume',
+        action='store_false',
+        dest='resume',
+        help="Don't resume partial files, " 'download the whole stream again',
+    )
+    io_group.add_argument(
+        '--no-overwrite',
+        action='store_false',
+        dest='overwrite',
+        help='Quit if a file already exists',
+    )
+    io_group.add_argument(
+        '--ratelimit',
+        metavar='BR',
+        type=int,
+        help='Maximum bandwidth consumption, ' 'integer in kB/s',
+    )
+    io_group.add_argument(
+        '--proxy',
+        metavar='URI',
+        type=str,
+        help='HTTP(S) proxy to use. Example: --proxy localhost:8118',
+    )
+    io_group.add_argument(
+        '--postprocess',
+        metavar='CMD',
+        type=str,
+        help='Execute the command CMD after a successful '
+        'download. CMD is called with two arguments: '
+        'video, subtitle',
+    )
+    io_group.add_argument(
+        '--xattrs',
+        action='store_true',
+        help="Write metadata to the video file's xattrs",
+    )
 
     qual_group = parser.add_argument_group('Stream type and quality')
-    qual_group.add_argument('--sublang', metavar='LANG',
-                            type=str,
-                            choices=['none', 'fin', 'swe', 'all'],
-                            default='all',
-                            help='Download subtitles if LANG is "all" '
-                            '(default), "fin" or "swe". Disable subtitles '
-                            'if LANG is "none".')
-    qual_group.add_argument('--metadatalang', metavar='LANG', type=str,
-                            choices=['fin', 'swe', 'smi'],
-                            help='Preferred metadata language, "fin", "swe" '
-                            'or "smi"')
-    qual_group.add_argument('--latestepisode', action='store_true',
-                            help='Download the latest episode of a series')
-    qual_group.add_argument('--maxbitrate', metavar='RATE',
-                            type=str,
-                            help='Maximum bitrate stream to download, '
-                            'integer in kB/s or "best" or "worst".')
-    qual_group.add_argument('--resolution', metavar='RES',
-                            type=str,
-                            help='Maximum vertical resolution in pixels, '
-                            'default: highest available resolution')
-    qual_group.add_argument('--startposition', metavar='S', type=int,
-                            help='Start recording at S seconds from the start '
-                            'of the stream')
-    qual_group.add_argument('--duration', metavar='S', type=int,
-                            help='Record only the first S seconds of '
-                            'the stream')
-    qual_group.add_argument('--preferformat', metavar='F', type=str,
-                            default='mkv',
-                            help='Preferred video output format: '
-                            'mkv (default) or mp4. Applies only when '
-                            'downloading with ffmpeg')
+    qual_group.add_argument(
+        '--sublang',
+        metavar='LANG',
+        type=str,
+        choices=['none', 'fin', 'swe', 'all'],
+        default='all',
+        help='Download subtitles if LANG is "all" '
+        '(default), "fin" or "swe". Disable subtitles '
+        'if LANG is "none".',
+    )
+    qual_group.add_argument(
+        '--metadatalang',
+        metavar='LANG',
+        type=str,
+        choices=['fin', 'swe', 'smi'],
+        help='Preferred metadata language, "fin", "swe" ' 'or "smi"',
+    )
+    qual_group.add_argument(
+        '--latestepisode',
+        action='store_true',
+        help='Download the latest episode of a series',
+    )
+    qual_group.add_argument(
+        '--maxbitrate',
+        metavar='RATE',
+        type=str,
+        help='Maximum bitrate stream to download, '
+        'integer in kB/s or "best" or "worst".',
+    )
+    qual_group.add_argument(
+        '--resolution',
+        metavar='RES',
+        type=str,
+        help='Maximum vertical resolution in pixels, '
+        'default: highest available resolution',
+    )
+    qual_group.add_argument(
+        '--startposition',
+        metavar='S',
+        type=int,
+        help='Start recording at S seconds from the start ' 'of the stream',
+    )
+    qual_group.add_argument(
+        '--duration',
+        metavar='S',
+        type=int,
+        help='Record only the first S seconds of ' 'the stream',
+    )
+    qual_group.add_argument(
+        '--preferformat',
+        metavar='F',
+        type=str,
+        default='mkv',
+        help='Preferred video output format: '
+        'mkv (default) or mp4. Applies only when '
+        'downloading with ffmpeg',
+    )
 
     dl_group = parser.add_argument_group('Downloader backends')
-    dl_group.add_argument('--backend', metavar='BE',
-                          type=str,
-                          default="ffmpeg,wget",
-                          help='Downloaders that are tried until one of them '
-                          ' succeeds (a comma-separated list). '
-                          'Possible values: '
-                          '"wget", '
-                          '"ffmpeg"')
-    dl_group.add_argument('--ffmpeg', metavar='PATH',
-                          type=str,
-                          help='Set the path of the ffmpeg executable')
-    dl_group.add_argument('--ffprobe', metavar='PATH',
-                          type=str,
-                          help='Set the path of the ffprobe executable')
-    dl_group.add_argument('--wget', metavar='PATH',
-                          type=str, default='',
-                          help='Set the path of the wget executable')
+    dl_group.add_argument(
+        '--backend',
+        metavar='BE',
+        type=str,
+        default='ffmpeg,wget',
+        help='Downloaders that are tried until one of them '
+        ' succeeds (a comma-separated list). '
+        'Possible values: '
+        '"wget", '
+        '"ffmpeg"',
+    )
+    dl_group.add_argument(
+        '--ffmpeg',
+        metavar='PATH',
+        type=str,
+        help='Set the path of the ffmpeg executable',
+    )
+    dl_group.add_argument(
+        '--ffprobe',
+        metavar='PATH',
+        type=str,
+        help='Set the path of the ffprobe executable',
+    )
+    dl_group.add_argument(
+        '--wget',
+        metavar='PATH',
+        type=str,
+        default='',
+        help='Set the path of the wget executable',
+    )
 
     return parser
 
@@ -404,8 +525,10 @@ def warn_on_obsolete_ffmpeg(backends, io):
 
 def warn_on_output_template_syntax_change(title_formatter):
     if title_formatter.maybe_missing_separators():
-        logger.warning('The syntax of --output-template has changed! '
-                       'Insert separator characters in the template if needed')
+        logger.warning(
+            'The syntax of --output-template has changed! '
+            'Insert separator characters in the template if needed'
+        )
 
 
 ### main program ###
@@ -432,8 +555,10 @@ def main(argv=sys.argv):
         if destdir:
             fstype = get_filesystem_type(destdir).upper()
             if fstype in ['VFAT', 'NTFS']:
-                logger.info(f'Automatically enabling --restrict-filename-no-specials '
-                            f'because the destination is a {fstype} filesystem')
+                logger.info(
+                    f'Automatically enabling --restrict-filename-no-specials '
+                    f'because the destination is a {fstype} filesystem'
+                )
                 args.filenames_no_specials = True
 
     excludechars = r'\"*/:<>?|' if args.filenames_no_specials else '*/|'
@@ -464,7 +589,8 @@ def main(argv=sys.argv):
         ffprobe_binary=args.ffprobe or 'ffprobe',
         wget_binary=args.wget or 'wget',
         create_dirs=args.create_dirs,
-        xattr=args.xattrs)
+        xattr=args.xattrs,
+    )
 
     if args.showurl:
         action = StreamAction.PRINT_STREAM_URL
@@ -479,12 +605,13 @@ def main(argv=sys.argv):
     else:
         action = StreamAction.DOWNLOAD
 
-    if (logger.isEnabledFor(logging.INFO) and
-        action not in [StreamAction.PIPE,
-                       StreamAction.PRINT_STREAM_URL,
-                       StreamAction.PRINT_STREAM_TITLE,
-                       StreamAction.PRINT_EPISODE_PAGES,
-                       StreamAction.PRINT_METADATA]):
+    if logger.isEnabledFor(logging.INFO) and action not in [
+        StreamAction.PIPE,
+        StreamAction.PRINT_STREAM_URL,
+        StreamAction.PRINT_STREAM_TITLE,
+        StreamAction.PRINT_EPISODE_PAGES,
+        StreamAction.PRINT_METADATA,
+    ]:
         print_enc(parser.description)
 
     backends = Backends.parse_backends(args.backend.split(','))
@@ -493,8 +620,7 @@ def main(argv=sys.argv):
 
     maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
-    stream_filters = StreamFilters(args.latestepisode,
-                                   maxbitrate, maxheight, backends)
+    stream_filters = StreamFilters(args.latestepisode, maxbitrate, maxheight, backends)
     httpclient = HttpClient(io)
     exit_status = RD_SUCCESS
 
@@ -525,8 +651,10 @@ def main(argv=sys.argv):
                 exit_status = res
     except FfmpegNotFoundError:
         logger.error('ffmpeg or ffprobe not found on PATH.')
-        logger.error('Install ffmpeg, and use "--ffmpeg" and "--ffprobe" '
-                     'to set the ffmpeg and ffprobe locations')
+        logger.error(
+            'Install ffmpeg, and use "--ffmpeg" and "--ffprobe" '
+            'to set the ffmpeg and ffprobe locations'
+        )
         logger.error('or use "--backend wget".')
         exit_status = RD_FAILED
 

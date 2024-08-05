@@ -35,7 +35,7 @@ class Capturing(list):
 
     def __exit__(self, *args):
         self.extend(self._bytesio.getvalue().decode('UTF-8').splitlines())
-        del self._bytesio    # free up some memory
+        del self._bytesio  # free up some memory
         sys.stdout = self._stdout
 
 
@@ -66,23 +66,24 @@ def fetch_episode_pages(url, filters=StreamFilters()):
 
 
 def fetch_metadata(url, filters=StreamFilters(), meta_language=None):
-    return json.loads('\n'.join(
-        fetch(url, StreamAction.PRINT_METADATA, filters, meta_language)))
+    return json.loads(
+        '\n'.join(fetch(url, StreamAction.PRINT_METADATA, filters, meta_language))
+    )
 
 
 def fetch(url, action, filters, meta_language=None):
-    io = IOContext(destdir='/tmp/', metadata_language=meta_language,
-                   x_forwarded_for=random_elisa_ipv4())
+    io = IOContext(
+        destdir='/tmp/',
+        metadata_language=meta_language,
+        x_forwarded_for=random_elisa_ipv4(),
+    )
     httpclient = HttpClient(io)
     title_formatter = TitleFormatter()
 
     with Capturing() as output:
-        res = execute_action(url,
-                             action,
-                             io,
-                             httpclient,
-                             title_formatter,
-                             stream_filters = filters)
+        res = execute_action(
+            url, action, io, httpclient, title_formatter, stream_filters=filters
+        )
         assert res == RD_SUCCESS
 
     return output
