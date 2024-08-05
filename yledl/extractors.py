@@ -322,7 +322,9 @@ class AreenaPlaylistParser:
     def _parse_episodes_tab(self, next_data_tabs, titled_tab):
         if titled_tab:
             episodes_tab = [
-                tab for tab in next_data_tabs if tab.get('title') in ['Jaksot', 'Avsnitt', 'Uusimmat']
+                tab for tab in next_data_tabs if tab.get('title') in [
+                    'Jaksot', 'Avsnitt', 'Uusimmat'
+                ]
             ]
         else:
             episodes_tab = [

@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Install linters
-          command: pip install pycodestyle pyflakes mypy
+          command: pip install ruff mypy
       - run:
           name: Install dependencies
           command: pip install -e .[extra]
@@ -16,14 +16,8 @@ jobs:
           name: mypy
           command: mypy --disable-error-code=import-untyped yledl/*.py
       - run:
-          name: pyflakes
-          command: pyflakes yledl/*.py
-      - run:
-          name: Code style check
-          # E266 too many leading ‘#’ for block comment
-          # W504 line break after binary operator
-          command: |
-            pycodestyle --ignore=E266,W504 --max-line-length 100 --statistics --count yledl/*.py || true
+          name: ruff check
+          command: ruff check yledl
 
   test:
     parameters:

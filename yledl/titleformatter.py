@@ -54,7 +54,11 @@ class TitleFormatter:
             'episode_separator': self._concatenate_if_not_empty(episode_number, '-'),
             'timestamp': self._timestamp_string(publish_timestamp) or self.placeholder,
             'date': self._date_string(publish_timestamp) or self.placeholder,
-            'episode_or_date': episode_number or self._date_string(publish_timestamp) or self.placeholder,
+            'episode_or_date': (
+                    episode_number or
+                    self._date_string(publish_timestamp) or
+                    self.placeholder
+            ),
             'program_id': program_id or self.placeholder,
         }
 
