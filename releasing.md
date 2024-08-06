@@ -22,7 +22,7 @@ git checkout gh-pages
 
 # Edit index.html, index-en.html and index-sv.html
 
-git commit -a
+PRE_COMMIT_ALLOW_NO_CONFIG=1 git commit -a
 git push
 git checkout master
 ```
