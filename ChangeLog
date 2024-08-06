@@ -2,9 +2,9 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2024 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20240806
 
-- Fixed the bulk download of MOT and Perjantai episodes
+- Fixed the bulk download of MOT, Perjantai and possibly other programs
 
 Version 20240706
 
