@@ -893,7 +893,12 @@ class AreenaExtractor(ClipExtractor):
     def is_html5_media(self, media_id):
         # 29- is the most common media ID
         # 84-, hosted on yleawsmpondemand-04.akamaized.net, April 2024
-        return media_id and (media_id.startswith('29-') or media_id.startswith('84-'))
+        # 85-, ylekvodmod01.akamaized.net, also seen on podcasts, Summer 2024
+        return media_id and (
+            media_id.startswith('29-')
+            or media_id.startswith('84-')
+            or media_id.startswith('85-')
+        )
 
     def is_kaltura_media(self, media_id):
         return media_id and media_id.startswith('29-')
@@ -906,9 +911,9 @@ class AreenaExtractor(ClipExtractor):
         return media_id and media_id.startswith('67-')
 
     def is_mp3_podcast(self, media_id):
-        # Podcast streams ("78-" seen on Spring 2023, "85-" seen on Summer 2024).
+        # Podcast streams, "78-" seen on Spring 2023
         # Prefer download_url, no extra flavors here.
-        return media_id and (media_id.startswith('78-') or media_id.startswith('85-'))
+        return media_id and media_id.startswith('78-')
 
     def is_live_media(self, media_id):
         return media_id and media_id.startswith('10-')
