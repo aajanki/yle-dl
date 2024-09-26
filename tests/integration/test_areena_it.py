@@ -243,3 +243,17 @@ def test_areena_uusimmat_tab_page():
     episodes = fetch_episode_pages('https://areena.yle.fi/tv/ohjelmat/57-4Nj71REaB')
 
     assert len(episodes) > 10
+
+
+def test_areena_clips_only():
+    # This page has only the "Klipit" tab, not "Jaksot" like most pages
+    episodes = fetch_episode_pages('https://areena.yle.fi/1-4354262')
+
+    assert len(episodes) >= 5
+
+
+def test_areena_clip_tab_selected():
+    titles = fetch_title('https://areena.yle.fi/1-4530023?t=klipit')
+
+    assert len(titles) >= 6
+    assert all([t.startswith('Modernit miehet') for t in titles])

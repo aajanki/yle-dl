@@ -338,24 +338,20 @@ class AreenaPlaylistParser:
         next_data_tag = html_tree.xpath('//script[@id="__NEXT_DATA__"]')
         if next_data_tag:
             next_data = json.loads(next_data_tag[0].text)
-            tabs = (
-                next_data.get('props', {})
-                .get('pageProps', {})
-                .get('view', {})
-                .get('tabs', [])
-            )
-            return self._parse_episodes_tab(tabs, True) or self._parse_episodes_tab(
-                tabs, False
-            )
+            page_props = next_data.get('props', {}).get('pageProps', {})
+            tabs = page_props.get('view', {}).get('tabs', [])
+            first_tab_slug = tabs[0].get('slug') if tabs else None
+            selected_tab = page_props.get('selectedTab') or first_tab_slug or 'jaksot'
+            return self._parse_episodes_tab(
+                tabs, selected_tab
+            ) or self._parse_episodes_tab(tabs, None)
 
         return None
 
-    def _parse_episodes_tab(self, next_data_tabs, titled_tab):
-        if titled_tab:
+    def _parse_episodes_tab(self, next_data_tabs, tab_slug):
+        if tab_slug:
             episodes_tab = [
-                tab
-                for tab in next_data_tabs
-                if tab.get('title') in ['Jaksot', 'Avsnitt', 'Uusimmat']
+                tab for tab in next_data_tabs if tab.get('slug') == tab_slug
             ]
         else:
             episodes_tab = [

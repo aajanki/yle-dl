@@ -5,6 +5,8 @@ Distributed under the GPL v3 or later
 <unreleased>
 
 - Fixed --maxbitrate and --resolution on a new stream type
+- Download episodes if page contain only the "Klipit" tab, not "Jaksot"
+- Download correct episodes when some other tab than the default is selected
 
 Version 20240806
 
