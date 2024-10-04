@@ -233,16 +233,18 @@ Solution: Update your ffmpeg to version 4.1 or later.
 
 #### Problem: Subtitles are missing on live stream
 
-This is a known problem. Currently there are no fixes.
+This is a known problem. Currently, there are no fixes.
 
 #### Problem: I get warnings about unsupported subtitles and dropping subtitles
 
-Downloading produces a bunch of warnings such as "Can't support the
-subtitle" and "Dropping 114 duplicated subtitle events".
+Downloading always produces certain warnings messages that are harmless and can
+be ignored. Subtitles should get downloaded correctly in most cases despite the warnings.
 
-These warning messages are harmless and can be ignored. Subtitles
-should get downloaded correctly in most cases despite the warnings.
-The only exceptions are live streams.
+At least messages similar to the following are safe to ignore:
+- mime type is not rfc8216 compliant
+- Can't support the subtitle(uri: ...)
+- Dropping 114 duplicated subtitle events
+- Unsupported codec with id 98313 for input stream 5
 
 #### Problem: I installed yle-dl but get an error message "command not found" when I try to run it
 
