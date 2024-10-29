@@ -300,7 +300,7 @@ class YleDlDownloader:
 
     def should_skip_downloading(self, outputfile, downloader, clip, io):
         limits = io.download_limits
-        slicing_active = limits.start_position or 0 > 0 or limits.duration
+        slicing_active = ((limits.start_position or 0) > 0) or limits.duration
 
         return (not io.overwrite and os.path.exists(outputfile)) or (
             not slicing_active
