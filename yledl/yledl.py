@@ -592,18 +592,7 @@ def main(argv=sys.argv):
         xattr=args.xattrs,
     )
 
-    if args.showurl:
-        action = StreamAction.PRINT_STREAM_URL
-    elif args.showepisodepage:
-        action = StreamAction.PRINT_EPISODE_PAGES
-    elif args.showtitle:
-        action = StreamAction.PRINT_STREAM_TITLE
-    elif args.showmetadata:
-        action = StreamAction.PRINT_METADATA
-    elif args.pipe or (args.outputfile == '-'):
-        action = StreamAction.PIPE
-    else:
-        action = StreamAction.DOWNLOAD
+    action = _set_sction(args)
 
     if logger.isEnabledFor(logging.INFO) and action not in [
         StreamAction.PIPE,
@@ -628,27 +617,7 @@ def main(argv=sys.argv):
         warn_on_obsolete_ffmpeg(backends, io)
         warn_on_output_template_syntax_change(title_formatter)
 
-        for i, url in enumerate(urls):
-            if len(urls) > 1:
-                logger.info('')
-                logger.info(f'Now downloading from URL {i + 1}/{len(urls)}: {url}')
-
-            if args.startposition is not None:
-                io.download_limits.start_position = args.startposition
-            elif start_position_from_url(url) is not None:
-                io.download_limits.start_position = start_position_from_url(url)
-
-            res = execute_action(
-                url,
-                action=action,
-                io=io,
-                httpclient=httpclient,
-                title_formatter=title_formatter,
-                stream_filters=stream_filters,
-            )
-
-            if res != RD_SUCCESS:
-                exit_status = res
+        exit_status = _handle_urls(action, args, httpclient, io, stream_filters, title_formatter, urls)
     except FfmpegNotFoundError:
         logger.error('ffmpeg or ffprobe not found on PATH.')
         logger.error(
@@ -658,6 +627,47 @@ def main(argv=sys.argv):
         logger.error('or use "--backend wget".')
         exit_status = RD_FAILED
 
+    return exit_status
+
+
+def _set_sction(args):
+    if args.showurl:
+        action = StreamAction.PRINT_STREAM_URL
+    elif args.showepisodepage:
+        action = StreamAction.PRINT_EPISODE_PAGES
+    elif args.showtitle:
+        action = StreamAction.PRINT_STREAM_TITLE
+    elif args.showmetadata:
+        action = StreamAction.PRINT_METADATA
+    elif args.pipe or (args.outputfile == '-'):
+        action = StreamAction.PIPE
+    else:
+        action = StreamAction.DOWNLOAD
+    return action
+
+
+def _handle_urls(action, args, httpclient, io, stream_filters, title_formatter, urls):
+    for i, url in enumerate(urls):
+        if len(urls) > 1:
+            logger.info('')
+            logger.info(f'Now downloading from URL {i + 1}/{len(urls)}: {url}')
+
+        if args.startposition is not None:
+            io.download_limits.start_position = args.startposition
+        elif start_position_from_url(url) is not None:
+            io.download_limits.start_position = start_position_from_url(url)
+
+        res = execute_action(
+            url,
+            action=action,
+            io=io,
+            httpclient=httpclient,
+            title_formatter=title_formatter,
+            stream_filters=stream_filters,
+        )
+
+        if res != RD_SUCCESS:
+            exit_status = res
     return exit_status
 
 
