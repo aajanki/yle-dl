@@ -109,109 +109,12 @@ def arg_parser():
         description=description,
         formatter_class=configargparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        '-V',
-        '--verbose',
-        action='count',
-        dest='verbosity',
-        default=0,
-        help='Increase output verbosity. -VV is really verbose.',
-    )
-    parser.add_argument(
-        '--debug',
-        action='store_const',
-        const=2,
-        dest='verbosity',
-        help='Really verbose output, same as -VV',
-    )
-    parser.add_argument(
-        '-q',
-        action='count',
-        dest='quietness',
-        default=0,
-        help='Reduce output verbosity. -qq prints only errors.',
-    )
-    parser.add_argument(
-        '-c',
-        '--config',
-        metavar='FILENAME',
-        is_config_file=True,
-        help='config file path',
-    )
+    _add_parser_arguments(parser)
 
     io_group = parser.add_argument_group('Input and output')
     url_group = io_group.add_mutually_exclusive_group()
-    url_group.add_argument(
-        'url',
-        nargs='?',
-        type=str,
-        help='Address of an Areena, Elävä Arkisto, ' 'or Yle news web page',
-    )
-    url_group.add_argument(
-        '-i',
-        metavar='FILENAME',
-        dest='inputfile',
-        type=str,
-        help='Read input URLs to process from the named ' 'file, one URL per line',
-    )
-    io_group.add_argument(
-        '-o',
-        metavar='FILENAME',
-        dest='outputfile',
-        type=str,
-        help='Save stream to the named file',
-    )
-    io_group.add_argument(
-        '--output-template',
-        metavar='TEMPLATE',
-        default='${series_separator}${title}: ${episode_separator}${timestamp}',
-        help='Template for generating an output file name '
-        'when not using -o. Put the argument in single quotes: '
-        "--output-template '${title}'. "
-        'The template supports following substitutions: '
-        '${title} is replaced by the title of the episode, '
-        '${series} is the series title, '
-        '${series_separator} is the series title followed by ": ", '
-        '${season} is the string "Season XX" where XX is the season, '
-        '${episode} is the season and episode number ("S02E12"), '
-        '${episode_separator} is the season and episode followed by "-", '
-        '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
-        '${date} is the stream publish date ("2018-12-01"), '
-        '${episode_or_date} is the same as "episode", or "date" if the episode '
-        'number is unavailable, '
-        '${program_id} is an unique ID, '
-        '$$ is an escape and will be replaced by a literal $. '
-        '/ specifies a subdirectory, but any / in the beginning is removed. '
-        'Everything else will appear as-is.',
-    )
-    io_group.add_argument(
-        '--output-na-placeholder',
-        metavar='PLACEHOLDER',
-        help='Placeholder value for unavailable meta fields '
-        'in output filename template '
-        '(default is an empty string)',
-    )
-    io_group.add_argument(
-        '--pipe',
-        action='store_true',
-        help='Dump stream to stdout for piping to media '
-        'player. E.g. "yle-dl --pipe URL | vlc -"',
-    )
-    io_group.add_argument(
-        '--destdir', metavar='DIR', type=str, help='Save files to DIR'
-    )
-    io_group.add_argument(
-        '--create-dirs',
-        action='store_true',
-        default=True,
-        help='Create directories automatically (this is the default)',
-    )
-    io_group.add_argument(
-        '--no-create-dirs',
-        action='store_false',
-        dest='create_dirs',
-        help='Stop if an output directory does not exist',
-    )
+    _add_url_groups_arguments(url_group)
+    _add_io_group_arguments(io_group)
     action_group = io_group.add_mutually_exclusive_group()
     action_group.add_argument(
         '--showurl', action='store_true', help="Print URL, don't download"
@@ -386,6 +289,115 @@ def arg_parser():
     )
 
     return parser
+
+
+def _add_io_group_arguments(io_group):
+    io_group.add_argument(
+        '-o',
+        metavar='FILENAME',
+        dest='outputfile',
+        type=str,
+        help='Save stream to the named file',
+    )
+    io_group.add_argument(
+        '--output-template',
+        metavar='TEMPLATE',
+        default='${series_separator}${title}: ${episode_separator}${timestamp}',
+        help='Template for generating an output file name '
+             'when not using -o. Put the argument in single quotes: '
+             "--output-template '${title}'. "
+             'The template supports following substitutions: '
+             '${title} is replaced by the title of the episode, '
+             '${series} is the series title, '
+             '${series_separator} is the series title followed by ": ", '
+             '${season} is the string "Season XX" where XX is the season, '
+             '${episode} is the season and episode number ("S02E12"), '
+             '${episode_separator} is the season and episode followed by "-", '
+             '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
+             '${date} is the stream publish date ("2018-12-01"), '
+             '${episode_or_date} is the same as "episode", or "date" if the episode '
+             'number is unavailable, '
+             '${program_id} is an unique ID, '
+             '$$ is an escape and will be replaced by a literal $. '
+             '/ specifies a subdirectory, but any / in the beginning is removed. '
+             'Everything else will appear as-is.',
+    )
+    io_group.add_argument(
+        '--output-na-placeholder',
+        metavar='PLACEHOLDER',
+        help='Placeholder value for unavailable meta fields '
+             'in output filename template '
+             '(default is an empty string)',
+    )
+    io_group.add_argument(
+        '--pipe',
+        action='store_true',
+        help='Dump stream to stdout for piping to media '
+             'player. E.g. "yle-dl --pipe URL | vlc -"',
+    )
+    io_group.add_argument(
+        '--destdir', metavar='DIR', type=str, help='Save files to DIR'
+    )
+    io_group.add_argument(
+        '--create-dirs',
+        action='store_true',
+        default=True,
+        help='Create directories automatically (this is the default)',
+    )
+    io_group.add_argument(
+        '--no-create-dirs',
+        action='store_false',
+        dest='create_dirs',
+        help='Stop if an output directory does not exist',
+    )
+
+
+def _add_url_groups_arguments(url_group):
+    url_group.add_argument(
+        'url',
+        nargs='?',
+        type=str,
+        help='Address of an Areena, Elävä Arkisto, ' 'or Yle news web page',
+    )
+    url_group.add_argument(
+        '-i',
+        metavar='FILENAME',
+        dest='inputfile',
+        type=str,
+        help='Read input URLs to process from the named ' 'file, one URL per line',
+    )
+
+
+def _add_parser_arguments(parser):
+    parser.add_argument(
+        '-V',
+        '--verbose',
+        action='count',
+        dest='verbosity',
+        default=0,
+        help='Increase output verbosity. -VV is really verbose.',
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_const',
+        const=2,
+        dest='verbosity',
+        help='Really verbose output, same as -VV',
+    )
+    parser.add_argument(
+        '-q',
+        action='count',
+        dest='quietness',
+        default=0,
+        help='Reduce output verbosity. -qq prints only errors.',
+    )
+    parser.add_argument(
+        '-c',
+        '--config',
+        metavar='FILENAME',
+        is_config_file=True,
+        help='config file path',
+    )
 
 
 def read_urls_from_file(f):
