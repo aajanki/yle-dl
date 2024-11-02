@@ -20,11 +20,10 @@ import json
 import logging
 import os.path
 import re
-from dataclasses import dataclass
-from data_extractors import Clip, AreenaApiProgramInfo, EpisodeMetadata
+from data_extractors import Clip, AreenaApiProgramInfo, EpisodeMetadata, PlaylistData
 from datetime import datetime
 from requests import HTTPError
-from typing import Dict, List, Optional
+from typing import List
 from urllib.parse import urlparse, parse_qs
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .http import update_url_query
