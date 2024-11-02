@@ -28,7 +28,8 @@ from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader, FailingBackend
 from yledl.downloader import YleDlDownloader
 from yledl.errors import TransientDownloadError
-from yledl.extractors import Clip, FailedClip, StreamFlavor
+from yledl.data_extractors import Clip
+from yledl.extractors import FailedClip, StreamFlavor
 from yledl.titleformatter import TitleFormatter
 
 
