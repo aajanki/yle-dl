@@ -116,20 +116,7 @@ def arg_parser():
     _add_url_groups_arguments(url_group)
     _add_io_group_arguments(io_group)
     action_group = io_group.add_mutually_exclusive_group()
-    action_group.add_argument(
-        '--showurl', action='store_true', help="Print URL, don't download"
-    )
-    action_group.add_argument(
-        '--showtitle', action='store_true', help="Print stream title, don't download"
-    )
-    action_group.add_argument(
-        '--showepisodepage', action='store_true', help='Print web page for each episode'
-    )
-    action_group.add_argument(
-        '--showmetadata',
-        action='store_true',
-        help='Print metadata about available streams',
-    )
+    _add_action_group_arguments(action_group)
     io_group.add_argument(
         '--restrict-filename-no-spaces',
         action='store_true',
@@ -152,19 +139,7 @@ def arg_parser():
     resume_group = io_group.add_mutually_exclusive_group()
     # --resume is the new default, the option is still accepted but
     # doesn't do anything
-    resume_group.add_argument(
-        '--resume',
-        action='store_true',
-        dest='resume',
-        default=True,
-        help=configargparse.SUPPRESS,
-    )
-    resume_group.add_argument(
-        '--no-resume',
-        action='store_false',
-        dest='resume',
-        help="Don't resume partial files, " 'download the whole stream again',
-    )
+    _add_resume_group_arguments(resume_group)
     io_group.add_argument(
         '--no-overwrite',
         action='store_false',
@@ -198,75 +173,25 @@ def arg_parser():
     )
 
     qual_group = parser.add_argument_group('Stream type and quality')
-    qual_group.add_argument(
-        '--sublang',
-        metavar='LANG',
-        type=str,
-        choices=['none', 'fin', 'swe', 'all'],
-        default='all',
-        help='Download subtitles if LANG is "all" '
-        '(default), "fin" or "swe". Disable subtitles '
-        'if LANG is "none".',
-    )
-    qual_group.add_argument(
-        '--metadatalang',
-        metavar='LANG',
-        type=str,
-        choices=['fin', 'swe', 'smi'],
-        help='Preferred metadata language, "fin", "swe" ' 'or "smi"',
-    )
-    qual_group.add_argument(
-        '--latestepisode',
-        action='store_true',
-        help='Download the latest episode of a series',
-    )
-    qual_group.add_argument(
-        '--maxbitrate',
-        metavar='RATE',
-        type=str,
-        help='Maximum bitrate stream to download, '
-        'integer in kB/s or "best" or "worst".',
-    )
-    qual_group.add_argument(
-        '--resolution',
-        metavar='RES',
-        type=str,
-        help='Maximum vertical resolution in pixels, '
-        'default: highest available resolution',
-    )
-    qual_group.add_argument(
-        '--startposition',
-        metavar='S',
-        type=int,
-        help='Start recording at S seconds from the start ' 'of the stream',
-    )
-    qual_group.add_argument(
-        '--duration',
-        metavar='S',
-        type=int,
-        help='Record only the first S seconds of ' 'the stream',
-    )
-    qual_group.add_argument(
-        '--preferformat',
-        metavar='F',
-        type=str,
-        default='mkv',
-        help='Preferred video output format: '
-        'mkv (default) or mp4. Applies only when '
-        'downloading with ffmpeg',
-    )
+    _add_qual_group_arguments(qual_group)
 
     dl_group = parser.add_argument_group('Downloader backends')
+    _add_dl_group_arguments(dl_group)
+
+    return parser
+
+
+def _add_dl_group_arguments(dl_group):
     dl_group.add_argument(
         '--backend',
         metavar='BE',
         type=str,
         default='ffmpeg,wget',
         help='Downloaders that are tried until one of them '
-        ' succeeds (a comma-separated list). '
-        'Possible values: '
-        '"wget", '
-        '"ffmpeg"',
+             ' succeeds (a comma-separated list). '
+             'Possible values: '
+             '"wget", '
+             '"ffmpeg"',
     )
     dl_group.add_argument(
         '--ffmpeg',
@@ -288,7 +213,98 @@ def arg_parser():
         help='Set the path of the wget executable',
     )
 
-    return parser
+
+def _add_qual_group_arguments(qual_group):
+    qual_group.add_argument(
+        '--sublang',
+        metavar='LANG',
+        type=str,
+        choices=['none', 'fin', 'swe', 'all'],
+        default='all',
+        help='Download subtitles if LANG is "all" '
+             '(default), "fin" or "swe". Disable subtitles '
+             'if LANG is "none".',
+    )
+    qual_group.add_argument(
+        '--metadatalang',
+        metavar='LANG',
+        type=str,
+        choices=['fin', 'swe', 'smi'],
+        help='Preferred metadata language, "fin", "swe" ' 'or "smi"',
+    )
+    qual_group.add_argument(
+        '--latestepisode',
+        action='store_true',
+        help='Download the latest episode of a series',
+    )
+    qual_group.add_argument(
+        '--maxbitrate',
+        metavar='RATE',
+        type=str,
+        help='Maximum bitrate stream to download, '
+             'integer in kB/s or "best" or "worst".',
+    )
+    qual_group.add_argument(
+        '--resolution',
+        metavar='RES',
+        type=str,
+        help='Maximum vertical resolution in pixels, '
+             'default: highest available resolution',
+    )
+    qual_group.add_argument(
+        '--startposition',
+        metavar='S',
+        type=int,
+        help='Start recording at S seconds from the start ' 'of the stream',
+    )
+    qual_group.add_argument(
+        '--duration',
+        metavar='S',
+        type=int,
+        help='Record only the first S seconds of ' 'the stream',
+    )
+    qual_group.add_argument(
+        '--preferformat',
+        metavar='F',
+        type=str,
+        default='mkv',
+        help='Preferred video output format: '
+             'mkv (default) or mp4. Applies only when '
+             'downloading with ffmpeg',
+    )
+
+
+def _add_resume_group_arguments(resume_group):
+    resume_group.add_argument(
+        '--resume',
+        action='store_true',
+        dest='resume',
+        default=True,
+        help=configargparse.SUPPRESS,
+    )
+    resume_group.add_argument(
+        '--no-resume',
+        action='store_false',
+        dest='resume',
+        help="Don't resume partial files, " 'download the whole stream again',
+    )
+
+
+def _add_action_group_arguments(action_group):
+    action_group.add_argument(
+        '--showurl', action='store_true', help="Print URL, don't download"
+    )
+    action_group.add_argument(
+        '--showtitle', action='store_true', help="Print stream title, don't download"
+    )
+    action_group.add_argument(
+        '--showepisodepage', action='store_true', help='Print web page for each episode'
+    )
+    action_group.add_argument(
+        '--showmetadata',
+        action='store_true',
+        help='Print metadata about available streams',
+    )
 
 
 def _add_io_group_arguments(io_group):
