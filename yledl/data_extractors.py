@@ -1,8 +1,12 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 from datetime import datetime
 
 from dataclasses import dataclass, field
 from .io import OutputFileNameGenerator
+from .streamflavor import StreamFlavor
+from .subtitles import Subtitle
+
+## Clip
 
 
 @dataclass
@@ -103,3 +107,55 @@ class Clip:
 
     def ignore_none_values(self, li):
         return {key: value for (key, value) in li if value is not None}
+
+
+@dataclass(frozen=True)
+class AreenaApiProgramInfo:
+    media_id: str
+    title: str
+    episode_title: str
+    description: Optional[str]
+    flavors: List[StreamFlavor]
+    subtitles: List[Subtitle]
+    duration_seconds: Optional[int]
+    available_at_region: str
+    publish_timestamp: Optional[datetime]
+    expiration_timestamp: Optional[datetime]
+    pending: bool
+    expired: bool
+
+
+@dataclass(frozen=True)
+class PlaylistData:
+    # The base URL from which to download a playlist
+    base_url: str
+    # List of query parameters. Each item is a dictionary of query
+    # parameters for one season. If empty, a playlist is downloaded
+    # from the plain base_url.
+    season_parameters: List[Dict]
+
+    def season_playlist_urls(self):
+        if self.season_parameters:
+            for season_query in self.season_parameters:
+                yield update_url_query(self.base_url, season_query)
+        else:
+            yield self.base_url
+
+
+@dataclass(frozen=True)
+class EpisodeMetadata:
+    uri: str
+    season_number: Optional[int]
+    episode_number: Optional[int]
+    release_date: Optional[datetime]
+
+    def sort_key(self):
+        return (
+            self.season_number or 99999,
+            self.episode_number or 99999,
+            self.release_date or datetime(1970, 1, 1, 0, 0, 0),
+        )
+
+    def with_episode_number(self, ep):
+        return EpisodeMetadata(self.uri, self.season_number, ep, self.release_date)
+
