@@ -117,60 +117,10 @@ def arg_parser():
     _add_io_group_arguments(io_group)
     action_group = io_group.add_mutually_exclusive_group()
     _add_action_group_arguments(action_group)
-    io_group.add_argument(
-        '--restrict-filename-no-spaces',
-        action='store_true',
-        dest='filenames_no_spaces',
-        help='Replace spaces by underscores in generated filenames',
-    )
-    io_group.add_argument(
-        '--restrict-filename-no-specials',
-        action='store_true',
-        dest='filenames_no_specials',
-        help='Generate Windows-compatible filenames by avoiding '
-        'certain reserved characters',
-    )
-    io_group.add_argument(
-        '--vfat',
-        action='store_true',
-        dest='filenames_no_specials',
-        help='Alias for --restrict-filename-no-specials',
-    )
     resume_group = io_group.add_mutually_exclusive_group()
     # --resume is the new default, the option is still accepted but
     # doesn't do anything
     _add_resume_group_arguments(resume_group)
-    io_group.add_argument(
-        '--no-overwrite',
-        action='store_false',
-        dest='overwrite',
-        help='Quit if a file already exists',
-    )
-    io_group.add_argument(
-        '--ratelimit',
-        metavar='BR',
-        type=int,
-        help='Maximum bandwidth consumption, ' 'integer in kB/s',
-    )
-    io_group.add_argument(
-        '--proxy',
-        metavar='URI',
-        type=str,
-        help='HTTP(S) proxy to use. Example: --proxy localhost:8118',
-    )
-    io_group.add_argument(
-        '--postprocess',
-        metavar='CMD',
-        type=str,
-        help='Execute the command CMD after a successful '
-        'download. CMD is called with two arguments: '
-        'video, subtitle',
-    )
-    io_group.add_argument(
-        '--xattrs',
-        action='store_true',
-        help="Write metadata to the video file's xattrs",
-    )
 
     qual_group = parser.add_argument_group('Stream type and quality')
     _add_qual_group_arguments(qual_group)
@@ -365,6 +315,58 @@ def _add_io_group_arguments(io_group):
         action='store_false',
         dest='create_dirs',
         help='Stop if an output directory does not exist',
+    )
+
+    io_group.add_argument(
+        '--restrict-filename-no-spaces',
+        action='store_true',
+        dest='filenames_no_spaces',
+        help='Replace spaces by underscores in generated filenames',
+    )
+    io_group.add_argument(
+        '--restrict-filename-no-specials',
+        action='store_true',
+        dest='filenames_no_specials',
+        help='Generate Windows-compatible filenames by avoiding '
+        'certain reserved characters',
+    )
+    io_group.add_argument(
+        '--vfat',
+        action='store_true',
+        dest='filenames_no_specials',
+        help='Alias for --restrict-filename-no-specials',
+    )
+
+    io_group.add_argument(
+        '--no-overwrite',
+        action='store_false',
+        dest='overwrite',
+        help='Quit if a file already exists',
+    )
+    io_group.add_argument(
+        '--ratelimit',
+        metavar='BR',
+        type=int,
+        help='Maximum bandwidth consumption, ' 'integer in kB/s',
+    )
+    io_group.add_argument(
+        '--proxy',
+        metavar='URI',
+        type=str,
+        help='HTTP(S) proxy to use. Example: --proxy localhost:8118',
+    )
+    io_group.add_argument(
+        '--postprocess',
+        metavar='CMD',
+        type=str,
+        help='Execute the command CMD after a successful '
+        'download. CMD is called with two arguments: '
+        'video, subtitle',
+    )
+    io_group.add_argument(
+        '--xattrs',
+        action='store_true',
+        help="Write metadata to the video file's xattrs",
     )
 
 
