@@ -2,7 +2,6 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 from dataclasses import dataclass, field
-from .http import update_url_query
 from .io import OutputFileNameGenerator
 from .streamflavor import StreamFlavor
 from .subtitles import Subtitle
