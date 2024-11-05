@@ -71,9 +71,8 @@ def test_uutiset_inline_video_block_metadata():
     assert 'Raitiovaunuliikennettä Helsingin Hakaniemessä' in metadata[1]['title']
     assert metadata[1]['duration_seconds'] == 14
 
-    flavors = metadata[0]['flavors'] + metadata[1]['flavors']
-    assert len(flavors) >= 1
-    assert all(f.get('media_type') == 'video' for f in flavors)
+    assert any(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
+    assert any(f.get('media_type') == 'video' for f in metadata[1]['flavors'])
 
 
 def test_uutiset_inline_audio_block_metadata():
