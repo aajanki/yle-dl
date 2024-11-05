@@ -138,10 +138,10 @@ def _add_dl_group_arguments(dl_group):
         type=str,
         default='ffmpeg,wget',
         help='Downloaders that are tried until one of them '
-             ' succeeds (a comma-separated list). '
-             'Possible values: '
-             '"wget", '
-             '"ffmpeg"',
+        ' succeeds (a comma-separated list). '
+        'Possible values: '
+        '"wget", '
+        '"ffmpeg"',
     )
     dl_group.add_argument(
         '--ffmpeg',
@@ -172,8 +172,8 @@ def _add_qual_group_arguments(qual_group):
         choices=['none', 'fin', 'swe', 'all'],
         default='all',
         help='Download subtitles if LANG is "all" '
-             '(default), "fin" or "swe". Disable subtitles '
-             'if LANG is "none".',
+        '(default), "fin" or "swe". Disable subtitles '
+        'if LANG is "none".',
     )
     qual_group.add_argument(
         '--metadatalang',
@@ -192,14 +192,14 @@ def _add_qual_group_arguments(qual_group):
         metavar='RATE',
         type=str,
         help='Maximum bitrate stream to download, '
-             'integer in kB/s or "best" or "worst".',
+        'integer in kB/s or "best" or "worst".',
     )
     qual_group.add_argument(
         '--resolution',
         metavar='RES',
         type=str,
         help='Maximum vertical resolution in pixels, '
-             'default: highest available resolution',
+        'default: highest available resolution',
     )
     qual_group.add_argument(
         '--startposition',
@@ -219,8 +219,8 @@ def _add_qual_group_arguments(qual_group):
         type=str,
         default='mkv',
         help='Preferred video output format: '
-             'mkv (default) or mp4. Applies only when '
-             'downloading with ffmpeg',
+        'mkv (default) or mp4. Applies only when '
+        'downloading with ffmpeg',
     )
 
 
@@ -270,36 +270,36 @@ def _add_io_group_arguments(io_group):
         metavar='TEMPLATE',
         default='${series_separator}${title}: ${episode_separator}${timestamp}',
         help='Template for generating an output file name '
-             'when not using -o. Put the argument in single quotes: '
-             "--output-template '${title}'. "
-             'The template supports following substitutions: '
-             '${title} is replaced by the title of the episode, '
-             '${series} is the series title, '
-             '${series_separator} is the series title followed by ": ", '
-             '${season} is the string "Season XX" where XX is the season, '
-             '${episode} is the season and episode number ("S02E12"), '
-             '${episode_separator} is the season and episode followed by "-", '
-             '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
-             '${date} is the stream publish date ("2018-12-01"), '
-             '${episode_or_date} is the same as "episode", or "date" if the episode '
-             'number is unavailable, '
-             '${program_id} is an unique ID, '
-             '$$ is an escape and will be replaced by a literal $. '
-             '/ specifies a subdirectory, but any / in the beginning is removed. '
-             'Everything else will appear as-is.',
+        'when not using -o. Put the argument in single quotes: '
+        "--output-template '${title}'. "
+        'The template supports following substitutions: '
+        '${title} is replaced by the title of the episode, '
+        '${series} is the series title, '
+        '${series_separator} is the series title followed by ": ", '
+        '${season} is the string "Season XX" where XX is the season, '
+        '${episode} is the season and episode number ("S02E12"), '
+        '${episode_separator} is the season and episode followed by "-", '
+        '${timestamp} is stream publish timestamp ("2018-12-01T18:30"), '
+        '${date} is the stream publish date ("2018-12-01"), '
+        '${episode_or_date} is the same as "episode", or "date" if the episode '
+        'number is unavailable, '
+        '${program_id} is an unique ID, '
+        '$$ is an escape and will be replaced by a literal $. '
+        '/ specifies a subdirectory, but any / in the beginning is removed. '
+        'Everything else will appear as-is.',
     )
     io_group.add_argument(
         '--output-na-placeholder',
         metavar='PLACEHOLDER',
         help='Placeholder value for unavailable meta fields '
-             'in output filename template '
-             '(default is an empty string)',
+        'in output filename template '
+        '(default is an empty string)',
     )
     io_group.add_argument(
         '--pipe',
         action='store_true',
         help='Dump stream to stdout for piping to media '
-             'player. E.g. "yle-dl --pipe URL | vlc -"',
+        'player. E.g. "yle-dl --pipe URL | vlc -"',
     )
     io_group.add_argument(
         '--destdir', metavar='DIR', type=str, help='Save files to DIR'
@@ -647,7 +647,9 @@ def main(argv=sys.argv):
         warn_on_obsolete_ffmpeg(backends, io)
         warn_on_output_template_syntax_change(title_formatter)
 
-        exit_status = _handle_urls(action, args, httpclient, io, stream_filters, title_formatter, urls)
+        exit_status = _handle_urls(
+            action, args, httpclient, io, stream_filters, title_formatter, urls
+        )
     except FfmpegNotFoundError:
         logger.error('ffmpeg or ffprobe not found on PATH.')
         logger.error(
