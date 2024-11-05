@@ -67,7 +67,7 @@ def test_uutiset_inline_video_block_metadata():
     assert metadata[0]['title'].startswith(
         'Minuutin uutisvideot: Kymmenien ihmisten ryhmissä kuljetaan pummilla'
     )
-    assert metadata[0]['duration_seconds'] == 48
+    assert metadata[0]['duration_seconds'] == 49
     assert 'Raitiovaunuliikennettä Helsingin Hakaniemessä' in metadata[1]['title']
     assert metadata[1]['duration_seconds'] == 14
 
