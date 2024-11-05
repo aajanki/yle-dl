@@ -641,13 +641,12 @@ def main(argv=sys.argv):
     maxheight = resolution_from_arg(args.resolution)
     stream_filters = StreamFilters(args.latestepisode, maxbitrate, maxheight, backends)
     httpclient = HttpClient(io)
-    exit_status = RD_SUCCESS
 
     try:
         warn_on_obsolete_ffmpeg(backends, io)
         warn_on_output_template_syntax_change(title_formatter)
 
-        exit_status = _handle_urls(
+        exit_status = handle_urls(
             action, args, httpclient, io, stream_filters, title_formatter, urls
         )
     except FfmpegNotFoundError:
@@ -678,7 +677,9 @@ def _set_sction(args):
     return action
 
 
-def _handle_urls(action, args, httpclient, io, stream_filters, title_formatter, urls):
+def handle_urls(action, args, httpclient, io, stream_filters, title_formatter, urls):
+    exit_status = RD_SUCCESS
+
     for i, url in enumerate(urls):
         if len(urls) > 1:
             logger.info('')
