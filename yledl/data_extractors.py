@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 from dataclasses import dataclass, field
+from .areena_playlist_parser import AreenaPlaylistParser
 from .http import update_url_query
 from .io import OutputFileNameGenerator
 from .streamflavor import StreamFlavor

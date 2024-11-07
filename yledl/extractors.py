@@ -19,7 +19,7 @@ import json
 import logging
 import re
 from .areena_extractors import (AreenaExtractor, AreenaLiveRadioExtractor,
-                                    AreenaLiveTVExtractor, AreenaPlaylistParser)
+                                    AreenaLiveTVExtractor)
 from .data_extractors import Clip
 
 from .streamflavor import failed_flavor
