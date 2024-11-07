@@ -90,21 +90,6 @@ class FailedClip(Clip):
         )
 
 
-class ClipExtractor:
-    def __init__(self, httpclient):
-        self.httpclient = httpclient
-
-    def extract(self, url, latest_only):
-        playlist = self.get_playlist(url, latest_only)
-        return (self.extract_clip(clipurl, url) for clipurl in playlist)
-
-    def get_playlist(self, url, latest_only=False):
-        return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
-
-    def extract_clip(self, url, origin_url):
-        raise NotImplementedError('extract_clip must be overridden')
-
-
 ### Elava Arkisto ###
 
 

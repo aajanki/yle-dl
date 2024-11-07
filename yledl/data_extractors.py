@@ -160,3 +160,18 @@ class EpisodeMetadata:
     def with_episode_number(self, ep):
         return EpisodeMetadata(self.uri, self.season_number, ep, self.release_date)
 
+
+class ClipExtractor:
+    def __init__(self, httpclient):
+        self.httpclient = httpclient
+
+    def extract(self, url, latest_only):
+        playlist = self.get_playlist(url, latest_only)
+        return (self.extract_clip(clipurl, url) for clipurl in playlist)
+
+    def get_playlist(self, url, latest_only=False):
+        return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
+
+    def extract_clip(self, url, origin_url):
+        raise NotImplementedError('extract_clip must be overridden')
+
