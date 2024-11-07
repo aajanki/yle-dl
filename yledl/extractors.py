@@ -93,126 +93,6 @@ class Flavors:
             return 'video'
 
 
-
-### Elava Arkisto ###
-
-
-class ElavaArkistoExtractor(AreenaExtractor):
-    def get_playlist(self, url, latest_only=False):
-        ids = self.get_dataids(url)
-
-        if latest_only:
-            ids = ids[-1:]
-
-        if ids:
-            return [f'https://areena.yle.fi/{x}' for x in ids]
-        else:
-            # Fallback to Yle news parser because sometimes Elävä
-            # arkisto pages are published using the same article type
-            # as news articles.
-            return parse_playlist_from_yle_article(url, self.httpclient, latest_only)
-
-    def get_dataids(self, url):
-        tree = self.httpclient.download_html_tree(url)
-        if tree is None:
-            return []
-
-        return self.ordered_union(self._simple_dataids(tree), self._ydd_dataids(tree))
-
-    def ordered_union(self, xs, ys):
-        union = list(xs)  # copy
-        for y in ys:
-            if y not in union:
-                union.append(y)
-        return union
-
-    def _simple_dataids(self, tree):
-        dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
-        dataids = [str(d) for d in dataids]
-        return [d if '-' in d else f'1-{d}' for d in dataids]
-
-    def _ydd_dataids(self, tree):
-        player_props = [
-            json.loads(p)
-            for p in tree.xpath("//main[@id='main-content']//div/@data-player-props")
-        ]
-        return [x['id'] for x in player_props if 'id' in x]
-
-
-### News clips at the Yle news site ###
-
-
-class YleUutisetExtractor(AreenaExtractor):
-    def get_playlist(self, url, latest_only=False):
-        return parse_playlist_from_yle_article(url, self.httpclient, latest_only)
-
-
-def parse_playlist_from_yle_article(url, httpclient, latest_only):
-    def id_to_areena_url(data_id):
-        if '-' in data_id:
-            areena_id = data_id
-        else:
-            areena_id = f'1-{data_id}'
-        return f'https://areena.yle.fi/{areena_id}'
-
-    tree = httpclient.download_html_tree(url)
-    if tree is None:
-        return []
-
-    state = None
-    state_script_nodes = tree.xpath(
-        '//script[@type="text/javascript" and '
-        '(contains(text(), "window.__INITIAL__STATE__") or '
-        ' contains(text(), "window.__INITIAL_STATE__"))]/text()'
-    )
-    if len(state_script_nodes) > 0:
-        state_json = re.sub(
-            r'^window\.__INITIAL__?STATE__\s*=\s*', '', state_script_nodes[0]
-        )
-        state = json.loads(state_json)
-
-    if state is None:
-        state_div_nodes = tree.xpath('//div[@id="initialState"]')
-        if len(state_div_nodes) > 0:
-            state = json.loads(state_div_nodes[0].attrib.get('data-state'))
-
-    if state is None:
-        return []
-
-    data_ids = []
-    article = state.get('pageData', {}).get('article', {})
-    if article.get('mainMedia') is not None:
-        medias = article['mainMedia']
-        data_ids = [
-            media['id']
-            for media in medias
-            if media.get('type') in ['VideoBlock', 'video'] and 'id' in media
-        ]
-    else:
-        headline_video_id = article.get('headline', {}).get('video', {}).get('id')
-        if headline_video_id:
-            data_ids = [headline_video_id]
-
-    content = article.get('content', [])
-    inline_media = [
-        block['id']
-        for block in content
-        if block.get('type') in ['AudioBlock', 'audio', 'VideoBlock', 'video']
-        and 'id' in block
-    ]
-    for id in inline_media:
-        if id not in data_ids:
-            data_ids.append(id)
-
-    logger.debug(f"Found Areena data IDs: {','.join(data_ids)}")
-
-    playlist = [id_to_areena_url(id) for id in data_ids]
-    if latest_only:
-        playlist = playlist[-1:]
-
-    return playlist
-
-
 ### Extract streams from an Areena webpage ###
 
 
@@ -585,4 +465,124 @@ class AreenaLiveRadioExtractor(AreenaExtractor):
         else:
             key = parsed.path.split('/')[-1]
             return known_channels.get(key, key)
+
+
+
+### Elava Arkisto ###
+
+
+class ElavaArkistoExtractor(AreenaExtractor):
+    def get_playlist(self, url, latest_only=False):
+        ids = self.get_dataids(url)
+
+        if latest_only:
+            ids = ids[-1:]
+
+        if ids:
+            return [f'https://areena.yle.fi/{x}' for x in ids]
+        else:
+            # Fallback to Yle news parser because sometimes Elävä
+            # arkisto pages are published using the same article type
+            # as news articles.
+            return parse_playlist_from_yle_article(url, self.httpclient, latest_only)
+
+    def get_dataids(self, url):
+        tree = self.httpclient.download_html_tree(url)
+        if tree is None:
+            return []
+
+        return self.ordered_union(self._simple_dataids(tree), self._ydd_dataids(tree))
+
+    def ordered_union(self, xs, ys):
+        union = list(xs)  # copy
+        for y in ys:
+            if y not in union:
+                union.append(y)
+        return union
+
+    def _simple_dataids(self, tree):
+        dataids = tree.xpath("//article[@id='main-content']//div/@data-id")
+        dataids = [str(d) for d in dataids]
+        return [d if '-' in d else f'1-{d}' for d in dataids]
+
+    def _ydd_dataids(self, tree):
+        player_props = [
+            json.loads(p)
+            for p in tree.xpath("//main[@id='main-content']//div/@data-player-props")
+        ]
+        return [x['id'] for x in player_props if 'id' in x]
+
+
+### News clips at the Yle news site ###
+
+
+class YleUutisetExtractor(AreenaExtractor):
+    def get_playlist(self, url, latest_only=False):
+        return parse_playlist_from_yle_article(url, self.httpclient, latest_only)
+
+
+def parse_playlist_from_yle_article(url, httpclient, latest_only):
+    def id_to_areena_url(data_id):
+        if '-' in data_id:
+            areena_id = data_id
+        else:
+            areena_id = f'1-{data_id}'
+        return f'https://areena.yle.fi/{areena_id}'
+
+    tree = httpclient.download_html_tree(url)
+    if tree is None:
+        return []
+
+    state = None
+    state_script_nodes = tree.xpath(
+        '//script[@type="text/javascript" and '
+        '(contains(text(), "window.__INITIAL__STATE__") or '
+        ' contains(text(), "window.__INITIAL_STATE__"))]/text()'
+    )
+    if len(state_script_nodes) > 0:
+        state_json = re.sub(
+            r'^window\.__INITIAL__?STATE__\s*=\s*', '', state_script_nodes[0]
+        )
+        state = json.loads(state_json)
+
+    if state is None:
+        state_div_nodes = tree.xpath('//div[@id="initialState"]')
+        if len(state_div_nodes) > 0:
+            state = json.loads(state_div_nodes[0].attrib.get('data-state'))
+
+    if state is None:
+        return []
+
+    data_ids = []
+    article = state.get('pageData', {}).get('article', {})
+    if article.get('mainMedia') is not None:
+        medias = article['mainMedia']
+        data_ids = [
+            media['id']
+            for media in medias
+            if media.get('type') in ['VideoBlock', 'video'] and 'id' in media
+        ]
+    else:
+        headline_video_id = article.get('headline', {}).get('video', {}).get('id')
+        if headline_video_id:
+            data_ids = [headline_video_id]
+
+    content = article.get('content', [])
+    inline_media = [
+        block['id']
+        for block in content
+        if block.get('type') in ['AudioBlock', 'audio', 'VideoBlock', 'video']
+        and 'id' in block
+    ]
+    for id in inline_media:
+        if id not in data_ids:
+            data_ids.append(id)
+
+    logger.debug(f"Found Areena data IDs: {','.join(data_ids)}")
+
+    playlist = [id_to_areena_url(id) for id in data_ids]
+    if latest_only:
+        playlist = playlist[-1:]
+
+    return playlist
 
