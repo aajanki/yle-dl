@@ -9,10 +9,8 @@ from urllib.parse import urlparse, parse_qs
 
 
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
-from .data_extractors import AreenaApiProgramInfo, Clip, EpisodeMetadata, PlaylistData, ClipExtractor
-
-from .extractors import FailedClip
-from .http import update_url_query
+from .clip_extractors import Clip, ClipExtractor, FailedClip
+from .data_extractors import AreenaApiProgramInfo
 from .kaltura import YleKalturaApiClient
 from .localization import TranslationChooser
 from .subtitles import Subtitle

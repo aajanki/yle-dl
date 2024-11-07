@@ -20,9 +20,7 @@ import logging
 import re
 from .areena_extractors import (AreenaExtractor, AreenaLiveRadioExtractor,
                                     AreenaLiveTVExtractor)
-from .data_extractors import Clip
 
-from .streamflavor import failed_flavor
 
 
 logger = logging.getLogger('yledl')
@@ -81,13 +79,6 @@ class Flavors:
         else:
             return 'video'
 
-
-
-class FailedClip(Clip):
-    def __init__(self, webpage, error_message, **kwargs):
-        super().__init__(
-            webpage=webpage, flavors=[failed_flavor(error_message)], **kwargs
-        )
 
 
 ### Elava Arkisto ###
