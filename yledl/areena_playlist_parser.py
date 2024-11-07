@@ -4,7 +4,7 @@ import re
 from typing import List
 
 import logging
-from .data_extractors import EpisodeMetadata
+from .areena_api import EpisodeMetadata
 from .http import update_url_query
 from .play_list_data import PlaylistData
 from .timestamp import parse_areena_timestamp
