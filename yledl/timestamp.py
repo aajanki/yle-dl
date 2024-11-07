@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-import re
 from datetime import datetime
 
 
@@ -28,21 +27,13 @@ def parse_areena_timestamp(timestamp):
         return None
 
     timestamp = timestamp.strip()
-    parsed = parse_areena_timestamp_py3(timestamp)
+    parsed = strptime_or_none(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z') or strptime_or_none(
+        timestamp, '%Y-%m-%dT%H:%M:%S%z'
+    )
     if parsed is None:
         logger.warning(f'Failed to parse timestamp: {timestamp}')
 
     return parsed
-
-
-def parse_areena_timestamp_py3(timestamp):
-    # Python prior to 3.7 doesn't support a colon in the timezone
-    if re.search(r'\d\d:\d\d$', timestamp):
-        timestamp = timestamp[:-3] + timestamp[-2:]
-
-    return strptime_or_none(timestamp, '%Y-%m-%dT%H:%M:%S.%f%z') or strptime_or_none(
-        timestamp, '%Y-%m-%dT%H:%M:%S%z'
-    )
 
 
 def strptime_or_none(timestamp, format):
