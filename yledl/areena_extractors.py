@@ -9,7 +9,7 @@ from urllib.parse import urlparse, parse_qs
 
 
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
-from .clip_extractors import Clip, ClipExtractor, FailedClip
+from .clip import Clip, ClipExtractor, FailedClip
 from .data_extractors import AreenaApiProgramInfo
 from .kaltura import YleKalturaApiClient
 from .localization import TranslationChooser
