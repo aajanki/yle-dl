@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2024 Antti Ajanki
 Distributed under the GPL v3 or later
 
+<unreleased>
+
+- Python 3.7 is no longer supported. It might work, but is no longer tested.
+
 Version 20240927
 
 - Fixed --maxbitrate and --resolution on a new stream type
