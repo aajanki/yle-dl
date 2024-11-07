@@ -5,7 +5,6 @@ import logging
 import os.path
 import re
 from requests import HTTPError
-from typing import List
 from urllib.parse import urlparse, parse_qs
 
 

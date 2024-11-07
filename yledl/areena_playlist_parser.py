@@ -1,3 +1,11 @@
+import json
+from typing import List
+
+import logging
+from .play_list_data import PlaylistData
+
+logger = logging.getLogger('yledl')
+
 class AreenaPlaylistParser:
     """Get a list of episodes in a series from Areena API
 
