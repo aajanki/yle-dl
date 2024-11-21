@@ -76,13 +76,6 @@ Lataaminen SOCKS5-proxyn kautta on mahdollista käyttämällä
 tsocks-ohjelmaa.
 
 
-### libav:n käyttö ffmpegin sijaan
-
-```
-yle-dl --ffmpeg avconv --ffprobe avprobe ...
-```
-
-
 Asetustiedosto
 --------------
 

@@ -93,12 +93,6 @@ Type `yle-dl --help` to see the full list of options.
 
 To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/) or a similar wrapper.
 
-### Using with libav instead of ffmpeg
-
-```
-yle-dl --ffmpeg avconv --ffprobe avprobe ...
-```
-
 Config file
 -----------
 

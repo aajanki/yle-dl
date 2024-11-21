@@ -65,12 +65,6 @@ Argument kan också anges i en konfigurationsfil. Standardkonfigurationsfilen ä
 kan anges via --config. Filen yledl.conf.sample innehåller ett exempel på
 konfiguration.
 
-## Användning av libav istället för ffmpeg
-
-```
-yle-dl --ffmpeg avconv --ffprobe avprobe ...
-```
-
 # Exempel
 
 ### Arenan
