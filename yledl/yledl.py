@@ -101,7 +101,6 @@ def arg_parser():
         f'yle-dl {__version__}: Download media files from Yle Areena and Elävä Arkisto\n'
         'Copyright (C) 2009-2024 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
     )
-
     xdg_config_home = os.getenv('XDG_CONFIG_HOME') or '~/.config'
     parser = ArgumentParserEncoded(
         default_config_files=['~/.yledl.conf', f'{xdg_config_home}/yledl.conf'],
@@ -109,29 +108,16 @@ def arg_parser():
         description=description,
         formatter_class=configargparse.RawDescriptionHelpFormatter,
     )
-    _add_parser_arguments(parser)
-
-    io_group = parser.add_argument_group('Input and output')
-    url_group = io_group.add_mutually_exclusive_group()
-    _add_url_groups_arguments(url_group)
-    _add_io_group_arguments(io_group)
-    action_group = io_group.add_mutually_exclusive_group()
-    _add_action_group_arguments(action_group)
-    resume_group = io_group.add_mutually_exclusive_group()
-    # --resume is the new default, the option is still accepted but
-    # doesn't do anything
-    _add_resume_group_arguments(resume_group)
-
-    qual_group = parser.add_argument_group('Stream type and quality')
-    _add_qual_group_arguments(qual_group)
-
-    dl_group = parser.add_argument_group('Downloader backends')
-    _add_dl_group_arguments(dl_group)
+    _add_toplevel_arguments(parser)
+    _add_io_arguments(parser)
+    _add_quality_arguments(parser)
+    _add_downloader_arguments(parser)
 
     return parser
 
 
-def _add_dl_group_arguments(dl_group):
+def _add_downloader_arguments(parser):
+    dl_group = parser.add_argument_group('Downloader backends')
     dl_group.add_argument(
         '--backend',
         metavar='BE',
@@ -164,7 +150,8 @@ def _add_dl_group_arguments(dl_group):
     )
 
 
-def _add_qual_group_arguments(qual_group):
+def _add_quality_arguments(parser):
+    qual_group = parser.add_argument_group('Stream type and quality')
     qual_group.add_argument(
         '--sublang',
         metavar='LANG',
@@ -224,7 +211,10 @@ def _add_qual_group_arguments(qual_group):
     )
 
 
-def _add_resume_group_arguments(resume_group):
+def _add_resume_arguments(io_group):
+    resume_group = io_group.add_mutually_exclusive_group()
+    # --resume is the new default, the option is still accepted but
+    # doesn't do anything
     resume_group.add_argument(
         '--resume',
         action='store_true',
@@ -240,7 +230,8 @@ def _add_resume_group_arguments(resume_group):
     )
 
 
-def _add_action_group_arguments(action_group):
+def _add_action_group_arguments(io_group):
+    action_group = io_group.add_mutually_exclusive_group()
     action_group.add_argument(
         '--showurl', action='store_true', help="Print URL, don't download"
     )
@@ -257,7 +248,9 @@ def _add_action_group_arguments(action_group):
     )
 
 
-def _add_io_group_arguments(io_group):
+def _add_io_arguments(parser):
+    io_group = parser.add_argument_group('Input and output')
+    _add_url_arguments(io_group)
     io_group.add_argument(
         '-o',
         metavar='FILENAME',
@@ -317,6 +310,8 @@ def _add_io_group_arguments(io_group):
         help='Stop if an output directory does not exist',
     )
 
+    _add_action_group_arguments(io_group)
+
     io_group.add_argument(
         '--restrict-filename-no-spaces',
         action='store_true',
@@ -336,6 +331,8 @@ def _add_io_group_arguments(io_group):
         dest='filenames_no_specials',
         help='Alias for --restrict-filename-no-specials',
     )
+
+    _add_resume_arguments(io_group)
 
     io_group.add_argument(
         '--no-overwrite',
@@ -370,7 +367,8 @@ def _add_io_group_arguments(io_group):
     )
 
 
-def _add_url_groups_arguments(url_group):
+def _add_url_arguments(io_group):
+    url_group = io_group.add_mutually_exclusive_group()
     url_group.add_argument(
         'url',
         nargs='?',
@@ -386,7 +384,7 @@ def _add_url_groups_arguments(url_group):
     )
 
 
-def _add_parser_arguments(parser):
+def _add_toplevel_arguments(parser):
     parser.add_argument(
         '-V',
         '--verbose',
