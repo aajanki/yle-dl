@@ -33,13 +33,6 @@ Komennolla `pipx install yle-dl[extra]` saat käyttöösi myös valinnaiset
 ominaisuudet: videon metadatan tallentamisen tiedoston xattr-attribuuteiksi ja
 automaattinen rajatun merkistön vaativien levyjen tunnistamisen.
 
-Toinen vaihtoehto on asentaa lähdekoodeista. Lataa lähdekoodit ja aja
-seuraava komento lähdekoodihakemistossa:
-
-```shell
-pip3 install --user .
-```
-
 Käyttö
 ------
 
@@ -109,6 +102,26 @@ Valmiit asennuspaketit
 Katso lista saatavilla olevista asennuspaketeista osoitteesta
 https://aajanki.github.io/yle-dl/#packages
 
+
+Kehittäminen
+------------
+
+Jos haluat muokata koodia, asenna lähdekoodit muokattavassa tilassa
+seuraavasti:
+
+```sh
+python3 -m venv venv
+source venv/bin/activate
+pip install --editable .[test,extra]
+```
+
+Asenna pre-commit-skriptit:
+
+```sh
+pipx install pre-commit
+
+pre-commit install
+```
 
 Yksikkö- ja integraatiotestit
 -----------------------------

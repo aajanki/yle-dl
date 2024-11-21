@@ -34,13 +34,6 @@ finns i filen OS-install-instructions.md.
 
 Kommandot `pipx install yle-dl[extra]` aktiverade alla optinalfunktioner.
 
-Ett annat alternativ är att installera från källkoden. Ladda ner
-källkoden och kör följande kommando:
-
-```shell
-pip3 install --user .
-```
-
 # Användning
 
 ```
