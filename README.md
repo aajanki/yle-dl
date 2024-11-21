@@ -194,7 +194,7 @@ pre-commit install
 ### Unit and integration tests
 
 ```
-pytest-3
+python3 -m pytest
 ```
 
 Some tests succeed only when run on a Finnish IP address because some
@@ -202,13 +202,13 @@ Areena streams are available only in Finland. By default, these tests
 are skipped. To run all tests, include the "--geoblocked" flag:
 
 ```
-pytest-3 --geoblocked
+python3 -m pytest --geoblocked
 ```
 
 Running only a single test file:
 
 ```
-pytest-3 tests/integration/test_areena_radio_it.py
+python3 -m pytest tests/integration/test_areena_radio_it.py
 ```
 
 Creating a new release

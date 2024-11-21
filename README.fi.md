@@ -110,11 +110,11 @@ Katso lista saatavilla olevista asennuspaketeista osoitteesta
 https://aajanki.github.io/yle-dl/#packages
 
 
-Integraatiotestien ajaminen
----------------------------
+Yksikkö- ja integraatiotestit
+-----------------------------
 
 ```
-pytest-3
+python3 -m pytest
 ```
 
 Jotkin testit onnistuvat vain suomalaisesta IP-osoitteesta, koska osa
@@ -123,7 +123,7 @@ testit jätetään suorittamatta. Ajaaksesi myös nämä testit käytä
 "--geoblocked"-vipua:
 
 ```
-pytest-3 --geoblocked
+python3 -m pytest --geoblocked
 ```
 
 

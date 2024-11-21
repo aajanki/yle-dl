@@ -16,7 +16,7 @@ pipx install yle-dl
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt install git wget ffmpeg python3-pip
+sudo apt install git wget ffmpeg python3-pip python3-pytest
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
 python3 -m venv venv
