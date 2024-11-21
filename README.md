@@ -34,7 +34,7 @@ instructions for Debian, Ubuntu, Mac OS X, Windows and Android.
 
 ### 2. Install yle-dl ###
 
-1. [Install pipx](https://pypa.github.io/pipx/)
+1. [Install pipx](https://pipx.pypa.io/stable/installation/)
 2. Install yle-dl: `pipx install yle-dl`
 
 Installing yle-dl with all optional dependencies (`pipx install yle-dl[extra]`)

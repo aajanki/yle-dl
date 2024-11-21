@@ -29,7 +29,7 @@ finns i filen OS-install-instructions.md.
 
 ## 2. Installera yle-dl
 
-1. [Installera pipx](https://pypa.github.io/pipx/)
+1. [Installera pipx](https://pipx.pypa.io/stable/installation/)
 2. Installera yle-dl: `pipx install yle-dl`
 
 Kommandot `pipx install yle-dl[extra]` aktiverade alla optinalfunktioner.

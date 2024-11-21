@@ -26,7 +26,7 @@ löytyvät tiedostosta OS-install-instructions.md.
 
 ### 2. Asenna yle-dl
 
-1. [Asenna pipx](https://pypa.github.io/pipx/)
+1. [Asenna pipx](https://pipx.pypa.io/stable/installation/)
 2. Asenna yle-dl kirjoittamalla: `pipx install yle-dl`
 
 Komennolla `pipx install yle-dl[extra]` saat käyttöösi myös valinnaiset

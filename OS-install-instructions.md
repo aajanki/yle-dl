@@ -1,6 +1,14 @@
 # OS-specific installation instructions for yle-dl
 
-## Debian 10 (Buster)/Ubuntu 17.10 and later
+## Debian and Ubuntu
+
+```
+sudo apt install pipx
+pipx ensurepath
+pipx install yle-dl
+```
+
+## Installing from source code on Debian 12 (Bookworm)/Ubuntu 20.04 and later
 
 ```
 # If you have installed a previous version globally (without the
@@ -8,69 +16,16 @@
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt-get install wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml python3-xattr python3-psutil
-pip3 install --user --upgrade yle-dl
-
-# If you get "command not found" message when you try to run yle-dl, append
-# the installation location onto your search path with the following command:
-#
-# echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc && source ~/.bashrc
-```
-
-
-### Installing from source code on Debian 10/Ubuntu 17.10
-
-```
-# If you have installed a previous version globally (without the
-# --user switch in the pip install command), remove the globally
-# installed version first:
-sudo pip uninstall yle-dl
-
-sudo apt-get install git wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml python3-xattr python3-psutil
+sudo apt install git wget ffmpeg python3-pip
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
-pip3 install --user .
+python3 -m venv venv
+source venv/bin/activate
+pip3 install .
+
+# Note that you need to always activate the virtual environment before running yle-dl
+source yle-dl/venv/bin/activate
 ```
-
-
-## Debian 9 (Stretch)/Ubuntu 16.04
-
-```
-# If you have installed a previous version globally (without the
-# --user switch in the pip install command), remove the globally
-# installed version first:
-sudo pip uninstall yle-dl
-
-sudo apt-get install wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml
-pip3 install --user --upgrade yle-dl
-
-# If you get "command not found" message when you try to run yle-dl, append
-# the installation location onto your search path with the following command:
-#
-# echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc && source ~/.bashrc
-```
-
-(You may get prompted to upgrade pip. However, it is not necessary to
-upgrade pip for installing yle-dl.)
-
-### Installing from source code on Debian 9/Ubuntu 16.04
-
-```
-# If you have installed a previous version globally (without the
-# --user switch in the pip install command), remove the globally
-# installed version first:
-sudo pip uninstall yle-dl
-
-sudo apt-get install git wget ffmpeg python3-dev python3-setuptools \
-    python3-pip python3-requests python3-lxml
-git clone https://github.com/aajanki/yle-dl.git
-cd yle-dl
-pip3 install --user .
-```
-
 
 ## Gentoo
 
