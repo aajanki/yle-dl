@@ -3,7 +3,7 @@
 ## Debian and Ubuntu
 
 ```
-sudo apt install pipx
+sudo apt install pipx wget ffmpeg
 pipx ensurepath
 pipx install yle-dl
 ```
