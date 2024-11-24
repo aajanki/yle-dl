@@ -130,4 +130,3 @@ class ClipExtractor:
 
     def extract_clip(self, url, origin_url):
         raise NotImplementedError('extract_clip must be overridden')
-

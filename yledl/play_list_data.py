@@ -19,4 +19,3 @@ class PlaylistData:
                 yield update_url_query(self.base_url, season_query)
         else:
             yield self.base_url
-

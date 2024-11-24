@@ -6,7 +6,6 @@ from .streamflavor import StreamFlavor
 from .subtitles import Subtitle
 
 
-
 @dataclass(frozen=True)
 class AreenaApiProgramInfo:
     media_id: str
@@ -21,7 +20,6 @@ class AreenaApiProgramInfo:
     expiration_timestamp: Optional[datetime]
     pending: bool
     expired: bool
-
 
 
 @dataclass(frozen=True)
@@ -40,4 +38,3 @@ class EpisodeMetadata:
 
     def with_episode_number(self, ep):
         return EpisodeMetadata(self.uri, self.season_number, ep, self.release_date)
-

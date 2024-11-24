@@ -11,6 +11,7 @@ from .timestamp import parse_areena_timestamp
 
 logger = logging.getLogger('yledl')
 
+
 class AreenaPlaylistParser:
     """Get a list of episodes in a series from Areena API
 

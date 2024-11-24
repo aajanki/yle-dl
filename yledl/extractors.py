@@ -35,7 +35,6 @@ from .timestamp import parse_areena_timestamp
 from .titleformatter import TitleFormatter
 
 
-
 logger = logging.getLogger('yledl')
 
 
@@ -418,8 +417,6 @@ class AreenaExtractor(ClipExtractor):
         return {}
 
 
-
-
 ### Areena live TV ###
 
 
@@ -465,7 +462,6 @@ class AreenaLiveRadioExtractor(AreenaExtractor):
         else:
             key = parsed.path.split('/')[-1]
             return known_channels.get(key, key)
-
 
 
 ### Elava Arkisto ###
@@ -585,4 +581,3 @@ def parse_playlist_from_yle_article(url, httpclient, latest_only):
         playlist = playlist[-1:]
 
     return playlist
-

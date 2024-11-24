@@ -9,7 +9,6 @@ from .timestamp import parse_areena_timestamp, format_finnish_short_weekday_and_
 logger = logging.getLogger('yledl')
 
 
-
 class AreenaPreviewApiParser:
     def __init__(self, data):
         self.preview = data or {}
@@ -165,5 +164,3 @@ class AreenaPreviewApiParser:
             if lang and url:
                 subtitles.append(Subtitle(url, lang, category))
         return subtitles
-
-

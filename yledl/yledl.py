@@ -123,11 +123,8 @@ def _add_downloader_arguments(parser):
         metavar='BE',
         type=str,
         default='ffmpeg,wget',
-        help='Downloaders that are tried until one of them '
-        ' succeeds (a comma-separated list). '
-        'Possible values: '
-        '"wget", '
-        '"ffmpeg"',
+        help='Downloaders that are tried until one of them succeeds '
+        '(a comma-separated list). Possible values: "wget", "ffmpeg"',
     )
     dl_group.add_argument(
         '--ffmpeg',
@@ -158,16 +155,15 @@ def _add_quality_arguments(parser):
         type=str,
         choices=['none', 'fin', 'swe', 'all'],
         default='all',
-        help='Download subtitles if LANG is "all" '
-        '(default), "fin" or "swe". Disable subtitles '
-        'if LANG is "none".',
+        help='Download subtitles if LANG is "all" (default), "fin" or "swe". '
+        'Disable subtitles if LANG is "none".',
     )
     qual_group.add_argument(
         '--metadatalang',
         metavar='LANG',
         type=str,
         choices=['fin', 'swe', 'smi'],
-        help='Preferred metadata language, "fin", "swe" ' 'or "smi"',
+        help='Preferred metadata language, "fin", "swe" or "smi"',
     )
     qual_group.add_argument(
         '--latestepisode',
@@ -178,8 +174,7 @@ def _add_quality_arguments(parser):
         '--maxbitrate',
         metavar='RATE',
         type=str,
-        help='Maximum bitrate stream to download, '
-        'integer in kB/s or "best" or "worst".',
+        help='Maximum bitrate stream to download, integer in kB/s or "best" or "worst".',
     )
     qual_group.add_argument(
         '--resolution',
@@ -192,21 +187,20 @@ def _add_quality_arguments(parser):
         '--startposition',
         metavar='S',
         type=int,
-        help='Start recording at S seconds from the start ' 'of the stream',
+        help='Start recording at S seconds from the start of the stream',
     )
     qual_group.add_argument(
         '--duration',
         metavar='S',
         type=int,
-        help='Record only the first S seconds of ' 'the stream',
+        help='Record only the first S seconds of the stream',
     )
     qual_group.add_argument(
         '--preferformat',
         metavar='F',
         type=str,
         default='mkv',
-        help='Preferred video output format: '
-        'mkv (default) or mp4. Applies only when '
+        help='Preferred video output format: mkv (default) or mp4. Applies only when '
         'downloading with ffmpeg',
     )
 
@@ -226,7 +220,7 @@ def _add_resume_arguments(io_group):
         '--no-resume',
         action='store_false',
         dest='resume',
-        help="Don't resume partial files, " 'download the whole stream again',
+        help="Don't resume partial files, download the whole stream again",
     )
 
 
@@ -285,14 +279,13 @@ def _add_io_arguments(parser):
         '--output-na-placeholder',
         metavar='PLACEHOLDER',
         help='Placeholder value for unavailable meta fields '
-        'in output filename template '
-        '(default is an empty string)',
+        'in output filename template (the default is an empty string)',
     )
     io_group.add_argument(
         '--pipe',
         action='store_true',
-        help='Dump stream to stdout for piping to media '
-        'player. E.g. "yle-dl --pipe URL | vlc -"',
+        help='Dump stream to stdout for piping to media player. '
+        'E.g. "yle-dl --pipe URL | vlc -"',
     )
     io_group.add_argument(
         '--destdir', metavar='DIR', type=str, help='Save files to DIR'
@@ -322,8 +315,7 @@ def _add_io_arguments(parser):
         '--restrict-filename-no-specials',
         action='store_true',
         dest='filenames_no_specials',
-        help='Generate Windows-compatible filenames by avoiding '
-        'certain reserved characters',
+        help='Generate Windows-compatible filenames by avoiding certain reserved characters',
     )
     io_group.add_argument(
         '--vfat',
@@ -344,7 +336,7 @@ def _add_io_arguments(parser):
         '--ratelimit',
         metavar='BR',
         type=int,
-        help='Maximum bandwidth consumption, ' 'integer in kB/s',
+        help='Maximum bandwidth consumption, integer in kB/s',
     )
     io_group.add_argument(
         '--proxy',
@@ -356,9 +348,8 @@ def _add_io_arguments(parser):
         '--postprocess',
         metavar='CMD',
         type=str,
-        help='Execute the command CMD after a successful '
-        'download. CMD is called with two arguments: '
-        'video, subtitle',
+        help='Execute the command CMD after a successful download. '
+        'CMD is called with two arguments: video, subtitle',
     )
     io_group.add_argument(
         '--xattrs',
@@ -373,14 +364,14 @@ def _add_url_arguments(io_group):
         'url',
         nargs='?',
         type=str,
-        help='Address of an Areena, Elävä Arkisto, ' 'or Yle news web page',
+        help='Address of an Areena, Elävä Arkisto, or Yle news web page',
     )
     url_group.add_argument(
         '-i',
         metavar='FILENAME',
         dest='inputfile',
         type=str,
-        help='Read input URLs to process from the named ' 'file, one URL per line',
+        help='Read input URLs to process from the named file, one URL per line',
     )
 
 
