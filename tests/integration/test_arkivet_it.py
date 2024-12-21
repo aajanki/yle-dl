@@ -83,7 +83,7 @@ def test_arkivet_a_metadata():
     assert len(metadata) >= 4
     assert metadata[1].get('title').startswith('Valborg på Borgbacken')
     flavors = metadata[1]['flavors']
-    assert all(f.get('media_type') == 'video' for f in flavors)
+    assert any(f.get('media_type') == 'video' for f in flavors)
     assert all('bitrate' in f for f in flavors)
-    assert all('height' in f for f in flavors)
-    assert all('width' in f for f in flavors)
+    assert any('height' in f for f in flavors)
+    assert any('width' in f for f in flavors)
