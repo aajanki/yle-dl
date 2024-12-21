@@ -36,6 +36,7 @@ from .backends import Backends
 from .downloader import YleDlDownloader
 from .errors import FfmpegNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
+from .ffprobe import ffmpeg_version
 from .geolocation import AreenaGeoLocation
 from .http import HttpClient
 from .io import IOContext, DownloadLimits, random_elisa_ipv4, get_filesystem_type
@@ -530,13 +531,13 @@ def start_position_from_url(url):
 
 def warn_on_obsolete_ffmpeg(backends, io):
     if 'ffmpeg' in backends:
-        ffmpeg_version = io.ffmpeg_version()
-        if ffmpeg_version is not None:
-            formatted_ffmpeg_version = '{}.{}.{}'.format(*ffmpeg_version)
-            logger.debug(f'Detected ffmpeg {formatted_ffmpeg_version}')
-            if ffmpeg_version < (4, 1, 0):
+        version = ffmpeg_version(io.ffmpeg_binary)
+        if version > (0, 0):
+            version_string = '{}.{}'.format(*version)
+            logger.debug(f'Detected ffmpeg {version_string}')
+            if version < (4, 1):
                 logger.warning(
-                    f'Your version of ffmpeg ({formatted_ffmpeg_version}) '
+                    f'Your version of ffmpeg ({version_string}) '
                     'might not download all streams correctly.\n'
                     'Please upgrade ffmpeg to version 4.1 or later.'
                 )

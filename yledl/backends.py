@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2024 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ import shlex
 import subprocess
 from .errors import ExternalApplicationNotFoundError, TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
+from .ffprobe import ffmpeg_version
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
@@ -374,7 +375,12 @@ class DASHHLSBackend(ExternalDownloader):
         if io.subtitles == 'none':
             return ['-sn']
         elif io.subtitles == 'all':
-            return ['-scodec', scodec, '-map', f'0:p:{pid}:s?']
+            return [
+                '-scodec',
+                scodec,
+                '-map',
+                self._optional_stream(f'0:p:{pid}:s', io),
+            ]
         else:
             # Sometimes the subtitles are labelled with a two-letter
             # code, sometimes with a three-letter code. Try both.
@@ -383,14 +389,19 @@ class DASHHLSBackend(ExternalDownloader):
                 '-scodec',
                 scodec,
                 '-map',
-                f'0:s:m:language:{short_code}?',
+                self._optional_stream(f'0:s:m:language:{short_code}', io),
                 '-map',
-                f'0:s:m:language:{io.subtitles}?',
+                self._optional_stream(f'0:s:m:language:{io.subtitles}', io),
             ]
 
     def _map_video_and_audio_streams(self, io):
         pid = self._program_id(io)
-        return ['-map', f'0:p:{pid}:v?', '-map', f'0:p:{pid}:a?']
+        return [
+            '-map',
+            self._optional_stream(f'0:p:{pid}:v', io),
+            '-map',
+            self._optional_stream(f'0:p:{pid}:a', io),
+        ]
 
     def build_args(self, output_name, clip, io):
         return (
@@ -466,6 +477,10 @@ class DASHHLSBackend(ExternalDownloader):
         return (
             io.outputfilename and io.outputfilename.endswith('.mp4')
         ) or io.preferred_format in ('mp4', '.mp4')
+
+    def _optional_stream(self, stream_spec: str, io) -> str:
+        sep = ':' if ffmpeg_version(io.ffmpeg_binary) >= (7, 1) else ''
+        return f'{stream_spec}{sep}?'
 
     def full_stream_already_downloaded(self, filename, clip, io):
         ffprobe = io.ffprobe()
