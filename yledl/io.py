@@ -22,7 +22,7 @@ import random
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
-from .ffprobe import Ffprobe
+from .ffmpeg import Ffprobe
 from .utils import sane_filename
 
 logger = logging.getLogger('yledl')

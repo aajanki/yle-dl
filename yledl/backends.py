@@ -26,7 +26,7 @@ import shlex
 import subprocess
 from .errors import ExternalApplicationNotFoundError, TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
-from .ffprobe import ffmpeg_version
+from .ffmpeg import ffmpeg_version
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel

@@ -29,7 +29,7 @@ from .extractors import extractor_factory
 from .localization import TranslationChooser
 from .io import OutputFileNameGenerator
 from .streamflavor import failed_flavor
-from .ffprobe import NullProbe
+from .ffmpeg import NullProbe
 
 
 logger = logging.getLogger('yledl')

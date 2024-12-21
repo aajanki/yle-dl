@@ -36,7 +36,7 @@ from .backends import Backends
 from .downloader import YleDlDownloader
 from .errors import FfmpegNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
-from .ffprobe import ffmpeg_version
+from .ffmpeg import ffmpeg_version
 from .geolocation import AreenaGeoLocation
 from .http import HttpClient
 from .io import IOContext, DownloadLimits, random_elisa_ipv4, get_filesystem_type
