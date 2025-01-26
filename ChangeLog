@@ -1,8 +1,8 @@
 yle-dl - download videos from Yle servers
-Copyright 2009-2024 Antti Ajanki
+Copyright 2009-2025 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20250126
 
 - Fixed subtitle language selection (e.g. --sublang swe) on ffmpeg 7.1
 - Python 3.7 is no longer supported. It might work, but is no longer tested.
