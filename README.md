@@ -3,7 +3,7 @@ Download videos from Yle servers
 [![Build status](https://circleci.com/gh/aajanki/yle-dl.svg?style=shield)](https://app.circleci.com/pipelines/github/aajanki/yle-dl)
 [![PyPI version](https://badge.fury.io/py/yle-dl.svg)](https://badge.fury.io/py/yle-dl)
 
-Copyright (C) 2010-2024 Antti Ajanki, antti.ajanki@iki.fi
+Copyright (C) 2010-2025 Antti Ajanki, antti.ajanki@iki.fi
 
 License: GPL v3 or later
 
