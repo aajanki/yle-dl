@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    branches:
-      - release_test
+    tags:
+      - releases/*
 
 jobs:
   build:
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://test.pypi.org/project/yle-dl/
+      url: https://pypi.org/project/yle-dl/
     permissions:
       id-token: write
     steps:
@@ -46,5 +46,3 @@ jobs:
           path: dist/
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          repository-url: https://test.pypi.org/legacy/
