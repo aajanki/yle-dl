@@ -7,12 +7,11 @@ pytest-3 --geoblocked
 
 git push
 
-git tag 20211203
-git push --tags
+# Wait until the CircleCI checks are completed
 
-rm -rf dist
-python3 -m build
-twine upload dist/*
+# Pushing to releases/* tag runs the release pipeline on Github Actions
+git tag releases/20211203
+git push --tags
 ```
 
 Link the new release on the gh-pages:
