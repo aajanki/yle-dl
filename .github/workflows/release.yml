@@ -17,6 +17,7 @@ jobs:
           python-version: '3.13'
       - name: Install dependencies
         run: |
+            sudo apt install -y ffmpeg
             python -m pip install --upgrade pip build
             python -m pip install .[test]
       - name: Run unit tests
@@ -31,6 +32,7 @@ jobs:
           path: dist/
 
   publish:
+    needs: [build]
     runs-on: ubuntu-latest
     environment:
       name: pypi
