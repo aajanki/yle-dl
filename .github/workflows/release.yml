@@ -44,7 +44,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: release-dist
+          path: dist/
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          repository_url: https://test.pypi.org/legacy/
