@@ -23,8 +23,7 @@ jobs:
       - name: Run unit tests
         run: python -m pytest tests/unit
       - name: Build
-        run: |
-          python -m build
+        run: python -m build
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -49,4 +48,3 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
-          repository_url: https://test.pypi.org/legacy/
