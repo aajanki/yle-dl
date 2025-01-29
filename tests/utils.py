@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@ import sys
 import json
 from datetime import timedelta, tzinfo
 from io import BytesIO
+from typing import Tuple
 from yledl import execute_action, StreamFilters, IOContext, StreamAction, RD_SUCCESS
 from yledl.io import random_elisa_ipv4
 from yledl.http import HttpClient
@@ -53,6 +54,12 @@ class FixedOffset(tzinfo):
         return timedelta(0)
 
 
+class MockIOContext(IOContext):
+    def ffmpeg_version(self) -> Tuple[int, int]:
+        print('Mock ffmpeg_version called!')
+        return 7, 1
+
+
 def fetch_title(url, filters=StreamFilters()):
     return fetch(url, StreamAction.PRINT_STREAM_TITLE, filters)
 
@@ -72,7 +79,7 @@ def fetch_metadata(url, filters=StreamFilters(), meta_language=None):
 
 
 def fetch(url, action, filters, meta_language=None):
-    io = IOContext(
+    io = MockIOContext(
         destdir='/tmp/',
         metadata_language=meta_language,
         x_forwarded_for=random_elisa_ipv4(),

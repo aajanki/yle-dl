@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -20,8 +20,6 @@ import logging
 import os.path
 import re
 import subprocess
-from functools import lru_cache
-from typing import Tuple
 from .errors import FfmpegNotFoundError
 from .utils import ffmpeg_loglevel
 
@@ -143,30 +141,3 @@ class NullProbe:
 
     def full_stream_already_downloaded(self, _filename, _clip):
         return False
-
-
-@lru_cache
-def ffmpeg_version(ffmpeg_binary: str) -> Tuple[int, int]:
-    """Get the ffmpeg application version.
-
-    The parameter ffmpeg_binary is the path to the ffmpeg executable.
-
-    Returns the version as a two-tuple (major, minor). If parsing the version
-    number in the ffmpeg output fails, returns an all-zero version (0, 0).
-
-    Throws FfmpegNotFoundError, if ffmpeg application is not found.
-    """
-    ver = 0, 0
-    if ffmpeg_binary:
-        args = [ffmpeg_binary, '-loglevel', 'quiet', '-version']
-        try:
-            p = subprocess.run(args, stdout=subprocess.PIPE, universal_newlines=True)
-            if p.returncode == 0:
-                first_line = p.stdout.splitlines()[0]
-                m = re.match(r'ffmpeg version (\d+)\.(\d+)', first_line)
-                if m:
-                    ver = int(m.group(1)), int(m.group(2))
-        except FileNotFoundError:
-            raise FfmpegNotFoundError()
-
-    return ver

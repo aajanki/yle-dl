@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -15,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-from yledl import IOContext, RD_SUCCESS
+from yledl import RD_SUCCESS
 from yledl.backends import DASHHLSBackend, WgetBackend
+from utils import MockIOContext
 
 
 tv1_url = 'https://yletv-lh.akamaihd.net/i/yletv1hls_1@103188/master.m3u8'
-io = IOContext(destdir='/tmp/')
+io = MockIOContext(destdir='/tmp/')
 
 
 class MockHLSBackend(DASHHLSBackend):

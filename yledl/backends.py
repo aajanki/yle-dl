@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import shlex
 import subprocess
 from .errors import ExternalApplicationNotFoundError, TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
-from .ffmpeg import ffmpeg_version
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
@@ -479,7 +478,7 @@ class DASHHLSBackend(ExternalDownloader):
         ) or io.preferred_format in ('mp4', '.mp4')
 
     def _optional_stream(self, stream_spec: str, io) -> str:
-        sep = ':' if ffmpeg_version(io.ffmpeg_binary) >= (7, 1) else ''
+        sep = ':' if io.ffmpeg_version() >= (7, 1) else ''
         return f'{stream_spec}{sep}?'
 
     def full_stream_already_downloaded(self, filename, clip, io):

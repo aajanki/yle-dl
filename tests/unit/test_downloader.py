@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from unittest.mock import Mock
-from utils import FixedOffset
-from yledl import StreamFilters, IOContext, RD_SUCCESS, RD_FAILED
+from utils import FixedOffset, MockIOContext
+from yledl import StreamFilters, RD_SUCCESS, RD_FAILED
 from yledl.backends import BaseDownloader, FailingBackend
 from yledl.downloader import YleDlDownloader
 from yledl.errors import TransientDownloadError
@@ -221,14 +221,14 @@ def create_clip(flavors, title='Test clip: S01E01-2018-07-01T00:00'):
 
 @dataclass(frozen=True)
 class DownloaderParametersFixture:
-    io: IOContext
+    io: MockIOContext
     filters: StreamFilters
 
 
 @pytest.fixture
 def simple():
     return DownloaderParametersFixture(
-        io=IOContext(destdir='/tmp/'), filters=StreamFilters()
+        io=MockIOContext(destdir='/tmp/'), filters=StreamFilters()
     )
 
 

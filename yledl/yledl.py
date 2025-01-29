@@ -36,7 +36,6 @@ from .backends import Backends
 from .downloader import YleDlDownloader
 from .errors import FfmpegNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
-from .ffmpeg import ffmpeg_version
 from .geolocation import AreenaGeoLocation
 from .http import HttpClient
 from .io import IOContext, DownloadLimits, random_elisa_ipv4, get_filesystem_type
@@ -531,7 +530,7 @@ def start_position_from_url(url):
 
 def warn_on_obsolete_ffmpeg(backends, io):
     if 'ffmpeg' in backends:
-        version = ffmpeg_version(io.ffmpeg_binary)
+        version = io.ffmpeg_version()
         if version > (0, 0):
             version_string = '{}.{}'.format(*version)
             logger.debug(f'Detected ffmpeg {version_string}')

@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -19,9 +19,12 @@ import ipaddress
 import logging
 import os
 import random
+import re
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
+from .errors import FfmpegNotFoundError
 from .ffmpeg import Ffprobe
 from .utils import sane_filename
 
@@ -69,12 +72,47 @@ class IOContext:
     wget_binary: str = 'wget'
     create_dirs: bool = False
     xattr: bool = False
+    __cached_ffmpeg_version: Optional[Tuple[int, int]] = None
 
     def ffprobe(self):
         if self.ffprobe_binary is None:
             return None
 
         return Ffprobe(self.ffprobe_binary, self.ffmpeg_binary, self.x_forwarded_for)
+
+    def ffmpeg_version(self) -> Tuple[int, int]:
+        """Get the ffmpeg application version.
+
+        The parameter ffmpeg_binary is the path to the ffmpeg executable.
+
+        Returns the version as a two-tuple (major, minor). If parsing the version
+        number in the ffmpeg output fails, returns an all-zero version (0, 0).
+
+        The return value is memoized, and the same value is returned on
+         subsequent calls.
+
+        Throws FfmpegNotFoundError, if ffmpeg application is not found.
+        """
+        if self.__cached_ffmpeg_version:
+            return self.__cached_ffmpeg_version
+
+        ver = 0, 0
+        if self.ffmpeg_binary:
+            args = [self.ffmpeg_binary, '-loglevel', 'quiet', '-version']
+            try:
+                p = subprocess.run(
+                    args, stdout=subprocess.PIPE, universal_newlines=True
+                )
+                if p.returncode == 0:
+                    first_line = p.stdout.splitlines()[0]
+                    m = re.match(r'ffmpeg version (\d+)\.(\d+)', first_line)
+                    if m:
+                        ver = int(m.group(1)), int(m.group(2))
+            except FileNotFoundError:
+                raise FfmpegNotFoundError()
+
+        self.__cached_ffmpeg_version = ver
+        return ver
 
 
 class OutputFileNameGenerator:
