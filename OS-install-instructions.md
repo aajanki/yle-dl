@@ -16,12 +16,12 @@ pipx install yle-dl
 # installed version first:
 sudo pip uninstall yle-dl
 
-sudo apt install git wget ffmpeg python3-pip python3-pytest
+sudo apt install git wget ffmpeg python3-pip
 git clone https://github.com/aajanki/yle-dl.git
 cd yle-dl
 python3 -m venv venv
 source venv/bin/activate
-pip3 install .
+pip3 install .[test]
 
 # Note that you need to always activate the virtual environment before running yle-dl
 source yle-dl/venv/bin/activate
