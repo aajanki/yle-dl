@@ -572,8 +572,6 @@ class WgetBackend(ExternalDownloader):
             args.append('--quiet')
         elif logger.getEffectiveLevel() > logging.INFO:
             args.append('--no-verbose')
-        elif logger.getEffectiveLevel() <= logging.WARNING:
-            args.append('--show-progress')
         if io.resume:
             args.append('--continue')
         if io.download_limits.ratelimit:
