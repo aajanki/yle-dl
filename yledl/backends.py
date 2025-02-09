@@ -55,14 +55,6 @@ class MandatoryFileExtension:
         self.is_mandatory = True
 
 
-def shlex_join(elements):
-    try:
-        return shlex.join(elements)
-    except AttributeError:
-        # Python older than 3.8 does not have shlex.join
-        return ' '.join(elements)
-
-
 def exit_code_to_rd(exit_code):
     return RD_SUCCESS if exit_code == 0 else RD_FAILED
 
@@ -177,7 +169,7 @@ class Subprocess:
             return RD_SUCCESS
 
         logger.debug('Executing:')
-        shell_command_string = ' | '.join(shlex_join(args) for args in commands)
+        shell_command_string = ' | '.join(shlex.join(args) for args in commands)
         logger.debug(shell_command_string)
 
         env = self.combine_envs(extra_environment)
