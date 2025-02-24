@@ -522,6 +522,23 @@ def get_urls(args):
     return urls
 
 
+def expanduser(args):
+    if args.outputfile is not None:
+        args.outputfile = os.path.expanduser(args.outputfile)
+    if args.destdir is not None:
+        args.destdir = os.path.expanduser(args.destdir)
+    if args.postprocess is not None:
+        args.postprocess = os.path.expanduser(args.postprocess)
+    if args.ffmpeg is not None:
+        args.ffmpeg = os.path.expanduser(args.ffmpeg)
+    if args.ffprobe is not None:
+        args.ffprobe = os.path.expanduser(args.ffprobe)
+    if args.wget is not None:
+        args.wget = os.path.expanduser(args.wget)
+
+    return args
+
+
 def start_position_from_url(url):
     p = urlparse(url)
     seeks = parse_qs(p.query).get('seek')
@@ -563,6 +580,8 @@ def main(argv=sys.argv):
     config_files = getattr(parser, 'yledl_read_config_files', [])
     if config_files:
         logger.debug(f'Parsed config files: {", ".join(config_files)}')
+
+    args = expanduser(args)
 
     urls = get_urls(args)
     if not urls:
