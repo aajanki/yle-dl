@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-204 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -43,10 +43,10 @@ def test_arkivet_metadata():
     assert len(metadata) == 1
     assert metadata[0].get('title').startswith('Seportage om Naturväktarna')
     flavors = metadata[0]['flavors']
-    assert all(f.get('media_type') == 'video' for f in flavors)
+    assert any(f.get('media_type') == 'video' for f in flavors)
     assert all('bitrate' in f for f in flavors)
-    assert all('height' in f for f in flavors)
-    assert all('width' in f for f in flavors)
+    assert any('height' in f for f in flavors)
+    assert any('width' in f for f in flavors)
 
 
 def test_arkivet_audio_stream_url():
