@@ -7,6 +7,7 @@ Distributed under the GPL v3 or later
 - The wget backend is compatible with wget2
 - Replace initial ~ and ~user with user's home directory in --destdir and other
   path arguments
+- New command line argument: --version
 
 Version 20250126
 

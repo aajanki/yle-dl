@@ -227,7 +227,7 @@ def _add_resume_arguments(io_group):
 def _add_action_group_arguments(io_group):
     action_group = io_group.add_mutually_exclusive_group()
     action_group.add_argument(
-        '--showurl', action='store_true', help="Print URL, don't download"
+        '--showurl', action='store_true', help="Print stream URL, don't download"
     )
     action_group.add_argument(
         '--showtitle', action='store_true', help="Print stream title, don't download"
@@ -252,6 +252,9 @@ def _add_io_arguments(parser):
         type=str,
         help='Save stream to the named file',
     )
+
+    _add_action_group_arguments(io_group)
+
     io_group.add_argument(
         '--output-template',
         metavar='TEMPLATE',
@@ -302,9 +305,6 @@ def _add_io_arguments(parser):
         dest='create_dirs',
         help='Stop if an output directory does not exist',
     )
-
-    _add_action_group_arguments(io_group)
-
     io_group.add_argument(
         '--restrict-filename-no-spaces',
         action='store_true',
@@ -383,6 +383,9 @@ def _add_toplevel_arguments(parser):
         dest='verbosity',
         default=0,
         help='Increase output verbosity. -VV is really verbose.',
+    )
+    parser.add_argument(
+        '-v', '--version', action='version', version=f'yle-dl {__version__}'
     )
     parser.add_argument(
         '--debug',
