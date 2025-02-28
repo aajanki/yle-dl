@@ -5,7 +5,8 @@ readme = "README.md"
 authors = [
     {name = "Antti Ajanki", email = "antti.ajanki@iki.fi"}
 ]
-license = {text = "GPLv3+"}
+license = "GPL-3.0-or-later"
+license-files = ["COPYING"]
 dependencies = [
     "requests",
     "lxml",
@@ -16,7 +17,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -46,7 +46,7 @@ yle-dl = "yledl.yledl:main"
 [project.urls]
 Home = "https://aajanki.github.io/yle-dl/"
 Source = "https://github.com/aajanki/yle-dl/"
-changelog = "https://raw.githubusercontent.com/aajanki/yle-dl/master/ChangeLog"
+changelog = "https://github.com/aajanki/yle-dl/blob/master/ChangeLog"
 issues = "https://github.com/aajanki/yle-dl/issues"
 
 [tool.flit.module]
@@ -73,5 +73,5 @@ quote-style = "single"
 disable_error_code = "import-untyped"
 
 [build-system]
-requires = ["flit_core >=3.9,<4"]
+requires = ["flit_core >=3.11,<4"]
 build-backend = "flit_core.buildapi"
