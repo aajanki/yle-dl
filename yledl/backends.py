@@ -420,6 +420,8 @@ class DASHHLSBackend(ExternalDownloader):
             '2048',
             '-seekable',
             '0',  # needed for media ID 67-xxxx streams
+            '-allowed_extensions',
+            'ts,aac,vtt',
         ]
         if not (io.subtitles == 'none' or self.live) and self.experimental_subtitles:
             # Needed for decoding webvtt subtitles on HLS streams
