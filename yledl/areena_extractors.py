@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -181,3 +181,13 @@ class AreenaPreviewApiParser:
             if lang and url:
                 subtitles.append(Subtitle(url, lang, category))
         return subtitles
+
+    def thumbnail_url(self):
+        image_data = self.ongoing().get('image', {})
+        if 'id' not in image_data:
+            return None
+
+        version = image_data['version'] or 1624522786
+        image_id = image_data['id']
+
+        return f'https://images.cdn.yle.fi/image/upload/f_auto,c_limit,w_1080,q_auto/v{version}/{image_id}'

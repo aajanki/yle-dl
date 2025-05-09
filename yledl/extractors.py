@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -177,6 +177,7 @@ class AreenaExtractor(ClipExtractor):
                 subtitles=program_info.subtitles,
                 program_id=program_id,
                 origin_url=origin_url,
+                thumbnail=program_info.thumbnail,
             )
 
     def media_flavors(
@@ -361,6 +362,7 @@ class AreenaExtractor(ClipExtractor):
                 pageurl,
                 ffprobe,
             ),
+            thumbnail=preview.thumbnail_url(),
             subtitles=preview_subtitles,
             duration_seconds=preview.duration_seconds(),
             available_at_region=preview.available_at_region() or 'Finland',

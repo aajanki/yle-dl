@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ class Clip:
     subtitles: List = field(default_factory=list)
     program_id: Optional[str] = None
     origin_url: Optional[str] = None
+    thumbnail: Optional[str] = None
 
     def metadata(self, io):
         flavors_meta = sorted(
@@ -63,6 +64,7 @@ class Clip:
                     for x in self.subtitles
                 ],
             ),
+            ('thumbnail', self.thumbnail),
             ('region', self.region),
             ('publish_timestamp', self.format_timestamp(self.publish_timestamp)),
             ('expiration_timestamp', self.format_timestamp(self.expiration_timestamp)),

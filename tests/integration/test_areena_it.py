@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ def test_areena_html5_metadata():
     assert metadata[0]['publish_timestamp'] == '2021-04-01T00:01:00+03:00'
     assert 'expired_timestamp' not in metadata[0]
     assert len(metadata[0]['description']) > 150
+    assert metadata[0]['thumbnail'].startswith('https://images.cdn.yle.fi/')
 
 
 def test_metadata_language():
