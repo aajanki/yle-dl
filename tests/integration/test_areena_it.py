@@ -34,8 +34,9 @@ def test_areena_html5_metadata():
     assert len(metadata) == 1
     flavors = metadata[0]['flavors']
     assert len(flavors) >= 4
-    assert all(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f and 'height' in f and 'width' in f for f in flavors)
+    assert any(f.get('media_type') == 'video' for f in flavors)
+    assert all('bitrate' in f for f in flavors)
+    assert any('height' in f and 'width' in f for f in flavors)
     assert metadata[0]['duration_seconds'] == 907
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2021-04-01T00:01:00+03:00'

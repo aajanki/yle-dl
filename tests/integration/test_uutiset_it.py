@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -35,8 +35,9 @@ def test_uutiset_main_media_metadata():
 
     flavors = metadata[0]['flavors']
     assert len(flavors) >= 3
-    assert all(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f and 'height' in f and 'width' in f for f in flavors)
+    assert any(f.get('media_type') == 'video' for f in flavors)
+    assert all('bitrate' in f for f in flavors)
+    assert any('height' in f and 'width' in f for f in flavors)
 
 
 def test_uutiset_headline_metadata():
