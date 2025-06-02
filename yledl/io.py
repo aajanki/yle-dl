@@ -105,7 +105,7 @@ class IOContext:
                 )
                 if p.returncode == 0:
                     first_line = p.stdout.splitlines()[0]
-                    m = re.match(r'ffmpeg version (\d+)\.(\d+)', first_line)
+                    m = re.match(r'ffmpeg version n?(\d+)\.(\d+)', first_line)
                     if m:
                         ver = int(m.group(1)), int(m.group(2))
             except FileNotFoundError:
