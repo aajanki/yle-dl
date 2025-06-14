@@ -73,7 +73,7 @@ class BaseDownloader:
     def warn_on_unsupported_feature(self, io):
         if io.proxy and IOCapability.PROXY not in self.io_capabilities:
             logger.warning(
-                'Proxy not supported on this stream. ' 'Trying to continue anyway'
+                'Proxy not supported on this stream. Trying to continue anyway'
             )
 
         if (

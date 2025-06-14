@@ -576,7 +576,7 @@ def parse_playlist_from_yle_article(url, httpclient, latest_only):
         if id not in data_ids:
             data_ids.append(id)
 
-    logger.debug(f"Found Areena data IDs: {','.join(data_ids)}")
+    logger.debug(f'Found Areena data IDs: {",".join(data_ids)}')
 
     playlist = [id_to_areena_url(id) for id in data_ids]
     if latest_only:

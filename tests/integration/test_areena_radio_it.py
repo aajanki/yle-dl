@@ -58,8 +58,7 @@ def test_radio_live_url():
 @pytest.mark.geoblocked
 def test_radio_live_url2():
     url = fetch_stream_url(
-        'https://areena.yle.fi/podcastit/ohjelmat/57-3gO4bl7J6?'
-        '_c=yle-radio-suomi-oulu'
+        'https://areena.yle.fi/podcastit/ohjelmat/57-3gO4bl7J6?_c=yle-radio-suomi-oulu'
     )
 
     assert len(url) == 1
