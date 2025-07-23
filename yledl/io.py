@@ -89,7 +89,7 @@ class IOContext:
         number in the ffmpeg output fails, returns an all-zero version (0, 0).
 
         The return value is memoized, and the same value is returned on
-         subsequent calls.
+        subsequent calls.
 
         Throws FfmpegNotFoundError, if ffmpeg application is not found.
         """

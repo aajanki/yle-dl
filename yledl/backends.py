@@ -421,9 +421,12 @@ class DASHHLSBackend(ExternalDownloader):
             '-seekable',
             '0',  # needed for media ID 67-xxxx streams
         ]
-        if io.ffmpeg_version() >= (7, 0):
+        ffver = io.ffmpeg_version()
+        if ffver >= (7, 0) or ffver == (0, 0):
             # -allowed_extensions is required from 7.1.1 onwards for subtitles.
             # Some older versions support, but do no require, it.
+            # Enable -allowed_extensions if the ffmpeg version is detected as
+            # (0, 0) meaning that the detection failed.
             args.extend(
                 [
                     '-allowed_extensions',
