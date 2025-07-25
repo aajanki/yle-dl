@@ -4,7 +4,8 @@ Distributed under the GPL v3 or later
 
 <unreleased>
 
-- Try to fix subtitles when ffmpeg version is recognized
+- Fixed subtitle downloading on certain ffmpeg versions, at least on ffmpeg
+  4.3.9. Might break downloading on very old ffmpeg versions!
 
 Version 20250614
 

@@ -418,21 +418,17 @@ class DASHHLSBackend(ExternalDownloader):
             ffmpeg_loglevel(logger.getEffectiveLevel()),
             '-thread_queue_size',
             '2048',
+            # -seekable 0 is needed for media ID 67-xxxx streams
             '-seekable',
-            '0',  # needed for media ID 67-xxxx streams
+            '0',
+            # -allowed_extensions is required for subtitles starting from ffmpeg
+            # versions released since Feb 2025 (e.g. 4.3.9 and 7.1.1).
+            # Testing shows that this works also on at least on some older
+            # ffmpeg versions, but I haven't checked when -allowed_extensions
+            # was introduced.
+            '-allowed_extensions',
+            'ts,aac,vtt',
         ]
-        ffver = io.ffmpeg_version()
-        if ffver >= (7, 0) or ffver == (0, 0):
-            # -allowed_extensions is required from 7.1.1 onwards for subtitles.
-            # Some older versions support, but do no require, it.
-            # Enable -allowed_extensions if the ffmpeg version is detected as
-            # (0, 0) meaning that the detection failed.
-            args.extend(
-                [
-                    '-allowed_extensions',
-                    'ts,aac,vtt',
-                ]
-            )
         if not (io.subtitles == 'none' or self.live) and self.experimental_subtitles:
             # Needed for decoding webvtt subtitles on HLS streams
             #
