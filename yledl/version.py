@@ -15,4 +15,4 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-__version__ = '20250614'
+__version__ = '20250730'

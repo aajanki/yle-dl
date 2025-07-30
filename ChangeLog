@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2025 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20250730
 
 - Fixed subtitle downloading on certain ffmpeg versions, at least on ffmpeg
   4.3.9. Might break downloading on very old ffmpeg versions!
