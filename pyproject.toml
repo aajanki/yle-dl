@@ -39,6 +39,7 @@ extra = [
 
 [dependency-groups]
 test = ["pytest"]
+lint = ["ruff", "mypy"]
 
 [project.scripts]
 yle-dl = "yledl.yledl:main"

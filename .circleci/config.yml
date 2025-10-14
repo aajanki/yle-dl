@@ -7,11 +7,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install linters
-          command: pip install ruff mypy
-      - run:
           name: Install dependencies
-          command: pip install .[extra] --group test
+          command: pip install .[extra] --group test --group lint
       - run:
           name: mypy
           command: mypy yledl tests
