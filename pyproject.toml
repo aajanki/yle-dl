@@ -32,13 +32,13 @@ classifiers = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-test = [
-    "pytest",
-]
 extra = [
     "psutil",
     "xattr;sys_platform != \"win32\"",
 ]
+
+[dependency-groups]
+test = ["pytest"]
 
 [project.scripts]
 yle-dl = "yledl.yledl:main"

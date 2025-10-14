@@ -105,7 +105,7 @@ seuraavasti:
 ```sh
 python3 -m venv venv
 source venv/bin/activate
-pip install --editable .[test,extra]
+pip install --editable .[extra] --group test
 ```
 
 Asenna pre-commit-skriptit:

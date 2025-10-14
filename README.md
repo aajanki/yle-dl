@@ -173,7 +173,7 @@ Install yle-dl in editable mode in a virtual environment:
 ```
 python3 -m venv venv
 source venv/bin/activate
-pip install --editable .[test,extra]
+pip install --editable .[extra] --group test
 ```
 
 Install the pre-commit hooks for linting and type checking:
