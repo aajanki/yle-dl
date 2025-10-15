@@ -194,9 +194,10 @@ def test_areena_season_number_in_webpage():
     # These episode don't have the season number in their description but do
     # have it as part of the web page HTML
     expected_episodes = []
-    season = 1
     for episode in range(1, 7 + 1):
-        expected_episodes.append(f'S{season:02d}E{episode:02d}')
+        expected_episodes.append(f'S01E{episode:02d}')
+    for episode in range(1, 8 + 1):
+        expected_episodes.append(f'S02E{episode:02d}')
 
     titles = fetch_title('https://areena.yle.fi/1-50831169')
 
