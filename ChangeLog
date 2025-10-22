@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2025 Antti Ajanki
 Distributed under the GPL v3 or later
 
+<unreleased>
+
+- Add Python 3.14 as a supported version, drop Python 3.8
+
 Version 20250730
 
 - Fixed subtitle downloading on certain ffmpeg versions, at least on ffmpeg
