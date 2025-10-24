@@ -207,22 +207,7 @@ def get_filesystem_type(dir: str) -> str:
     parts = psutil.disk_partitions(all=True)
     parts = sorted(parts, key=lambda p: -len(p.mountpoint))
     for p in parts:
-        # TODO: replace this function call with
-        # Path(dir).is_relative_to(Path(p.mountpoint))
-        # when the support for Python 3.8 is dropped.
-        if a_is_relative_to_b(Path(dir), Path(p.mountpoint)):
+        if Path(dir).is_relative_to(Path(p.mountpoint)):
             return p.fstype
 
     return ''
-
-
-def a_is_relative_to_b(a: Path, b: Path) -> bool:
-    """Return whether a is relative to b.
-
-    Equivalent to a.is_relative_to(b) on Python 3.9 and later.
-    """
-    try:
-        a.relative_to(b)
-        return True
-    except ValueError:
-        return False
