@@ -20,6 +20,10 @@ from datetime import datetime
 from utils import fetch_title, fetch_stream_url, fetch_episode_pages, fetch_metadata
 from yledl import StreamFilters
 
+# A StreamFilters instance that disables stream probing.
+# Useful in test cases that don't need stream metadata.
+filters_backends_disabled = StreamFilters(enabled_backends=[])
+
 
 def test_areena_html5_stream_url():
     streamurl = fetch_stream_url('https://areena.yle.fi/1-787136')
@@ -46,11 +50,15 @@ def test_areena_html5_metadata():
 
 
 def test_metadata_language():
-    meta_fin = fetch_metadata('https://areena.yle.fi/1-403848', meta_language='fin')
+    meta_fin = fetch_metadata(
+        'https://areena.yle.fi/1-403848', filters_backends_disabled, 'fin'
+    )
     title_fin = meta_fin[0].get('title')
     assert title_fin.startswith('Suomen tie jatkosotaan')
 
-    meta_swe = fetch_metadata('https://areena.yle.fi/1-403848', meta_language='swe')
+    meta_swe = fetch_metadata(
+        'https://areena.yle.fi/1-403848', filters_backends_disabled, 'swe'
+    )
     title_swe = meta_swe[0].get('title')
     assert title_swe.startswith('Finlands väg till fortsättningskriget')
 
@@ -154,7 +162,9 @@ def test_areena_season_id():
 
 def test_areena_sort_by_season_episode():
     # These clips have season and episode numbers
-    metadata = fetch_metadata('https://areena.yle.fi/1-4530023')
+    metadata = fetch_metadata(
+        'https://areena.yle.fi/1-4530023', filters_backends_disabled
+    )
 
     # Should be sorted from oldest to newest
     timestamps = [x['publish_timestamp'] for x in metadata]
@@ -165,7 +175,9 @@ def test_areena_sort_by_season_episode():
 def test_areena_sort_by_timestamp():
     # Most of these clips have a timestamp (but not all do).
     # Most clips do not have an episode number (but some do).
-    metadata = fetch_metadata('https://areena.yle.fi/1-3830094')
+    metadata = fetch_metadata(
+        'https://areena.yle.fi/1-3830094', filters_backends_disabled
+    )
 
     # Should be sorted from oldest to newest
     timestamps = [x.get('publish_timestamp', '') for x in metadata]

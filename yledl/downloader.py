@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -151,19 +151,20 @@ class YleDlDownloader:
         clips = extractor.extract(base_url, latest_only)
         return (sane_filename(clip.title or '', io.excludechars) for clip in clips)
 
-    def get_metadata(self, base_url, io, latest_only):
+    def get_metadata(self, base_url, io, filters):
+        prober = self.create_prober(io, filters)
         extractor = self.extractor_factory(
             base_url,
             self.language_chooser(base_url, io),
             self.httpclient,
             self.title_formatter,
-            io.ffprobe(),
+            prober,
         )
         if not extractor:
             self.log_unsupported_url_error(base_url)
             return []
 
-        clips = extractor.extract(base_url, latest_only)
+        clips = extractor.extract(base_url, filters.latest_only)
         return list(clip.metadata(io) for clip in clips)
 
     def get_playlist(self, base_url, io):

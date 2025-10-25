@@ -372,7 +372,7 @@ def test_print_titles_replaces_whitespace(simple):
 
 def test_print_metadata(simple):
     dl = downloader({'a': successful_clip()})
-    metadata = dl.get_metadata('', simple.io, False)
+    metadata = dl.get_metadata('', simple.io, simple.filters)
 
     assert len(metadata) == 1
 
@@ -438,7 +438,7 @@ def test_print_metadata(simple):
 
 def test_print_metadata_incomplete(simple):
     dl = downloader({'a': incomplete_flavors_clip()})
-    metadata = dl.get_metadata('', simple.io, False)
+    metadata = dl.get_metadata('', simple.io, simple.filters)
 
     assert len(metadata) == 1
 
@@ -493,7 +493,7 @@ def test_download_failed_stream(simple):
 
 def test_print_metadata_failed_clip(simple):
     dl = downloader({'a': failed_clip()})
-    metadata = dl.get_metadata('', simple.io, False)
+    metadata = dl.get_metadata('', simple.io, simple.filters)
 
     assert metadata == [
         {
