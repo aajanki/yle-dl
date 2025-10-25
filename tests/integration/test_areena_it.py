@@ -163,7 +163,7 @@ def test_areena_season_id():
 def test_areena_sort_by_season_episode():
     # These clips have season and episode numbers
     metadata = fetch_metadata(
-        'https://areena.yle.fi/1-4530023', filters_backends_disabled
+        'https://areena.yle.fi/1-50802137', filters_backends_disabled
     )
 
     # Should be sorted from oldest to newest
