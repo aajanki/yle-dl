@@ -23,7 +23,7 @@ import re
 import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 from .errors import FfmpegNotFoundError
 from .ffmpeg import Ffprobe
 from .utils import sane_filename
@@ -72,7 +72,7 @@ class IOContext:
     wget_binary: str = 'wget'
     create_dirs: bool = False
     xattr: bool = False
-    __cached_ffmpeg_version: Optional[Tuple[int, int]] = None
+    __cached_ffmpeg_version: Optional[tuple[int, int]] = None
 
     def ffprobe(self):
         if self.ffprobe_binary is None:
@@ -80,7 +80,7 @@ class IOContext:
 
         return Ffprobe(self.ffprobe_binary, self.ffmpeg_binary, self.x_forwarded_for)
 
-    def ffmpeg_version(self) -> Tuple[int, int]:
+    def ffmpeg_version(self) -> tuple[int, int]:
         """Get the ffmpeg application version.
 
         The parameter ffmpeg_binary is the path to the ffmpeg executable.
@@ -100,9 +100,7 @@ class IOContext:
         if self.ffmpeg_binary:
             args = [self.ffmpeg_binary, '-loglevel', 'quiet', '-version']
             try:
-                p = subprocess.run(
-                    args, stdout=subprocess.PIPE, universal_newlines=True
-                )
+                p = subprocess.run(args, stdout=subprocess.PIPE, text=True)
                 if p.returncode == 0:
                     first_line = p.stdout.splitlines()[0]
                     m = re.match(r'ffmpeg version n?(\d+)\.(\d+)', first_line)

@@ -19,7 +19,6 @@ import sys
 import json
 from datetime import timedelta, tzinfo
 from io import BytesIO
-from typing import Tuple
 from yledl import execute_action, StreamFilters, IOContext, StreamAction, RD_SUCCESS
 from yledl.io import random_elisa_ipv4
 from yledl.http import HttpClient
@@ -55,7 +54,7 @@ class FixedOffset(tzinfo):
 
 
 class MockIOContext(IOContext):
-    def ffmpeg_version(self) -> Tuple[int, int]:
+    def ffmpeg_version(self) -> tuple[int, int]:
         print('Mock ffmpeg_version called!')
         return 7, 1
 

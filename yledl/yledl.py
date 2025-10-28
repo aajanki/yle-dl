@@ -50,7 +50,7 @@ class PlainInfoFormatter(logging.Formatter):
         if record.levelno == logging.INFO:
             return record.getMessage()
         else:
-            return super(PlainInfoFormatter, self).format(record)
+            return super().format(record)
 
 
 def yledl_logger():

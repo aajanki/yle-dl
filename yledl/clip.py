@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 
 from dataclasses import dataclass, field
@@ -38,7 +38,7 @@ class Clip:
     region: str = 'Finland'
     publish_timestamp: Optional[datetime] = None
     expiration_timestamp: Optional[datetime] = None
-    subtitles: List = field(default_factory=list)
+    subtitles: list = field(default_factory=list)
     program_id: Optional[str] = None
     origin_url: Optional[str] = None
     thumbnail: Optional[str] = None

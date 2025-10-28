@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Optional
 from .backends import Backends
 
 
@@ -33,4 +33,4 @@ class StreamFilters:
     latest_only: bool = False
     maxbitrate: Optional[int] = None
     maxheight: Optional[int] = None
-    enabled_backends: List[str] = field(default_factory=default_backends)
+    enabled_backends: list[str] = field(default_factory=default_backends)

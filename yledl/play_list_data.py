@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -15,8 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Dict, List
-
 from dataclasses import dataclass
 from .http import update_url_query
 
@@ -28,7 +26,7 @@ class PlaylistData:
     # List of query parameters. Each item is a dictionary of query
     # parameters for one season. If empty, a playlist is downloaded
     # from the plain base_url.
-    season_parameters: List[Dict]
+    season_parameters: list[dict]
 
     def season_playlist_urls(self):
         if self.season_parameters:

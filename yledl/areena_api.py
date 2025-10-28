@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import List, Optional
+from typing import Optional
 from datetime import datetime
 
 from dataclasses import dataclass
@@ -29,9 +29,9 @@ class AreenaApiProgramInfo:
     title: str
     episode_title: str
     description: Optional[str]
-    flavors: List[StreamFlavor]
+    flavors: list[StreamFlavor]
     thumbnail: Optional[str]
-    subtitles: List[Subtitle]
+    subtitles: list[Subtitle]
     duration_seconds: Optional[int]
     available_at_region: str
     publish_timestamp: Optional[datetime]

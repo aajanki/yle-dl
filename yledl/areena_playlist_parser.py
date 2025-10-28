@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2025 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 from datetime import datetime
 import json
 import re
-from typing import List
-
 import logging
 from .areena_api import EpisodeMetadata
 from .http import update_url_query
@@ -335,7 +333,7 @@ class AreenaPlaylistParser:
 
         return None
 
-    def _label_by_type(self, labels: dict, type_name: str, key_name: str) -> List[str]:
+    def _label_by_type(self, labels: dict, type_name: str, key_name: str) -> list[str]:
         """Return a key value of an Areena API label object which as the given type."""
         matches = [x for x in labels if x.get('type') == type_name]
         return [x[key_name] for x in matches if key_name in x]
