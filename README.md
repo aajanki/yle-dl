@@ -71,7 +71,7 @@ yle-dl options:
 
 * `--showmetadata`    Print stream [metadata as JSON](docs/metadata.md)
 
-* `--vfat`            Create Windows-compatible filenames
+* `--restrict-filename-no-specials`  Create Windows-compatible filenames
 
 * `--sublang lang`    Disable subtitles if lang is "none"
 

@@ -112,7 +112,7 @@ pip install --user --upgrade yle-dl
 Usage:
 
 ```
-yle-dl --vfat https://areena.yle.fi/...
+yle-dl --restrict-filename-no-specials https://areena.yle.fi/...
 ```
 
 

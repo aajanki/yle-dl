@@ -59,7 +59,7 @@ Valitsimet:
 * `--showurl`       Tulostaa videon URL, ei lataa tiedostoa
 * `--showtitle`     Tulostaa ohjelman nimen, ei lataa tiedostoa
 * `--showmetadata`  Tulostaa metatietoja ohjelmasta. Katso docs/metadata.md
-* `--vfat`          Tuota Windows-yhteensopivia tiedoston nimiä
+* `--restrict-filename-no-specials`  Tuota Windows-yhteensopivia tiedoston nimiä
 * `--sublang lan`   Jätä tekstitykset lataamatta, jos lang on "none"
 * `--resolution r`  Rajoita ladattavan striimin pystyresoluutiota
 * `--maxbitrate br` Rajoita ladattavan striimin bittinopeutta (kB/s)
