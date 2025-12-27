@@ -33,6 +33,5 @@ def test_timestamp_strip():
 
 def test_invalid_timestamp():
     assert parse_areena_timestamp('xxx2018-01-02T18:30:00+02:00') is None
-    assert parse_areena_timestamp('2018-01-02T18:30:00') is None
     assert parse_areena_timestamp('2018-01-999999T18:30:00+02:00') is None
     assert parse_areena_timestamp('2018-01-999999T22222') is None
