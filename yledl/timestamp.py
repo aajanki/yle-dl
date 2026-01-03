@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 logger = logging.getLogger('yledl')
@@ -32,6 +32,12 @@ def parse_areena_timestamp(timestamp):
     )
     if parsed is None:
         logger.warning(f'Failed to parse timestamp: {timestamp}')
+
+    if parsed is not None and parsed.tzinfo is None:
+        # Python 3.15 might return a naive datetime if the input does not
+        # contain a timezone specifier. Let's convert it to an aware datetime
+        # by assuming UTC.
+        parsed = parsed.replace(tzinfo=timezone.utc)
 
     return parsed
 
