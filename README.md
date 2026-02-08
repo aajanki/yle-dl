@@ -239,6 +239,19 @@ At least messages similar to the following are safe to ignore:
 - Dropping 114 duplicated subtitle events
 - Unsupported codec with id 98313 for input stream 5
 
+#### Problem: On macOS, downloads fail with "Unable to negotiate TLS/SSL session" or "Bad file descriptor"
+
+Homebrew's standard `ffmpeg` uses macOS SecureTransport for TLS, which is
+incompatible with Yle's Akamai CDN. Install `ffmpeg-full` (which uses GnuTLS)
+instead:
+
+    brew install ffmpeg-full
+
+Then add to `~/.yledl.conf`:
+
+    ffmpeg=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg
+    ffprobe=/opt/homebrew/opt/ffmpeg-full/bin/ffprobe
+
 #### Problem: I installed yle-dl but get an error message "command not found" when I try to run it
 
 The installation location is not on shell's search path. Use the full path to run yle-dl: `~/.local/bin/yle-dl`
