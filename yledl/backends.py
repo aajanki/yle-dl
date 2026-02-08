@@ -448,7 +448,7 @@ class DASHHLSBackend(ExternalDownloader):
             self._duration_arg(io.download_limits)
             + self._map_video_and_audio_streams(io)
             + self._subtitle_args(io)
-            + ['-vcodec', 'copy', '-acodec', 'aac', '-dn', '-f', 'matroska', 'pipe:1']
+            + ['-vcodec', 'copy', '-acodec', 'copy', '-dn', '-f', 'matroska', 'pipe:1']
         )
 
     def output_args_file(self, clip, io, output_name):
