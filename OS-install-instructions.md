@@ -63,8 +63,20 @@ commands:
 ```
 brew install python
 brew install wget
-brew install ffmpeg
+brew install ffmpeg-full
 brew install yle-dl
+```
+
+Note: `ffmpeg-full` is required instead of `ffmpeg` because Homebrew's
+standard `ffmpeg` uses macOS SecureTransport for TLS, which is incompatible
+with Yle's Akamai CDN. `ffmpeg-full` uses GnuTLS which works correctly.
+
+After installing, add the following to `~/.yledl.conf` so that yle-dl
+uses the ffmpeg-full binaries:
+
+```
+ffmpeg=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg
+ffprobe=/opt/homebrew/opt/ffmpeg-full/bin/ffprobe
 ```
 
 
