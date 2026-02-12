@@ -51,7 +51,11 @@ class Ffprobe:
             url,
         ]
         try:
-            return json.loads(subprocess.check_output(args).decode('utf-8'))
+            return json.loads(
+                subprocess.check_output(args, timeout=20).decode('utf-8')
+            )
+        except subprocess.TimeoutExpired:
+            raise ValueError('Stream probing timed out')
         except subprocess.CalledProcessError as ex:
             raise ValueError(f'Stream probing failed with status {ex.returncode}')
         except FileNotFoundError:
@@ -72,10 +76,12 @@ class Ffprobe:
 
         try:
             decoding_result = (
-                subprocess.check_output(args, stderr=subprocess.STDOUT)
+                subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=180)
                 .decode('utf-8')
                 .rsplit('\r', 1)[-1]
             )
+        except subprocess.TimeoutExpired:
+            raise ValueError('Duration probing timed out')
         except subprocess.CalledProcessError as ex:
             raise ValueError(f'Stream probing failed with status {ex.returncode}')
         except UnicodeDecodeError:
