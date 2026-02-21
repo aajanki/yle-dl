@@ -444,6 +444,12 @@ class DASHHLSBackend(ExternalDownloader):
         return args
 
     def output_args_pipe(self, io):
+        # We don't use "-acodec copy" on pipe, because at least vlc fails to
+        # play it failing with "Error parsing AAC extradata, unable to
+        # determine samplerate."
+        #
+        # The reason seems to be that Areena HLS stream doesn't provide AAC
+        # extradata but re-transcoding AAC to AAC inserts it.
         return (
             self._duration_arg(io.download_limits)
             + self._map_video_and_audio_streams(io)
