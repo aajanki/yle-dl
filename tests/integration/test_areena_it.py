@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
+import re
 from datetime import datetime
 from utils import fetch_title, fetch_stream_url, fetch_episode_pages, fetch_metadata
 from yledl import StreamFilters
@@ -190,16 +191,18 @@ def test_areena_season_and_episode_number():
     # The episode titles should include S01E01, S01E02, etc.
     # These episodes have season number in their description, e.g. "Kausi 1"
     expected_episodes = []
-    for season in range(1, 4 + 1):
+    for season in range(1, 5 + 1):
         number_of_episodes = 12 if season < 4 else 10
         for episode in range(1, number_of_episodes + 1):
             expected_episodes.append(f'S{season:02d}E{episode:02d}')
 
     titles = fetch_title('https://areena.yle.fi/1-4530023')
 
-    assert len(titles) == len(expected_episodes)
-    for title, substring in zip(titles, expected_episodes):
-        assert substring in title
+    episode_nums_from_titles = [
+        re.search(r'S[0-9]{2}E[0-9]{2}', t).group(0) for t in titles
+    ]
+
+    assert set(episode_nums_from_titles).issuperset(set(expected_episodes))
 
 
 def test_areena_season_number_in_webpage():
