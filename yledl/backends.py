@@ -70,6 +70,7 @@ class BaseDownloader:
     def __init__(self):
         self.io_capabilities = frozenset()
         self.error_message = None
+        self.name = ''
 
     def is_valid(self):
         return True

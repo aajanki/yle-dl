@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -15,22 +15,20 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional
+from typing import Optional, Dict, Any, Iterable, Tuple, List
 from datetime import datetime
-
 from dataclasses import dataclass, field
-from .io import OutputFileNameGenerator
-
+from .http import HttpClient
+from .io import IOContext, OutputFileNameGenerator
 from .areena_playlist_parser import AreenaPlaylistParser
-from .streamflavor import failed_flavor
-
-## Clip
+from .streamflavor import failed_flavor, StreamFlavor
+from .subtitles import Subtitle
 
 
 @dataclass
 class Clip:
     webpage: str
-    flavors: list = field(default_factory=list)
+    flavors: List[StreamFlavor] = field(default_factory=list)
     title: str = ''
     episode_title: str = ''
     description: Optional[str] = None
@@ -38,12 +36,12 @@ class Clip:
     region: str = 'Finland'
     publish_timestamp: Optional[datetime] = None
     expiration_timestamp: Optional[datetime] = None
-    subtitles: list = field(default_factory=list)
+    subtitles: List[Subtitle] = field(default_factory=list)
     program_id: Optional[str] = None
     origin_url: Optional[str] = None
     thumbnail: Optional[str] = None
 
-    def metadata(self, io):
+    def metadata(self, io: IOContext) -> Dict[str, Any]:
         flavors_meta = sorted(
             (self.flavor_meta(f) for f in self.flavors),
             key=lambda x: x.get('bitrate', 0),
@@ -71,7 +69,9 @@ class Clip:
         ]
         return self.ignore_none_values(meta)
 
-    def meta_file_name(self, flavors, io):
+    def meta_file_name(
+        self, flavors: Iterable[StreamFlavor], io: IOContext
+    ) -> Optional[str]:
         flavors = sorted(flavors, key=lambda x: x.bitrate or 0)
         flavors = [fl for fl in flavors if any(s.is_valid() for s in fl.streams)]
         if flavors:
@@ -83,16 +83,16 @@ class Clip:
 
         return None
 
-    def format_timestamp(self, ts):
+    def format_timestamp(self, ts: Optional[datetime]) -> Optional[str]:
         return ts.isoformat() if ts else None
 
-    def flavor_meta(self, flavor):
+    def flavor_meta(self, flavor: StreamFlavor) -> Dict[str, Any]:
         if all(not s.is_valid() for s in flavor.streams):
             return self.error_flavor_meta(flavor)
         else:
             return self.valid_flavor_meta(flavor)
 
-    def valid_flavor_meta(self, flavor):
+    def valid_flavor_meta(self, flavor: StreamFlavor) -> Dict[str, Any]:
         backends = [s.name for s in flavor.streams if s.is_valid()]
 
         streams = flavor.streams
@@ -112,7 +112,7 @@ class Clip:
         ]
         return self.ignore_none_values(meta)
 
-    def error_flavor_meta(self, flavor):
+    def error_flavor_meta(self, flavor: StreamFlavor) -> Dict[str, Any]:
         error_messages = [
             s.error_message
             for s in flavor.streams
@@ -125,27 +125,27 @@ class Clip:
 
         return {'error': msg}
 
-    def ignore_none_values(self, li):
+    def ignore_none_values(self, li: Iterable[Tuple[str, Any]]) -> Dict[str, Any]:
         return {key: value for (key, value) in li if value is not None}
 
 
 class FailedClip(Clip):
-    def __init__(self, webpage, error_message, **kwargs):
+    def __init__(self, webpage: str, error_message: str, **kwargs):
         super().__init__(
             webpage=webpage, flavors=[failed_flavor(error_message)], **kwargs
         )
 
 
 class ClipExtractor:
-    def __init__(self, httpclient):
+    def __init__(self, httpclient: HttpClient):
         self.httpclient = httpclient
 
-    def extract(self, url, latest_only):
+    def extract(self, url: str, latest_only: bool):
         playlist = self.get_playlist(url, latest_only)
         return (self.extract_clip(clipurl, url) for clipurl in playlist)
 
-    def get_playlist(self, url, latest_only=False):
+    def get_playlist(self, url: str, latest_only: bool = False):
         return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
 
-    def extract_clip(self, url, origin_url):
+    def extract_clip(self, url: str, origin_url: str):
         raise NotImplementedError('extract_clip must be overridden')

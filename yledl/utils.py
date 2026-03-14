@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 import logging
 import re
 import sys
+from typing import Literal
 
 
 def print_enc(msg, out=None, linefeed_and_flush=True):
@@ -40,13 +41,13 @@ def print_enc(msg, out=None, linefeed_and_flush=True):
         bytes_out.flush()
 
 
-def sane_filename(name, excludechars):
+def sane_filename(name: str, excludechars: str) -> str:
     tr = {ord(c): ord('_') for c in excludechars}
     x = re.sub(r'\s+', ' ', name, flags=re.UNICODE).strip(' .').translate(tr)
     return x or 'ylevideo'
 
 
-def ffmpeg_loglevel(py_loglevel):
+def ffmpeg_loglevel(py_loglevel: int) -> Literal['info', 'warning', 'error', 'fatal']:
     """Convert a Python log level to the corresponding ffmpeg log level."""
     if py_loglevel >= logging.CRITICAL:
         return 'fatal'

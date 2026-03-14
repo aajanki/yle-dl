@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -33,5 +33,5 @@ class TransientDownloadError(Exception):
     situation.
     """
 
-    def __init__(self, message):
+    def __init__(self, message: str):
         self.message = message

@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -20,10 +20,9 @@ import logging
 import os
 import re
 from dataclasses import asdict
-from .errors import TransientDownloadError
+from .errors import ExternalApplicationNotFoundError, TransientDownloadError
 from .utils import sane_filename
 from .backends import Subprocess
-from .errors import ExternalApplicationNotFoundError
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory
 from .localization import TranslationChooser
@@ -503,7 +502,7 @@ def sortkey_max_resolution_max_bitrate(backend_preference):
         backend_score = max(
             backend_preference.get(stream.name, -1) for stream in x.streams
         )
-        return (x.height or 0, backend_score, x.bitrate or 0)
+        return x.height or 0, backend_score, x.bitrate or 0
 
     return sortkey
 
@@ -513,7 +512,7 @@ def sortkey_max_resolution_min_bitrate(backend_preference):
         backend_score = max(
             backend_preference.get(stream.name, -1) for stream in x.streams
         )
-        return (x.height or 0, backend_score, -(x.bitrate or 0))
+        return x.height or 0, backend_score, -(x.bitrate or 0)
 
     return sortkey
 
