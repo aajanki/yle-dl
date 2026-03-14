@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@ import lxml.etree
 import re
 import requests
 import sys
+from typing import Mapping, Optional, Any
 from requests.adapters import HTTPAdapter
+from requests.structures import CaseInsensitiveDict
 from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
 from .version import __version__
 
@@ -32,7 +34,7 @@ class HttpClient:
     def __init__(self, io):
         self._session = self._create_session(io.proxy)
 
-    def _create_session(self, proxy):
+    def _create_session(self, proxy: str) -> requests.Session:
         session = requests.Session()
         session.timeout = 20
 
@@ -52,19 +54,25 @@ class HttpClient:
 
         return session
 
-    def download_page(self, url, extra_headers=None):
+    def download_page(
+        self, url: str, extra_headers: Optional[Mapping[str, str]] = None, timeout=60
+    ) -> Optional[str]:
         """Returns contents of a URL."""
-        response = self.get(url, extra_headers)
+        response = self.get(url, extra_headers, timeout=timeout)
         return response.text if response else None
 
-    def download_json(self, url, extra_headers=None):
-        """Returns JSON from an URL."""
-        response = self.get(url, extra_headers)
+    def download_json(
+        self, url: str, extra_headers: Optional[Mapping[str, str]] = None, timeout=60
+    ):
+        """Returns JSON from a URL."""
+        response = self.get(url, extra_headers, timeout=timeout)
         return response.json()
 
-    def download_html_tree(self, url, extra_headers=None):
-        """Downloads a HTML document and returns it parsed as an lxml tree."""
-        response = self.get(url, extra_headers)
+    def download_html_tree(
+        self, url: str, extra_headers: Optional[Mapping[str, str]] = None, timeout=60
+    ):
+        """Downloads an HTML document and returns it parsed as a lxml tree."""
+        response = self.get(url, extra_headers, timeout=timeout)
         metacharset = html_meta_charset(response.content)
         if metacharset:
             logger.debug(f'HTML meta charset: {metacharset}')
@@ -80,7 +88,7 @@ class HttpClient:
             logger.warning(f'HTML parsing error: {str(ex)}')
             return None
 
-    def download_to_file(self, url, destination_filename):
+    def download_to_file(self, url: str, destination_filename: str) -> None:
         enc = sys.getfilesystemencoding()
         encoded_filename = destination_filename.encode(enc, 'replace')
         logger.debug(f'HTTP GET {url}')
@@ -90,7 +98,9 @@ class HttpClient:
             for chunk in r.iter_content(chunk_size=4096):
                 output.write(chunk)
 
-    def get(self, url, extra_headers=None):
+    def get(
+        self, url: str, extra_headers: Optional[Mapping[str, str]] = None, timeout=60
+    ) -> requests.Response:
         if url.find('://') == -1:
             url = f'http://{url}'
         if '#' in url:
@@ -101,7 +111,7 @@ class HttpClient:
             headers.update(extra_headers)
 
         logger.debug(f'HTTP GET {url}')
-        r = self._session.get(url, headers=headers)
+        r = self._session.get(url, headers=headers, timeout=timeout)
         logger.debug(f'HTTP status code: {r.status_code}')
         logger.debug('HTTP response headers:')
         for name, value in r.headers.items():
@@ -110,13 +120,19 @@ class HttpClient:
 
         return r
 
-    def post(self, url, json_data, extra_headers=None):
+    def post(
+        self,
+        url: str,
+        json_data: Mapping[str, Any],
+        extra_headers: Optional[Mapping[str, str]] = None,
+        timeout=60,
+    ) -> requests.Response:
         headers = yledl_headers()
         if extra_headers:
             headers.update(extra_headers)
 
         logger.debug(f'HTTP POST {url}')
-        r = self._session.post(url, json=json_data, headers=headers)
+        r = self._session.post(url, json=json_data, headers=headers, timeout=timeout)
         logger.debug(f'HTTP status code: {r.status_code}')
         logger.debug('HTTP response headers:')
         for name, value in r.headers.items():
@@ -126,18 +142,18 @@ class HttpClient:
         return r
 
 
-def yledl_headers():
+def yledl_headers() -> CaseInsensitiveDict[str]:
     headers = requests.utils.default_headers()
     headers.update({'User-Agent': yledl_user_agent()})
     return headers
 
 
-def yledl_user_agent():
+def yledl_user_agent() -> str:
     major = __version__.split(' ')[0]
     return f'yle-dl/{major}'
 
 
-def html_meta_charset(html_bytes):
+def html_meta_charset(html_bytes: bytes) -> Optional[str]:
     metacharset = re.search(rb'<meta [^>]*?charset="(.*?)"', html_bytes)
     if metacharset:
         return metacharset.group(1).decode('ASCII')
@@ -145,15 +161,15 @@ def html_meta_charset(html_bytes):
         return None
 
 
-def update_url_query(url, new_query_parameters):
+def update_url_query(url: str, new_query_parameters: Mapping[str, str]):
     """Add the key-value pairs in new_query_parameters in the input URL query.
 
     Overwrite existing query parameters with the same name.
     """
     parsed = urlparse(url)
     params = parse_qs(parsed.query)
-    params = {k: v[0] for k, v in params.items()}
-    params.update(new_query_parameters)
-    q = urlencode(params)
+    params2 = {k: v[0] for k, v in params.items()}
+    params2.update(new_query_parameters)
+    q = urlencode(params2)
     parts = (parsed[0], parsed[1], parsed[2], '', q, '')
     return urlunparse(parts)
