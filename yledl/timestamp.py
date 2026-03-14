@@ -17,12 +17,12 @@
 
 import logging
 from datetime import datetime, timezone
-
+from typing import Optional
 
 logger = logging.getLogger('yledl')
 
 
-def parse_areena_timestamp(timestamp: str) -> datetime | None:
+def parse_areena_timestamp(timestamp: str) -> Optional[datetime]:
     if timestamp is None:
         return None
 
@@ -42,7 +42,7 @@ def parse_areena_timestamp(timestamp: str) -> datetime | None:
     return parsed
 
 
-def strptime_or_none(timestamp: str, format: str) -> datetime | None:
+def strptime_or_none(timestamp: str, format: str) -> Optional[datetime]:
     try:
         return datetime.strptime(timestamp, format)
     except ValueError:

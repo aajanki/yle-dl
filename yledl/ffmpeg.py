@@ -20,6 +20,7 @@ import logging
 import os.path
 import re
 import subprocess
+from typing import Optional
 from .errors import FfmpegNotFoundError
 from .utils import ffmpeg_loglevel
 
@@ -29,7 +30,7 @@ logger = logging.getLogger('yledl')
 
 class Ffprobe:
     def __init__(
-        self, ffprobe_binary: str, ffmpeg_binary: str, x_forwarded_for: str | None
+        self, ffprobe_binary: str, ffmpeg_binary: str, x_forwarded_for: Optional[str]
     ):
         self.ffprobe_binary = ffprobe_binary
         self.ffmpeg_binary = ffmpeg_binary
@@ -101,7 +102,7 @@ class Ffprobe:
         )
 
     def full_stream_already_downloaded(
-        self, filename: str, expected_duration: float | None
+        self, filename: str, expected_duration: Optional[float]
     ) -> bool:
         """Returns True if a stream file called "filename" exists and is complete.
 
@@ -147,6 +148,6 @@ class NullProbe:
         return 0
 
     def full_stream_already_downloaded(
-        self, _filename: str, _expected_duration: float | None
+        self, _filename: str, _expected_duration: Optional[float]
     ) -> bool:
         return False

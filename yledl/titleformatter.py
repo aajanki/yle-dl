@@ -17,14 +17,14 @@
 
 import re
 from datetime import datetime
-from typing import List, Mapping, Union
+from typing import List, Mapping, Union, Optional
 
 
 class TitleFormatter:
     def __init__(
         self,
         template: str = '${series_separator}${title}: ${episode_separator}${timestamp}',
-        placeholder: str | None = None,
+        placeholder: Optional[str] = None,
     ):
         self.template = template
         self.tokens = self._parse_template(template)
@@ -32,14 +32,14 @@ class TitleFormatter:
 
     def format(
         self,
-        title: str | None,
-        publish_timestamp: datetime | None = None,
-        series_title: str | None = None,
-        subheading: str | None = None,
-        season: int | None = None,
-        episode: int | None = None,
-        program_id: str | None = None,
-    ) -> str | None:
+        title: Optional[str],
+        publish_timestamp: Optional[datetime] = None,
+        series_title: Optional[str] = None,
+        subheading: Optional[str] = None,
+        season: Optional[int] = None,
+        episode: Optional[int] = None,
+        program_id: Optional[str] = None,
+    ) -> Optional[str]:
         if title is None:
             return None
 
@@ -105,7 +105,7 @@ class TitleFormatter:
 
         return res
 
-    def _substitute(self, values: Mapping[str, str | None]) -> str:
+    def _substitute(self, values: Mapping[str, Optional[str]]) -> str:
         res = []
         for token in self.tokens:
             subst = token.substitute(values)
@@ -115,7 +115,7 @@ class TitleFormatter:
         return ''.join(res).lstrip('/')
 
     def _main_title(
-        self, title: str, subheading: str | None, series_title: str | None
+        self, title: str, subheading: Optional[str], series_title: Optional[str]
     ) -> str:
         episode_title = self._remove_genre_prefix(
             self._remove_repeated_main_title(title)
@@ -167,19 +167,21 @@ class TitleFormatter:
                 return title[len(prefix) :].strip()
         return title
 
-    def _concatenate_if_not_empty(self, first: str | None, second: str) -> str | None:
+    def _concatenate_if_not_empty(
+        self, first: Optional[str], second: str
+    ) -> Optional[str]:
         if first:
             return first + second
         else:
             return first
 
-    def _season(self, season: int | None) -> str:
+    def _season(self, season: Optional[int]) -> str:
         if season:
             return f'Season {season:02d}'
         else:
             return ''
 
-    def _episode_number(self, season: int | None, episode: int | None) -> str:
+    def _episode_number(self, season: Optional[int], episode: Optional[int]) -> str:
         if season and episode:
             return f'S{season:02d}E{episode:02d}'
         elif episode:
@@ -187,7 +189,7 @@ class TitleFormatter:
         else:
             return ''
 
-    def _timestamp_string(self, publish_timestamp: datetime | None) -> str:
+    def _timestamp_string(self, publish_timestamp: Optional[datetime]) -> str:
         if publish_timestamp and hasattr(publish_timestamp, 'hour'):
             return datetime.strftime(publish_timestamp, '%Y-%m-%dT%H:%M')
         elif publish_timestamp:
@@ -195,7 +197,7 @@ class TitleFormatter:
         else:
             return ''
 
-    def _date_string(self, publish_timestamp: datetime | None) -> str:
+    def _date_string(self, publish_timestamp: Optional[datetime]) -> str:
         if publish_timestamp:
             return publish_timestamp.strftime('%Y-%m-%d')
         else:
@@ -209,7 +211,7 @@ class Substitution:
     def is_constant(self) -> bool:
         return False
 
-    def substitute(self, values: Mapping[str, str | None]) -> str:
+    def substitute(self, values: Mapping[str, Optional[str]]) -> str:
         key = self.variable_name[2:-1]
         val = values.get(key, self.variable_name)
         return val.replace('/', '_') if val else ''
@@ -222,5 +224,5 @@ class Literal:
     def is_constant(self) -> bool:
         return True
 
-    def substitute(self, _values: Mapping[str, str | None]) -> str:
+    def substitute(self, _values: Mapping[str, Optional[str]]) -> str:
         return self.text
