@@ -18,9 +18,7 @@
 from typing import Optional, Dict, Any, Iterable, Tuple, List
 from datetime import datetime
 from dataclasses import dataclass, field
-from .http import HttpClient
 from .io import IOContext, OutputFileNameGenerator
-from .areena_playlist_parser import AreenaPlaylistParser
 from .streamflavor import failed_flavor, StreamFlavor
 from .subtitles import Subtitle
 
@@ -134,18 +132,3 @@ class FailedClip(Clip):
         super().__init__(
             webpage=webpage, flavors=[failed_flavor(error_message)], **kwargs
         )
-
-
-class ClipExtractor:
-    def __init__(self, httpclient: HttpClient):
-        self.httpclient = httpclient
-
-    def extract(self, url: str, latest_only: bool):
-        playlist = self.get_playlist(url, latest_only)
-        return (self.extract_clip(clipurl, url) for clipurl in playlist)
-
-    def get_playlist(self, url: str, latest_only: bool = False):
-        return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
-
-    def extract_clip(self, url: str, origin_url: str):
-        raise NotImplementedError('extract_clip must be overridden')

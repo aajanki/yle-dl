@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -23,11 +23,12 @@ import re
 from requests import HTTPError
 from urllib.parse import urlparse, parse_qs
 
-
+from .areena_playlist_parser import AreenaPlaylistParser
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
-from .clip import Clip, ClipExtractor, FailedClip
+from .clip import Clip, FailedClip
 from .areena_api import AreenaApiProgramInfo
 from .areena_extractors import AreenaPreviewApiParser
+from .http import HttpClient
 from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, failed_flavor
 from .streamprobe import FullHDFlavorProber
@@ -93,6 +94,21 @@ class Flavors:
 
 
 ### Extract streams from an Areena webpage ###
+
+
+class ClipExtractor:
+    def __init__(self, httpclient: HttpClient):
+        self.httpclient = httpclient
+
+    def extract(self, url: str, latest_only: bool):
+        playlist = self.get_playlist(url, latest_only)
+        return (self.extract_clip(clipurl, url) for clipurl in playlist)
+
+    def get_playlist(self, url: str, latest_only: bool = False):
+        return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
+
+    def extract_clip(self, url: str, origin_url: str):
+        raise NotImplementedError('extract_clip must be overridden')
 
 
 class AreenaExtractor(ClipExtractor):
