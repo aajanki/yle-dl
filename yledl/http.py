@@ -161,7 +161,7 @@ def html_meta_charset(html_bytes: bytes) -> Optional[str]:
         return None
 
 
-def update_url_query(url: str, new_query_parameters: Mapping[str, str]):
+def update_url_query(url: str, new_query_parameters: Mapping[str, str]) -> str:
     """Add the key-value pairs in new_query_parameters in the input URL query.
 
     Overwrite existing query parameters with the same name.
@@ -171,5 +171,5 @@ def update_url_query(url: str, new_query_parameters: Mapping[str, str]):
     params2 = {k: v[0] for k, v in params.items()}
     params2.update(new_query_parameters)
     q = urlencode(params2)
-    parts = (parsed[0], parsed[1], parsed[2], '', q, '')
+    parts = (parsed.scheme, parsed.netloc, parsed.path, '', q, '')
     return urlunparse(parts)
