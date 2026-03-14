@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 logger = logging.getLogger('yledl')
 
 
-def parse_areena_timestamp(timestamp):
+def parse_areena_timestamp(timestamp: str) -> datetime | None:
     if timestamp is None:
         return None
 
@@ -42,14 +42,14 @@ def parse_areena_timestamp(timestamp):
     return parsed
 
 
-def strptime_or_none(timestamp, format):
+def strptime_or_none(timestamp: str, format: str) -> datetime | None:
     try:
         return datetime.strptime(timestamp, format)
     except ValueError:
         return None
 
 
-def format_finnish_short_weekday_and_date(d):
+def format_finnish_short_weekday_and_date(d: datetime) -> str:
     """Format a datetime object as Finnish weekday and date ("pe 9.9.2022")."""
     short_weekday_names = {
         '1': 'ma',

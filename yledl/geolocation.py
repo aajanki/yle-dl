@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -18,16 +18,17 @@
 import json
 import logging
 import requests
+from yledl.http import HttpClient
 
 
 logger = logging.getLogger('yledl')
 
 
 class AreenaGeoLocation:
-    def __init__(self, httpclient):
+    def __init__(self, httpclient: HttpClient):
         self.httpclient = httpclient
 
-    def located_in_finland(self, referrer):
+    def located_in_finland(self, referrer: str) -> bool:
         endpoint = (
             'https://locations.api.yle.fi/v3/address/current?'
             'app_id=areena-web-items&'

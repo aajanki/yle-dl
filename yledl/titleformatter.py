@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -17,13 +17,14 @@
 
 import re
 from datetime import datetime
+from typing import List, Mapping, Union
 
 
 class TitleFormatter:
     def __init__(
         self,
-        template='${series_separator}${title}: ${episode_separator}${timestamp}',
-        placeholder=None,
+        template: str = '${series_separator}${title}: ${episode_separator}${timestamp}',
+        placeholder: str | None = None,
     ):
         self.template = template
         self.tokens = self._parse_template(template)
@@ -31,14 +32,14 @@ class TitleFormatter:
 
     def format(
         self,
-        title,
-        publish_timestamp=None,
-        series_title=None,
-        subheading=None,
-        season=None,
-        episode=None,
-        program_id=None,
-    ):
+        title: str | None,
+        publish_timestamp: datetime | None = None,
+        series_title: str | None = None,
+        subheading: str | None = None,
+        season: int | None = None,
+        episode: int | None = None,
+        program_id: str | None = None,
+    ) -> str | None:
         if title is None:
             return None
 
@@ -83,8 +84,8 @@ class TitleFormatter:
             and '_separator' not in self.template
         )
 
-    def _parse_template(self, template):
-        res = []
+    def _parse_template(self, template: str) -> List[Union['Literal', 'Substitution']]:
+        res: List[Union['Literal', 'Substitution']] = []
 
         last_pos = 0
         for m in re.finditer(r'\$(:?{[a-zA-Z_]+?}|\$)', template):
@@ -104,7 +105,7 @@ class TitleFormatter:
 
         return res
 
-    def _substitute(self, values):
+    def _substitute(self, values: Mapping[str, str | None]) -> str:
         res = []
         for token in self.tokens:
             subst = token.substitute(values)
@@ -113,7 +114,9 @@ class TitleFormatter:
 
         return ''.join(res).lstrip('/')
 
-    def _main_title(self, title, subheading, series_title):
+    def _main_title(
+        self, title: str, subheading: str | None, series_title: str | None
+    ) -> str:
         episode_title = self._remove_genre_prefix(
             self._remove_repeated_main_title(title)
         )
@@ -134,12 +137,12 @@ class TitleFormatter:
         else:
             return episode_title
 
-    def _remove_age_limit(self, title):
+    def _remove_age_limit(self, title: str) -> str:
         """Strip (S) or (12) postfix from the title."""
         m = re.match(r'(.+?)\s+\(([A-Z]|[0-9]{1,2})\)$', title)
         return m.group(1) if m else title
 
-    def _remove_repeated_main_title(self, title):
+    def _remove_repeated_main_title(self, title: str) -> str:
         if ':' in title:
             prefix, rest = title.split(':', 1)
             if prefix in rest:
@@ -147,7 +150,7 @@ class TitleFormatter:
 
         return title
 
-    def _remove_genre_prefix(self, title):
+    def _remove_genre_prefix(self, title: str) -> str:
         genre_prefixes = [
             'Elokuva:',
             'Kino:',
@@ -164,19 +167,19 @@ class TitleFormatter:
                 return title[len(prefix) :].strip()
         return title
 
-    def _concatenate_if_not_empty(self, first, second):
+    def _concatenate_if_not_empty(self, first: str | None, second: str) -> str | None:
         if first:
             return first + second
         else:
             return first
 
-    def _season(self, season):
+    def _season(self, season: int | None) -> str:
         if season:
             return f'Season {season:02d}'
         else:
             return ''
 
-    def _episode_number(self, season, episode):
+    def _episode_number(self, season: int | None, episode: int | None) -> str:
         if season and episode:
             return f'S{season:02d}E{episode:02d}'
         elif episode:
@@ -184,7 +187,7 @@ class TitleFormatter:
         else:
             return ''
 
-    def _timestamp_string(self, publish_timestamp):
+    def _timestamp_string(self, publish_timestamp: datetime | None) -> str:
         if publish_timestamp and hasattr(publish_timestamp, 'hour'):
             return datetime.strftime(publish_timestamp, '%Y-%m-%dT%H:%M')
         elif publish_timestamp:
@@ -192,7 +195,7 @@ class TitleFormatter:
         else:
             return ''
 
-    def _date_string(self, publish_timestamp):
+    def _date_string(self, publish_timestamp: datetime | None) -> str:
         if publish_timestamp:
             return publish_timestamp.strftime('%Y-%m-%d')
         else:
@@ -200,24 +203,24 @@ class TitleFormatter:
 
 
 class Substitution:
-    def __init__(self, variable_name):
+    def __init__(self, variable_name: str):
         self.variable_name = variable_name
 
-    def is_constant(self):
+    def is_constant(self) -> bool:
         return False
 
-    def substitute(self, values):
+    def substitute(self, values: Mapping[str, str | None]) -> str:
         key = self.variable_name[2:-1]
         val = values.get(key, self.variable_name)
         return val.replace('/', '_') if val else ''
 
 
 class Literal:
-    def __init__(self, text):
+    def __init__(self, text: str):
         self.text = text
 
-    def is_constant(self):
+    def is_constant(self) -> bool:
         return True
 
-    def substitute(self, values):
+    def substitute(self, _values: Mapping[str, str | None]) -> str:
         return self.text
