@@ -3,7 +3,7 @@
 """
 yle-dl - download videos from Yle servers
 
-Copyright (C) 2010-2025 Antti Ajanki <antti.ajanki@iki.fi>
+Copyright (C) 2010-2026 Antti Ajanki <antti.ajanki@iki.fi>
 
 This script downloads video and audio streams from Yle Areena
 (https://areena.yle.fi) and Elävä Arkisto
@@ -187,7 +187,8 @@ def _add_quality_arguments(parser):
         '--startposition',
         metavar='S',
         type=int,
-        help='Start recording at S seconds from the start of the stream',
+        help='Start recording at S seconds from the start of the stream. On live streams, '
+        'use a negative value to start the recording from S seconds ago (capped at 4 hours).',
     )
     qual_group.add_argument(
         '--duration',
