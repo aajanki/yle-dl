@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -42,16 +42,20 @@ class IOCapability:
 
 
 class PreferredFileExtension:
-    def __init__(self, extension):
-        assert extension.startswith('.')
-        self.extension = extension
+    def __init__(self, extension: str):
+        if not extension:
+            raise ValueError('extension required')
+
+        self.extension = extension if extension.startswith('.') else '.' + extension
         self.is_mandatory = False
 
 
 class MandatoryFileExtension:
-    def __init__(self, extension):
-        assert extension.startswith('.')
-        self.extension = extension
+    def __init__(self, extension: str):
+        if not extension:
+            raise ValueError('extension required')
+
+        self.extension = extension if extension.startswith('.') else '.' + extension
         self.is_mandatory = True
 
 
@@ -200,7 +204,8 @@ class Subprocess:
 
     def start_process(self, commands, env):
         """Start all commands and setup pipes."""
-        assert commands
+        if not commands:
+            raise ValueError('command required')
 
         processes = []
         for i, args in enumerate(commands):
@@ -259,8 +264,7 @@ class DASHHLSBackend(ExternalDownloader):
         self.name = Backends.FFMPEG
 
     def file_extension(self, preferred):
-        ext = preferred if preferred.startswith('.') else '.' + preferred
-        return PreferredFileExtension(ext)
+        return PreferredFileExtension(preferred)
 
     def _duration_arg(self, download_limits):
         if download_limits.duration:
@@ -530,7 +534,7 @@ class WgetBackend(ExternalDownloader):
 
         if not file_extension:
             logger.warning(f'Mandatory file extension is missing for URL {url}')
-        self._file_extension = MandatoryFileExtension(file_extension or '')
+        self._file_extension = MandatoryFileExtension(file_extension)
         self.io_capabilities = frozenset(
             [IOCapability.RESUME, IOCapability.RATELIMIT, IOCapability.PROXY]
         )

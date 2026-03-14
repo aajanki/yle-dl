@@ -58,10 +58,17 @@ include = ["*.md", "COPYING", "ChangeLog", "setup.py", "yledl.conf.sample", "tes
 exclude = ["**/*~"]
 
 [tool.ruff.lint]
-select = ["E", "F"]
+select = ["E", "F", "S"]
 ignore = [
-    # Too many leading # before block comment
-    "E266"
+    "E266", # Too many leading # before block comment
+    "S311", # Cryptographically weak pseudo-random number generator
+    "S603", # subprocess call
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+    "S101", # Use of assert detected
+    "S108", # Probable insecure usage of temporary file or directory
 ]
 
 [tool.ruff.lint.pycodestyle]
