@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -51,9 +51,7 @@ class Ffprobe:
             url,
         ]
         try:
-            return json.loads(
-                subprocess.check_output(args, timeout=20).decode('utf-8')
-            )
+            return json.loads(subprocess.check_output(args, timeout=20).decode('utf-8'))
         except subprocess.TimeoutExpired:
             raise ValueError('Stream probing timed out')
         except subprocess.CalledProcessError as ex:
@@ -76,7 +74,7 @@ class Ffprobe:
 
         try:
             decoding_result = (
-                subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=180)
+                subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=600)
                 .decode('utf-8')
                 .rsplit('\r', 1)[-1]
             )

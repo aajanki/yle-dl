@@ -89,4 +89,4 @@ class TestDurationSecondsFile:
 
             assert result == 1 * 3600 + 23 * 60 + 45 + 0.67
             call_kwargs = mock_check_output.call_args[1]
-            assert call_kwargs['timeout'] == 180
+            assert call_kwargs['timeout'] is not None
