@@ -493,7 +493,9 @@ class DASHHLSBackend(ExternalDownloader):
 
     def full_stream_already_downloaded(self, filename, clip, io):
         ffprobe = io.ffprobe()
-        return ffprobe and ffprobe.full_stream_already_downloaded(filename, clip)
+        return ffprobe and ffprobe.full_stream_already_downloaded(
+            filename, clip.duration_seconds
+        )
 
 
 class HLSAudioBackend(DASHHLSBackend):
@@ -521,7 +523,9 @@ class HLSAudioBackend(DASHHLSBackend):
 
     def full_stream_already_downloaded(self, filename, clip, io):
         ffprobe = io.ffprobe()
-        return ffprobe and ffprobe.full_stream_already_downloaded(filename, clip)
+        return ffprobe and ffprobe.full_stream_already_downloaded(
+            filename, clip.duration_seconds
+        )
 
 
 ### Download a plain HTTP file ###

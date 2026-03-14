@@ -28,12 +28,14 @@ logger = logging.getLogger('yledl')
 
 
 class Ffprobe:
-    def __init__(self, ffprobe_binary, ffmpeg_binary, x_forwarded_for):
+    def __init__(
+        self, ffprobe_binary: str, ffmpeg_binary: str, x_forwarded_for: str | None
+    ):
         self.ffprobe_binary = ffprobe_binary
         self.ffmpeg_binary = ffmpeg_binary
         self.x_forwarded_for = x_forwarded_for
 
-    def show_programs_for_url(self, url):
+    def show_programs_for_url(self, url: str):
         args = [
             self.ffprobe_binary,
             '-loglevel',
@@ -59,7 +61,7 @@ class Ffprobe:
         except FileNotFoundError:
             raise FfmpegNotFoundError()
 
-    def duration_seconds_file(self, filename):
+    def duration_seconds_file(self, filename: str) -> float:
         args = [
             self.ffmpeg_binary,
             '-stats',
@@ -74,7 +76,7 @@ class Ffprobe:
 
         try:
             decoding_result = (
-                subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=600)
+                subprocess.check_output(args, stderr=subprocess.STDOUT, timeout=900)
                 .decode('utf-8')
                 .rsplit('\r', 1)[-1]
             )
@@ -98,7 +100,9 @@ class Ffprobe:
             + float(m.group(4)) / 100
         )
 
-    def full_stream_already_downloaded(self, filename, clip):
+    def full_stream_already_downloaded(
+        self, filename: str, expected_duration: float | None
+    ) -> bool:
         """Returns True if a stream file called "filename" exists and is complete.
 
         This calls ffprobe to analyze the file (or returns False if ffprobe is not
@@ -111,7 +115,6 @@ class Ffprobe:
             f'{filename} already exists.\nChecking if the stream is complete...'
         )
 
-        expected_duration = clip.duration_seconds
         if expected_duration is None or expected_duration <= 0:
             return False
 
@@ -137,11 +140,13 @@ class NullProbe:
     Faster than Ffprobe for cases where stream data is not needed.
     """
 
-    def show_programs_for_url(self, _url):
+    def show_programs_for_url(self, _url: str):
         return {}
 
-    def duration_seconds_file(self, _filename):
+    def duration_seconds_file(self, _filename: str) -> float:
         return 0
 
-    def full_stream_already_downloaded(self, _filename, _clip):
+    def full_stream_already_downloaded(
+        self, _filename: str, _expected_duration: float | None
+    ) -> bool:
         return False
