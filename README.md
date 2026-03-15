@@ -213,9 +213,8 @@ Bug reports and feature suggestions
 -----------------------------------
 
 If you encounter a bug or have an idea for a new feature, please post
-it to [Github issue
-tracker](https://github.com/aajanki/yle-dl/issues). You can write in
-English or in Finnish.
+it to the [GitHub issue tracker](https://github.com/aajanki/yle-dl/issues). You
+can write in English or in Finnish.
 
 Known problems
 --------------
@@ -251,6 +250,26 @@ Then add to `~/.yledl.conf`:
 
     ffmpeg=/opt/homebrew/opt/ffmpeg-full/bin/ffmpeg
     ffprobe=/opt/homebrew/opt/ffmpeg-full/bin/ffprobe
+
+
+#### Problem: On macOS, downloading fails due to SSL errors
+
+You probably have
+[urllib3 v2.x and an incompatible SSL library](https://github.com/urllib3/urllib3/issues/3020)
+installed.
+
+Install a more recent Python that has been built with OpenSSL 1.1.1 or more recent.
+
+Alternatively, downgrade your urllib3 to v1.x by running the following command
+in yle-dl's Python environment:
+
+```
+pip install urllib3<2
+```
+
+Sample errors that indicate this problem: "urllib3 v2.0 only supports OpenSSL 1.1.1+,
+currently the 'ssl' module is compiled with LibreSSL 2.8.3" or "ssl.SSLEOFError:
+[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:2426)"
 
 #### Problem: I installed yle-dl but get an error message "command not found" when I try to run it
 
