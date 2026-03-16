@@ -30,6 +30,8 @@ import json
 import logging
 import os
 import os.path
+from argparse import Namespace
+from typing import Iterable, List
 import configargparse
 from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
@@ -428,7 +430,14 @@ def encode_url_utf8(url):
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
-def execute_action(url, action, io, httpclient, title_formatter, stream_filters):
+def execute_action(
+    url: str,
+    action: int,
+    io: IOContext,
+    httpclient: HttpClient,
+    title_formatter: TitleFormatter,
+    stream_filters: StreamFilters,
+) -> int:
     """Parse a web page and download the enclosed stream.
 
     url is an Areena, Elävä Arkisto or Yle news web page.
@@ -465,7 +474,7 @@ def execute_action(url, action, io, httpclient, title_formatter, stream_filters)
         return RD_FAILED
 
 
-def print_lines(lines):
+def print_lines(lines: Iterable[str]) -> None:
     for line in lines:
         print_enc(line)
 
@@ -514,7 +523,7 @@ def set_log_level(args):
         logger.setLevel(5)
 
 
-def get_urls(args):
+def get_urls(args: Namespace) -> List[str]:
     urls = []
 
     if args.url:
@@ -526,7 +535,7 @@ def get_urls(args):
     return urls
 
 
-def expanduser(args):
+def expanduser(args: Namespace) -> Namespace:
     if args.outputfile is not None:
         args.outputfile = os.path.expanduser(args.outputfile)
     if args.destdir is not None:
@@ -634,7 +643,7 @@ def main(argv=sys.argv):
         xattr=args.xattrs,
     )
 
-    action = _set_sction(args)
+    action = _parse_action(args)
 
     if logger.isEnabledFor(logging.INFO) and action not in [
         StreamAction.PIPE,
@@ -673,7 +682,7 @@ def main(argv=sys.argv):
     return exit_status
 
 
-def _set_sction(args):
+def _parse_action(args: Namespace) -> int:
     if args.showurl:
         action = StreamAction.PRINT_STREAM_URL
     elif args.showepisodepage:
@@ -689,7 +698,15 @@ def _set_sction(args):
     return action
 
 
-def handle_urls(action, args, httpclient, io, stream_filters, title_formatter, urls):
+def handle_urls(
+    action: int,
+    args: Namespace,
+    httpclient: HttpClient,
+    io: IOContext,
+    stream_filters: StreamFilters,
+    title_formatter: TitleFormatter,
+    urls: List[str],
+) -> int:
     exit_status = RD_SUCCESS
 
     for i, url in enumerate(urls):
