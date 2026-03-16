@@ -38,7 +38,7 @@ class TestShowProgramsForUrl:
                 cmd='ffprobe', timeout=20
             )
 
-            with pytest.raises(ValueError, match='Stream probing timed out'):
+            with pytest.raises(subprocess.TimeoutExpired):
                 ffprobe.show_programs_for_url('https://example.com/master.m3u8')
 
     def test_successful_probe(self):
@@ -62,7 +62,7 @@ class TestShowProgramsForUrl:
                 returncode=1, cmd='ffprobe'
             )
 
-            with pytest.raises(ValueError, match='Stream probing failed'):
+            with pytest.raises(subprocess.CalledProcessError):
                 ffprobe.show_programs_for_url('https://example.com/master.m3u8')
 
 
@@ -75,7 +75,7 @@ class TestDurationSecondsFile:
                 cmd='ffmpeg', timeout=180
             )
 
-            with pytest.raises(ValueError, match='Duration probing timed out'):
+            with pytest.raises(subprocess.TimeoutExpired):
                 ffprobe.duration_seconds_file('/tmp/test.mkv')
 
     def test_successful_duration_probe(self):
