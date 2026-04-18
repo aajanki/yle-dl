@@ -224,14 +224,14 @@ def test_areena_season_number_in_webpage():
 def test_areena_latest_episode():
     # This series has seasons
     filters = StreamFilters(latest_only=True)
-    metadata = fetch_metadata('https://areena.yle.fi/1-4655342', filters)
+    metadata = fetch_metadata('https://areena.yle.fi/1-50738953', filters)
 
     assert len(metadata) == 1
 
     # The latest episode at the time of writing this test was
-    # published on 2021-01-27
+    # published on 2026-02-09
     publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
-    assert publish_date >= datetime(2021, 1, 27)
+    assert publish_date >= datetime(2026, 2, 9)
 
 
 def test_areena_latest_episode_no_seasons():
