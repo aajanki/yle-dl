@@ -75,6 +75,8 @@ yle-dl options:
 
 * `--sublang lang`    Disable subtitles if lang is "none"
 
+* `--subdelay ms`     Shift subtitle timing by ms milliseconds (positive = later, negative = earlier)
+
 * `--resolution res`  Maximum vertical resolution in pixels
 
 * `--maxbitrate br`   Maximum bitrate stream to download, integer in kB/s or "best" or "worst". Not all streams support limited bitrates.
