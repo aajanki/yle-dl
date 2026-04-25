@@ -495,12 +495,22 @@ class DASHHLSBackend(ExternalDownloader):
         args = [
             io.ffmpeg_binary,
             '-y',
-            '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
-            '-i', f'file:{filename}',
-            '-itsoffset', str(delay_s),
-            '-i', f'file:{filename}',
-            '-map', '0:v', '-map', '0:a', '-map', sub_spec,
-            '-c', 'copy',
+            '-loglevel',
+            ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-i',
+            f'file:{filename}',
+            '-itsoffset',
+            str(delay_s),
+            '-i',
+            f'file:{filename}',
+            '-map',
+            '0:v',
+            '-map',
+            '0:a',
+            '-map',
+            sub_spec,
+            '-c',
+            'copy',
             f'file:{tmp}',
         ]
         logger.debug(f'Applying subtitle delay: {shlex.join(args)}')
@@ -622,8 +632,16 @@ class WgetBackend(ExternalDownloader):
             return f'{h:02d}:{m:02d}:{s:02d},{ms:03d}'
 
         def shift(match):
-            start = (int(match.group(1)) * 3600 + int(match.group(2)) * 60 + int(match.group(3))) * 1000 + int(match.group(4))
-            end = (int(match.group(5)) * 3600 + int(match.group(6)) * 60 + int(match.group(7))) * 1000 + int(match.group(8))
+            start = (
+                int(match.group(1)) * 3600
+                + int(match.group(2)) * 60
+                + int(match.group(3))
+            ) * 1000 + int(match.group(4))
+            end = (
+                int(match.group(5)) * 3600
+                + int(match.group(6)) * 60
+                + int(match.group(7))
+            ) * 1000 + int(match.group(8))
             return f'{ms_to_srt(start + delay_ms)} --> {ms_to_srt(end + delay_ms)}'
 
         with open(filename, encoding='utf-8') as f:
