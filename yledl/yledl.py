@@ -206,6 +206,12 @@ def _add_quality_arguments(parser):
         help='Preferred video output format: mkv (default) or mp4. Applies only when '
         'downloading with ffmpeg',
     )
+    qual_group.add_argument(
+        '--subdelay',
+        metavar='MS',
+        type=int,
+        help='Shift subtitle timing by MS milliseconds (positive = later, negative = earlier)',
+    )
 
 
 def _add_resume_arguments(io_group):
@@ -641,6 +647,7 @@ def main(argv=sys.argv):
         wget_binary=args.wget or 'wget',
         create_dirs=args.create_dirs,
         xattr=args.xattrs,
+        subtitle_delay_ms=args.subdelay,
     )
 
     action = _parse_action(args)

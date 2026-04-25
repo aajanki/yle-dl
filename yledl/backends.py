@@ -21,6 +21,7 @@ import logging
 import os
 import os.path
 import platform
+import re
 import signal
 import shlex
 import subprocess
@@ -480,6 +481,37 @@ class DASHHLSBackend(ExternalDownloader):
             ]
         )
 
+    def save_stream(self, output_name, clip, io):
+        res = super().save_stream(output_name, clip, io)
+        if res == RD_SUCCESS and io.subtitle_delay_ms and output_name != '-':
+            self._apply_subtitle_delay_to_file(output_name, io)
+        return res
+
+    def _apply_subtitle_delay_to_file(self, filename, io):
+        delay_s = io.subtitle_delay_ms / 1000.0
+        sub_spec = f'1:s{":?" if io.ffmpeg_version() >= (7, 1) else "?"}'
+        base, ext = os.path.splitext(filename)
+        tmp = base + '.tmp_subdelay' + ext
+        args = [
+            io.ffmpeg_binary,
+            '-y',
+            '-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-i', f'file:{filename}',
+            '-itsoffset', str(delay_s),
+            '-i', f'file:{filename}',
+            '-map', '0:v', '-map', '0:a', '-map', sub_spec,
+            '-c', 'copy',
+            f'file:{tmp}',
+        ]
+        logger.debug(f'Applying subtitle delay: {shlex.join(args)}')
+        ret = subprocess.run(args).returncode
+        if ret == 0:
+            os.replace(tmp, filename)
+        else:
+            logger.warning('Failed to apply subtitle delay')
+            if os.path.exists(tmp):
+                os.remove(tmp)
+
     def stream_url(self):
         return self.url
 
@@ -505,6 +537,9 @@ class HLSAudioBackend(DASHHLSBackend):
 
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
+
+    def save_stream(self, output_name, clip, io):
+        return ExternalDownloader.save_stream(self, output_name, clip, io)
 
     def output_args_file(self, clip, io, output_name):
         return (
@@ -571,6 +606,30 @@ class WgetBackend(ExternalDownloader):
             basename = os.path.splitext(video_file_name)[0]
             destination_file = f'{basename}.srt'
             HttpClient(io).download_to_file(sub.url, destination_file)
+            if io.subtitle_delay_ms:
+                self._shift_srt_timestamps(destination_file, io.subtitle_delay_ms)
+
+    def _shift_srt_timestamps(self, filename, delay_ms):
+        time_re = re.compile(
+            r'(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})'
+        )
+
+        def ms_to_srt(ms):
+            ms = max(0, ms)
+            h, ms = divmod(ms, 3_600_000)
+            m, ms = divmod(ms, 60_000)
+            s, ms = divmod(ms, 1000)
+            return f'{h:02d}:{m:02d}:{s:02d},{ms:03d}'
+
+        def shift(match):
+            start = (int(match.group(1)) * 3600 + int(match.group(2)) * 60 + int(match.group(3))) * 1000 + int(match.group(4))
+            end = (int(match.group(5)) * 3600 + int(match.group(6)) * 60 + int(match.group(7))) * 1000 + int(match.group(8))
+            return f'{ms_to_srt(start + delay_ms)} --> {ms_to_srt(end + delay_ms)}'
+
+        with open(filename, encoding='utf-8') as f:
+            content = f.read()
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(time_re.sub(shift, content))
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io, output_name)

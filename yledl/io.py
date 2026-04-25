@@ -72,6 +72,7 @@ class IOContext:
     wget_binary: str = 'wget'
     create_dirs: bool = False
     xattr: bool = False
+    subtitle_delay_ms: Optional[int] = None
     __cached_ffmpeg_version: Optional[tuple[int, int]] = None
 
     def ffprobe(self):
