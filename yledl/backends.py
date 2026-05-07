@@ -136,6 +136,36 @@ class BaseDownloader:
 
 
 class ExternalDownloader(BaseDownloader):
+    def _shift_srt_timestamps(self, filename, delay_ms):
+        time_re = re.compile(
+            r'(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})'
+        )
+
+        def ms_to_srt(ms):
+            ms = max(0, ms)
+            h, ms = divmod(ms, 3_600_000)
+            m, ms = divmod(ms, 60_000)
+            s, ms = divmod(ms, 1000)
+            return f'{h:02d}:{m:02d}:{s:02d},{ms:03d}'
+
+        def shift(match):
+            start = (
+                int(match.group(1)) * 3600
+                + int(match.group(2)) * 60
+                + int(match.group(3))
+            ) * 1000 + int(match.group(4))
+            end = (
+                int(match.group(5)) * 3600
+                + int(match.group(6)) * 60
+                + int(match.group(7))
+            ) * 1000 + int(match.group(8))
+            return f'{ms_to_srt(start + delay_ms)} --> {ms_to_srt(end + delay_ms)}'
+
+        with open(filename, encoding='utf-8') as f:
+            content = f.read()
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(time_re.sub(shift, content))
+
     def save_stream(self, output_name, clip, io):
         self.warn_on_unsupported_resume(output_name, clip, io)
 
@@ -464,6 +494,15 @@ class DASHHLSBackend(ExternalDownloader):
         )
 
     def output_args_file(self, clip, io, output_name):
+        if io.subtitles_only:
+            short_code = two_letter_language_code(io.subtitles) or io.subtitles
+            return (
+                self._duration_arg(io.download_limits)
+                + ['-scodec', 'srt',
+                   '-map', self._optional_stream(f'0:s:m:language:{short_code}', io),
+                   '-map', self._optional_stream(f'0:s:m:language:{io.subtitles}', io)]
+                + ['-vn', '-an', f'file:{output_name}']
+            )
         return (
             self._duration_arg(io.download_limits)
             + self._metadata_args(clip, io)
@@ -484,7 +523,10 @@ class DASHHLSBackend(ExternalDownloader):
     def save_stream(self, output_name, clip, io):
         res = super().save_stream(output_name, clip, io)
         if res == RD_SUCCESS and io.subtitle_delay_ms and output_name != '-':
-            self._apply_subtitle_delay_to_file(output_name, io)
+            if io.subtitles_only:
+                self._shift_srt_timestamps(output_name, io.subtitle_delay_ms)
+            else:
+                self._apply_subtitle_delay_to_file(output_name, io)
         return res
 
     def _apply_subtitle_delay_to_file(self, filename, io):
@@ -535,6 +577,8 @@ class DASHHLSBackend(ExternalDownloader):
         return f'{stream_spec}{sep}?'
 
     def full_stream_already_downloaded(self, filename, clip, io):
+        if io.subtitles_only:
+            return False
         ffprobe = io.ffprobe()
         return ffprobe and ffprobe.full_stream_already_downloaded(
             filename, clip.duration_seconds
@@ -597,6 +641,9 @@ class WgetBackend(ExternalDownloader):
         if clip is not None:
             self.download_external_subtitles(clip.subtitles, output_name, io)
 
+        if io.subtitles_only:
+            return RD_SUCCESS
+
         res = super().save_stream(output_name, clip, io)
         if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
             logger.error('wget failed! Increase verbosity to see more details.')
@@ -618,36 +665,6 @@ class WgetBackend(ExternalDownloader):
             HttpClient(io).download_to_file(sub.url, destination_file)
             if io.subtitle_delay_ms:
                 self._shift_srt_timestamps(destination_file, io.subtitle_delay_ms)
-
-    def _shift_srt_timestamps(self, filename, delay_ms):
-        time_re = re.compile(
-            r'(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})'
-        )
-
-        def ms_to_srt(ms):
-            ms = max(0, ms)
-            h, ms = divmod(ms, 3_600_000)
-            m, ms = divmod(ms, 60_000)
-            s, ms = divmod(ms, 1000)
-            return f'{h:02d}:{m:02d}:{s:02d},{ms:03d}'
-
-        def shift(match):
-            start = (
-                int(match.group(1)) * 3600
-                + int(match.group(2)) * 60
-                + int(match.group(3))
-            ) * 1000 + int(match.group(4))
-            end = (
-                int(match.group(5)) * 3600
-                + int(match.group(6)) * 60
-                + int(match.group(7))
-            ) * 1000 + int(match.group(8))
-            return f'{ms_to_srt(start + delay_ms)} --> {ms_to_srt(end + delay_ms)}'
-
-        with open(filename, encoding='utf-8') as f:
-            content = f.read()
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(time_re.sub(shift, content))
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io, output_name)

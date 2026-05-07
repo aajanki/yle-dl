@@ -73,6 +73,7 @@ class IOContext:
     create_dirs: bool = False
     xattr: bool = False
     subtitle_delay_ms: Optional[int] = None
+    subtitles_only: bool = False
     __cached_ffmpeg_version: Optional[tuple[int, int]] = None
 
     def ffprobe(self):

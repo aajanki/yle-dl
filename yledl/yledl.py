@@ -212,6 +212,12 @@ def _add_quality_arguments(parser):
         type=int,
         help='Shift subtitle timing by MS milliseconds (positive = later, negative = earlier)',
     )
+    qual_group.add_argument(
+        '--subtitles-only',
+        action='store_true',
+        default=False,
+        help='Download only subtitle files, skip video and audio',
+    )
 
 
 def _add_resume_arguments(io_group):
@@ -625,6 +631,11 @@ def main(argv=sys.argv):
     dl_limits = DownloadLimits(args.startposition, args.duration, args.ratelimit)
     output_template, template_ext = os.path.splitext(args.output_template)
     preferformat = template_ext.strip('.') or args.preferformat
+    if args.subtitles_only:
+        if args.sublang not in ('fin', 'swe'):
+            logger.error('--subtitles-only requires --sublang fin or --sublang swe')
+            return RD_FAILED
+        preferformat = 'srt'
     title_formatter = TitleFormatter(output_template, args.output_na_placeholder)
     if args.xattrs and sys.platform in ['win32', 'cygwin']:
         logger.warning('--xattrs not supported on Windows')
@@ -648,6 +659,7 @@ def main(argv=sys.argv):
         create_dirs=args.create_dirs,
         xattr=args.xattrs,
         subtitle_delay_ms=args.subdelay,
+        subtitles_only=args.subtitles_only,
     )
 
     action = _parse_action(args)
