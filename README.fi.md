@@ -65,17 +65,13 @@ Valitsimet:
 * `--resolution r`  Rajoita ladattavan striimin pystyresoluutiota
 * `--maxbitrate br` Rajoita ladattavan striimin bittinopeutta (kB/s)
 * `--postprocess c` Suorita ohjelma c onnistuneen latauksen jälkeen. Ohjelmalle c annetaan parametriksi ladatun videotiedoston nimi ja mahdollisten tekstitystiedostojen nimet.
-* `--proxy uri`     Käytä HTTP(S)-proxyä. Esimerkki: --proxy localhost:8118
+* `--proxy uri`     Käytä proxyä. Esimerkkejä: `--proxy localhost:8118` `--proxy socks5h://localhost:1080`
 * `--destdir dir`   Aseta hakemisto mihin tiedostot tallennetaan
-* `--pipe`          Ohjaa striimi stdout:iin, esim. "yle-dl --pipe URL | vlc -"
+* `--pipe`          Ohjaa striimi stdout:iin, esim. `yle-dl --pipe URL | vlc -`
 * `-V`, `--verbose` Tulosta enemmän tietoja latauksen etenemisestä
 
 Luettelon mahdollisista valitsimista (englanniksi) näkee
 komentamalla `yle-dl --help`.
-
-Lataaminen SOCKS5-proxyn kautta on mahdollista käyttämällä
-tsocks-ohjelmaa.
-
 
 Asetustiedosto
 --------------
