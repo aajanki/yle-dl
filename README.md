@@ -83,7 +83,7 @@ yle-dl options:
 
 * `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded video file as the first parameter and subtitle files (if any) as the following parameters.
 
-* `--proxy uri`       HTTP(S) proxy to use. Example: `--proxy localhost:8118`
+* `--proxy uri`       Proxy to use. Examples: `--proxy localhost:8118`, `--proxy socks5h://localhost:1080`
 
 * `--destdir dir`     Save files to dir
 
@@ -92,8 +92,6 @@ yle-dl options:
 * `-V, --verbose`     Show verbose debug output
 
 Type `yle-dl --help` to see the full list of options.
-
-To download through a SOCKS5 proxy, use [tsocks](http://tsocks.sourceforge.net/) or a similar wrapper.
 
 Config file
 -----------

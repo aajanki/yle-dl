@@ -8,7 +8,7 @@ authors = [
 license = "GPL-3.0-or-later"
 license-files = ["COPYING"]
 dependencies = [
-    "requests",
+    "requests[socks]",
     "lxml",
     "ConfigArgParse >= 0.13.0",
 ]
