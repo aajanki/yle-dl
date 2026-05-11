@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -124,15 +124,25 @@ class AreenaPlaylistParser:
                 if playlist_data.get('title') not in ['Katso myös', 'Kuuntele myös']:
                     uri = playlist_data.get('source', {}).get('uri')
 
-                    series_parameters = {}
+                    series_parameters = []
                     filters = playlist_data.get('filters', [])
                     if filters:
                         options = filters[0].get('options', [])
-                        series_parameters = [x['parameters'] for x in options]
+                        parameters = [
+                            (x['parameters'], self._series_sort_key(x['title']))
+                            for x in options
+                        ]
+                        parameters = sorted(parameters, key=lambda x: x[1])
+                        series_parameters = [p[0] for p in parameters]
 
                     return PlaylistData(uri, series_parameters)
 
         return None
+
+    def _series_sort_key(self, title: str) -> str:
+        """Extract the season number from 'Kausi 1' and pad with zeroes"""
+        m = re.match(r'(?:Kausi|Säsong) (\d+)\b', title)
+        return m.group(1).zfill(5) if m else title
 
     def _parse_package_playlist(self, html_tree):
         package_tag = html_tree.xpath('//div[@class="package-view"]/@data-view')

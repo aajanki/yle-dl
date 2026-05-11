@@ -234,6 +234,19 @@ def test_areena_latest_episode():
     assert publish_date >= datetime(2026, 2, 9)
 
 
+def test_areena_latest_episode_svenska():
+    # This series has seasons
+    filters = StreamFilters(latest_only=True)
+    metadata = fetch_metadata('https://arenan.yle.fi/1-50738953', filters)
+
+    assert len(metadata) == 1
+
+    # The latest episode at the time of writing this test was
+    # published on 2026-02-09
+    publish_date = datetime.strptime(metadata[0]['publish_timestamp'][:10], '%Y-%m-%d')
+    assert publish_date >= datetime(2026, 2, 9)
+
+
 def test_areena_latest_episode_no_seasons():
     # This series has no seasons
     filters = StreamFilters(latest_only=True)

@@ -1,9 +1,12 @@
 yle-dl - download videos from Yle servers
-Copyright 2009-2025 Antti Ajanki
+Copyright 2009-2026 Antti Ajanki
 Distributed under the GPL v3 or later
 
 <unreleased>
 
+- Add --subdelay option to shift subtitle timing
+- Add timeouts on operations that previously could hang indefinitely
+- Fix --latestepisode
 - Add Python 3.14 as a supported version, drop Python 3.8
 
 Version 20250730
