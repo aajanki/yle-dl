@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
+from typing import Generator, Mapping
 from .http import update_url_query
 
 
@@ -23,12 +24,12 @@ from .http import update_url_query
 class PlaylistData:
     # The base URL from which to download a playlist
     base_url: str
-    # List of query parameters. Each item is a dictionary of query
-    # parameters for one season. If empty, a playlist is downloaded
-    # from the plain base_url.
-    season_parameters: list[dict]
+    # List of seasons in ascending order. Each element is a mapping of query
+    # parameters to be appended to base_url for that season.
+    # If empty, a playlist is downloaded from the plain base_url.
+    season_parameters: list[Mapping[str, str]]
 
-    def season_playlist_urls(self):
+    def season_playlist_urls(self) -> Generator[str]:
         if self.season_parameters:
             for season_query in self.season_parameters:
                 yield update_url_query(self.base_url, season_query)
