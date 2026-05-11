@@ -29,7 +29,7 @@ class PlaylistData:
     # If empty, a playlist is downloaded from the plain base_url.
     season_parameters: list[Mapping[str, str]]
 
-    def season_playlist_urls(self) -> Generator[str]:
+    def season_playlist_urls(self) -> Generator[str, None, None]:
         if self.season_parameters:
             for season_query in self.season_parameters:
                 yield update_url_query(self.base_url, season_query)
