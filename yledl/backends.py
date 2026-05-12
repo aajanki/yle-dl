@@ -498,9 +498,14 @@ class DASHHLSBackend(ExternalDownloader):
             short_code = two_letter_language_code(io.subtitles) or io.subtitles
             return (
                 self._duration_arg(io.download_limits)
-                + ['-scodec', 'srt',
-                   '-map', self._optional_stream(f'0:s:m:language:{short_code}', io),
-                   '-map', self._optional_stream(f'0:s:m:language:{io.subtitles}', io)]
+                + [
+                    '-scodec',
+                    'srt',
+                    '-map',
+                    self._optional_stream(f'0:s:m:language:{short_code}', io),
+                    '-map',
+                    self._optional_stream(f'0:s:m:language:{io.subtitles}', io),
+                ]
                 + ['-vn', '-an', f'file:{output_name}']
             )
         return (
