@@ -41,7 +41,7 @@ class HttpClient:
             session.proxies = {'http': proxy, 'https': proxy}
 
         try:
-            from requests.packages.urllib3.util.retry import Retry
+            from urllib3.util import Retry
 
             retry = Retry(
                 total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504]
@@ -49,7 +49,7 @@ class HttpClient:
             session.mount('http://', HTTPAdapter(max_retries=retry))
             session.mount('https://', HTTPAdapter(max_retries=retry))
         except ImportError:
-            logger.warning('Requests library is too old. Retrying not supported.')
+            logger.warning('Retrying not supported.')
 
         return session
 
