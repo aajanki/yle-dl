@@ -36,7 +36,6 @@ class HttpClient:
 
     def _create_session(self, proxy: str) -> requests.Session:
         session = requests.Session()
-        session.timeout = 20
 
         if proxy:
             session.proxies = {'http': proxy, 'https': proxy}
