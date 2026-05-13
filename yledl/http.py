@@ -25,6 +25,7 @@ from typing import Mapping, Optional, Any
 from requests.adapters import HTTPAdapter
 from requests.structures import CaseInsensitiveDict
 from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
+from urllib3.util import Retry
 from .version import __version__
 
 logger = logging.getLogger('yledl')
@@ -40,16 +41,11 @@ class HttpClient:
         if proxy:
             session.proxies = {'http': proxy, 'https': proxy}
 
-        try:
-            from urllib3.util import Retry
-
-            retry = Retry(
-                total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504]
-            )
-            session.mount('http://', HTTPAdapter(max_retries=retry))
-            session.mount('https://', HTTPAdapter(max_retries=retry))
-        except ImportError:
-            logger.warning('Retrying not supported.')
+        retry = Retry(
+            total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504]
+        )
+        session.mount('http://', HTTPAdapter(max_retries=retry))
+        session.mount('https://', HTTPAdapter(max_retries=retry))
 
         return session
 
