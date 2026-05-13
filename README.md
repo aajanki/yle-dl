@@ -229,6 +229,11 @@ Solution: Update your ffmpeg to version 4.1 or later.
 
 This is a known problem. Currently, there are no fixes.
 
+#### Problem: Some subtitle lines appear twice
+
+Solution: This is a bug in recent ffmpeg versions. Downgrade ffmpeg. For example,
+version 4.1 generates non-duplicated subtitles.
+
 #### Problem: I get warnings about unsupported subtitles and dropping subtitles
 
 Downloading always produces certain warnings messages that are harmless and can
