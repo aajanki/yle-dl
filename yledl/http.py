@@ -21,7 +21,7 @@ import lxml.etree
 import re
 import requests
 import sys
-from typing import Mapping, Optional, Any, MutableMapping
+from typing import Mapping, Optional, Any, Dict
 from requests.adapters import HTTPAdapter
 from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
 from urllib3.util import Retry
@@ -136,7 +136,7 @@ class HttpClient:
         return r
 
 
-def yledl_headers() -> MutableMapping[str, str]:
+def yledl_headers() -> Dict[str, str]:
     headers = requests.utils.default_headers()
     headers.update({'User-Agent': yledl_user_agent()})
     return headers
