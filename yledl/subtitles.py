@@ -35,6 +35,15 @@ class Subtitle:
 
 def delay_substitles_srt(filename: str, delay_ms: int):
     """Delay subtitle lines in an .srt file by delay_ms milliseconds."""
+    logger.debug(f'delaying subtitles by {delay_ms} ms')
+
+    with open(filename, encoding='utf-8') as f:
+        content = f.read()
+    with open(filename, 'w', encoding='utf-8') as f:
+        f.write(delay_substitles_srt_text(content, delay_ms))
+
+
+def delay_substitles_srt_text(text: str, delay_ms: int) -> str:
     time_re = re.compile(
         r'(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})'
     )
@@ -55,12 +64,7 @@ def delay_substitles_srt(filename: str, delay_ms: int):
         ) * 1000 + int(match.group(8))
         return f'{ms_to_srt(start + delay_ms)} --> {ms_to_srt(end + delay_ms)}'
 
-    logger.debug(f'delaying subtitles by {delay_ms} ms')
-
-    with open(filename, encoding='utf-8') as f:
-        content = f.read()
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.write(time_re.sub(shift, content))
+    return time_re.sub(shift, text)
 
 
 def delay_subtitles_mkv(
