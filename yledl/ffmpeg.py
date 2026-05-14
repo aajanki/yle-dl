@@ -143,3 +143,8 @@ class NullProbe:
         self, _filename: str, _expected_duration: Optional[float]
     ) -> bool:
         return False
+
+
+def optional_stream(stream_spec: str, ffmpeg_version: tuple[int, int]) -> str:
+    sep = ':' if ffmpeg_version >= (7, 1) else ''
+    return f'{stream_spec}{sep}?'

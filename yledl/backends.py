@@ -26,6 +26,7 @@ import shlex
 import subprocess
 from .errors import ExternalApplicationNotFoundError, TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
+from .ffmpeg import optional_stream
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
@@ -376,7 +377,7 @@ class DASHHLSBackend(ExternalDownloader):
                 '-scodec',
                 scodec,
                 '-map',
-                self._optional_stream(f'0:p:{pid}:s', io),
+                optional_stream(f'0:p:{pid}:s', io.ffmpeg_version()),
             ]
         else:
             # Sometimes the subtitles are labelled with a two-letter
@@ -386,18 +387,18 @@ class DASHHLSBackend(ExternalDownloader):
                 '-scodec',
                 scodec,
                 '-map',
-                self._optional_stream(f'0:s:m:language:{short_code}', io),
+                optional_stream(f'0:s:m:language:{short_code}', io.ffmpeg_version()),
                 '-map',
-                self._optional_stream(f'0:s:m:language:{io.subtitles}', io),
+                optional_stream(f'0:s:m:language:{io.subtitles}', io.ffmpeg_version()),
             ]
 
     def _map_video_and_audio_streams(self, io):
         pid = self._program_id(io)
         return [
             '-map',
-            self._optional_stream(f'0:p:{pid}:v', io),
+            optional_stream(f'0:p:{pid}:v', io.ffmpeg_version()),
             '-map',
-            self._optional_stream(f'0:p:{pid}:a', io),
+            optional_stream(f'0:p:{pid}:a', io.ffmpeg_version()),
         ]
 
     def build_args(self, output_name, clip, io):
@@ -472,9 +473,13 @@ class DASHHLSBackend(ExternalDownloader):
                     '-scodec',
                     'srt',
                     '-map',
-                    self._optional_stream(f'0:s:m:language:{short_code}', io),
+                    optional_stream(
+                        f'0:s:m:language:{short_code}', io.ffmpeg_version()
+                    ),
                     '-map',
-                    self._optional_stream(f'0:s:m:language:{io.subtitles}', io),
+                    optional_stream(
+                        f'0:s:m:language:{io.subtitles}', io.ffmpeg_version()
+                    ),
                 ]
                 + ['-vn', '-an', f'file:{output_name}']
             )
@@ -498,7 +503,7 @@ class DASHHLSBackend(ExternalDownloader):
     def save_stream(self, output_name, clip, io):
         res = super().save_stream(output_name, clip, io)
         if res == RD_SUCCESS and io.subtitle_delay_ms and output_name != '-':
-            logger.info(f'timeshifting subtitles by {io.subtitle_delay_ms} ms')
+            logger.debug(f'timeshifting subtitles by {io.subtitle_delay_ms} ms')
 
             if io.subtitles_only:
                 delay_substitles_srt(output_name, io.subtitle_delay_ms)
@@ -518,10 +523,6 @@ class DASHHLSBackend(ExternalDownloader):
         return (
             io.outputfilename and io.outputfilename.endswith('.mp4')
         ) or io.preferred_format in ('mp4', '.mp4')
-
-    def _optional_stream(self, stream_spec: str, io) -> str:
-        sep = ':' if io.ffmpeg_version() >= (7, 1) else ''
-        return f'{stream_spec}{sep}?'
 
     def full_stream_already_downloaded(self, filename, clip, io):
         if io.subtitles_only:
@@ -611,7 +612,7 @@ class WgetBackend(ExternalDownloader):
             destination_file = f'{basename}.srt'
             HttpClient(io).download_to_file(sub.url, destination_file)
             if io.subtitle_delay_ms:
-                logger.info(f'timeshifting subtitles by {io.subtitle_delay_ms} ms')
+                logger.debug(f'timeshifting subtitles by {io.subtitle_delay_ms} ms')
                 delay_substitles_srt(destination_file, io.subtitle_delay_ms)
 
     def build_args(self, output_name, clip, io):

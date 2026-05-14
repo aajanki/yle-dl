@@ -21,6 +21,7 @@ import os.path
 import shlex
 import subprocess
 from dataclasses import dataclass
+from .ffmpeg import optional_stream
 from .utils import ffmpeg_loglevel
 
 logger = logging.getLogger('yledl')
@@ -66,7 +67,7 @@ def delay_subtitles_mkv(
 ):
     """Delay subtitle lines in a .mkv file by delay_ms milliseconds."""
     delay_s = delay_ms / 1000.0
-    sub_spec = f'1:s{":?" if ffmpeg_version >= (7, 1) else "?"}'
+    sub_spec = optional_stream('1:s', ffmpeg_version)
     base, ext = os.path.splitext(filename)
     tmp = base + '.tmp_subdelay' + ext
     args = [
