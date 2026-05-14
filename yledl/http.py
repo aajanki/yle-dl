@@ -139,7 +139,7 @@ class HttpClient:
 def yledl_headers() -> Dict[str, str]:
     headers = requests.utils.default_headers()
     headers.update({'User-Agent': yledl_user_agent()})
-    return headers
+    return dict(headers)
 
 
 def yledl_user_agent() -> str:
