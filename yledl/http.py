@@ -21,9 +21,8 @@ import lxml.etree
 import re
 import requests
 import sys
-from typing import Mapping, Optional, Any
+from typing import Mapping, Optional, Any, MutableMapping
 from requests.adapters import HTTPAdapter
-from requests.structures import CaseInsensitiveDict
 from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
 from urllib3.util import Retry
 from .version import __version__
@@ -137,7 +136,7 @@ class HttpClient:
         return r
 
 
-def yledl_headers() -> CaseInsensitiveDict[str]:
+def yledl_headers() -> MutableMapping[str, str]:
     headers = requests.utils.default_headers()
     headers.update({'User-Agent': yledl_user_agent()})
     return headers
