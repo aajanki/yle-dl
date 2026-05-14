@@ -18,10 +18,9 @@
 import logging
 import re
 import os.path
-import shlex
-import subprocess
 from dataclasses import dataclass
 from .ffmpeg import optional_stream
+from .subprocess import execute_pipe
 from .utils import ffmpeg_loglevel
 
 logger = logging.getLogger('yledl')
@@ -56,6 +55,8 @@ def delay_substitles_srt(filename: str, delay_ms: int):
         ) * 1000 + int(match.group(8))
         return f'{ms_to_srt(start + delay_ms)} --> {ms_to_srt(end + delay_ms)}'
 
+    logger.debug(f'delaying subtitles by {delay_ms} ms')
+
     with open(filename, encoding='utf-8') as f:
         content = f.read()
     with open(filename, 'w', encoding='utf-8') as f:
@@ -66,6 +67,8 @@ def delay_subtitles_mkv(
     filename: str, delay_ms: int, ffmpeg_binary: str, ffmpeg_version: tuple[int, int]
 ):
     """Delay subtitle lines in a .mkv file by delay_ms milliseconds."""
+    logger.debug(f'delaying subtitles by {delay_ms} ms')
+
     delay_s = delay_ms / 1000.0
     sub_spec = optional_stream('1:s', ffmpeg_version)
     base, ext = os.path.splitext(filename)
@@ -91,8 +94,7 @@ def delay_subtitles_mkv(
         'copy',
         f'file:{tmp}',
     ]
-    logger.debug(f'Applying subtitle delay: {shlex.join(args)}')
-    ret = subprocess.run(args).returncode
+    ret = execute_pipe([args])
     if ret == 0:
         os.replace(tmp, filename)
     else:

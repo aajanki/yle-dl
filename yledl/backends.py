@@ -15,22 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import ctypes
-import ctypes.util
 import logging
 import os
 import os.path
-import platform
-import signal
-import shlex
-import subprocess
-from .errors import ExternalApplicationNotFoundError, TransientDownloadError
-from .exitcodes import RD_SUCCESS, RD_FAILED, RD_INCOMPLETE
+from .errors import TransientDownloadError
+from .exitcodes import RD_SUCCESS, RD_FAILED
 from .ffmpeg import optional_stream
 from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
 from .subtitles import delay_subtitles_mkv, delay_substitles_srt
+from .subprocess import execute_pipe
 
 
 logger = logging.getLogger('yledl')
@@ -159,90 +154,7 @@ class ExternalDownloader(BaseDownloader):
         return None
 
     def external_downloader(self, commands, env=None):
-        return exit_code_to_rd(Subprocess().execute(commands, env))
-
-
-class Subprocess:
-    def execute(self, commands, extra_environment):
-        """Start external processes connected with pipes and wait completion.
-
-        commands is a list commands to execute. commands[i] is a list of shell
-        command and arguments.
-
-        extra_environment is a dict of environment variables that are combined
-        with os.environ.
-        """
-        if not commands:
-            return RD_SUCCESS
-
-        logger.debug('Executing:')
-        shell_command_string = ' | '.join(shlex.join(args) for args in commands)
-        logger.debug(shell_command_string)
-
-        env = self.combine_envs(extra_environment)
-        process = self.start_process(commands, env)
-        try:
-            return process.wait()
-        except KeyboardInterrupt:
-            try:
-                os.kill(process.pid, signal.SIGINT)
-                process.wait()
-            except OSError:
-                # The process died before we killed it.
-                pass
-            return RD_INCOMPLETE
-        except OSError as exc:
-            logger.error(f'Failed to execute {shell_command_string}')
-            logger.error(exc.strerror)
-            raise ExternalApplicationNotFoundError(
-                f'Failed to execute {shell_command_string}'
-            )
-
-    def combine_envs(self, extra_environment):
-        env = None
-        if extra_environment:
-            env = dict(os.environ)
-            env.update(extra_environment)
-        return env
-
-    def start_process(self, commands, env):
-        """Start all commands and setup pipes."""
-        if not commands:
-            raise ValueError('command required')
-
-        processes = []
-        for i, args in enumerate(commands):
-            if i == 0 and platform.system() != 'Windows':
-                preexec_fn = self._sigterm_when_parent_dies
-            else:
-                preexec_fn = None
-
-            stdin = processes[-1].stdout if processes else None
-            stdout = None if i == len(commands) - 1 else subprocess.PIPE
-            processes.append(
-                subprocess.Popen(
-                    args, stdin=stdin, stdout=stdout, env=env, preexec_fn=preexec_fn
-                )
-            )
-
-        # Causes the first process to receive SIGPIPE if the seconds
-        # process exists
-        for p in processes[:-1]:
-            p.stdout.close()
-
-        return processes[0]
-
-    def _sigterm_when_parent_dies(self):
-        PR_SET_PDEATHSIG = 1
-
-        libcname = ctypes.util.find_library('c')
-        libc = libcname and ctypes.CDLL(libcname)
-
-        try:
-            libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM)
-        except AttributeError:
-            # libc is None or libc does not contain prctl
-            pass
+        return exit_code_to_rd(execute_pipe(commands, env))
 
 
 ### Download a MPEG-DASH and HLS stream by delegating to ffmpeg ###
@@ -503,8 +415,6 @@ class DASHHLSBackend(ExternalDownloader):
     def save_stream(self, output_name, clip, io):
         res = super().save_stream(output_name, clip, io)
         if res == RD_SUCCESS and io.subtitle_delay_ms and output_name != '-':
-            logger.debug(f'timeshifting subtitles by {io.subtitle_delay_ms} ms')
-
             if io.subtitles_only:
                 delay_substitles_srt(output_name, io.subtitle_delay_ms)
             else:
@@ -612,7 +522,6 @@ class WgetBackend(ExternalDownloader):
             destination_file = f'{basename}.srt'
             HttpClient(io).download_to_file(sub.url, destination_file)
             if io.subtitle_delay_ms:
-                logger.debug(f'timeshifting subtitles by {io.subtitle_delay_ms} ms')
                 delay_substitles_srt(destination_file, io.subtitle_delay_ms)
 
     def build_args(self, output_name, clip, io):
@@ -671,7 +580,7 @@ class WgetBackend(ExternalDownloader):
         return env
 
     def external_downloader(self, commands, env=None):
-        res = Subprocess().execute(commands, env)
+        res = execute_pipe(commands, env)
 
         # These exit status codes indicate errors where retrying might help
         # (from the wget man page).

@@ -27,13 +27,14 @@ from .geolocation import AreenaGeoLocation
 from .http import HttpClient
 from .titleformatter import TitleFormatter
 from .utils import sane_filename
-from .backends import Subprocess, BaseDownloader
+from .backends import BaseDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .extractors import extractor_factory, ClipExtractor
 from .localization import TranslationChooser
 from .io import IOContext, OutputFileNameGenerator
 from .streamflavor import failed_flavor, StreamFlavor
 from .streamfilters import StreamFilters
+from .subprocess import execute_pipe
 from .ffmpeg import NullProbe
 
 
@@ -491,11 +492,11 @@ class YleDlDownloader:
         postprocess_command: Optional[str],
         videofile: str,
         subtitlefiles: Iterable[str],
-    ) -> None:
+    ) -> Optional[int]:
         if postprocess_command:
             args = [postprocess_command, videofile]
             args.extend(subtitlefiles)
-            return Subprocess().execute([args], None)
+            return execute_pipe([args])
         else:
             return None
 
