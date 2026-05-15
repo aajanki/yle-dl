@@ -31,7 +31,7 @@ from .areena_extractors import AreenaPreviewApiParser
 from .http import HttpClient
 from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, failed_flavor
-from .streamprobe import FullHDFlavorProber
+from .streamprobe import probe_flavors
 from .timestamp import parse_areena_timestamp
 from .titleformatter import TitleFormatter
 
@@ -303,7 +303,7 @@ class AreenaExtractor(ClipExtractor):
             return []
 
         logger.debug('Probing for stream flavors')
-        return FullHDFlavorProber().probe_flavors(hls_manifest_url, is_live, ffprobe)
+        return probe_flavors(hls_manifest_url, is_live, ffprobe)
 
     def download_flavors(self, download_url, media_type):
         path = urlparse(download_url)[2]

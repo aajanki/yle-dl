@@ -68,6 +68,7 @@ class BaseDownloader:
         self.io_capabilities = frozenset()
         self.error_message = None
         self.name = ''
+        self.url = ''
 
     def is_valid(self):
         return True
