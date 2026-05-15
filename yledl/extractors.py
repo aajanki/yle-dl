@@ -227,7 +227,7 @@ class AreenaExtractor(ClipExtractor):
             # Web Areena no longer uses Kaltura, so this may break (Dec 2023).
             flavors.extend(self.kaltura_mp4_flavors(media_id, pageurl))
 
-        return flavors or None
+        return flavors
 
     def flavors_by_media_id(self, media_id, hls_manifest_url, is_live, ffprobe):
         if self.is_full_hd_media(media_id) or is_live:
@@ -355,7 +355,7 @@ class AreenaExtractor(ClipExtractor):
         title_params.update(season_and_episode)
         title = title_formatter.format(**title_params) or 'areena'
         simple_formatter = TitleFormatter('${series_separator}${title}')
-        episode_title = simple_formatter.format(**title_params)
+        episode_title = simple_formatter.format(**title_params) or 'areena'
         media_id = preview.media_id()
         is_live = self.is_live_media(media_id) or preview.is_live()
         download_url = self.ignore_invalid_download_url(preview.media_url())

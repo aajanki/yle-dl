@@ -22,7 +22,7 @@ from typing import Optional
 logger = logging.getLogger('yledl')
 
 
-def parse_areena_timestamp(timestamp: str) -> Optional[datetime]:
+def parse_areena_timestamp(timestamp: Optional[str]) -> Optional[datetime]:
     if timestamp is None:
         return None
 

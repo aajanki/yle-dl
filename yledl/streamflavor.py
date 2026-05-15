@@ -25,7 +25,7 @@ class StreamFlavor:
     media_type: str
     height: Optional[int] = None
     width: Optional[int] = None
-    bitrate: Optional[int] = None
+    bitrate: Optional[float] = None
     streams: list[BaseDownloader] = field(default_factory=list)
 
 
