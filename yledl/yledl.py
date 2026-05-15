@@ -23,6 +23,7 @@ This script downloads video and audio streams from Yle Areena
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import configargparse
 import sys
 import re
 import codecs
@@ -32,7 +33,6 @@ import os
 import os.path
 from argparse import Namespace
 from typing import Iterable, List
-import configargparse
 from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
@@ -595,11 +595,11 @@ def warn_on_output_template_syntax_change(title_formatter):
 ### main program ###
 
 
-def main(argv=sys.argv):
+def main():
     logging.addLevelName(5, 'TRACE')
 
     parser = arg_parser()
-    args = parser.parse_args(argv[1:])
+    args = parser.parse_args(sys.argv[1:])
     set_log_level(args)
 
     config_files = getattr(parser, 'yledl_read_config_files', [])
