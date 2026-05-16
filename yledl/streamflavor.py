@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@ class StreamFlavor:
     height: Optional[int] = None
     width: Optional[int] = None
     bitrate: Optional[float] = None
+    subtitle_start_time: Optional[float] = None
     streams: list[BaseDownloader] = field(default_factory=list)
 
 

@@ -415,13 +415,27 @@ class DASHHLSBackend(ExternalDownloader):
 
     def save_stream(self, output_name, clip, io):
         res = super().save_stream(output_name, clip, io)
-        if res == RD_SUCCESS and io.subtitle_delay_ms and output_name != '-':
+
+        clip_sub_starts: list[float] = [x.subtitle_start_time for x in clip.flavors]
+
+        # Prefer subtitle delay set by command line argument --subdelay.
+        subtitle_delay_ms = io.subtitle_delay_ms
+        if subtitle_delay_ms is None and len(clip_sub_starts) > 0:
+            # If --subdelay is not set, use the delay probed from the stream metadata.
+            #
+            # ffmpeg (at least versions up to 8.1) show subtitles with incorrect timing if the
+            # substitle stream has non-zero start time. To fix the timing, we delay subtitles
+            # by the probed subtitle stream start time. Taking the minimum of all stream.
+            # It should not matter as all streams usually have the same start time.
+            subtitle_delay_ms = int(min(clip_sub_starts) * 1000)
+
+        if res == RD_SUCCESS and subtitle_delay_ms and output_name != '-':
             if io.subtitles_only:
-                delay_substitles_srt(output_name, io.subtitle_delay_ms)
+                delay_substitles_srt(output_name, subtitle_delay_ms)
             else:
                 delay_subtitles_mkv(
                     output_name,
-                    io.subtitle_delay_ms,
+                    subtitle_delay_ms,
                     io.ffmpeg_binary,
                     io.ffmpeg_version(),
                 )

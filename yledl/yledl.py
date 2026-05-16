@@ -210,7 +210,8 @@ def _add_quality_arguments(parser):
         '--subdelay',
         metavar='MS',
         type=int,
-        help='Shift subtitle timing by MS milliseconds (positive = later, negative = earlier)',
+        help='Shift subtitle timing by MS milliseconds (positive = later, negative = earlier). '
+        'If not set, the correct delay is inferred automatically.',
     )
     qual_group.add_argument(
         '--subtitles-only',

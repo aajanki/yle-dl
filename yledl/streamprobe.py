@@ -47,7 +47,15 @@ def programs_to_stream_flavors(
         bitrate = program.get('tags', {}).get('variant_bitrate')
         if bitrate:
             bitrate = int(bitrate) / 1000
-
+        # Take (arbitrarily) the min of subtitle start times. Usually all start times are equal.
+        subtitle_start_times = [
+            float(s['start_time'])
+            for s in streams
+            if s['codec_type'] == 'subtitle' and 'start_time' in s
+        ]
+        shared_subtitle_start_time = (
+            min(subtitle_start_times) if subtitle_start_times else None
+        )
         pid = program.get('program_id')
         res.append(
             StreamFlavor(
@@ -55,6 +63,7 @@ def programs_to_stream_flavors(
                 height=heights[0] if heights else None,
                 width=widths[0] if widths else None,
                 bitrate=bitrate,
+                subtitle_start_time=shared_subtitle_start_time,
                 streams=[
                     DASHHLSBackend(
                         manifest_url,

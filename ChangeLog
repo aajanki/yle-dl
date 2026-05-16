@@ -5,8 +5,10 @@ Distributed under the GPL v3 or later
 <unreleased>
 
 - Add --subdelay option to shift subtitle timing
+- Automatically detects the correct subtitle delay when --subdelay is not set
 - Add timeouts on operations that previously could hang indefinitely
 - Fix --latestepisode
+- --proxy now support SOCKS proxies natively without tsocks or other external applications
 - Add Python 3.14 as a supported version, drop Python 3.8
 
 Version 20250730
