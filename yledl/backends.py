@@ -416,10 +416,21 @@ class DASHHLSBackend(ExternalDownloader):
     def save_stream(self, output_name, clip, io):
         res = super().save_stream(output_name, clip, io)
 
-        clip_sub_starts: list[float] = [x.subtitle_start_time for x in clip.flavors]
+        if res == RD_SUCCESS and output_name != '-':
+            self._delay_subtitles(output_name, clip, io)
+
+        return res
+
+    def _delay_subtitles(self, output_name: str, clip, io) -> None:
+        clip_sub_starts: list[float] = [
+            x.subtitle_start_time
+            for x in clip.flavors
+            if x.subtitle_start_time is not None
+        ]
 
         # Prefer subtitle delay set by command line argument --subdelay.
         subtitle_delay_ms = io.subtitle_delay_ms
+
         if subtitle_delay_ms is None and len(clip_sub_starts) > 0:
             # If --subdelay is not set, use the delay probed from the stream metadata.
             #
@@ -429,8 +440,8 @@ class DASHHLSBackend(ExternalDownloader):
             # It should not matter as all streams usually have the same start time.
             subtitle_delay_ms = int(min(clip_sub_starts) * 1000)
 
-        if res == RD_SUCCESS and subtitle_delay_ms and output_name != '-':
-            if io.subtitles_only:
+        if subtitle_delay_ms:
+            if output_name.endswith('.srt'):
                 delay_substitles_srt(output_name, subtitle_delay_ms)
             else:
                 delay_subtitles_mkv(
@@ -439,7 +450,6 @@ class DASHHLSBackend(ExternalDownloader):
                     io.ffmpeg_binary,
                     io.ffmpeg_version(),
                 )
-        return res
 
     def stream_url(self):
         return self.url
