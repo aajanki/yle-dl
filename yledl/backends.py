@@ -121,8 +121,7 @@ class BaseDownloader:
         return RD_FAILED
 
     def stream_url(self):
-        """Derived classes can override this to return the URL of the stream"""
-        return None
+        return self.url
 
     def full_stream_already_downloaded(self, filename, clip, io):
         """Override on backends that are able to check if a file is complete."""
@@ -451,9 +450,6 @@ class DASHHLSBackend(ExternalDownloader):
                     io.ffmpeg_version(),
                 )
 
-    def stream_url(self):
-        return self.url
-
     def _is_mp4(self, io):
         return (
             io.outputfilename and io.outputfilename.endswith('.mp4')
@@ -615,9 +611,6 @@ class WgetBackend(ExternalDownloader):
             raise TransientDownloadError('wget: Network failure')
 
         return exit_code_to_rd(res)
-
-    def stream_url(self):
-        return self.url
 
 
 ### Backend representing a failed stream ###
