@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -22,12 +22,15 @@ from yledl.timestamp import parse_areena_timestamp
 def test_timestamp():
     ts = parse_areena_timestamp('2018-01-02T18:30:00+02:00')
 
+    assert ts is not None
     assert ts.replace(tzinfo=None) == datetime(2018, 1, 2, 18, 30, 00)
     assert ts.utcoffset() == timedelta(hours=2)
 
 
 def test_timestamp_strip():
     ts = parse_areena_timestamp('  2018-01-02T18:30:00+02:00  ')
+
+    assert ts is not None
     assert ts.replace(tzinfo=None) == datetime(2018, 1, 2, 18, 30, 00)
 
 

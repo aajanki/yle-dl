@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2024 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -15,8 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
+from typing import Iterable, Optional
+from tests.utils import MockIOContext
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import BaseDownloader, Backends, FailingBackend
+from yledl.geolocation import AreenaGeoLocation
+from yledl.http import HttpClient
 from yledl.streamflavor import StreamFlavor, failed_flavor
 from yledl.titleformatter import TitleFormatter
 
@@ -31,7 +35,7 @@ class MockBackend(BaseDownloader):
         return True
 
 
-class MockGeoLocation:
+class MockGeoLocation(AreenaGeoLocation):
     def located_in_finland(self, referrer):
         return True
 
@@ -90,21 +94,33 @@ flavors = [
 
 
 def yle_dl_downloader():
-    return YleDlDownloader(MockGeoLocation(), TitleFormatter(), None)
+    mockhttpclient = HttpClient(MockIOContext)
+    return YleDlDownloader(
+        MockGeoLocation(mockhttpclient), TitleFormatter(), mockhttpclient
+    )
 
 
 def video_flavor(streams):
     return StreamFlavor(media_type='video', streams=streams)
 
 
-def filter_flavors(flavors, max_height=None, max_bitrate=None, enabled_backends=None):
+def filter_flavors(
+    flavors: Iterable[StreamFlavor],
+    max_height: Optional[int] = None,
+    max_bitrate: Optional[int] = None,
+    enabled_backends: Optional[list[str]] = None,
+) -> StreamFlavor:
     if enabled_backends is None:
         enabled_backends = list(Backends.default_order)
 
     filters = StreamFilters(
         maxheight=max_height, maxbitrate=max_bitrate, enabled_backends=enabled_backends
     )
-    return yle_dl_downloader().select_flavor(flavors, filters)
+
+    selected = yle_dl_downloader().select_flavor(flavors, filters)
+    assert selected is not None
+
+    return selected
 
 
 def backend_data(flavor):
@@ -112,10 +128,15 @@ def backend_data(flavor):
 
 
 def test_empty_input():
-    assert filter_flavors([]) is None
-    assert filter_flavors([], max_height=720) is None
-    assert filter_flavors([], max_bitrate=5000) is None
-    assert filter_flavors([], max_height=720, max_bitrate=5000) is None
+    assert yle_dl_downloader().select_flavor([], StreamFilters()) is None
+    assert yle_dl_downloader().select_flavor([], StreamFilters(maxheight=720)) is None
+    assert yle_dl_downloader().select_flavor([], StreamFilters(maxbitrate=5000)) is None
+    assert (
+        yle_dl_downloader().select_flavor(
+            [], StreamFilters(maxheight=720, maxbitrate=5000)
+        )
+        is None
+    )
 
 
 def test_only_failed_flavors():
@@ -263,9 +284,12 @@ def test_backend_filter_no_match():
 
 
 def test_backend_filter_no_streams():
-    flavor = filter_flavors([], enabled_backends=['ffmpeg'])
-
-    assert flavor is None
+    assert (
+        yle_dl_downloader().select_flavor(
+            [], StreamFilters(enabled_backends=['ffmpeg'])
+        )
+        is None
+    )
 
 
 def test_backend_filter_failed_stream():

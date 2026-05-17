@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -30,10 +30,12 @@ from yledl.downloader import YleDlDownloader
 from yledl.errors import TransientDownloadError
 from yledl.clip import Clip, FailedClip
 from yledl.extractors import StreamFlavor
+from yledl.geolocation import AreenaGeoLocation
+from yledl.http import HttpClient
 from yledl.titleformatter import TitleFormatter
 
 
-class MockGeoLocation:
+class MockGeoLocation(AreenaGeoLocation):
     def located_in_finland(self, referrer):
         return True
 
@@ -236,7 +238,13 @@ def downloader(clips_by_url):
     def extractor_factory(*args):
         return MockExtractor(clips_by_url)
 
-    return YleDlDownloader(MockGeoLocation(), TitleFormatter(), None, extractor_factory)
+    mockhttpclient = HttpClient(MockIOContext)
+    return YleDlDownloader(
+        MockGeoLocation(mockhttpclient),
+        TitleFormatter(),
+        mockhttpclient,
+        extractor_factory,
+    )
 
 
 def stream_by_partial_url_match(clip, url_contains):
@@ -372,7 +380,7 @@ def test_print_titles_replaces_whitespace(simple):
 
 def test_print_metadata(simple):
     dl = downloader({'a': successful_clip()})
-    metadata = dl.get_metadata('', simple.io, simple.filters)
+    metadata = list(dl.get_metadata('', simple.io, simple.filters))
 
     assert len(metadata) == 1
 
@@ -438,7 +446,7 @@ def test_print_metadata(simple):
 
 def test_print_metadata_incomplete(simple):
     dl = downloader({'a': incomplete_flavors_clip()})
-    metadata = dl.get_metadata('', simple.io, simple.filters)
+    metadata = list(dl.get_metadata('', simple.io, simple.filters))
 
     assert len(metadata) == 1
 

@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2022 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 import pytest
-from datetime import datetime, date
+from datetime import datetime
 from utils import FixedOffset
 from yledl.titleformatter import TitleFormatter
 
@@ -46,73 +46,77 @@ def test_title_timestamp():
 
 
 def test_title_date_only():
-    title = tf.format('test', publish_timestamp=date(2018, 1, 2))
-    assert title == 'test: 2018-01-02'
+    title = tf.format('test', publish_timestamp=datetime(2018, 1, 2))
+    assert title == 'test: 2018-01-02T00:00'
 
 
 def test_repeated_main_title():
     title = tf.format(
-        'Uutiset: Uutiset iltapäivällä', publish_timestamp=date(2021, 1, 1)
+        'Uutiset: Uutiset iltapäivällä', publish_timestamp=datetime(2021, 1, 1)
     )
-    assert title == 'Uutiset iltapäivällä: 2021-01-01'
+    assert title == 'Uutiset iltapäivällä: 2021-01-01T00:00'
 
 
 def test_subheading():
     title = tf.format(
-        'EM-kisat', subheading='Kymmenottelu', publish_timestamp=date(2021, 1, 1)
+        'EM-kisat', subheading='Kymmenottelu', publish_timestamp=datetime(2021, 1, 1)
     )
-    assert title == 'EM-kisat: Kymmenottelu: 2021-01-01'
+    assert title == 'EM-kisat: Kymmenottelu: 2021-01-01T00:00'
 
 
 def test_no_repeated_subheading():
     title = tf.format(
         'Uutiset: Kymmenen uutiset',
         subheading='Uutiset',
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Uutiset: Kymmenen uutiset: 2021-01-01'
+    assert title == 'Uutiset: Kymmenen uutiset: 2021-01-01T00:00'
 
 
 def test_season_and_episode():
     title = tf.format(
-        'Isänmaan toivot', season=2, episode=6, publish_timestamp=date(2021, 1, 1)
+        'Isänmaan toivot', season=2, episode=6, publish_timestamp=datetime(2021, 1, 1)
     )
-    assert title == 'Isänmaan toivot: S02E06-2021-01-01'
+    assert title == 'Isänmaan toivot: S02E06-2021-01-01T00:00'
 
 
 def test_episode_without_season():
-    title = tf.format('Isänmaan toivot', episode=12, publish_timestamp=date(2021, 1, 1))
-    assert title == 'Isänmaan toivot: E12-2021-01-01'
+    title = tf.format(
+        'Isänmaan toivot', episode=12, publish_timestamp=datetime(2021, 1, 1)
+    )
+    assert title == 'Isänmaan toivot: E12-2021-01-01T00:00'
 
 
 def test_remove_genre_prefix():
     assert (
-        tf.format('Elokuva: Indiana Jones', publish_timestamp=date(2021, 1, 1))
-        == 'Indiana Jones: 2021-01-01'
+        tf.format('Elokuva: Indiana Jones', publish_timestamp=datetime(2021, 1, 1))
+        == 'Indiana Jones: 2021-01-01T00:00'
     )
 
 
 def test_series_title():
     title = tf.format(
-        'Kerblam!', series_title='Doctor Who', publish_timestamp=date(2021, 1, 1)
+        'Kerblam!', series_title='Doctor Who', publish_timestamp=datetime(2021, 1, 1)
     )
-    assert title == 'Doctor Who: Kerblam!: 2021-01-01'
+    assert title == 'Doctor Who: Kerblam!: 2021-01-01T00:00'
 
 
 def test_no_repeated_series_title():
     title = tf.format(
-        'Doctor Who', series_title='Doctor Who', publish_timestamp=date(2021, 1, 1)
+        'Doctor Who', series_title='Doctor Who', publish_timestamp=datetime(2021, 1, 1)
     )
-    assert title == 'Doctor Who: 2021-01-01'
+    assert title == 'Doctor Who: 2021-01-01T00:00'
 
 
 def test_no_repeated_series_title_whole_words():
     title = tf.format(
         'Noin viikon studion uusi vuosi',
         series_title='Noin viikon studio',
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Noin viikon studio: Noin viikon studion uusi vuosi: 2021-01-01'
+    assert (
+        title == 'Noin viikon studio: Noin viikon studion uusi vuosi: 2021-01-01T00:00'
+    )
 
 
 def test_no_repeated_series_title_with_subheading():
@@ -120,51 +124,55 @@ def test_no_repeated_series_title_with_subheading():
         'Solsidan',
         series_title='Solsidan',
         subheading='Nya avsnitt från Solsidan',
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Solsidan: Nya avsnitt från Solsidan: 2021-01-01'
+    assert title == 'Solsidan: Nya avsnitt från Solsidan: 2021-01-01T00:00'
 
 
 def test_no_repeated_series_title_with_episode_title():
     title = tf.format(
         'Doctor Who: Kerblam!',
         series_title='Doctor Who',
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Doctor Who: Kerblam!: 2021-01-01'
+    assert title == 'Doctor Who: Kerblam!: 2021-01-01T00:00'
 
 
 def test_series_name_as_part_of_episode_title():
     title = tf.format(
         'Rölli ja Robotti Ruttunen',
         series_title='Rölli',
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Rölli: Rölli ja Robotti Ruttunen: 2021-01-01'
+    assert title == 'Rölli: Rölli ja Robotti Ruttunen: 2021-01-01T00:00'
 
 
 def test_main_title_equals_series_title_plus_age_limit():
     title = tf.format(
         'Rantahotelli (S)',
         series_title='Rantahotelli',
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Rantahotelli: 2021-01-01'
+    assert title == 'Rantahotelli: 2021-01-01T00:00'
 
 
 def test_strip_whitespace():
-    title = tf.format(' Rantahotelli ', publish_timestamp=date(2021, 1, 1))
-    assert title == 'Rantahotelli: 2021-01-01'
+    title = tf.format(' Rantahotelli ', publish_timestamp=datetime(2021, 1, 1))
+    assert title == 'Rantahotelli: 2021-01-01T00:00'
 
     title = tf.format(
-        'Uutiset klo 18', series_title='Uutiset ', publish_timestamp=date(2021, 1, 1)
+        'Uutiset klo 18',
+        series_title='Uutiset ',
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Uutiset: Uutiset klo 18: 2021-01-01'
+    assert title == 'Uutiset: Uutiset klo 18: 2021-01-01T00:00'
 
     title = tf.format(
-        'Uutiset klo 18', series_title=' Uutiset ', publish_timestamp=date(2021, 1, 1)
+        'Uutiset klo 18',
+        series_title=' Uutiset ',
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Uutiset: Uutiset klo 18: 2021-01-01'
+    assert title == 'Uutiset: Uutiset klo 18: 2021-01-01T00:00'
 
 
 def test_all_components(pasila):
@@ -311,9 +319,9 @@ def test_series_title_placeholder():
         series_title='Isänmaan toivot',
         season=2,
         episode=6,
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Isänmaan toivot: pe 1.1.2021: S02E06-2021-01-01'
+    assert title == 'Isänmaan toivot: pe 1.1.2021: S02E06-2021-01-01T00:00'
 
 
 def test_title_only_placeholder():
@@ -342,6 +350,6 @@ def test_no_repeated_series_title_placeholder():
         series_title='Solsidan',
         season=6,
         episode=3,
-        publish_timestamp=date(2021, 1, 1),
+        publish_timestamp=datetime(2021, 1, 1),
     )
-    assert title == 'Solsidan: S06E03-2021-01-01'
+    assert title == 'Solsidan: S06E03-2021-01-01T00:00'
