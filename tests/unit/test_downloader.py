@@ -60,11 +60,10 @@ def mock_backend(
     name='ffmpeg',
     stream_url='https://yledl.test/video/areena.mp4',
 ):
-    backend = BaseDownloader('stream.test')
+    backend = BaseDownloader(stream_url)
     backend.name = name
     backend.save_stream = Mock(return_value=status)
     backend.pipe = Mock(return_value=status)
-    backend.stream_url = Mock(return_value=stream_url)
     return backend
 
 
