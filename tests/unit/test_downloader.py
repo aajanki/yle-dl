@@ -58,7 +58,7 @@ def mock_backend(
     name='ffmpeg',
     stream_url='https://areena.example.com/video/areena.mp4',
 ):
-    backend = BaseDownloader()
+    backend = BaseDownloader('stream.test')
     backend.name = name
     backend.save_stream = Mock(return_value=status)
     backend.pipe = Mock(return_value=status)
@@ -74,7 +74,7 @@ def backend_that_fails_n_times(n):
 
     save_stream() and pipe() are Mock instances.
     """
-    backend = BaseDownloader()
+    backend = BaseDownloader('stream.test')
     backend.name = 'ffmpeg'
     return_values = [TransientDownloadError('Failed!')] * n + [RD_SUCCESS]
     backend.save_stream = Mock(side_effect=return_values)

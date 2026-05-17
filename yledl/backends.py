@@ -18,6 +18,7 @@
 import logging
 import os
 import os.path
+from typing import AbstractSet, Optional
 from .errors import TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .ffmpeg import optional_stream
@@ -64,11 +65,11 @@ def exit_code_to_rd(exit_code):
 
 
 class BaseDownloader:
-    def __init__(self):
-        self.io_capabilities = frozenset()
-        self.error_message = None
+    def __init__(self, url: str):
+        self.url = url
+        self.io_capabilities: AbstractSet[str] = frozenset()
+        self.error_message: Optional[str] = None
         self.name = ''
-        self.url = ''
 
     def is_valid(self):
         return True
@@ -169,8 +170,7 @@ class DASHHLSBackend(ExternalDownloader):
         is_live=False,
         experimental_subtitles=False,
     ):
-        ExternalDownloader.__init__(self)
-        self.url = url
+        ExternalDownloader.__init__(self, url)
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
@@ -465,9 +465,6 @@ class DASHHLSBackend(ExternalDownloader):
 
 
 class HLSAudioBackend(DASHHLSBackend):
-    def __init__(self, url):
-        DASHHLSBackend.__init__(self, url)
-
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
 
@@ -502,8 +499,7 @@ class HLSAudioBackend(DASHHLSBackend):
 
 class WgetBackend(ExternalDownloader):
     def __init__(self, url, file_extension):
-        ExternalDownloader.__init__(self)
-        self.url = url
+        ExternalDownloader.__init__(self, url)
 
         if not file_extension:
             logger.warning(f'Mandatory file extension is missing for URL {url}')
@@ -618,7 +614,7 @@ class WgetBackend(ExternalDownloader):
 
 class FailingBackend(BaseDownloader):
     def __init__(self, error_message):
-        BaseDownloader.__init__(self)
+        BaseDownloader.__init__(self, '')
         self.error_message = error_message
         self.name = None
 

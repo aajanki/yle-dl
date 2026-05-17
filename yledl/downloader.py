@@ -448,7 +448,7 @@ class YleDlDownloader:
         if supported_backends:
             msg = f'Required backend not enabled. Try: --backend {",".join(supported_backends)}'
         elif error_messages:
-            msg = error_messages[0]
+            msg = error_messages[0] or 'unknown error'
         else:
             msg = 'Stream not found'
 
@@ -458,7 +458,7 @@ class YleDlDownloader:
         for fl in flavors:
             for s in fl.streams:
                 if not s.is_valid():
-                    return failed_flavor(s.error_message)
+                    return failed_flavor(s.error_message or 'unknown error')
 
         return None
 
