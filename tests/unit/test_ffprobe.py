@@ -39,7 +39,7 @@ class TestShowProgramsForUrl:
             )
 
             with pytest.raises(subprocess.TimeoutExpired):
-                ffprobe.show_programs_for_url('https://example.com/master.m3u8')
+                ffprobe.show_programs_for_url('https://yledl.test/master.m3u8')
 
     def test_successful_probe(self):
         ffprobe = create_ffprobe()
@@ -48,7 +48,7 @@ class TestShowProgramsForUrl:
         with patch('yledl.ffmpeg.subprocess.check_output') as mock_check_output:
             mock_check_output.return_value = mock_output
 
-            result = ffprobe.show_programs_for_url('https://example.com/master.m3u8')
+            result = ffprobe.show_programs_for_url('https://yledl.test/master.m3u8')
 
             assert result == {'programs': [{'program_id': 0, 'streams': []}]}
             call_kwargs = mock_check_output.call_args[1]
@@ -63,7 +63,7 @@ class TestShowProgramsForUrl:
             )
 
             with pytest.raises(subprocess.CalledProcessError):
-                ffprobe.show_programs_for_url('https://example.com/master.m3u8')
+                ffprobe.show_programs_for_url('https://yledl.test/master.m3u8')
 
 
 class TestDurationSecondsFile:

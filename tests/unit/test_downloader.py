@@ -58,7 +58,7 @@ class MockExtractor:
 def mock_backend(
     status=RD_SUCCESS,
     name='ffmpeg',
-    stream_url='https://areena.example.com/video/areena.mp4',
+    stream_url='https://yledl.test/video/areena.mp4',
 ):
     backend = BaseDownloader('stream.test')
     backend.name = name
@@ -93,7 +93,7 @@ def successful_clip(title='Test clip: S01E01-2018-07-01T00:00'):
             width=1920,
             bitrate=2808,
             streams=[
-                mock_backend(stream_url='https://example.com/video/high_quality.mp4')
+                mock_backend(stream_url='https://yledl.test/video/high_quality.mp4')
             ],
         ),
         StreamFlavor(
@@ -102,7 +102,7 @@ def successful_clip(title='Test clip: S01E01-2018-07-01T00:00'):
             width=640,
             bitrate=880,
             streams=[
-                mock_backend(stream_url='https://example.com/video/low_quality.mp4')
+                mock_backend(stream_url='https://yledl.test/video/low_quality.mp4')
             ],
         ),
         StreamFlavor(
@@ -111,7 +111,7 @@ def successful_clip(title='Test clip: S01E01-2018-07-01T00:00'):
             width=640,
             bitrate=964,
             streams=[
-                mock_backend(stream_url='https://example.com/video/low_quality_2.mp4')
+                mock_backend(stream_url='https://yledl.test/video/low_quality_2.mp4')
             ],
         ),
         StreamFlavor(
@@ -120,7 +120,7 @@ def successful_clip(title='Test clip: S01E01-2018-07-01T00:00'):
             width=1280,
             bitrate=1412,
             streams=[
-                mock_backend(stream_url='https://example.com/video/medium_quality.mp4')
+                mock_backend(stream_url='https://yledl.test/video/medium_quality.mp4')
             ],
         ),
         StreamFlavor(
@@ -130,7 +130,7 @@ def successful_clip(title='Test clip: S01E01-2018-07-01T00:00'):
             bitrate=1872,
             streams=[
                 mock_backend(
-                    stream_url='https://example.com/video/medium_quality_high_bitrate.mp4'
+                    stream_url='https://yledl.test/video/medium_quality_high_bitrate.mp4'
                 )
             ],
         ),
@@ -144,17 +144,17 @@ def incomplete_flavors_clip():
         flavors=[
             StreamFlavor(
                 media_type='video',
-                streams=[mock_backend(stream_url='https://example.com/video/1.mp4')],
+                streams=[mock_backend(stream_url='https://yledl.test/video/1.mp4')],
             ),
             StreamFlavor(
                 media_type='video',
                 height=360,
                 width=640,
-                streams=[mock_backend(stream_url='https://example.com/video/2.mp4')],
+                streams=[mock_backend(stream_url='https://yledl.test/video/2.mp4')],
             ),
             StreamFlavor(
                 media_type='video',
-                streams=[mock_backend(stream_url='https://example.com/video/3.mp4')],
+                streams=[mock_backend(stream_url='https://yledl.test/video/3.mp4')],
             ),
         ],
         title='Test clip: S01E01-2018-07-01T00:00',
@@ -177,10 +177,10 @@ def multistream_clip():
                     FailingBackend('Invalid stream'),
                     FailingBackend('Invalid stream'),
                     mock_backend(
-                        name='wget', stream_url='https://example.com/video/3.mp4'
+                        name='wget', stream_url='https://yledl.test/video/3.mp4'
                     ),
                     mock_backend(
-                        name='ffmpeg', stream_url='https://example.com/video/4.mp4'
+                        name='ffmpeg', stream_url='https://yledl.test/video/4.mp4'
                     ),
                 ],
             )
@@ -351,8 +351,8 @@ def test_print_urls(simple):
     urls = list(dl.get_urls('', simple.io, simple.filters))
 
     assert urls == [
-        'https://example.com/video/high_quality.mp4',
-        'https://example.com/video/high_quality.mp4',
+        'https://yledl.test/video/high_quality.mp4',
+        'https://yledl.test/video/high_quality.mp4',
     ]
 
 
@@ -399,7 +399,7 @@ def test_print_metadata(simple):
                     'height': 360,
                     'width': 640,
                     'bitrate': 880,
-                    'url': 'https://example.com/video/low_quality.mp4',
+                    'url': 'https://yledl.test/video/low_quality.mp4',
                     'backends': ['ffmpeg'],
                 },
                 {
@@ -407,7 +407,7 @@ def test_print_metadata(simple):
                     'height': 480,
                     'width': 640,
                     'bitrate': 964,
-                    'url': 'https://example.com/video/low_quality_2.mp4',
+                    'url': 'https://yledl.test/video/low_quality_2.mp4',
                     'backends': ['ffmpeg'],
                 },
                 {
@@ -415,7 +415,7 @@ def test_print_metadata(simple):
                     'height': 720,
                     'width': 1280,
                     'bitrate': 1412,
-                    'url': 'https://example.com/video/medium_quality.mp4',
+                    'url': 'https://yledl.test/video/medium_quality.mp4',
                     'backends': ['ffmpeg'],
                 },
                 {
@@ -423,7 +423,7 @@ def test_print_metadata(simple):
                     'height': 720,
                     'width': 1280,
                     'bitrate': 1872,
-                    'url': 'https://example.com/video/medium_quality_high_bitrate.mp4',
+                    'url': 'https://yledl.test/video/medium_quality_high_bitrate.mp4',
                     'backends': ['ffmpeg'],
                 },
                 {
@@ -431,7 +431,7 @@ def test_print_metadata(simple):
                     'height': 1080,
                     'width': 1920,
                     'bitrate': 2808,
-                    'url': 'https://example.com/video/high_quality.mp4',
+                    'url': 'https://yledl.test/video/high_quality.mp4',
                     'backends': ['ffmpeg'],
                 },
             ],
@@ -463,19 +463,19 @@ def test_print_metadata_incomplete(simple):
             'flavors': [
                 {
                     'media_type': 'video',
-                    'url': 'https://example.com/video/1.mp4',
+                    'url': 'https://yledl.test/video/1.mp4',
                     'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
                     'height': 360,
                     'width': 640,
-                    'url': 'https://example.com/video/2.mp4',
+                    'url': 'https://yledl.test/video/2.mp4',
                     'backends': ['ffmpeg'],
                 },
                 {
                     'media_type': 'video',
-                    'url': 'https://example.com/video/3.mp4',
+                    'url': 'https://yledl.test/video/3.mp4',
                     'backends': ['ffmpeg'],
                 },
             ],
