@@ -16,7 +16,7 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 from typing import Iterable, Optional
-from tests.utils import MockIOContext
+from utils import MockIOContext
 from yledl import YleDlDownloader, StreamFilters
 from yledl.backends import BaseDownloader, Backends, FailingBackend
 from yledl.geolocation import AreenaGeoLocation
