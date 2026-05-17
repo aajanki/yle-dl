@@ -463,7 +463,6 @@ class AreenaLiveRadioExtractor(AreenaExtractor):
         known_channels = {
             '57-p89RepWE0': 'yle-radio-1',
             '57-JAprnp7W2': 'ylex',
-            '57-kpDBBz8Pz': 'yle-puhe',
             '57-md5vJP6a2': 'yle-x3m',
             '57-llL6Y4blL': 'yle-klassinen',
             '57-bN8gjw7AY': 'yle-sami-radio',

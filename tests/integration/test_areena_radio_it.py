@@ -49,7 +49,7 @@ def test_radio_metadata_hls():
 
 @pytest.mark.geoblocked
 def test_radio_live_url():
-    url = fetch_stream_url('https://areena.yle.fi/podcastit/ohjelmat/57-kpDBBz8Pz')
+    url = fetch_stream_url('https://areena.yle.fi/podcastit/ohjelmat/57-p89RepWE0')
 
     assert len(url) == 1
     assert '.m3u8' in url[0]
@@ -67,12 +67,12 @@ def test_radio_live_url2():
 
 @pytest.mark.geoblocked
 def test_radio_live_metadata():
-    metadata = fetch_metadata('https://areena.yle.fi/podcastit/ohjelmat/57-kpDBBz8Pz')
+    metadata = fetch_metadata('https://areena.yle.fi/podcastit/ohjelmat/57-p89RepWE0')
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
     assert all(f.get('media_type') == 'audio' for f in metadata[0]['flavors'])
-    assert metadata[0]['title'].startswith('Yle Puhe')
+    assert metadata[0]['title'].startswith('Yle Radio 1')
 
 
 def test_radio_series_2020():
