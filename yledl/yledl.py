@@ -639,6 +639,7 @@ def main():
     dl_limits = DownloadLimits(args.startposition, args.duration, args.ratelimit)
     output_template, template_ext = os.path.splitext(args.output_template)
     preferformat = template_ext.strip('.') or args.preferformat
+    subtitle_delay_ms = int(args.subdelay * 1000) if args.subdelay is not None else None
     if args.subtitles_only:
         if args.sublang not in ('fin', 'swe'):
             logger.error('--subtitles-only requires --sublang fin or --sublang swe')
@@ -666,7 +667,7 @@ def main():
         wget_binary=args.wget or 'wget',
         create_dirs=args.create_dirs,
         xattr=args.xattrs,
-        subtitle_delay_ms=int(args.subdelay * 1000),
+        subtitle_delay_ms=subtitle_delay_ms,
         subtitles_only=args.subtitles_only,
     )
 
