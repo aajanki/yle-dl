@@ -101,7 +101,7 @@ def arg_parser():
 
     description = (
         f'yle-dl {__version__}: Download media files from Yle Areena and Elävä Arkisto\n'
-        'Copyright (C) 2009-2025 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
+        'Copyright (C) 2009-2026 Antti Ajanki <antti.ajanki@iki.fi>, license: GPLv3\n'
     )
     xdg_config_home = os.getenv('XDG_CONFIG_HOME') or '~/.config'
     parser = ArgumentParserEncoded(
@@ -208,10 +208,10 @@ def _add_quality_arguments(parser):
     )
     qual_group.add_argument(
         '--subdelay',
-        metavar='MS',
-        type=int,
-        help='Shift subtitle timing by MS milliseconds (positive = later, negative = earlier). '
-        'If not set, the correct delay is inferred automatically.',
+        metavar='S',
+        type=float_with_dot_or_comma,
+        help='Shift subtitle timing by S seconds (positive = later, negative = earlier). '
+        'Can be a floating point number. If not set, the correct delay is inferred automatically.',
     )
     qual_group.add_argument(
         '--subtitles-only',
@@ -443,6 +443,13 @@ def encode_url_utf8(url):
     return urlunparse((scheme, netloc, path, params, query, fragment))
 
 
+def float_with_dot_or_comma(s: str) -> float:
+    try:
+        return float(s)
+    except ValueError:
+        return float(s.replace(',', '.'))
+
+
 def execute_action(
     url: str,
     action: int,
@@ -659,7 +666,7 @@ def main():
         wget_binary=args.wget or 'wget',
         create_dirs=args.create_dirs,
         xattr=args.xattrs,
-        subtitle_delay_ms=args.subdelay,
+        subtitle_delay_ms=int(args.subdelay * 1000),
         subtitles_only=args.subtitles_only,
     )
 
