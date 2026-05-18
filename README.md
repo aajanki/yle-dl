@@ -60,37 +60,20 @@ you would normally watch the video in a browser.
 yle-dl options:
 
 * `-o filename`       Save stream to the named file
-
 * `-i filename`       Read input URLs to process from the named file, one URL per line
-
 * `--latestepisode`   Download the latest episodes
-
 * `--showurl`         Print the URL of the stream, don't download
-
 * `--showtitle`       Print stream title, don't download
-
 * `--showmetadata`    Print stream [metadata as JSON](docs/metadata.md)
-
 * `--restrict-filename-no-specials`  Create Windows-compatible filenames
-
 * `--sublang lang`    Disable subtitles if lang is "none"
-
-* `--subdelay ms`     Shift subtitle timing by ms milliseconds (positive = later, negative = earlier)
-
 * `--subtitles-only`  Download only subtitle file, skip video and audio
-
 * `--resolution res`  Maximum vertical resolution in pixels
-
 * `--maxbitrate br`   Maximum bitrate stream to download, integer in kB/s or "best" or "worst". Not all streams support limited bitrates.
-
 * `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded video file as the first parameter and subtitle files (if any) as the following parameters.
-
 * `--proxy uri`       Proxy to use. Examples: `--proxy localhost:8118`, `--proxy socks5h://localhost:1080`
-
 * `--destdir dir`     Save files to dir
-
 * `--pipe`            Dump stream to stdout for piping to media player. E.g. `yle-dl --pipe URL | vlc -`.
-
 * `-V, --verbose`     Show verbose debug output
 
 Type `yle-dl --help` to see the full list of options.

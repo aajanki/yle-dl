@@ -61,7 +61,6 @@ Valitsimet:
 * `--showmetadata`  Tulostaa metatietoja ohjelmasta. Katso docs/metadata.md
 * `--restrict-filename-no-specials`  Tuota Windows-yhteensopivia tiedoston nimiä
 * `--sublang lan`   Jätä tekstitykset lataamatta, jos lang on "none"
-* `--subdelay ms`   Siirrä tekstityksen ajoitusta ms millisekuntia (positiivinen = myöhemmäksi, negatiivinen = aiemmaksi)
 * `--subtitles-only`  Lataa vain tekstitystiedosto, ohita video ja ääni
 * `--resolution r`  Rajoita ladattavan striimin pystyresoluutiota
 * `--maxbitrate br` Rajoita ladattavan striimin bittinopeutta (kB/s)

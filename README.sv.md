@@ -55,8 +55,6 @@ yle-dl alternativ:
 * `--destdir dir`     Spara filer till en mapp
 * `--latestepisode`   Ladda ner senaste avsnitten
 * `--showmetadata`    Skriv ut streamens metadata [i JSON format](docs/metadata.md)
-* `--subdelay ms`     Förskjut undertexternas timing med ms millisekunder (positivt = senare, negativt = tidigare)
-
 * `--subtitles-only`  Ladda bara ned undertextfile, hoppa över video och ljud
 
 Använd kommandot `yle-dl --help` för att se alla alternativ.
