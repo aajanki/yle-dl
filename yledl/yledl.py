@@ -213,12 +213,6 @@ def _add_quality_arguments(parser):
         help='Shift subtitle timing by S seconds (positive = later, negative = earlier). '
         'Can be a floating point number. If not set, the correct delay is inferred automatically.',
     )
-    qual_group.add_argument(
-        '--subtitles-only',
-        action='store_true',
-        default=False,
-        help='Download only subtitle files, skip video and audio',
-    )
 
 
 def _add_resume_arguments(io_group):
@@ -255,6 +249,12 @@ def _add_action_group_arguments(io_group):
         '--showmetadata',
         action='store_true',
         help='Print metadata about available streams',
+    )
+    action_group.add_argument(
+        '--subtitles-only',
+        action='store_true',
+        default=False,
+        help='Download only subtitle files, skip video and audio',
     )
 
 
