@@ -2,12 +2,13 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2026 Antti Ajanki
 Distributed under the GPL v3 or later
 
-<unreleased>
+Version 20260520
 
-- Add --subdelay option to shift subtitle timing
-- Automatically detects the correct subtitle delay when --subdelay is not set
+- Fix subtitle timing (a bug in ffmpeg)
+- --subdelay option can be used to override the subtitle delay if the detection goes wrong
+- Fix --latestepisode to download the latest episode of the latest series
+- New option --subtitles-only downloads just the subtitles skipping video and audio
 - Add timeouts on operations that previously could hang indefinitely
-- Fix --latestepisode
 - --proxy now support SOCKS proxies natively without tsocks or other external applications
 - Add Python 3.14 as a supported version, drop Python 3.8
 
