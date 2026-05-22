@@ -65,11 +65,11 @@ def exit_code_to_rd(exit_code):
 
 
 class BaseDownloader:
-    def __init__(self, url: str):
+    def __init__(self, url: str, name: str):
         self.url = url
+        self.name = name
         self.io_capabilities: AbstractSet[str] = frozenset()
         self.error_message: Optional[str] = None
-        self.name = ''
 
     def is_valid(self):
         return True
@@ -206,13 +206,12 @@ class DASHHLSBackend(FfmpegBackend):
         is_live=False,
         experimental_subtitles=False,
     ):
-        super().__init__(url)
+        super().__init__(url, Backends.FFMPEG)
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
         self.experimental_subtitles = experimental_subtitles
         self.io_capabilities = frozenset([IOCapability.SLICE, IOCapability.PROXY])
-        self.name = Backends.FFMPEG
 
     def input_args(self, io):
         args = [
@@ -475,8 +474,7 @@ class DASHHLSBackend(FfmpegBackend):
 
 class HLSAudioBackend(FfmpegBackend):
     def __init__(self, url: str):
-        super().__init__(url)
-        self.name = Backends.FFMPEG
+        super().__init__(url, Backends.FFMPEG)
 
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
@@ -546,7 +544,7 @@ class HLSAudioBackend(FfmpegBackend):
 
 class WgetBackend(ExternalDownloader):
     def __init__(self, url, file_extension):
-        ExternalDownloader.__init__(self, url)
+        super().__init__(url, Backends.WGET)
 
         if not file_extension:
             logger.warning(f'Mandatory file extension is missing for URL {url}')
@@ -554,7 +552,6 @@ class WgetBackend(ExternalDownloader):
         self.io_capabilities = frozenset(
             [IOCapability.RESUME, IOCapability.RATELIMIT, IOCapability.PROXY]
         )
-        self.name = Backends.WGET
 
     def file_extension(self, preferred):
         return self._file_extension
@@ -661,9 +658,8 @@ class WgetBackend(ExternalDownloader):
 
 class FailingBackend(BaseDownloader):
     def __init__(self, error_message):
-        BaseDownloader.__init__(self, '')
+        super().__init__('', '')
         self.error_message = error_message
-        self.name = None
 
     def is_valid(self):
         return False

@@ -27,8 +27,7 @@ from yledl.titleformatter import TitleFormatter
 
 class MockBackend(BaseDownloader):
     def __init__(self, name, data=None):
-        super().__init__('stream.test')
-        self.name = name
+        super().__init__('stream.test', name)
         self.data = data
 
     def is_valid(self):

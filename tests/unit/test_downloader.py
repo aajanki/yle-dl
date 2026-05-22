@@ -60,8 +60,7 @@ def mock_backend(
     name='ffmpeg',
     stream_url='https://yledl.test/video/areena.mp4',
 ):
-    backend = BaseDownloader(stream_url)
-    backend.name = name
+    backend = BaseDownloader(stream_url, name)
     backend.save_stream = Mock(return_value=status)
     backend.pipe = Mock(return_value=status)
     return backend
@@ -75,8 +74,7 @@ def backend_that_fails_n_times(n):
 
     save_stream() and pipe() are Mock instances.
     """
-    backend = BaseDownloader('stream.test')
-    backend.name = 'ffmpeg'
+    backend = BaseDownloader('stream.test', 'ffmpeg')
     return_values = [TransientDownloadError('Failed!')] * n + [RD_SUCCESS]
     backend.save_stream = Mock(side_effect=return_values)
     backend.pipe = Mock(side_effect=return_values)
