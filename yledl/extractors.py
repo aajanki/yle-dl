@@ -22,14 +22,12 @@ import os.path
 import re
 from requests import HTTPError
 from urllib.parse import urlparse, parse_qs
-
 from .areena_playlist_parser import AreenaPlaylistParser
 from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
 from .clip import Clip, FailedClip
 from .areena_api import AreenaApiProgramInfo
 from .areena_extractors import AreenaPreviewApiParser
 from .http import HttpClient
-from .kaltura import YleKalturaApiClient
 from .streamflavor import StreamFlavor, failed_flavor
 from .streamprobe import probe_flavors
 from .timestamp import parse_areena_timestamp
@@ -222,11 +220,6 @@ class AreenaExtractor(ClipExtractor):
 
         flavors.extend(flavors2)
 
-        if self.is_kaltura_media(media_id):
-            # Get mp4 streams (for wget support) from Kaltura if available.
-            # Web Areena no longer uses Kaltura, so this may break (Dec 2023).
-            flavors.extend(self.kaltura_mp4_flavors(media_id, pageurl))
-
         return flavors
 
     def flavors_by_media_id(self, media_id, hls_manifest_url, is_live, ffprobe):
@@ -247,15 +240,6 @@ class AreenaExtractor(ClipExtractor):
         else:
             return [failed_flavor('Unknown stream flavor')]
 
-    def kaltura_mp4_flavors(self, media_id, pageurl):
-        entry_id = self.kaltura_entry_id(media_id)
-        kapi_client = YleKalturaApiClient(self.httpclient)
-        playback_context = kapi_client.playback_context(entry_id, pageurl)
-        if playback_context:
-            return kapi_client.parse_stream_flavors(playback_context, pageurl)
-        else:
-            return []
-
     def is_html5_media(self, media_id):
         # 29- is the most common media ID
         # 84-, hosted on yleawsmpondemand-04.akamaized.net, April 2024
@@ -265,9 +249,6 @@ class AreenaExtractor(ClipExtractor):
             or media_id.startswith('84-')
             or media_id.startswith('85-')
         )
-
-    def is_kaltura_media(self, media_id):
-        return media_id and media_id.startswith('29-')
 
     def is_full_hd_media(self, media_id):
         return media_id and media_id.startswith('55-')
@@ -283,9 +264,6 @@ class AreenaExtractor(ClipExtractor):
 
     def is_live_media(self, media_id):
         return media_id and media_id.startswith('10-')
-
-    def kaltura_entry_id(self, mediaid):
-        return mediaid.split('-', 1)[-1]
 
     def hls_flavors(self, hls_manifest_url, media_type):
         if not hls_manifest_url:
