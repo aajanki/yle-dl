@@ -18,7 +18,7 @@
 import logging
 import os
 import os.path
-from typing import AbstractSet, Optional
+from typing import AbstractSet, Optional, Iterable, Literal
 from .errors import TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .ffmpeg import optional_stream
@@ -31,12 +31,7 @@ from .subprocess import execute_pipe
 
 logger = logging.getLogger('yledl')
 
-
-class IOCapability:
-    RESUME = 'resume'
-    PROXY = 'proxy'
-    RATELIMIT = 'ratelimit'
-    SLICE = 'slice'
+IOCapability = Literal['resume', 'proxy', 'ratelimit', 'slice']
 
 
 class PreferredFileExtension:
@@ -65,37 +60,35 @@ def exit_code_to_rd(exit_code):
 
 
 class BaseDownloader:
-    def __init__(self, url: str, name: str):
+    def __init__(
+        self,
+        url: str,
+        name: str,
+        io_capabilities: Optional[Iterable[IOCapability]] = None,
+    ):
         self.url = url
         self.name = name
-        self.io_capabilities: AbstractSet[str] = frozenset()
         self.error_message: Optional[str] = None
+        self.io_capabilities: AbstractSet[IOCapability] = frozenset(
+            io_capabilities or []
+        )
 
     def is_valid(self):
         return True
 
     def warn_on_unsupported_feature(self, io):
-        if io.proxy and IOCapability.PROXY not in self.io_capabilities:
+        if io.proxy and 'proxy' not in self.io_capabilities:
             logger.warning(
                 'Proxy not supported on this stream. Trying to continue anyway'
             )
 
-        if (
-            io.download_limits.ratelimit
-            and IOCapability.RATELIMIT not in self.io_capabilities
-        ):
+        if io.download_limits.ratelimit and 'ratelimit' not in self.io_capabilities:
             logger.warning('Rate limiting not supported on this stream')
 
-        if (
-            io.download_limits.duration
-            and IOCapability.SLICE not in self.io_capabilities
-        ):
+        if io.download_limits.duration and 'slice' not in self.io_capabilities:
             logger.warning('--duration will be ignored on this stream')
 
-        if (
-            io.download_limits.start_position
-            and IOCapability.SLICE not in self.io_capabilities
-        ):
+        if io.download_limits.start_position and 'slice' not in self.io_capabilities:
             logger.warning('--startposition will be ignored on this stream')
 
         # IOCapability.RESUME will be checked later when we know if we
@@ -104,7 +97,7 @@ class BaseDownloader:
     def warn_on_unsupported_resume(self, filename, clip, io):
         if (
             io.resume
-            and IOCapability.RESUME not in self.io_capabilities
+            and 'resume' not in self.io_capabilities
             and filename != '-'
             and os.path.isfile(filename)
         ):
@@ -206,12 +199,11 @@ class DASHHLSBackend(FfmpegBackend):
         is_live=False,
         experimental_subtitles=False,
     ):
-        super().__init__(url, Backends.FFMPEG)
+        super().__init__(url, Backends.FFMPEG, ['slice', 'proxy'])
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
         self.experimental_subtitles = experimental_subtitles
-        self.io_capabilities = frozenset([IOCapability.SLICE, IOCapability.PROXY])
 
     def input_args(self, io):
         args = [
@@ -544,14 +536,15 @@ class HLSAudioBackend(FfmpegBackend):
 
 class WgetBackend(ExternalDownloader):
     def __init__(self, url, file_extension):
-        super().__init__(url, Backends.WGET)
+        super().__init__(
+            url,
+            Backends.WGET,
+            ['resume', 'ratelimit', 'proxy'],
+        )
 
         if not file_extension:
             logger.warning(f'Mandatory file extension is missing for URL {url}')
         self._file_extension = MandatoryFileExtension(file_extension)
-        self.io_capabilities = frozenset(
-            [IOCapability.RESUME, IOCapability.RATELIMIT, IOCapability.PROXY]
-        )
 
     def file_extension(self, preferred):
         return self._file_extension
