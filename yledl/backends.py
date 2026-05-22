@@ -158,10 +158,46 @@ class ExternalDownloader(BaseDownloader):
         return exit_code_to_rd(execute_pipe(commands, env))
 
 
-### Download a MPEG-DASH and HLS stream by delegating to ffmpeg ###
+### Base class for downloading by delegating to ffmpeg ###
 
 
-class DASHHLSBackend(ExternalDownloader):
+class FfmpegBackend(ExternalDownloader):
+    def build_args(self, output_name: str, clip, io) -> list[str]:
+        return (
+            [io.ffmpeg_binary]
+            + self.input_args(io)
+            + self.output_args_file(clip, io, output_name)
+        )
+
+    def build_pipe_args(self, io) -> list[str]:
+        return [io.ffmpeg_binary] + self.input_args(io) + self.output_args_pipe(io)
+
+    def input_args(self, io) -> list[str]:
+        return []
+
+    def output_args_file(self, clip, io, output_name: str) -> list[str]:
+        return []
+
+    def output_args_pipe(self, io) -> list[str]:
+        return []
+
+    def duration_arg(self, download_limits) -> list[str]:
+        if download_limits.duration:
+            return ['-t', str(download_limits.duration)]
+        else:
+            return []
+
+    def proxy_arg(self, io) -> list[str]:
+        if io.proxy:
+            return ['-http_proxy', io.proxy]
+        else:
+            return []
+
+
+### Download an MPEG-DASH and HLS stream by delegating to ffmpeg ###
+
+
+class DASHHLSBackend(FfmpegBackend):
     def __init__(
         self,
         url,
@@ -170,7 +206,7 @@ class DASHHLSBackend(ExternalDownloader):
         is_live=False,
         experimental_subtitles=False,
     ):
-        ExternalDownloader.__init__(self, url)
+        super().__init__(url)
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
@@ -178,20 +214,100 @@ class DASHHLSBackend(ExternalDownloader):
         self.io_capabilities = frozenset([IOCapability.SLICE, IOCapability.PROXY])
         self.name = Backends.FFMPEG
 
+    def input_args(self, io):
+        args = [
+            '-y',
+            '-headers',
+            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
+            '-loglevel',
+            ffmpeg_loglevel(logger.getEffectiveLevel()),
+            '-thread_queue_size',
+            '2048',
+            # -seekable 0 is needed for media ID 67-xxxx streams
+            '-seekable',
+            '0',
+            # -allowed_extensions is required for subtitles starting from ffmpeg
+            # versions released since Feb 2025 (e.g. 4.3.9 and 7.1.1).
+            # Testing shows that this works also on at least on some older
+            # ffmpeg versions, but I haven't checked when -allowed_extensions
+            # was introduced.
+            '-allowed_extensions',
+            'ts,aac,vtt',
+        ]
+        if not (io.subtitles == 'none' or self.live) and self.experimental_subtitles:
+            # Needed for decoding webvtt subtitles on HLS streams
+            #
+            # Subtitles disabled on live streams, because ffmpeg (at
+            # least 4.4) hangs on subtitle detection (Feb 2022).
+            args.extend(['-strict', 'experimental'])
+        if logger.getEffectiveLevel() <= logging.WARNING:
+            args.append('-stats')
+        args.extend(self._probe_args())
+        args.extend(self._seek_position_arg(io.download_limits))
+        args.extend(self.proxy_arg(io))
+        args.extend(['-i', self.url])
+        return args
+
+    def output_args_pipe(self, io):
+        # We don't use "-acodec copy" on pipe, because at least vlc fails to
+        # play it failing with "Error parsing AAC extradata, unable to
+        # determine samplerate."
+        #
+        # The reason seems to be that Areena HLS stream doesn't provide AAC
+        # extradata but re-transcoding AAC to AAC inserts it.
+        return (
+            self.duration_arg(io.download_limits)
+            + self._map_video_and_audio_streams(io)
+            + self._subtitle_args(io)
+            + ['-vcodec', 'copy', '-acodec', 'aac', '-dn', '-f', 'matroska', 'pipe:1']
+        )
+
+    def output_args_file(self, clip, io, output_name):
+        if io.subtitles_only:
+            short_code = two_letter_language_code(io.subtitles) or io.subtitles
+            return (
+                self.duration_arg(io.download_limits)
+                + [
+                    '-scodec',
+                    'srt',
+                    '-map',
+                    optional_stream(
+                        f'0:s:m:language:{short_code}', io.ffmpeg_version()
+                    ),
+                    '-map',
+                    optional_stream(
+                        f'0:s:m:language:{io.subtitles}', io.ffmpeg_version()
+                    ),
+                ]
+                + ['-vn', '-an', f'file:{output_name}']
+            )
+        return (
+            self.duration_arg(io.download_limits)
+            + self._metadata_args(clip, io)
+            + self._map_video_and_audio_streams(io)
+            + self._subtitle_args(io)
+            + [
+                '-bsf:a',
+                'aac_adtstoasc',
+                '-vcodec',
+                'copy',
+                '-acodec',
+                'copy',
+                '-dn',
+                f'file:{output_name}',
+            ]
+        )
+
+    def save_stream(self, output_name, clip, io):
+        res = super().save_stream(output_name, clip, io)
+
+        if res == RD_SUCCESS and output_name != '-':
+            self._delay_subtitles(output_name, clip, io)
+
+        return res
+
     def file_extension(self, preferred):
         return PreferredFileExtension(preferred)
-
-    def _duration_arg(self, download_limits):
-        if download_limits.duration:
-            return ['-t', str(download_limits.duration)]
-        else:
-            return []
-
-    def _proxy_arg(self, io):
-        if io.proxy:
-            return ['-http_proxy', io.proxy]
-        else:
-            return []
 
     def _seek_position_arg(self, download_limits):
         seekpos = download_limits.start_position
@@ -313,113 +429,6 @@ class DASHHLSBackend(ExternalDownloader):
             optional_stream(f'0:p:{pid}:a', io.ffmpeg_version()),
         ]
 
-    def build_args(self, output_name, clip, io):
-        return (
-            [io.ffmpeg_binary]
-            + self.input_args(io)
-            + self.output_args_file(clip, io, output_name)
-        )
-
-    def build_pipe_args(self, io):
-        return [io.ffmpeg_binary] + self.input_args(io) + self.output_args_pipe(io)
-
-    def pipe(self, io):
-        commands = [self.build_pipe_args(io)]
-        env = self.extra_environment(io)
-        return self.external_downloader(commands, env)
-
-    def input_args(self, io):
-        args = [
-            '-y',
-            '-headers',
-            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
-            '-loglevel',
-            ffmpeg_loglevel(logger.getEffectiveLevel()),
-            '-thread_queue_size',
-            '2048',
-            # -seekable 0 is needed for media ID 67-xxxx streams
-            '-seekable',
-            '0',
-            # -allowed_extensions is required for subtitles starting from ffmpeg
-            # versions released since Feb 2025 (e.g. 4.3.9 and 7.1.1).
-            # Testing shows that this works also on at least on some older
-            # ffmpeg versions, but I haven't checked when -allowed_extensions
-            # was introduced.
-            '-allowed_extensions',
-            'ts,aac,vtt',
-        ]
-        if not (io.subtitles == 'none' or self.live) and self.experimental_subtitles:
-            # Needed for decoding webvtt subtitles on HLS streams
-            #
-            # Subtitles disabled on live streams, because ffmpeg (at
-            # least 4.4) hangs on subtitle detection (Feb 2022).
-            args.extend(['-strict', 'experimental'])
-        if logger.getEffectiveLevel() <= logging.WARNING:
-            args.append('-stats')
-        args.extend(self._probe_args())
-        args.extend(self._seek_position_arg(io.download_limits))
-        args.extend(self._proxy_arg(io))
-        args.extend(['-i', self.url])
-        return args
-
-    def output_args_pipe(self, io):
-        # We don't use "-acodec copy" on pipe, because at least vlc fails to
-        # play it failing with "Error parsing AAC extradata, unable to
-        # determine samplerate."
-        #
-        # The reason seems to be that Areena HLS stream doesn't provide AAC
-        # extradata but re-transcoding AAC to AAC inserts it.
-        return (
-            self._duration_arg(io.download_limits)
-            + self._map_video_and_audio_streams(io)
-            + self._subtitle_args(io)
-            + ['-vcodec', 'copy', '-acodec', 'aac', '-dn', '-f', 'matroska', 'pipe:1']
-        )
-
-    def output_args_file(self, clip, io, output_name):
-        if io.subtitles_only:
-            short_code = two_letter_language_code(io.subtitles) or io.subtitles
-            return (
-                self._duration_arg(io.download_limits)
-                + [
-                    '-scodec',
-                    'srt',
-                    '-map',
-                    optional_stream(
-                        f'0:s:m:language:{short_code}', io.ffmpeg_version()
-                    ),
-                    '-map',
-                    optional_stream(
-                        f'0:s:m:language:{io.subtitles}', io.ffmpeg_version()
-                    ),
-                ]
-                + ['-vn', '-an', f'file:{output_name}']
-            )
-        return (
-            self._duration_arg(io.download_limits)
-            + self._metadata_args(clip, io)
-            + self._map_video_and_audio_streams(io)
-            + self._subtitle_args(io)
-            + [
-                '-bsf:a',
-                'aac_adtstoasc',
-                '-vcodec',
-                'copy',
-                '-acodec',
-                'copy',
-                '-dn',
-                f'file:{output_name}',
-            ]
-        )
-
-    def save_stream(self, output_name, clip, io):
-        res = super().save_stream(output_name, clip, io)
-
-        if res == RD_SUCCESS and output_name != '-':
-            self._delay_subtitles(output_name, clip, io)
-
-        return res
-
     def _delay_subtitles(self, output_name: str, clip, io) -> None:
         clip_sub_starts: list[float] = [
             x.subtitle_start_time
@@ -464,28 +473,66 @@ class DASHHLSBackend(ExternalDownloader):
         )
 
 
-class HLSAudioBackend(DASHHLSBackend):
+class HLSAudioBackend(FfmpegBackend):
+    def __init__(self, url: str):
+        super().__init__(url)
+        self.name = Backends.FFMPEG
+
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
 
-    def save_stream(self, output_name, clip, io):
-        return ExternalDownloader.save_stream(self, output_name, clip, io)
+    def input_args(self, io) -> list[str]:
+        args = [
+            '-y',
+            '-headers',
+            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
+            '-loglevel',
+            ffmpeg_loglevel(logger.getEffectiveLevel()),
+        ]
+        if logger.getEffectiveLevel() <= logging.WARNING:
+            args.append('-stats')
+        args.extend(self._seek_position_arg(io.download_limits))
+        args.extend(self.proxy_arg(io))
+        args.extend(['-i', self.url])
+        return args
 
-    def output_args_file(self, clip, io, output_name):
+    def output_args_file(self, clip, io, output_name: str) -> list[str]:
         return (
-            self._duration_arg(io.download_limits)
-            + self._metadata_args(clip, io, description_on_video_stream=False)
+            self.duration_arg(io.download_limits)
+            + self._metadata_args(clip)
             + ['-acodec', 'copy', '-f', 'mp3', f'file:{output_name}']
         )
 
-    def output_args_pipe(self, io):
-        return self._duration_arg(io.download_limits) + [
+    def output_args_pipe(self, io) -> list[str]:
+        return self.duration_arg(io.download_limits) + [
             '-acodec',
             'copy',
             '-f',
             'mp3',
             'pipe:1',
         ]
+
+    def _seek_position_arg(self, download_limits) -> list[str]:
+        if download_limits.start_position is not None:
+            return ['-ss', str(download_limits.start_position)]
+        else:
+            return []
+
+    def _metadata_args(self, clip) -> list[str]:
+        if not clip:
+            return []
+
+        metadata = []
+        if clip.description:
+            metadata += [f'description={clip.description}']
+
+        if clip.publish_timestamp:
+            metadata += [
+                '-metadata',
+                f'creation_time={clip.publish_timestamp.isoformat()}',
+            ]
+
+        return metadata
 
     def full_stream_already_downloaded(self, filename, clip, io):
         ffprobe = io.ffprobe()
