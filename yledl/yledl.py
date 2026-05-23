@@ -32,7 +32,7 @@ import logging
 import os
 import os.path
 from argparse import Namespace
-from typing import Iterable, List
+from typing import Iterable
 from urllib.parse import urlparse, urlunparse, parse_qs, quote
 from .backends import Backends
 from .downloader import YleDlDownloader
@@ -543,7 +543,7 @@ def set_log_level(args):
         logger.setLevel(5)
 
 
-def get_urls(args: Namespace) -> List[str]:
+def get_urls(args: Namespace) -> list[str]:
     urls = []
 
     if args.url:
@@ -733,7 +733,7 @@ def handle_urls(
     io: IOContext,
     stream_filters: StreamFilters,
     title_formatter: TitleFormatter,
-    urls: List[str],
+    urls: list[str],
 ) -> int:
     exit_status = RD_SUCCESS
 

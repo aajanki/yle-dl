@@ -20,7 +20,7 @@ import logging
 import os
 import re
 from dataclasses import asdict
-from typing import Iterable, Dict, Any, List, Optional, Literal, Iterator
+from typing import Iterable, Any, Optional, Literal, Iterator
 from .clip import Clip
 from .errors import ExternalApplicationNotFoundError, TransientDownloadError
 from .geolocation import AreenaGeoLocation
@@ -165,7 +165,7 @@ class YleDlDownloader:
 
     def get_metadata(
         self, base_url: str, io: IOContext, filters: StreamFilters
-    ) -> Iterable[Dict[str, Any]]:
+    ) -> Iterable[dict[str, Any]]:
         prober = self.create_prober(io, filters)
         extractor = self.extractor_factory(
             base_url,
@@ -381,7 +381,7 @@ class YleDlDownloader:
 
     def apply_backend_filter(
         self, flavors: Iterable[StreamFlavor], filters: StreamFilters
-    ) -> List[StreamFlavor]:
+    ) -> list[StreamFlavor]:
         def filter_streams_by_backend(flavor):
             sorted_streams = []
             for be in filters.enabled_backends:
@@ -408,7 +408,7 @@ class YleDlDownloader:
 
     def apply_resolution_filters(
         self, flavors: Iterable[StreamFlavor], filters: StreamFilters
-    ) -> List[StreamFlavor]:
+    ) -> list[StreamFlavor]:
         filtered = [
             fl
             for fl in flavors
@@ -464,7 +464,7 @@ class YleDlDownloader:
 
     def select_streams(
         self, flavors: Iterable[StreamFlavor], filters: StreamFilters
-    ) -> Optional[List[BaseDownloader]]:
+    ) -> Optional[list[BaseDownloader]]:
         flavor = self.select_flavor(flavors, filters)
         if flavor:
             return flavor.streams or []

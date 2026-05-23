@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional, Dict, Any, Iterable, Tuple, List
+from typing import Optional, Any, Iterable
 from datetime import datetime
 from dataclasses import dataclass, field
 from .io import IOContext, OutputFileNameGenerator
@@ -26,7 +26,7 @@ from .subtitles import Subtitle
 @dataclass
 class Clip:
     webpage: str
-    flavors: List[StreamFlavor] = field(default_factory=list)
+    flavors: list[StreamFlavor] = field(default_factory=list)
     title: str = ''
     episode_title: str = ''
     description: Optional[str] = None
@@ -34,12 +34,12 @@ class Clip:
     region: str = 'Finland'
     publish_timestamp: Optional[datetime] = None
     expiration_timestamp: Optional[datetime] = None
-    subtitles: List[Subtitle] = field(default_factory=list)
+    subtitles: list[Subtitle] = field(default_factory=list)
     program_id: Optional[str] = None
     origin_url: Optional[str] = None
     thumbnail: Optional[str] = None
 
-    def metadata(self, io: IOContext) -> Dict[str, Any]:
+    def metadata(self, io: IOContext) -> dict[str, Any]:
         flavors_meta = sorted(
             (self.flavor_meta(f) for f in self.flavors),
             key=lambda x: x.get('bitrate', 0),
@@ -84,13 +84,13 @@ class Clip:
     def format_timestamp(self, ts: Optional[datetime]) -> Optional[str]:
         return ts.isoformat() if ts else None
 
-    def flavor_meta(self, flavor: StreamFlavor) -> Dict[str, Any]:
+    def flavor_meta(self, flavor: StreamFlavor) -> dict[str, Any]:
         if all(not s.is_valid() for s in flavor.streams):
             return self.error_flavor_meta(flavor)
         else:
             return self.valid_flavor_meta(flavor)
 
-    def valid_flavor_meta(self, flavor: StreamFlavor) -> Dict[str, Any]:
+    def valid_flavor_meta(self, flavor: StreamFlavor) -> dict[str, Any]:
         backends = [s.name for s in flavor.streams if s.is_valid()]
 
         streams = flavor.streams
@@ -110,7 +110,7 @@ class Clip:
         ]
         return self.ignore_none_values(meta)
 
-    def error_flavor_meta(self, flavor: StreamFlavor) -> Dict[str, Any]:
+    def error_flavor_meta(self, flavor: StreamFlavor) -> dict[str, Any]:
         error_messages = [
             s.error_message
             for s in flavor.streams
@@ -123,7 +123,7 @@ class Clip:
 
         return {'error': msg}
 
-    def ignore_none_values(self, li: Iterable[Tuple[str, Any]]) -> Dict[str, Any]:
+    def ignore_none_values(self, li: Iterable[tuple[str, Any]]) -> dict[str, Any]:
         return {key: value for (key, value) in li if value is not None}
 
 

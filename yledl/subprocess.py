@@ -25,7 +25,7 @@ import signal
 import shlex
 import subprocess
 from subprocess import Popen
-from typing import Sequence, Mapping, List, Optional, Dict
+from typing import Sequence, Mapping, Optional
 from .errors import ExternalApplicationNotFoundError
 from .exitcodes import RD_SUCCESS, RD_INCOMPLETE
 
@@ -73,7 +73,7 @@ def execute_pipe(
 
 def _combine_envs(
     extra_environment: Optional[Mapping[str, str]],
-) -> Optional[Dict[str, str]]:
+) -> Optional[dict[str, str]]:
     if extra_environment:
         env = dict(os.environ)
         env.update(extra_environment)
@@ -89,7 +89,7 @@ def _start_process(
     if not commands:
         raise ValueError('command required')
 
-    processes: List[Popen] = []
+    processes: list[Popen] = []
     for i, args in enumerate(commands):
         if i == 0 and platform.system() != 'Windows':
             preexec_fn = _sigterm_when_parent_dies

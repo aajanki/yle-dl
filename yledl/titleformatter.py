@@ -17,7 +17,7 @@
 
 import re
 from datetime import datetime
-from typing import List, Mapping, Union, Optional
+from typing import Mapping, Union, Optional
 
 
 class TitleFormatter:
@@ -84,8 +84,8 @@ class TitleFormatter:
             and '_separator' not in self.template
         )
 
-    def _parse_template(self, template: str) -> List[Union['Literal', 'Substitution']]:
-        res: List[Union['Literal', 'Substitution']] = []
+    def _parse_template(self, template: str) -> list[Union['Literal', 'Substitution']]:
+        res: list[Union['Literal', 'Substitution']] = []
 
         last_pos = 0
         for m in re.finditer(r'\$(:?{[a-zA-Z_]+?}|\$)', template):

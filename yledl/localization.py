@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Iterable, List, Optional, Mapping
+from typing import Iterable, Optional, Mapping
 
 default_languages = ['fin', 'swe']
 
@@ -58,7 +58,7 @@ class TranslationChooser:
         else:
             return None
 
-    def _two_letter_codes(self, long_codes: Iterable[str]) -> List[str]:
+    def _two_letter_codes(self, long_codes: Iterable[str]) -> list[str]:
         return [two_letter_language_code(x) or x for x in long_codes]
 
 
