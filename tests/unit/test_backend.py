@@ -35,8 +35,8 @@ mock_clip = Clip(
 
 
 class MockHLSBackend(DASHHLSBackend):
-    def __init__(self, url, long_probe=False, program_id=None, is_live=False):
-        super().__init__(url, long_probe, program_id, is_live)
+    def __init__(self, url, program_id=None, is_live=False):
+        super().__init__(url, program_id, is_live)
 
         self.executed_commands = None
 

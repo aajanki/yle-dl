@@ -193,13 +193,11 @@ class FfmpegBackend(ExternalDownloader):
 class DASHHLSBackend(FfmpegBackend):
     def __init__(
         self,
-        url,
-        long_probe=False,
-        program_id=None,
-        is_live=False,
+        url: str,
+        program_id: Optional[int] = None,
+        is_live: bool = False,
     ):
         super().__init__(url, Backends.FFMPEG, ['slice', 'proxy'])
-        self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
 
@@ -310,16 +308,13 @@ class DASHHLSBackend(FfmpegBackend):
         else:
             return []
 
-    def _probe_args(self):
-        if self.long_probe:
-            return [
-                '-analyzeduration',
-                '10000000',  # 10 seconds
-                '-probesize',
-                '80000000',  # bytes
-            ]
-        else:
-            return []
+    def _probe_args(self) -> list[str]:
+        return [
+            '-analyzeduration',
+            '10000000',  # 10 seconds
+            '-probesize',
+            '80000000',  # bytes
+        ]
 
     def _metadata_args(self, clip, io, description_on_video_stream=True):
         if not clip:

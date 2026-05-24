@@ -62,7 +62,6 @@ def programs_to_stream_flavors(
         else:
             backend = DASHHLSBackend(
                 manifest_url,
-                long_probe=True,
                 program_id=pid,
                 is_live=is_live,
             )
