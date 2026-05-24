@@ -197,13 +197,11 @@ class DASHHLSBackend(FfmpegBackend):
         long_probe=False,
         program_id=None,
         is_live=False,
-        experimental_subtitles=False,
     ):
         super().__init__(url, Backends.FFMPEG, ['slice', 'proxy'])
         self.long_probe = long_probe
         self.program_id = program_id
         self.live = is_live
-        self.experimental_subtitles = experimental_subtitles
 
     def input_args(self, io):
         args = [
@@ -225,7 +223,7 @@ class DASHHLSBackend(FfmpegBackend):
             '-allowed_extensions',
             'ts,aac,vtt',
         ]
-        if not (io.subtitles == 'none' or self.live) and self.experimental_subtitles:
+        if not (io.subtitles == 'none' or self.live):
             # Needed for decoding webvtt subtitles on HLS streams
             #
             # Subtitles disabled on live streams, because ffmpeg (at

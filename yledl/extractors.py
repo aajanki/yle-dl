@@ -270,7 +270,7 @@ class AreenaExtractor(ClipExtractor):
             return []
 
         if media_type == 'video':
-            backend = DASHHLSBackend(hls_manifest_url, experimental_subtitles=True)
+            backend = DASHHLSBackend(hls_manifest_url)
         else:
             backend = HLSAudioBackend(hls_manifest_url)
 

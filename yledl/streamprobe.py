@@ -65,7 +65,6 @@ def programs_to_stream_flavors(
                 long_probe=True,
                 program_id=pid,
                 is_live=is_live,
-                experimental_subtitles=True,
             )
 
         res.append(
