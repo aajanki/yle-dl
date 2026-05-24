@@ -464,9 +464,12 @@ class DASHHLSBackend(FfmpegBackend):
         )
 
 
+### Download an HLS audio stream by delegating to ffmpeg ###
+
+
 class HLSAudioBackend(FfmpegBackend):
     def __init__(self, url: str):
-        super().__init__(url, Backends.FFMPEG)
+        super().__init__(url, Backends.FFMPEG, ['slice', 'proxy'])
 
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
@@ -490,13 +493,11 @@ class HLSAudioBackend(FfmpegBackend):
         return (
             self.duration_arg(io.download_limits)
             + self._metadata_args(clip)
-            + ['-acodec', 'copy', '-f', 'mp3', f'file:{output_name}']
+            + ['-f', 'mp3', f'file:{output_name}']
         )
 
     def output_args_pipe(self, io) -> list[str]:
         return self.duration_arg(io.download_limits) + [
-            '-acodec',
-            'copy',
             '-f',
             'mp3',
             'pipe:1',

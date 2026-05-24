@@ -16,7 +16,7 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from .backends import DASHHLSBackend
+from .backends import BaseDownloader, DASHHLSBackend, HLSAudioBackend
 from .ffmpeg import Ffprobe
 from .streamflavor import StreamFlavor, failed_flavor
 
@@ -39,9 +39,7 @@ def programs_to_stream_flavors(
     res: list[StreamFlavor] = []
     for program in programs.get('programs', []):
         streams = program.get('streams', [])
-        any_stream_is_video = any(
-            x['codec_type'] == 'video' for x in streams if 'codec_type' in x
-        )
+        audio_only_stream = all(x.get('codec_type') == 'audio' for x in streams)
         widths = [x['width'] for x in streams if 'width' in x]
         heights = [x['height'] for x in streams if 'height' in x]
         bitrate = program.get('tags', {}).get('variant_bitrate')
@@ -57,22 +55,27 @@ def programs_to_stream_flavors(
             min(subtitle_start_times) if subtitle_start_times else None
         )
         pid = program.get('program_id')
+
+        backend: BaseDownloader
+        if audio_only_stream:
+            backend = HLSAudioBackend(manifest_url)
+        else:
+            backend = DASHHLSBackend(
+                manifest_url,
+                long_probe=True,
+                program_id=pid,
+                is_live=is_live,
+                experimental_subtitles=True,
+            )
+
         res.append(
             StreamFlavor(
-                media_type='video' if any_stream_is_video else 'audio',
+                media_type='audio' if audio_only_stream else 'video',
                 height=heights[0] if heights else None,
                 width=widths[0] if widths else None,
                 bitrate=bitrate,
                 subtitle_start_time=shared_subtitle_start_time,
-                streams=[
-                    DASHHLSBackend(
-                        manifest_url,
-                        long_probe=True,
-                        program_id=pid,
-                        is_live=is_live,
-                        experimental_subtitles=True,
-                    )
-                ],
+                streams=[backend],
             )
         )
 
