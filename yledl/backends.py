@@ -186,6 +186,12 @@ class FfmpegBackend(ExternalDownloader):
         else:
             return []
 
+    def log_arg(self) -> list[str]:
+        args = ['-loglevel', ffmpeg_loglevel(logger.getEffectiveLevel())]
+        if logger.getEffectiveLevel() <= logging.WARNING:
+            args.append('-stats')
+        return args
+
 
 ### Download an MPEG-DASH and HLS stream by delegating to ffmpeg ###
 
@@ -206,8 +212,6 @@ class DASHHLSBackend(FfmpegBackend):
             '-y',
             '-headers',
             f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
-            '-loglevel',
-            ffmpeg_loglevel(logger.getEffectiveLevel()),
             '-thread_queue_size',
             '2048',
             # -seekable 0 is needed for media ID 67-xxxx streams
@@ -227,8 +231,7 @@ class DASHHLSBackend(FfmpegBackend):
             # Subtitles disabled on live streams, because ffmpeg (at
             # least 4.4) hangs on subtitle detection (Feb 2022).
             args.extend(['-strict', 'experimental'])
-        if logger.getEffectiveLevel() <= logging.WARNING:
-            args.append('-stats')
+        args.extend(self.log_arg())
         args.extend(self._probe_args())
         args.extend(self._seek_position_arg(io.download_limits))
         args.extend(self.proxy_arg(io))
@@ -472,11 +475,8 @@ class HLSAudioBackend(FfmpegBackend):
             '-y',
             '-headers',
             f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
-            '-loglevel',
-            ffmpeg_loglevel(logger.getEffectiveLevel()),
         ]
-        if logger.getEffectiveLevel() <= logging.WARNING:
-            args.append('-stats')
+        args.extend(self.log_arg())
         args.extend(self._seek_position_arg(io.download_limits))
         args.extend(self.proxy_arg(io))
         args.extend(['-i', self.url])
