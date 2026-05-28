@@ -23,7 +23,7 @@ import re
 from requests import HTTPError
 from urllib.parse import urlparse, parse_qs
 from .areena_playlist_parser import AreenaPlaylistParser
-from .backends import HLSAudioBackend, DASHHLSBackend, WgetBackend
+from .backends import DASHHLSBackend, HLSAudioBackend, WgetBackend
 from .clip import Clip, FailedClip
 from .areena_api import AreenaApiProgramInfo
 from .areena_extractors import AreenaPreviewApiParser
@@ -201,7 +201,6 @@ class AreenaExtractor(ClipExtractor):
         download_url,
         media_type,
         is_live,
-        pageurl,
         ffprobe,
     ):
         flavors = []
@@ -353,7 +352,6 @@ class AreenaExtractor(ClipExtractor):
                 download_url,
                 preview.media_type(),
                 is_live,
-                pageurl,
                 ffprobe,
             ),
             thumbnail=preview.thumbnail_url(),

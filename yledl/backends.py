@@ -110,7 +110,7 @@ class BaseDownloader:
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
-    def pipe(self, io):
+    def pipe(self, clip, io):
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
@@ -133,15 +133,15 @@ class ExternalDownloader(BaseDownloader):
         args = self.build_args(output_name, clip, io)
         return self.external_downloader([args], env)
 
-    def pipe(self, io):
-        commands = [self.build_pipe_args(io)]
+    def pipe(self, clip, io):
+        commands = [self.build_pipe_args(clip, io)]
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
 
     def build_args(self, output_name, clip, io):
         raise NotImplementedError('build_args must be overridden')
 
-    def build_pipe_args(self, io):
+    def build_pipe_args(self, clip, io):
         raise NotImplementedError('build_pipe_args must be overridden')
 
     def extra_environment(self, io):
@@ -158,14 +158,16 @@ class FfmpegBackend(ExternalDownloader):
     def build_args(self, output_name: str, clip, io) -> list[str]:
         return (
             [io.ffmpeg_binary]
-            + self.input_args(io)
+            + self.input_args(clip, io)
             + self.output_args_file(clip, io, output_name)
         )
 
-    def build_pipe_args(self, io) -> list[str]:
-        return [io.ffmpeg_binary] + self.input_args(io) + self.output_args_pipe(io)
+    def build_pipe_args(self, clip, io) -> list[str]:
+        return (
+            [io.ffmpeg_binary] + self.input_args(clip, io) + self.output_args_pipe(io)
+        )
 
-    def input_args(self, io) -> list[str]:
+    def input_args(self, clip, io) -> list[str]:
         return []
 
     def output_args_file(self, clip, io, output_name: str) -> list[str]:
@@ -192,6 +194,20 @@ class FfmpegBackend(ExternalDownloader):
             args.append('-stats')
         return args
 
+    def seek_position_arg(self, download_limits) -> list[str]:
+        if download_limits.start_position is not None:
+            return ['-ss', str(download_limits.start_position)]
+        else:
+            return []
+
+    def compute_subtitle_delay_s(self, clip, io) -> Optional[float]:
+        if io.subtitle_delay_ms is not None:
+            # Prefer subtitle delay set by command line argument --subdelay.
+            return io.subtitle_delay_ms / 1000
+        else:
+            # If --subdelay is not set, use the delay probed from the stream metadata.
+            return clip.subtitle_start_s()
+
 
 ### Download an MPEG-DASH and HLS stream by delegating to ffmpeg ###
 
@@ -207,7 +223,7 @@ class DASHHLSBackend(FfmpegBackend):
         self.program_id = program_id
         self.live = is_live
 
-    def input_args(self, io):
+    def input_args(self, clip, io):
         args = [
             '-y',
             '-headers',
@@ -233,7 +249,7 @@ class DASHHLSBackend(FfmpegBackend):
             args.extend(['-strict', 'experimental'])
         args.extend(self.log_arg())
         args.extend(self._probe_args())
-        args.extend(self._seek_position_arg(io.download_limits))
+        args.extend(self.seek_position_arg(io.download_limits))
         args.extend(self.proxy_arg(io))
         args.extend(['-i', self.url])
         return args
@@ -253,24 +269,6 @@ class DASHHLSBackend(FfmpegBackend):
         )
 
     def output_args_file(self, clip, io, output_name):
-        if io.subtitles_only:
-            short_code = two_letter_language_code(io.subtitles) or io.subtitles
-            return (
-                self.duration_arg(io.download_limits)
-                + [
-                    '-scodec',
-                    'srt',
-                    '-map',
-                    optional_stream(
-                        f'0:s:m:language:{short_code}', io.ffmpeg_version()
-                    ),
-                    '-map',
-                    optional_stream(
-                        f'0:s:m:language:{io.subtitles}', io.ffmpeg_version()
-                    ),
-                ]
-                + ['-vn', '-an', f'file:{output_name}']
-            )
         return (
             self.duration_arg(io.download_limits)
             + self._metadata_args(clip, io)
@@ -299,17 +297,14 @@ class DASHHLSBackend(FfmpegBackend):
     def file_extension(self, preferred):
         return PreferredFileExtension(preferred)
 
-    def _seek_position_arg(self, download_limits):
+    def seek_position_arg(self, download_limits):
         seekpos = download_limits.start_position
-        if seekpos is not None:
-            if self.live:
-                # Areena seem to have 6 secs/fragment. Can we trust
-                # that this is a constant?
-                return ['-live_start_index', str(seekpos // 6)]
-            else:
-                return ['-ss', str(seekpos)]
+        if self.live and seekpos is not None:
+            # Areena seem to have 6 secs/fragment. Can we trust
+            # that this is a constant?
+            return ['-live_start_index', str(seekpos // 6)]
         else:
-            return []
+            return super().seek_position_arg(download_limits)
 
     def _probe_args(self) -> list[str]:
         return [
@@ -417,31 +412,15 @@ class DASHHLSBackend(FfmpegBackend):
         ]
 
     def _delay_subtitles(self, output_name: str, clip, io) -> None:
-        clip_sub_starts: list[float] = [
-            x.subtitle_start_time
-            for x in clip.flavors
-            if x.subtitle_start_time is not None
-        ]
+        subtitle_delay_s = self.compute_subtitle_delay_s(clip, io)
 
-        # Prefer subtitle delay set by command line argument --subdelay.
-        subtitle_delay_ms = io.subtitle_delay_ms
-
-        if subtitle_delay_ms is None and len(clip_sub_starts) > 0:
-            # If --subdelay is not set, use the delay probed from the stream metadata.
-            #
-            # ffmpeg (at least versions up to 8.1) show subtitles with incorrect timing if the
-            # substitle stream has non-zero start time. To fix the timing, we delay subtitles
-            # by the probed subtitle stream start time. Taking the minimum of all stream.
-            # It should not matter as all streams usually have the same start time.
-            subtitle_delay_ms = int(min(clip_sub_starts) * 1000)
-
-        if subtitle_delay_ms:
+        if subtitle_delay_s:
             if output_name.endswith('.srt'):
-                delay_substitles_srt(output_name, subtitle_delay_ms)
+                delay_substitles_srt(output_name, int(subtitle_delay_s * 1000))
             else:
                 delay_subtitles_mkv(
                     output_name,
-                    subtitle_delay_ms,
+                    int(subtitle_delay_s * 1000),
                     io.ffmpeg_binary,
                     io.ffmpeg_version(),
                 )
@@ -452,8 +431,6 @@ class DASHHLSBackend(FfmpegBackend):
         ) or io.preferred_format in ('mp4', '.mp4')
 
     def full_stream_already_downloaded(self, filename, clip, io):
-        if io.subtitles_only:
-            return False
         ffprobe = io.ffprobe()
         return ffprobe and ffprobe.full_stream_already_downloaded(
             filename, clip.duration_seconds
@@ -470,14 +447,14 @@ class HLSAudioBackend(FfmpegBackend):
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
 
-    def input_args(self, io) -> list[str]:
+    def input_args(self, clip, io) -> list[str]:
         args = [
             '-y',
             '-headers',
             f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
         ]
         args.extend(self.log_arg())
-        args.extend(self._seek_position_arg(io.download_limits))
+        args.extend(self.seek_position_arg(io.download_limits))
         args.extend(self.proxy_arg(io))
         args.extend(['-i', self.url])
         return args
@@ -495,12 +472,6 @@ class HLSAudioBackend(FfmpegBackend):
             'mp3',
             'pipe:1',
         ]
-
-    def _seek_position_arg(self, download_limits) -> list[str]:
-        if download_limits.start_position is not None:
-            return ['-ss', str(download_limits.start_position)]
-        else:
-            return []
 
     def _metadata_args(self, clip) -> list[str]:
         if not clip:
@@ -525,6 +496,70 @@ class HLSAudioBackend(FfmpegBackend):
         )
 
 
+### Download subtitles in SRT format ###
+
+
+class SubtitlesOnlyBackend(FfmpegBackend):
+    def __init__(self, url: str):
+        super().__init__(url, Backends.FFMPEG, ['slice', 'proxy'])
+
+    def input_args(self, clip, io) -> list[str]:
+        args = [
+            '-y',
+            '-headers',
+            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
+            # -seekable 0 is needed for media ID 67-xxxx streams
+            '-seekable',
+            '0',
+            # -allowed_extensions is required for subtitles starting from ffmpeg
+            # versions released since Feb 2025 (e.g. 4.3.9 and 7.1.1).
+            # Testing shows that this works also on at least on some older
+            # ffmpeg versions, but I haven't checked when -allowed_extensions
+            # was introduced.
+            '-allowed_extensions',
+            'ts,aac,vtt',
+            # Needed for decoding webvtt subtitles on HLS streams
+            '-strict',
+            'experimental',
+        ]
+        args.extend(self.log_arg())
+        args.extend(self.seek_position_arg(io.download_limits))
+        args.extend(self.proxy_arg(io))
+
+        subtitle_delay_s = self.compute_subtitle_delay_s(clip, io)
+        if subtitle_delay_s:
+            args.extend(['-itsoffset', str(subtitle_delay_s)])
+
+        args.extend(['-i', self.url])
+
+        return args
+
+    def output_args_pipe(self, io):
+        return self._subtitle_output_args(io, 'pipe:1')
+
+    def output_args_file(self, clip, io, output_name: str):
+        return self._subtitle_output_args(io, f'file:{output_name}')
+
+    def _subtitle_output_args(self, io, destination: str) -> list[str]:
+        short_code = two_letter_language_code(io.subtitles) or 'fi'
+        long_code = 'fin' if io.subtitles == 'all' else io.subtitles
+        return (
+            self.duration_arg(io.download_limits)
+            + [
+                '-scodec',
+                'srt',
+                '-map',
+                optional_stream(f'0:s:m:language:{short_code}', io.ffmpeg_version()),
+                '-map',
+                optional_stream(f'0:s:m:language:{long_code}', io.ffmpeg_version()),
+            ]
+            + ['-vn', '-an', '-dn', '-f', 'srt', destination]
+        )
+
+    def file_extension(self, preferred: str):
+        return MandatoryFileExtension('.srt')
+
+
 ### Download a plain HTTP file ###
 
 
@@ -546,9 +581,6 @@ class WgetBackend(ExternalDownloader):
     def save_stream(self, output_name, clip, io):
         if clip is not None:
             self.download_external_subtitles(clip.subtitles, output_name, io)
-
-        if io.subtitles_only:
-            return RD_SUCCESS
 
         res = super().save_stream(output_name, clip, io)
         if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
@@ -594,7 +626,7 @@ class WgetBackend(ExternalDownloader):
         args.append(self.url)
         return args
 
-    def build_pipe_args(self, io):
+    def build_pipe_args(self, clip, io):
         return self.shared_wget_args(io, '-') + [self.url]
 
     def shared_wget_args(self, io, output_filename):
@@ -655,7 +687,7 @@ class FailingBackend(BaseDownloader):
         logger.error(self.error_message)
         return RD_FAILED
 
-    def pipe(self, io):
+    def pipe(self, clip, io):
         logger.error(self.error_message)
         return RD_FAILED
 

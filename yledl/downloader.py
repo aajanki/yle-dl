@@ -315,7 +315,7 @@ class YleDlDownloader:
             stream.warn_on_unsupported_feature(io)
 
             try:
-                return stream.pipe(io)
+                return stream.pipe(clip, io)
             except ExternalApplicationNotFoundError:
                 # The downloader subprocess failed to start (a missing application?).
                 # Try the next backend.
@@ -352,6 +352,9 @@ class YleDlDownloader:
     ) -> Optional[StreamFlavor]:
         if not flavors:
             return None
+
+        if filters.subtitle_only:
+            flavors = [fl for fl in flavors if fl.media_type == 'subtitle']
 
         logger.debug('Available flavors:')
         for fl in sorted(flavors, key=sortkey_max_resolution_max_bitrate({})):

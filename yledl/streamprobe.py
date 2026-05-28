@@ -16,7 +16,13 @@
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from .backends import BaseDownloader, DASHHLSBackend, HLSAudioBackend
+from typing import Optional
+from .backends import (
+    BaseDownloader,
+    DASHHLSBackend,
+    HLSAudioBackend,
+    SubtitlesOnlyBackend,
+)
 from .ffmpeg import Ffprobe
 from .streamflavor import StreamFlavor, failed_flavor
 
@@ -45,15 +51,6 @@ def programs_to_stream_flavors(
         bitrate = program.get('tags', {}).get('variant_bitrate')
         if bitrate:
             bitrate = int(bitrate) / 1000
-        # Take (arbitrarily) the min of subtitle start times. Usually all start times are equal.
-        subtitle_start_times = [
-            float(s['start_time'])
-            for s in streams
-            if s['codec_type'] == 'subtitle' and 'start_time' in s
-        ]
-        shared_subtitle_start_time = (
-            min(subtitle_start_times) if subtitle_start_times else None
-        )
         pid = program.get('program_id')
 
         backend: BaseDownloader
@@ -72,8 +69,17 @@ def programs_to_stream_flavors(
                 height=heights[0] if heights else None,
                 width=widths[0] if widths else None,
                 bitrate=bitrate,
-                subtitle_start_time=shared_subtitle_start_time,
                 streams=[backend],
+            )
+        )
+
+    has_subtitles, subtitle_start_time = _get_embedded_subtitles(programs)
+    if has_subtitles:
+        res.append(
+            StreamFlavor(
+                media_type='subtitle',
+                subtitle_start_time=subtitle_start_time,
+                streams=[SubtitlesOnlyBackend(manifest_url)],
             )
         )
 
@@ -81,9 +87,21 @@ def programs_to_stream_flavors(
     return sorted(res, key=lambda x: (x.height or 0, x.bitrate or 0))
 
 
+def _get_embedded_subtitles(programs: dict) -> tuple[bool, Optional[float]]:
+    for program in programs.get('programs', []):
+        for stream in program.get('streams', []):
+            if stream.get('codec_type') == 'subtitle':
+                # Take (arbitrarily) the start time of the first of subtitle stream.
+                # Usually all streams have the same start time so this shouldn't matter.
+                return True, float(stream['start_time'])
+
+    return False, None
+
+
 def _drop_duplicates(stream_flavors: list[StreamFlavor]) -> list[StreamFlavor]:
     def flavor_key(s: StreamFlavor):
         return (
+            s.media_type,
             s.width,
             s.height,
             s.bitrate,

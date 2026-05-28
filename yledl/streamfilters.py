@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -34,3 +34,4 @@ class StreamFilters:
     maxbitrate: Optional[int] = None
     maxheight: Optional[int] = None
     enabled_backends: list[str] = field(default_factory=default_backends)
+    subtitle_only: bool = False

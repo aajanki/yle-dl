@@ -75,7 +75,7 @@ def test_hls_backend_save_stream():
 def test_hls_backend_pipe():
     backend = MockHLSBackend(tv1_url, program_id=0)
 
-    res = backend.pipe(io)
+    res = backend.pipe(mock_clip, io)
 
     assert res == RD_SUCCESS
     assert len(backend.executed_commands) == 1
@@ -95,7 +95,7 @@ def test_wget_backend_save_stream():
 def test_wget_backend_pipe():
     backend = MockWgetBackend(tv1_url, file_extension='.mkv')
 
-    res = backend.pipe(io)
+    res = backend.pipe(mock_clip, io)
 
     assert res == RD_SUCCESS
     assert len(backend.executed_commands) == 1

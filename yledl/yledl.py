@@ -668,7 +668,6 @@ def main():
         create_dirs=args.create_dirs,
         xattr=args.xattrs,
         subtitle_delay_ms=subtitle_delay_ms,
-        subtitles_only=args.subtitles_only,
     )
 
     action = _parse_action(args)
@@ -688,7 +687,9 @@ def main():
 
     maxbitrate = bitrate_from_arg(args.maxbitrate)
     maxheight = resolution_from_arg(args.resolution)
-    stream_filters = StreamFilters(args.latestepisode, maxbitrate, maxheight, backends)
+    stream_filters = StreamFilters(
+        args.latestepisode, maxbitrate, maxheight, backends, args.subtitles_only
+    )
     httpclient = HttpClient(io)
 
     try:
