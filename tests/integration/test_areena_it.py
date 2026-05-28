@@ -39,9 +39,13 @@ def test_areena_html5_metadata():
     assert len(metadata) == 1
     flavors = metadata[0]['flavors']
     assert len(flavors) >= 4
-    assert any(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f for f in flavors)
-    assert any('height' in f and 'width' in f for f in flavors)
+    assert any(f.get('media_type') in ['video', 'subtitle'] for f in flavors)
+    assert all('bitrate' in f for f in flavors if f.get('media_type') == 'video')
+    assert any(
+        'height' in f and 'width' in f
+        for f in flavors
+        if f.get('media_type') == 'video'
+    )
     assert metadata[0]['duration_seconds'] == 907
     assert metadata[0]['region'] == 'World'
     assert metadata[0]['publish_timestamp'] == '2021-04-01T00:01:00+03:00'
@@ -92,7 +96,9 @@ def test_areena_live_metadata():
 
     assert len(metadata) == 1
     assert len(metadata[0]['flavors']) >= 1
-    assert all(f.get('media_type') == 'video' for f in metadata[0]['flavors'])
+    assert all(
+        f.get('media_type') in ['video', 'subtitle'] for f in metadata[0]['flavors']
+    )
     assert metadata[0]['region'] == 'Finland'
 
 

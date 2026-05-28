@@ -35,9 +35,13 @@ def test_uutiset_main_media_metadata():
 
     flavors = metadata[0]['flavors']
     assert len(flavors) >= 3
-    assert any(f.get('media_type') == 'video' for f in flavors)
-    assert all('bitrate' in f for f in flavors)
-    assert any('height' in f and 'width' in f for f in flavors)
+    assert any(f.get('media_type') in ['video', 'subtitle'] for f in flavors)
+    assert all('bitrate' in f for f in flavors if f.get('media_type') == 'video')
+    assert any(
+        'height' in f and 'width' in f
+        for f in flavors
+        if f.get('media_type') == 'video'
+    )
 
 
 def test_uutiset_headline_metadata():

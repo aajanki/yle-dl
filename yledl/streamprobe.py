@@ -95,7 +95,7 @@ def _get_embedded_subtitles(programs: dict) -> tuple[bool, Optional[float]]:
             if stream.get('codec_type') == 'subtitle':
                 # Take (arbitrarily) the start time of the first of subtitle stream.
                 # Usually all streams have the same start time so this shouldn't matter.
-                return True, float(stream['start_time'])
+                return True, float(stream.get('start_time', 0))
 
     return False, None
 
