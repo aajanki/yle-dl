@@ -49,6 +49,7 @@ def programs_to_stream_flavors(
         widths = [x['width'] for x in streams if 'width' in x]
         heights = [x['height'] for x in streams if 'height' in x]
         bitrate = program.get('tags', {}).get('variant_bitrate')
+        start_time = streams[0].get('start_time') if streams else None
         if bitrate:
             bitrate = int(bitrate) / 1000
         pid = program.get('program_id')
@@ -69,6 +70,7 @@ def programs_to_stream_flavors(
                 height=heights[0] if heights else None,
                 width=widths[0] if widths else None,
                 bitrate=bitrate,
+                start_time=start_time,
                 streams=[backend],
             )
         )
@@ -78,7 +80,7 @@ def programs_to_stream_flavors(
         res.append(
             StreamFlavor(
                 media_type='subtitle',
-                subtitle_start_time=subtitle_start_time,
+                start_time=subtitle_start_time,
                 streams=[SubtitlesOnlyBackend(manifest_url)],
             )
         )

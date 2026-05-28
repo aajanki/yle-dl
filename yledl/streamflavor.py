@@ -26,7 +26,7 @@ class StreamFlavor:
     height: Optional[int] = None
     width: Optional[int] = None
     bitrate: Optional[float] = None
-    subtitle_start_time: Optional[float] = None
+    start_time: Optional[float] = None
     streams: list[BaseDownloader] = field(default_factory=list)
 
 

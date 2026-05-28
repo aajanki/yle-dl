@@ -128,14 +128,12 @@ class Clip:
 
     def subtitle_start_s(self) -> Optional[float]:
         flavor_starts: list[float] = [
-            x.subtitle_start_time
-            for x in self.flavors
-            if x.subtitle_start_time is not None
+            x.start_time for x in self.flavors if x.start_time is not None
         ]
 
         if len(flavor_starts) > 0:
             # ffmpeg (at least versions up to 8.1) show subtitles with incorrect timing if the
-            # substitle stream has non-zero start time. To fix the timing, we delay subtitles
+            # subtitle stream has non-zero start time. To fix the timing, we delay subtitles
             # by the probed subtitle stream start time. Taking the minimum of all stream.
             # It should not matter as all streams usually have the same start time.
             return min(flavor_starts)
