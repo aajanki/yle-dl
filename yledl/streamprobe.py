@@ -49,7 +49,10 @@ def programs_to_stream_flavors(
         widths = [x['width'] for x in streams if 'width' in x]
         heights = [x['height'] for x in streams if 'height' in x]
         bitrate = program.get('tags', {}).get('variant_bitrate')
-        start_time = streams[0].get('start_time') if streams else None
+        try:
+            start_time = float(streams[0].get('start_time')) if streams else None
+        except ValueError:
+            start_time = None
         if bitrate:
             bitrate = int(bitrate) / 1000
         pid = program.get('program_id')
