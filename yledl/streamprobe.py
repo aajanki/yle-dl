@@ -21,7 +21,7 @@ from .backends import (
     BaseDownloader,
     DASHHLSBackend,
     HLSAudioBackend,
-    SubtitlesOnlyBackend,
+    HLSSubtitlesBackend,
 )
 from .ffmpeg import Ffprobe
 from .streamflavor import StreamFlavor, failed_flavor
@@ -84,7 +84,7 @@ def programs_to_stream_flavors(
             StreamFlavor(
                 media_type='subtitle',
                 start_time=subtitle_start_time,
-                streams=[SubtitlesOnlyBackend(manifest_url)],
+                streams=[HLSSubtitlesBackend(manifest_url)],
             )
         )
 

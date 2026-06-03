@@ -19,6 +19,8 @@ import logging
 import re
 import os.path
 from dataclasses import dataclass
+from typing import Optional, Iterable
+
 from .ffmpeg import optional_stream
 from .subprocess import execute_pipe
 from .utils import ffmpeg_loglevel
@@ -105,3 +107,13 @@ def delay_subtitles_mkv(
         logger.warning('Failed to apply subtitle delay')
         if os.path.exists(tmp):
             os.remove(tmp)
+
+
+def subtitle_url(subtitles: Iterable[Subtitle], sublang: str) -> Optional[str]:
+    if sublang == 'none' or not subtitles:
+        return None
+
+    if sublang == 'all':
+        sublang = 'fin'
+
+    return next((s.url for s in subtitles if s.lang == sublang))

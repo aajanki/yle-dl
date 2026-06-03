@@ -23,7 +23,7 @@ import re
 from requests import HTTPError
 from urllib.parse import urlparse, parse_qs
 from .areena_playlist_parser import AreenaPlaylistParser
-from .backends import DASHHLSBackend, HLSAudioBackend, WgetBackend
+from .backends import DASHHLSBackend, HLSAudioBackend, VideoAndSubtitlesWgetBackend
 from .clip import Clip, FailedClip
 from .areena_api import AreenaApiProgramInfo
 from .areena_extractors import AreenaPreviewApiParser
@@ -200,13 +200,16 @@ class AreenaExtractor(ClipExtractor):
         hls_manifest_url,
         download_url,
         media_type,
+        external_subtitles,
         is_live,
         ffprobe,
     ):
         flavors = []
 
         if download_url:
-            flavors.extend(self.download_flavors(download_url, media_type))
+            flavors.extend(
+                self.download_flavors(download_url, media_type, external_subtitles)
+            )
 
         flavors2 = []
         if media_id:
@@ -282,10 +285,10 @@ class AreenaExtractor(ClipExtractor):
         logger.debug('Probing for stream flavors')
         return probe_flavors(hls_manifest_url, is_live, ffprobe)
 
-    def download_flavors(self, download_url, media_type):
-        path = urlparse(download_url)[2]
+    def download_flavors(self, download_url: str, media_type: str, external_subtitles):
+        path: str = urlparse(download_url)[2]
         ext = os.path.splitext(path)[1] or None
-        backend = WgetBackend(download_url, ext)
+        backend = VideoAndSubtitlesWgetBackend(download_url, external_subtitles, ext)
         return [StreamFlavor(media_type=media_type, streams=[backend])]
 
     def publish_event(self, program_info):
@@ -351,6 +354,7 @@ class AreenaExtractor(ClipExtractor):
                 preview.manifest_url(),
                 download_url,
                 preview.media_type(),
+                preview_subtitles,
                 is_live,
                 ffprobe,
             ),

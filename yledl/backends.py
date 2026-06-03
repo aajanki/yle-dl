@@ -22,10 +22,9 @@ from typing import AbstractSet, Optional, Iterable, Literal
 from .errors import TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .ffmpeg import optional_stream
-from .http import HttpClient
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
-from .subtitles import delay_subtitles_mkv, delay_substitles_srt
+from .subtitles import delay_subtitles_mkv, delay_substitles_srt, Subtitle, subtitle_url
 from .subprocess import execute_pipe
 
 
@@ -499,7 +498,7 @@ class HLSAudioBackend(FfmpegBackend):
 ### Download subtitles in SRT format ###
 
 
-class SubtitlesOnlyBackend(FfmpegBackend):
+class HLSSubtitlesBackend(FfmpegBackend):
     def __init__(self, url: str):
         super().__init__(url, Backends.FFMPEG, ['slice', 'proxy'])
 
@@ -560,11 +559,11 @@ class SubtitlesOnlyBackend(FfmpegBackend):
         return MandatoryFileExtension('.srt')
 
 
-### Download a plain HTTP file ###
+### Download a plain HTTP file by delegating to wget ###
 
 
 class WgetBackend(ExternalDownloader):
-    def __init__(self, url, file_extension):
+    def __init__(self, url: str, file_extension: Optional[str]):
         super().__init__(
             url,
             Backends.WGET,
@@ -573,36 +572,19 @@ class WgetBackend(ExternalDownloader):
 
         if not file_extension:
             logger.warning(f'Mandatory file extension is missing for URL {url}')
-        self._file_extension = MandatoryFileExtension(file_extension)
+
+        self._file_extension = MandatoryFileExtension(file_extension or '.mp4')
 
     def file_extension(self, preferred):
         return self._file_extension
 
     def save_stream(self, output_name, clip, io):
-        if clip is not None:
-            self.download_external_subtitles(clip.subtitles, output_name, io)
-
         res = super().save_stream(output_name, clip, io)
+
         if res != 0 and logger.getEffectiveLevel() >= logging.ERROR:
             logger.error('wget failed! Increase verbosity to see more details.')
 
         return res
-
-    def download_external_subtitles(self, subtitles, video_file_name, io):
-        if io.subtitles == 'none' or not subtitles:
-            return
-        elif io.subtitles == 'all':
-            sub = next((s for s in subtitles if s.lang == 'fin'), subtitles[0])
-        else:
-            sub = next((s for s in subtitles if s.lang == io.subtitles), None)
-
-        if sub:
-            logger.debug(f'Downloading subtitles for {sub.lang}')
-            basename = os.path.splitext(video_file_name)[0]
-            destination_file = f'{basename}.srt'
-            HttpClient(io).download_to_file(sub.url, destination_file)
-            if io.subtitle_delay_ms:
-                delay_substitles_srt(destination_file, io.subtitle_delay_ms)
 
     def build_args(self, output_name, clip, io):
         args = self.shared_wget_args(io, output_name)
@@ -670,6 +652,32 @@ class WgetBackend(ExternalDownloader):
             raise TransientDownloadError('wget: Network failure')
 
         return exit_code_to_rd(res)
+
+
+### Download a video and subtitle ###
+
+
+class VideoAndSubtitlesWgetBackend(WgetBackend):
+    def __init__(
+        self, video_url: str, subtitles: list[Subtitle], video_extension: Optional[str]
+    ):
+        super().__init__(video_url, video_extension)
+        self.subtitles = subtitles
+
+    def save_stream(self, output_name: str, clip, io) -> int:
+        res = super().save_stream(output_name, clip, io)
+
+        try:
+            sub_url = subtitle_url(self.subtitles, io.subtitles)
+
+            if sub_url:
+                # FIXME
+                self.url = sub_url
+                super().save_stream(output_name, clip, io)
+        except RuntimeError as exc:
+            logger.error(exc)
+
+        return res
 
 
 ### Backend representing a failed stream ###
