@@ -129,18 +129,18 @@ class ExternalDownloader(BaseDownloader):
         self.warn_on_unsupported_resume(output_name, clip, io)
 
         env = self.extra_environment(io)
-        args = self.build_args(output_name, clip, io)
+        args = self.build_args(self.url, output_name, clip, io)
         return self.external_downloader([args], env)
 
     def pipe(self, clip, io):
-        commands = [self.build_pipe_args(clip, io)]
+        commands = [self.build_pipe_args(self.url, clip, io)]
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
 
-    def build_args(self, output_name, clip, io):
+    def build_args(self, url, output_name, clip, io):
         raise NotImplementedError('build_args must be overridden')
 
-    def build_pipe_args(self, clip, io):
+    def build_pipe_args(self, url, clip, io):
         raise NotImplementedError('build_pipe_args must be overridden')
 
     def extra_environment(self, io):
@@ -154,19 +154,21 @@ class ExternalDownloader(BaseDownloader):
 
 
 class FfmpegBackend(ExternalDownloader):
-    def build_args(self, output_name: str, clip, io) -> list[str]:
+    def build_args(self, url, output_name: str, clip, io) -> list[str]:
         return (
             [io.ffmpeg_binary]
-            + self.input_args(clip, io)
+            + self.input_args(url, clip, io)
             + self.output_args_file(clip, io, output_name)
         )
 
-    def build_pipe_args(self, clip, io) -> list[str]:
+    def build_pipe_args(self, url, clip, io) -> list[str]:
         return (
-            [io.ffmpeg_binary] + self.input_args(clip, io) + self.output_args_pipe(io)
+            [io.ffmpeg_binary]
+            + self.input_args(url, clip, io)
+            + self.output_args_pipe(io)
         )
 
-    def input_args(self, clip, io) -> list[str]:
+    def input_args(self, url, clip, io) -> list[str]:
         return []
 
     def output_args_file(self, clip, io, output_name: str) -> list[str]:
@@ -222,7 +224,7 @@ class DASHHLSBackend(FfmpegBackend):
         self.program_id = program_id
         self.live = is_live
 
-    def input_args(self, clip, io):
+    def input_args(self, url, clip, io):
         args = [
             '-y',
             '-headers',
@@ -250,7 +252,7 @@ class DASHHLSBackend(FfmpegBackend):
         args.extend(self._probe_args())
         args.extend(self.seek_position_arg(io.download_limits))
         args.extend(self.proxy_arg(io))
-        args.extend(['-i', self.url])
+        args.extend(['-i', url])
         return args
 
     def output_args_pipe(self, io):
@@ -446,7 +448,7 @@ class HLSAudioBackend(FfmpegBackend):
     def file_extension(self, preferred):
         return MandatoryFileExtension('.mp3')
 
-    def input_args(self, clip, io) -> list[str]:
+    def input_args(self, url, clip, io) -> list[str]:
         args = [
             '-y',
             '-headers',
@@ -455,7 +457,7 @@ class HLSAudioBackend(FfmpegBackend):
         args.extend(self.log_arg())
         args.extend(self.seek_position_arg(io.download_limits))
         args.extend(self.proxy_arg(io))
-        args.extend(['-i', self.url])
+        args.extend(['-i', url])
         return args
 
     def output_args_file(self, clip, io, output_name: str) -> list[str]:
@@ -502,7 +504,7 @@ class HLSSubtitlesBackend(FfmpegBackend):
     def __init__(self, url: str):
         super().__init__(url, Backends.FFMPEG, ['slice', 'proxy'])
 
-    def input_args(self, clip, io) -> list[str]:
+    def input_args(self, url, clip, io) -> list[str]:
         args = [
             '-y',
             '-headers',
@@ -529,7 +531,7 @@ class HLSSubtitlesBackend(FfmpegBackend):
         if subtitle_delay_s:
             args.extend(['-itsoffset', str(subtitle_delay_s)])
 
-        args.extend(['-i', self.url])
+        args.extend(['-i', url])
 
         return args
 
@@ -586,7 +588,7 @@ class WgetBackend(ExternalDownloader):
 
         return res
 
-    def build_args(self, output_name, clip, io):
+    def build_args(self, url, output_name, clip, io):
         args = self.shared_wget_args(io, output_name)
         args.extend(['--progress=bar', '--tries=1', '--random-wait'])
         if logger.getEffectiveLevel() >= logging.ERROR:
@@ -605,11 +607,11 @@ class WgetBackend(ExternalDownloader):
             args.append('--continue')
         if io.download_limits.ratelimit:
             args.append(f'--limit-rate={io.download_limits.ratelimit}k')
-        args.append(self.url)
+        args.append(url)
         return args
 
-    def build_pipe_args(self, clip, io):
-        return self.shared_wget_args(io, '-') + [self.url]
+    def build_pipe_args(self, url, clip, io):
+        return self.shared_wget_args(io, '-') + [url]
 
     def shared_wget_args(self, io, output_filename):
         # Sometimes it seems to be necessary to spoof the user-agent,
@@ -671,13 +673,18 @@ class VideoAndSubtitlesWgetBackend(WgetBackend):
             sub_url = subtitle_url(self.subtitles, io.subtitles)
 
             if sub_url:
-                # FIXME
-                self.url = sub_url
-                super().save_stream(output_name, clip, io)
+                sub_file = self.subtitle_filename(output_name)
+                commands = [self.build_args(sub_url, sub_file, clip, io)]
+                env = self.extra_environment(io)
+                return self.external_downloader(commands, env)
         except RuntimeError as exc:
             logger.error(exc)
 
         return res
+
+    def subtitle_filename(self, output_name: str) -> str:
+        basename = os.path.splitext(output_name)[0]
+        return f'{basename}.srt'
 
 
 ### Backend representing a failed stream ###
