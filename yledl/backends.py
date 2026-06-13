@@ -202,12 +202,9 @@ class FfmpegBackend(ExternalDownloader):
             return []
 
     def compute_subtitle_delay_s(self, clip, io) -> Optional[float]:
-        if io.subtitle_delay_ms is not None:
-            # Prefer subtitle delay set by command line argument --subdelay.
-            return io.subtitle_delay_ms / 1000
-        else:
-            # If --subdelay is not set, use the delay probed from the stream metadata.
-            return clip.subtitle_start_s()
+        # Prefer subtitle delay set by command line argument --subdelay.
+        # If --subdelay is not set, use the delay probed from the stream metadata.
+        return io.subtitle_delay_s or clip.subtitle_start_s()
 
 
 ### Download an MPEG-DASH and HLS stream by delegating to ffmpeg ###

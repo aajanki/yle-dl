@@ -641,7 +641,6 @@ def main():
     preferformat = template_ext.strip('.')
     if not preferformat:
         preferformat = 'str' if args.subtitles_only else args.preferformat
-    subtitle_delay_ms = int(args.subdelay * 1000) if args.subdelay is not None else None
     title_formatter = TitleFormatter(output_template, args.output_na_placeholder)
     if args.xattrs and sys.platform in ['win32', 'cygwin']:
         logger.warning('--xattrs not supported on Windows')
@@ -664,7 +663,7 @@ def main():
         wget_binary=args.wget or 'wget',
         create_dirs=args.create_dirs,
         xattr=args.xattrs,
-        subtitle_delay_ms=subtitle_delay_ms,
+        subtitle_delay_s=args.subdelay,
     )
 
     action = _parse_action(args)
