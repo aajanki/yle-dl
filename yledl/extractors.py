@@ -23,7 +23,13 @@ import re
 from requests import HTTPError
 from urllib.parse import urlparse, parse_qs
 from .areena_playlist_parser import AreenaPlaylistParser
-from .backends import DASHHLSBackend, HLSAudioBackend, VideoAndSubtitlesWgetBackend
+from .backends import (
+    DASHHLSBackend,
+    HLSAudioBackend,
+    VideoAndSubtitlesWgetBackend,
+    WgetBackend,
+    BaseDownloader,
+)
 from .clip import Clip, FailedClip
 from .areena_api import AreenaApiProgramInfo
 from .areena_extractors import AreenaPreviewApiParser
@@ -289,7 +295,15 @@ class AreenaExtractor(ClipExtractor):
         path: str = urlparse(download_url)[2]
         ext = os.path.splitext(path)[1] or None
         backend = VideoAndSubtitlesWgetBackend(download_url, external_subtitles, ext)
-        return [StreamFlavor(media_type=media_type, streams=[backend])]
+        flavors = [StreamFlavor(media_type=media_type, streams=[backend])]
+
+        if external_subtitles:
+            subbackends: list[BaseDownloader] = [
+                WgetBackend(s.url, '.srt') for s in external_subtitles
+            ]
+            flavors.append(StreamFlavor(media_type='subtitle', streams=subbackends))
+
+        return flavors
 
     def publish_event(self, program_info):
         events = (program_info or {}).get('data', {}).get('publicationEvent', [])
