@@ -194,7 +194,6 @@ class AreenaExtractor(ClipExtractor):
                 region=program_info.available_at_region,
                 publish_timestamp=program_info.publish_timestamp,
                 expiration_timestamp=program_info.expiration_timestamp,
-                subtitles=program_info.subtitles,
                 program_id=program_id,
                 origin_url=origin_url,
                 thumbnail=program_info.thumbnail,

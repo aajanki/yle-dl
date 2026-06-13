@@ -20,7 +20,6 @@ from datetime import datetime
 from dataclasses import dataclass, field
 from .io import IOContext, OutputFileNameGenerator
 from .streamflavor import failed_flavor, StreamFlavor
-from .subtitles import Subtitle
 
 
 @dataclass
@@ -34,7 +33,6 @@ class Clip:
     region: str = 'Finland'
     publish_timestamp: Optional[datetime] = None
     expiration_timestamp: Optional[datetime] = None
-    subtitles: list[Subtitle] = field(default_factory=list)
     program_id: Optional[str] = None
     origin_url: Optional[str] = None
     thumbnail: Optional[str] = None
@@ -53,13 +51,6 @@ class Clip:
             ('filename', self.meta_file_name(self.flavors, io)),
             ('flavors', flavors_meta),
             ('duration_seconds', self.duration_seconds),
-            (
-                'subtitles',
-                [
-                    {'language': x.lang, 'url': x.url, 'category': x.category}
-                    for x in self.subtitles
-                ],
-            ),
             ('thumbnail', self.thumbnail),
             ('region', self.region),
             ('publish_timestamp', self.format_timestamp(self.publish_timestamp)),

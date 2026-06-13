@@ -433,7 +433,6 @@ def test_print_metadata(simple):
                 },
             ],
             'duration_seconds': 950,
-            'subtitles': [],
             'region': 'Finland',
             'publish_timestamp': '2018-07-01T00:00:00+03:00',
             'expiration_timestamp': '2019-01-01T00:00:00+03:00',
@@ -477,7 +476,6 @@ def test_print_metadata_incomplete(simple):
                 },
             ],
             'region': 'Finland',
-            'subtitles': [],
         }
     ]
 
@@ -507,7 +505,6 @@ def test_print_metadata_failed_clip(simple):
             'region': 'Finland',
             'title': '',
             'episode_title': '',
-            'subtitles': [],
         }
     ]
 

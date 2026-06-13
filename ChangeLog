@@ -2,6 +2,11 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2026 Antti Ajanki
 Distributed under the GPL v3 or later
 
+Unreleased
+
+- --subtitles-only works now also with wget backend
+- subtitles are shown in the "flavors" section of --showmetadata, separate "subtitles" section is dropped
+
 Version 20260520
 
 - Fix subtitle timing (a bug in ffmpeg)
