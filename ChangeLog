@@ -5,6 +5,7 @@ Distributed under the GPL v3 or later
 Unreleased
 
 - --subtitles-only works now also with wget backend
+- --sublang is no longer required together with --subtitles-only, defaults to Finnish
 - subtitles are shown in the "flavors" section of --showmetadata, separate "subtitles" section is dropped
 
 Version 20260520

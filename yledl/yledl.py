@@ -641,9 +641,6 @@ def main():
     preferformat = template_ext.strip('.') or args.preferformat
     subtitle_delay_ms = int(args.subdelay * 1000) if args.subdelay is not None else None
     if args.subtitles_only:
-        if args.sublang not in ('fin', 'swe'):
-            logger.error('--subtitles-only requires --sublang fin or --sublang swe')
-            return RD_FAILED
         preferformat = 'srt'
     title_formatter = TitleFormatter(output_template, args.output_na_placeholder)
     if args.xattrs and sys.platform in ['win32', 'cygwin']:
