@@ -638,10 +638,10 @@ def main():
 
     dl_limits = DownloadLimits(args.startposition, args.duration, args.ratelimit)
     output_template, template_ext = os.path.splitext(args.output_template)
-    preferformat = template_ext.strip('.') or args.preferformat
+    preferformat = template_ext.strip('.')
+    if not preferformat:
+        preferformat = 'str' if args.subtitles_only else args.preferformat
     subtitle_delay_ms = int(args.subdelay * 1000) if args.subdelay is not None else None
-    if args.subtitles_only:
-        preferformat = 'srt'
     title_formatter = TitleFormatter(output_template, args.output_na_placeholder)
     if args.xattrs and sys.platform in ['win32', 'cygwin']:
         logger.warning('--xattrs not supported on Windows')
