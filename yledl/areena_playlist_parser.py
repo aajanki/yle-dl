@@ -54,6 +54,9 @@ class AreenaPlaylistParser:
         elif self._extract_package_id(tree) is not None:
             logger.debug('Package playlist')
             playlist_data = self._parse_package_playlist(tree)
+        elif self._is_article_page(tree):
+            logger.debug('Yle article or short video playlist')
+            playlist = self._parse_yle_article_playlist(tree)
         else:
             logger.debug('Not a playlist')
             playlist = [url]
@@ -79,6 +82,15 @@ class AreenaPlaylistParser:
         )
 
         return ptype in ['TVSeries', 'TVSeason', 'TVView', 'RadioSeries', 'Package']
+
+    @staticmethod
+    def _is_article_page(tree) -> bool:
+        state_script_nodes = tree.xpath(
+            '//script[@type="text/javascript" and '
+            '(contains(text(), "window.__INITIAL__STATE__") or '
+            ' contains(text(), "window.__INITIAL_STATE__"))]/text()'
+        )
+        return len(state_script_nodes) > 0
 
     def _is_radio_series_page(self, tree):
         is_radio_page = len(tree.xpath('//div[contains(@class, "RadioPlayer")]')) > 0
@@ -347,3 +359,68 @@ class AreenaPlaylistParser:
         """Return a key value of an Areena API label object which as the given type."""
         matches = [x for x in labels if x.get('type') == type_name]
         return [x[key_name] for x in matches if key_name in x]
+
+    @staticmethod
+    def _parse_yle_article_playlist(tree):
+        def id_to_areena_url(data_id):
+            if '-' in data_id:
+                areena_id = data_id
+            else:
+                areena_id = f'1-{data_id}'
+            return f'https://areena.yle.fi/{areena_id}'
+
+        state = None
+        state_script_nodes = tree.xpath(
+            '//script[@type="text/javascript" and '
+            '(contains(text(), "window.__INITIAL__STATE__") or '
+            ' contains(text(), "window.__INITIAL_STATE__"))]/text()'
+        )
+        if len(state_script_nodes) > 0:
+            state_json = re.sub(
+                r'^window\.__INITIAL__?STATE__\s*=\s*', '', state_script_nodes[0]
+            )
+            state = json.loads(state_json)
+
+        if state is None:
+            state_div_nodes = tree.xpath('//div[@id="initialState"]')
+            if len(state_div_nodes) > 0:
+                state = json.loads(state_div_nodes[0].attrib.get('data-state'))
+
+        if state is None:
+            return []
+
+        data_ids = []
+        pageData = state.get('pageData', {})
+        if 'articleWithMetadata' in pageData:
+            # "short videos" have an "articleWithMetadata" wrapper
+            article = pageData['articleWithMetadata'].get('article', {})
+        else:
+            # News articles have a plain "article"
+            article = pageData.get('article', {})
+
+        if article.get('mainMedia') is not None:
+            medias = article['mainMedia']
+            data_ids = [
+                media['id']
+                for media in medias
+                if media.get('type') in ['VideoBlock', 'video'] and 'id' in media
+            ]
+        else:
+            headline_video_id = article.get('headline', {}).get('video', {}).get('id')
+            if headline_video_id:
+                data_ids = [headline_video_id]
+
+        content = article.get('content', [])
+        inline_media = [
+            block['id']
+            for block in content
+            if block.get('type') in ['AudioBlock', 'audio', 'VideoBlock', 'video']
+            and 'id' in block
+        ]
+        for pid in inline_media:
+            if pid not in data_ids:
+                data_ids.append(pid)
+
+        logger.debug(f'Found Areena data IDs: {",".join(data_ids)}')
+
+        return [id_to_areena_url(pid) for pid in data_ids]

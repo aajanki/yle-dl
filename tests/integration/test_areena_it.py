@@ -116,6 +116,34 @@ def test_areena_html5_clip_stream_url():
     assert '.m3u8?' in streamurl[0]
 
 
+def test_areena_short_video_stream_url():
+    streamurl = fetch_stream_url('https://yle.fi/v/video/91-20232423')
+
+    assert len(streamurl) == 1
+    assert '.m3u8?' in streamurl[0]
+
+
+def test_areena_short_video_metadata():
+    metadata = fetch_metadata('https://yle.fi/v/video/91-20232423')
+
+    assert len(metadata) == 1
+    flavors = metadata[0]['flavors']
+    assert len(flavors) >= 1
+    assert any(f.get('media_type') in ['video', 'subtitle'] for f in flavors)
+    assert all('bitrate' in f for f in flavors if f.get('media_type') == 'video')
+    assert any(
+        'height' in f and 'width' in f
+        for f in flavors
+        if f.get('media_type') == 'video'
+    )
+    assert metadata[0]['duration_seconds'] == 106
+    assert metadata[0]['region'] == 'World'
+    assert metadata[0]['publish_timestamp'] == '2026-06-21T06:00:00+03:00'
+    assert 'expired_timestamp' not in metadata[0]
+    assert len(metadata[0]['description']) > 150
+    assert metadata[0]['thumbnail'].startswith('https://images.cdn.yle.fi/')
+
+
 # @pytest.mark.xfail(reason='This video has been broken in Areena since July 2022')
 # def test_areena_awsmpodamdipv4_stream_url():
 #     streamurl = fetch_stream_url('https://areena.yle.fi/1-50875269')
