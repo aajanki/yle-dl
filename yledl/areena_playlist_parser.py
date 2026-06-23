@@ -19,6 +19,7 @@ from datetime import datetime
 import json
 import re
 import logging
+from typing import Iterable, Sequence, Optional
 from .areena_api import EpisodeMetadata
 from .http import update_url_query
 from .play_list_data import PlaylistData
@@ -36,7 +37,7 @@ class AreenaPlaylistParser:
     def __init__(self, httpclient):
         self.httpclient = httpclient
 
-    def get(self, url, latest_only=False):
+    def get(self, url: str, latest_only: bool = False) -> list[str]:
         """If url is a series page, return a list of included episode pages."""
         tree = self.httpclient.download_html_tree(url)
         if tree is None:
@@ -70,7 +71,8 @@ class AreenaPlaylistParser:
 
         return playlist
 
-    def _is_tv_series_page(self, tree):
+    @staticmethod
+    def _is_tv_series_page(tree) -> bool:
         next_data_tag = tree.xpath('//script[@id="__NEXT_DATA__"]')
         if len(next_data_tag) == 0:
             return False
@@ -95,7 +97,8 @@ class AreenaPlaylistParser:
         )
         return len(state_script_nodes) > 0
 
-    def _is_radio_series_page(self, tree):
+    @staticmethod
+    def _is_radio_series_page(tree) -> bool:
         is_radio_page = len(tree.xpath('//div[contains(@class, "RadioPlayer")]')) > 0
         if is_radio_page:
             episode_modal = tree.xpath('//div[starts-with(@class, "EpisodeModal")]')
@@ -106,7 +109,7 @@ class AreenaPlaylistParser:
         else:
             return False
 
-    def _parse_series_playlist(self, html_tree, latest_only):
+    def _parse_series_playlist(self, html_tree, latest_only: bool) -> list[str]:
         next_data_tag = html_tree.xpath('//script[@id="__NEXT_DATA__"]')
         if next_data_tag:
             next_data = json.loads(next_data_tag[0].text)
@@ -163,7 +166,7 @@ class AreenaPlaylistParser:
         m = re.match(r'(?:Kausi|Säsong) (\d+)\b', title)
         return m.group(1).zfill(5) if m else title
 
-    def _parse_package_playlist(self, html_tree):
+    def _parse_package_playlist(self, html_tree) -> list[str]:
         package_tag = html_tree.xpath('//div[@class="package-view"]/@data-view')
         if package_tag:
             package_data = json.loads(package_tag[0])
@@ -177,7 +180,7 @@ class AreenaPlaylistParser:
 
         return []
 
-    def _parse_radio_playlist(self, html_tree):
+    def _parse_radio_playlist(self, html_tree) -> list[str]:
         state_tag = html_tree.xpath(
             '//script[contains(., "window.STORE_STATE_FROM_SERVER")]'
         )
@@ -196,8 +199,8 @@ class AreenaPlaylistParser:
         return []
 
     def _download_playlist_or_latest(
-        self, playlist_data, latest_season_only: bool = False
-    ):
+        self, playlist_data: PlaylistData, latest_season_only: bool = False
+    ) -> list[str]:
         season_urls = list(enumerate(playlist_data.season_playlist_urls(), start=1))
         if latest_season_only:
             # Optimization: The latest episode belongs to the latest season
@@ -219,22 +222,24 @@ class AreenaPlaylistParser:
         # that tries to sort intra-day episodes in ascending order.
         # For example: https://areena.yle.fi/1-3863205
         if self._is_descending_date_based_playlist(playlist):
-            playlist = reversed(playlist)
+            playlist = list(reversed(playlist))
 
         # Sort in ascending order: first by episode number, then by date
         playlist = sorted(playlist, key=lambda x: x.sort_key())
 
         return [x.uri for x in playlist]
 
-    def _episode_numbers_are_rare(self, playlist):
+    def _episode_numbers_are_rare(self, playlist: Sequence[EpisodeMetadata]) -> bool:
         num_has_episode = sum(p.episode_number is not None for p in playlist)
         return num_has_episode < 0.5 * len(playlist)
 
-    def _timestamps_are_common(self, playlist):
+    def _timestamps_are_common(self, playlist: Sequence[EpisodeMetadata]) -> bool:
         num_has_timestamp = sum(p.release_date is not None for p in playlist)
         return num_has_timestamp > 0.8 * len(playlist)
 
-    def _is_descending_date_based_playlist(self, playlist):
+    def _is_descending_date_based_playlist(
+        self, playlist: Sequence[EpisodeMetadata]
+    ) -> bool:
         if not all(p.episode_number is None for p in playlist):
             return False
 
@@ -251,7 +256,9 @@ class AreenaPlaylistParser:
 
         return False
 
-    def _download_playlist(self, season_urls):
+    def _download_playlist(
+        self, season_urls: Iterable[tuple[int, str]]
+    ) -> list[EpisodeMetadata]:
         playlist = []
         for season_num, season_url in season_urls:
             # Areena server fails (502 Bad gateway) if page_size is larger
@@ -286,7 +293,9 @@ class AreenaPlaylistParser:
 
         return playlist
 
-    def _parse_series_episode_data(self, playlist_page_url, season_number):
+    def _parse_series_episode_data(
+        self, playlist_page_url: str, season_number: int
+    ) -> Optional[list[EpisodeMetadata]]:
         playlist = self.httpclient.download_json(playlist_page_url)
         if playlist is None:
             return None
@@ -366,7 +375,7 @@ class AreenaPlaylistParser:
         return [x[key_name] for x in matches if key_name in x]
 
     @staticmethod
-    def _parse_yle_article_playlist(tree):
+    def _parse_yle_article_playlist(tree) -> list[str]:
         def id_to_areena_url(data_id):
             if '-' in data_id:
                 areena_id = data_id
