@@ -20,6 +20,7 @@ import itertools
 import logging
 import os.path
 import re
+from typing import Iterator
 from requests import HTTPError
 from urllib.parse import urlparse, parse_qs
 from .areena_playlist_parser import AreenaPlaylistParser
@@ -98,36 +99,34 @@ class Flavors:
 ### Extract streams from an Areena webpage ###
 
 
-class ClipExtractor:
-    def __init__(self, httpclient: HttpClient):
+class AreenaExtractor:
+    def __init__(
+        self,
+        language_chooser,
+        httpclient: HttpClient,
+        title_formatter: TitleFormatter,
+        ffprobe,
+    ):
         self.httpclient = httpclient
+        self.language_chooser = language_chooser
+        self.title_formatter = title_formatter
+        self.ffprobe = ffprobe
 
-    def extract(self, url: str, latest_only: bool):
+    def extract(self, url: str, latest_only: bool) -> Iterator[Clip]:
         playlist = self.get_playlist(url, latest_only)
         return (self.extract_clip(clipurl, url) for clipurl in playlist)
 
     def get_playlist(self, url: str, latest_only: bool = False):
         return AreenaPlaylistParser(self.httpclient).get(url, latest_only)
 
-    def extract_clip(self, url: str, origin_url: str):
-        raise NotImplementedError('extract_clip must be overridden')
-
-
-class AreenaExtractor(ClipExtractor):
-    def __init__(self, language_chooser, httpclient, title_formatter, ffprobe):
-        super().__init__(httpclient)
-        self.language_chooser = language_chooser
-        self.title_formatter = title_formatter
-        self.ffprobe = ffprobe
-
-    def extract_clip(self, clip_url, origin_url):
+    def extract_clip(self, clip_url: str, origin_url: str) -> Clip:
         pid = self.program_id_from_url(clip_url)
         program_info = self.program_info_for_pid(
             pid, clip_url, self.title_formatter, self.ffprobe
         )
         return self.create_clip_or_failure(pid, program_info, clip_url, origin_url)
 
-    def program_id_from_url(self, url):
+    def program_id_from_url(self, url: str) -> str:
         parsed = urlparse(url)
         query_dict = parse_qs(parsed.query)
         play = query_dict.get('play')

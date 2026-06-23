@@ -29,7 +29,7 @@ from .titleformatter import TitleFormatter
 from .utils import sane_filename
 from .backends import BaseDownloader
 from .exitcodes import RD_SUCCESS, RD_FAILED
-from .extractors import extractor_factory, ClipExtractor
+from .extractors import extractor_factory, AreenaExtractor
 from .localization import TranslationChooser
 from .io import IOContext, OutputFileNameGenerator
 from .streamflavor import failed_flavor, StreamFlavor
@@ -199,7 +199,7 @@ class YleDlDownloader:
         self,
         clip_url: str,
         base_url: str,
-        extractor: ClipExtractor,
+        extractor: AreenaExtractor,
         filters: StreamFilters,
         io: IOContext,
         max_retry_count: int,
