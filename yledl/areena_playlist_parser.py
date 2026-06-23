@@ -43,26 +43,29 @@ class AreenaPlaylistParser:
             logger.warning(f'Failed to download {url} while looking for a playlist')
             return [url]
 
-        playlist = []
-        playlist_data = None
         if self._is_tv_series_page(tree):
             logger.debug('TV playlist')
-            playlist_data = self._parse_series_playlist(tree)
+            playlist = self._parse_series_playlist(tree, latest_only)
         elif self._is_radio_series_page(tree):
             logger.debug('Radio playlist')
-            playlist_data = self._parse_radio_playlist(tree)
+            playlist = self._parse_radio_playlist(tree)
         elif self._extract_package_id(tree) is not None:
             logger.debug('Package playlist')
-            playlist_data = self._parse_package_playlist(tree)
+            playlist = self._parse_package_playlist(tree)
         elif self._is_article_page(tree):
-            logger.debug('Yle article or short video playlist')
+            logger.debug('Yle article playlist or a short video')
             playlist = self._parse_yle_article_playlist(tree)
         else:
             logger.debug('Not a playlist')
             playlist = [url]
 
-        if playlist_data is not None:
-            playlist = self._download_playlist_or_latest(playlist_data, latest_only)
+        if latest_only:
+            # The episode API doesn't seem to have any way to download only the
+            # latest episode or start from the latest. We need to download all
+            # and pick the latest.
+            playlist = playlist[-1:]
+
+        if len(playlist) > 1:
             logger.debug(f'playlist page with {len(playlist)} episodes')
 
         return playlist
@@ -103,7 +106,7 @@ class AreenaPlaylistParser:
         else:
             return False
 
-    def _parse_series_playlist(self, html_tree):
+    def _parse_series_playlist(self, html_tree, latest_only):
         next_data_tag = html_tree.xpath('//script[@id="__NEXT_DATA__"]')
         if next_data_tag:
             next_data = json.loads(next_data_tag[0].text)
@@ -111,11 +114,15 @@ class AreenaPlaylistParser:
             tabs = page_props.get('view', {}).get('tabs', [])
             first_tab_slug = tabs[0].get('slug') if tabs else None
             selected_tab = page_props.get('selectedTab') or first_tab_slug or 'jaksot'
-            return self._parse_episodes_tab(
+            playlist_data = self._parse_episodes_tab(
                 tabs, selected_tab
             ) or self._parse_episodes_tab(tabs, None)
+            if playlist_data is None:
+                return []
 
-        return None
+            return self._download_playlist_or_latest(playlist_data, latest_only)
+
+        return []
 
     def _parse_episodes_tab(self, next_data_tabs, tab_slug):
         if tab_slug:
@@ -165,9 +172,10 @@ class AreenaPlaylistParser:
                 content = tabs[0].get('content', [])
                 if content:
                     uri = content[0].get('source', {}).get('uri')
-                    return PlaylistData(uri, [])
+                    playlist_data = PlaylistData(uri, [])
+                    return self._download_playlist_or_latest(playlist_data)
 
-        return None
+        return []
 
     def _parse_radio_playlist(self, html_tree):
         state_tag = html_tree.xpath(
@@ -182,13 +190,16 @@ class AreenaPlaylistParser:
                 all_content = tabs[0].get('allContent')
                 if all_content:
                     uri = all_content[0].get('source', {}).get('uri')
-                    return PlaylistData(uri, [])
+                    playlist_data = PlaylistData(uri, [])
+                    return self._download_playlist_or_latest(playlist_data)
 
-        return None
+        return []
 
-    def _download_playlist_or_latest(self, playlist_data, latest_only):
+    def _download_playlist_or_latest(
+        self, playlist_data, latest_season_only: bool = False
+    ):
         season_urls = list(enumerate(playlist_data.season_playlist_urls(), start=1))
-        if latest_only:
+        if latest_season_only:
             # Optimization: The latest episode belongs to the latest season
             season_urls = season_urls[-1:]
 
@@ -212,12 +223,6 @@ class AreenaPlaylistParser:
 
         # Sort in ascending order: first by episode number, then by date
         playlist = sorted(playlist, key=lambda x: x.sort_key())
-
-        # The episode API doesn't seem to have any way to download only the
-        # latest episode or start from the latest. We need to download all and
-        # pick the latest.
-        if latest_only:
-            playlist = playlist[-1:]
 
         return [x.uri for x in playlist]
 
@@ -390,13 +395,13 @@ class AreenaPlaylistParser:
             return []
 
         data_ids = []
-        pageData = state.get('pageData', {})
-        if 'articleWithMetadata' in pageData:
+        page_data = state.get('pageData', {})
+        if 'articleWithMetadata' in page_data:
             # "short videos" have an "articleWithMetadata" wrapper
-            article = pageData['articleWithMetadata'].get('article', {})
+            article = page_data['articleWithMetadata'].get('article', {})
         else:
             # News articles have a plain "article"
-            article = pageData.get('article', {})
+            article = page_data.get('article', {})
 
         if article.get('mainMedia') is not None:
             medias = article['mainMedia']
