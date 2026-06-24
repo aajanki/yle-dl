@@ -2,12 +2,13 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2026 Antti Ajanki
 Distributed under the GPL v3 or later
 
-Unreleased
+Version 20260624
 
 - Support Areena "Lyhyet" videos
 - --subtitles-only works now also with the wget backend
 - --sublang is no longer required together with --subtitles-only, defaults to Finnish
-- subtitles are shown in the "flavors" section of --showmetadata, the separate "subtitles" section is dropped
+- subtitles are shown in the "flavors" section of --showmetadata, the separate
+  "subtitles" section is dropped
 
 Version 20260520
 
