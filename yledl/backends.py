@@ -550,6 +550,13 @@ class HLSSubtitlesBackend(FfmpegBackend):
                 optional_stream(f'0:s:m:language:{short_code}', io.ffmpeg_version()),
                 '-map',
                 optional_stream(f'0:s:m:language:{long_code}', io.ffmpeg_version()),
+                # Some inputs have multiple subtitle streams on the same
+                # language, but the srt output can contain only one. These
+                # negative selectors skip the second and third subtitle streams.
+                '-map',
+                '-s:1',
+                '-map',
+                '-s:2',
             ]
             + ['-vn', '-an', '-dn', '-f', 'srt', destination]
         )
