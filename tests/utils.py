@@ -55,7 +55,6 @@ class FixedOffset(tzinfo):
 
 class MockIOContext(IOContext):
     def ffmpeg_version(self) -> tuple[int, int]:
-        print('Mock ffmpeg_version called!')
         return 7, 1
 
 
