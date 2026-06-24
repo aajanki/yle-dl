@@ -235,7 +235,10 @@ class YleDlDownloader:
         streams = self.select_streams(clip.flavors, filters) or []
         valid_streams = [s for s in streams if s.is_valid()]
 
-        if not streams:
+        if not streams and filters.subtitle_only:
+            logger.error('The input has no subtitles')
+            return RD_FAILED
+        elif not streams and not filters.subtitle_only:
             logger.error('No stream found')
             return RD_FAILED
         elif not valid_streams:
@@ -296,7 +299,10 @@ class YleDlDownloader:
         streams = self.select_streams(clip.flavors, filters) or []
         valid_streams = [s for s in streams if s.is_valid()]
 
-        if not streams:
+        if not streams and filters.subtitle_only:
+            logger.error('The input has no subtitles')
+            return RD_FAILED
+        elif not streams and not filters.subtitle_only:
             logger.error('No stream found')
             return RD_FAILED
         elif not valid_streams:
