@@ -21,7 +21,7 @@ import os.path
 from typing import AbstractSet, Optional, Iterable, Literal
 from .errors import TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED
-from .ffmpeg import optional_stream
+from .ffmpeg import optional_stream, Ffprobe
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
 from .subtitles import delay_subtitles_mkv, delay_substitles_srt, Subtitle, subtitle_url
@@ -183,9 +183,15 @@ class FfmpegBackend(ExternalDownloader):
         else:
             return []
 
-    def proxy_arg(self, io) -> list[str]:
-        if io.proxy:
-            return ['-http_proxy', io.proxy]
+    def proxy_arg(self, proxy_address: Optional[str]) -> list[str]:
+        if proxy_address:
+            return ['-http_proxy', proxy_address]
+        else:
+            return []
+
+    def forwarded_for_arg(self, forwarded_for: Optional[str]) -> list[str]:
+        if forwarded_for:
+            return ['-headers', f'X-Forwarded-For: {forwarded_for}\r\n']
         else:
             return []
 
@@ -224,8 +230,6 @@ class DASHHLSBackend(FfmpegBackend):
     def input_args(self, url, clip, io):
         args = [
             '-y',
-            '-headers',
-            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
             '-thread_queue_size',
             '2048',
             # -seekable 0 is needed for media ID 67-xxxx streams
@@ -248,7 +252,8 @@ class DASHHLSBackend(FfmpegBackend):
         args.extend(self.log_arg())
         args.extend(self._probe_args())
         args.extend(self.seek_position_arg(io.download_limits))
-        args.extend(self.proxy_arg(io))
+        args.extend(self.forwarded_for_arg(io.x_forwarded_for))
+        args.extend(self.proxy_arg(io.proxy))
         args.extend(['-i', url])
         return args
 
@@ -335,9 +340,8 @@ class DASHHLSBackend(FfmpegBackend):
 
         return metadata
 
-    def _program_id(self, io):
+    def _program_id(self, ffprobe: Ffprobe) -> int:
         if self.program_id is None:
-            ffprobe = io.ffprobe()
             programs = ffprobe.show_programs_for_url(self.url)
             if programs.get('programs'):
                 self.program_id = self._select_max_bitrate_video_audio_pid(
@@ -348,7 +352,7 @@ class DASHHLSBackend(FfmpegBackend):
 
         return self.program_id
 
-    def _select_max_bitrate_video_audio_pid(self, programs):
+    def _select_max_bitrate_video_audio_pid(self, programs) -> int:
         if not programs:
             return 0
 
@@ -376,7 +380,7 @@ class DASHHLSBackend(FfmpegBackend):
 
     def _subtitle_args(self, io):
         scodec = 'mov_text' if self._is_mp4(io) else 'srt'
-        pid = self._program_id(io)
+        pid = self._program_id(io.ffprobe())
 
         if io.subtitles == 'none':
             return ['-sn']
@@ -401,7 +405,7 @@ class DASHHLSBackend(FfmpegBackend):
             ]
 
     def _map_video_and_audio_streams(self, io):
-        pid = self._program_id(io)
+        pid = self._program_id(io.ffprobe())
         return [
             '-map',
             optional_stream(f'0:p:{pid}:v', io.ffmpeg_version()),
@@ -446,14 +450,11 @@ class HLSAudioBackend(FfmpegBackend):
         return MandatoryFileExtension('.mp3')
 
     def input_args(self, url, clip, io) -> list[str]:
-        args = [
-            '-y',
-            '-headers',
-            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
-        ]
+        args = ['-y']
         args.extend(self.log_arg())
         args.extend(self.seek_position_arg(io.download_limits))
-        args.extend(self.proxy_arg(io))
+        args.extend(self.forwarded_for_arg(io.x_forwarded_for))
+        args.extend(self.proxy_arg(io.proxy))
         args.extend(['-i', url])
         return args
 
@@ -504,8 +505,6 @@ class HLSSubtitlesBackend(FfmpegBackend):
     def input_args(self, url, clip, io) -> list[str]:
         args = [
             '-y',
-            '-headers',
-            f'X-Forwarded-For: {io.x_forwarded_for}\r\n',
             # -seekable 0 is needed for media ID 67-xxxx streams
             '-seekable',
             '0',
@@ -522,7 +521,8 @@ class HLSSubtitlesBackend(FfmpegBackend):
         ]
         args.extend(self.log_arg())
         args.extend(self.seek_position_arg(io.download_limits))
-        args.extend(self.proxy_arg(io))
+        args.extend(self.forwarded_for_arg(io.x_forwarded_for))
+        args.extend(self.proxy_arg(io.proxy))
 
         subtitle_delay_s = self.compute_subtitle_delay_s(clip, io)
         if subtitle_delay_s:
@@ -593,7 +593,7 @@ class WgetBackend(ExternalDownloader):
         return res
 
     def build_args(self, url, output_name, clip, io):
-        args = self.shared_wget_args(io, output_name)
+        args = self.shared_wget_args(io.wget_binary, io.x_forwarded_for, output_name)
         args.extend(['--progress=bar', '--tries=1', '--random-wait'])
         if logger.getEffectiveLevel() >= logging.ERROR:
             # This will hide also errors.
@@ -615,9 +615,11 @@ class WgetBackend(ExternalDownloader):
         return args
 
     def build_pipe_args(self, url, clip, io):
-        return self.shared_wget_args(io, '-') + [url]
+        return self.shared_wget_args(io.wget_binary, io.x_forwarded_for, '-') + [url]
 
-    def shared_wget_args(self, io, output_filename):
+    def shared_wget_args(
+        self, wget_binary: str, forwarded_for: Optional[str], output_filename: str
+    ) -> list[str]:
         # Sometimes it seems to be necessary to spoof the user-agent,
         # see the issue #206
         spoofed_user_agent = (
@@ -625,16 +627,19 @@ class WgetBackend(ExternalDownloader):
             'Gecko/20100101 Firefox/67.0'
         )
 
-        return [
-            io.wget_binary,
+        args = [
+            wget_binary,
             '-O',
             output_filename,
             '--no-use-server-timestamps',
             f'--user-agent={spoofed_user_agent}',
-            '--header',
-            f'X-Forwarded-For: {io.x_forwarded_for}',
             '--timeout=20',
         ]
+
+        if forwarded_for:
+            args.extend(['--header', f'X-Forwarded-For: {forwarded_for}'])
+
+        return args
 
     def extra_environment(self, io):
         env = None
