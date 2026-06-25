@@ -30,6 +30,8 @@ from .utils import sane_filename
 
 logger = logging.getLogger('yledl')
 
+__cached_ffmpeg_version: Optional[tuple[int, int]] = None
+
 
 def random_elisa_ipv4():
     return str(random_ip(ipaddress.ip_network('91.152.0.0/13')))
@@ -53,7 +55,7 @@ class DownloadLimits:
     ratelimit: Optional[int] = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class IOContext:
     outputfilename: Optional[str] = None
     preferred_format: Optional[str] = None
@@ -73,7 +75,6 @@ class IOContext:
     create_dirs: bool = False
     xattr: bool = False
     subtitle_delay_s: Optional[float] = None
-    __cached_ffmpeg_version: Optional[tuple[int, int]] = None
 
     def ffprobe(self):
         if self.ffprobe_binary is None:
@@ -94,8 +95,9 @@ class IOContext:
 
         Throws FfmpegNotFoundError, if ffmpeg application is not found.
         """
-        if self.__cached_ffmpeg_version:
-            return self.__cached_ffmpeg_version
+        global __cached_ffmpeg_version
+        if __cached_ffmpeg_version:
+            return __cached_ffmpeg_version
 
         ver = 0, 0
         if self.ffmpeg_binary:
@@ -110,7 +112,7 @@ class IOContext:
             except FileNotFoundError:
                 raise FfmpegNotFoundError()
 
-        self.__cached_ffmpeg_version = ver
+        __cached_ffmpeg_version = ver
         return ver
 
 

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import copy
+import dataclasses
 import logging
 import unittest.mock
 import pytest
@@ -521,8 +521,7 @@ def test_download_fallback(simple):
 def test_postprocessing_no_log_errors(simple):
     # Smoke test for PR #303
     dl = downloader({'a': successful_clip()})
-    io_postprocess = copy.copy(simple.io)
-    io_postprocess.postprocess_command = 'echo'
+    io_postprocess = dataclasses.replace(simple.io, postprocess_command='echo')
     logger = logging.getLogger('yledl')
     with unittest.mock.patch.object(logger, 'error') as mock_log_error:
         res = dl.download_clips('', io_postprocess, simple.filters)
