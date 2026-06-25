@@ -18,10 +18,11 @@
 import logging
 import os
 import os.path
-from typing import AbstractSet, Optional, Iterable, Literal
+from typing import AbstractSet, Optional, Iterable, Literal, Mapping, Sequence
 from .errors import TransientDownloadError
 from .exitcodes import RD_SUCCESS, RD_FAILED
 from .ffmpeg import optional_stream, Ffprobe
+from .io import IOContext, DownloadLimits
 from .localization import two_letter_language_code
 from .utils import ffmpeg_loglevel
 from .subtitles import delay_subtitles_mkv, delay_substitles_srt, Subtitle, subtitle_url
@@ -51,7 +52,7 @@ class MandatoryFileExtension:
         self.is_mandatory = True
 
 
-def exit_code_to_rd(exit_code):
+def exit_code_to_rd(exit_code: int) -> int:
     return RD_SUCCESS if exit_code == 0 else RD_FAILED
 
 
@@ -75,7 +76,7 @@ class BaseDownloader:
     def is_valid(self):
         return True
 
-    def warn_on_unsupported_feature(self, io):
+    def warn_on_unsupported_feature(self, io: IOContext) -> None:
         if io.proxy and 'proxy' not in self.io_capabilities:
             logger.warning(
                 'Proxy not supported on this stream. Trying to continue anyway'
@@ -93,7 +94,7 @@ class BaseDownloader:
         # IOCapability.RESUME will be checked later when we know if we
         # are trying to resume a partial download
 
-    def warn_on_unsupported_resume(self, filename, clip, io):
+    def warn_on_unsupported_resume(self, filename: str, clip, io: IOContext) -> None:
         if (
             io.resume
             and 'resume' not in self.io_capabilities
@@ -105,18 +106,20 @@ class BaseDownloader:
     def file_extension(self, preferred):
         return PreferredFileExtension('.mp4')
 
-    def save_stream(self, output_name, clip, io):
+    def save_stream(self, output_name: str, clip, io: IOContext) -> int:
         """Deriving classes override this to perform the download"""
         raise NotImplementedError('save_stream must be overridden')
 
-    def pipe(self, clip, io):
+    def pipe(self, clip, io: IOContext) -> int:
         """Derived classes can override this to pipe to stdout"""
         return RD_FAILED
 
     def stream_url(self):
         return self.url
 
-    def full_stream_already_downloaded(self, filename, clip, io):
+    def full_stream_already_downloaded(
+        self, filename: str, clip, io: IOContext
+    ) -> bool:
         """Override on backends that are able to check if a file is complete."""
         return False
 
@@ -125,28 +128,30 @@ class BaseDownloader:
 
 
 class ExternalDownloader(BaseDownloader):
-    def save_stream(self, output_name, clip, io):
+    def save_stream(self, output_name: str, clip, io: IOContext) -> int:
         self.warn_on_unsupported_resume(output_name, clip, io)
 
         env = self.extra_environment(io)
         args = self.build_args(self.url, output_name, clip, io)
         return self.external_downloader([args], env)
 
-    def pipe(self, clip, io):
+    def pipe(self, clip, io: IOContext) -> int:
         commands = [self.build_pipe_args(self.url, clip, io)]
         env = self.extra_environment(io)
         return self.external_downloader(commands, env)
 
-    def build_args(self, url, output_name, clip, io):
+    def build_args(self, url: str, output_name: str, clip, io: IOContext) -> list[str]:
         raise NotImplementedError('build_args must be overridden')
 
-    def build_pipe_args(self, url, clip, io):
+    def build_pipe_args(self, url: str, clip, io: IOContext) -> list[str]:
         raise NotImplementedError('build_pipe_args must be overridden')
 
-    def extra_environment(self, io):
+    def extra_environment(self, io: IOContext) -> Optional[Mapping[str, str]]:
         return None
 
-    def external_downloader(self, commands, env=None):
+    def external_downloader(
+        self, commands: Sequence[Sequence[str]], env: Optional[Mapping[str, str]] = None
+    ) -> int:
         return exit_code_to_rd(execute_pipe(commands, env))
 
 
@@ -168,16 +173,16 @@ class FfmpegBackend(ExternalDownloader):
             + self.output_args_pipe(io)
         )
 
-    def input_args(self, url, clip, io) -> list[str]:
+    def input_args(self, url: str, clip, io: IOContext) -> list[str]:
         return []
 
-    def output_args_file(self, clip, io, output_name: str) -> list[str]:
+    def output_args_file(self, clip, io: IOContext, output_name: str) -> list[str]:
         return []
 
-    def output_args_pipe(self, io) -> list[str]:
+    def output_args_pipe(self, io: IOContext) -> list[str]:
         return []
 
-    def duration_arg(self, download_limits) -> list[str]:
+    def duration_arg(self, download_limits: DownloadLimits) -> list[str]:
         if download_limits.duration:
             return ['-t', str(download_limits.duration)]
         else:
@@ -201,13 +206,13 @@ class FfmpegBackend(ExternalDownloader):
             args.append('-stats')
         return args
 
-    def seek_position_arg(self, download_limits) -> list[str]:
+    def seek_position_arg(self, download_limits: DownloadLimits) -> list[str]:
         if download_limits.start_position is not None:
             return ['-ss', str(download_limits.start_position)]
         else:
             return []
 
-    def compute_subtitle_delay_s(self, clip, io) -> Optional[float]:
+    def compute_subtitle_delay_s(self, clip, io: IOContext) -> Optional[float]:
         # Prefer subtitle delay set by command line argument --subdelay.
         # If --subdelay is not set, use the delay probed from the stream metadata.
         return io.subtitle_delay_s or clip.subtitle_start_s()
@@ -317,7 +322,9 @@ class DASHHLSBackend(FfmpegBackend):
             '80000000',  # bytes
         ]
 
-    def _metadata_args(self, clip, io, description_on_video_stream=True):
+    def _metadata_args(
+        self, clip, io: IOContext, description_on_video_stream=True
+    ) -> list[str]:
         if not clip:
             return []
 
@@ -378,7 +385,7 @@ class DASHHLSBackend(FfmpegBackend):
 
         return best.get('program_id', 0)
 
-    def _subtitle_args(self, io):
+    def _subtitle_args(self, io: IOContext) -> list[str]:
         scodec = 'mov_text' if self._is_mp4(io) else 'srt'
         pid = self._program_id(io.ffprobe())
 
@@ -404,7 +411,7 @@ class DASHHLSBackend(FfmpegBackend):
                 optional_stream(f'0:s:m:language:{io.subtitles}', io.ffmpeg_version()),
             ]
 
-    def _map_video_and_audio_streams(self, io):
+    def _map_video_and_audio_streams(self, io: IOContext) -> list[str]:
         pid = self._program_id(io.ffprobe())
         return [
             '-map',
@@ -413,7 +420,7 @@ class DASHHLSBackend(FfmpegBackend):
             optional_stream(f'0:p:{pid}:a', io.ffmpeg_version()),
         ]
 
-    def _delay_subtitles(self, output_name: str, clip, io) -> None:
+    def _delay_subtitles(self, output_name: str, clip, io: IOContext) -> None:
         subtitle_delay_s = self.compute_subtitle_delay_s(clip, io)
 
         if subtitle_delay_s:
@@ -427,8 +434,8 @@ class DASHHLSBackend(FfmpegBackend):
                     io.ffmpeg_version(),
                 )
 
-    def _is_mp4(self, io):
-        return (
+    def _is_mp4(self, io: IOContext) -> bool:
+        return bool(
             io.outputfilename and io.outputfilename.endswith('.mp4')
         ) or io.preferred_format in ('mp4', '.mp4')
 
@@ -458,14 +465,14 @@ class HLSAudioBackend(FfmpegBackend):
         args.extend(['-i', url])
         return args
 
-    def output_args_file(self, clip, io, output_name: str) -> list[str]:
+    def output_args_file(self, clip, io: IOContext, output_name: str) -> list[str]:
         return (
             self.duration_arg(io.download_limits)
             + self._metadata_args(clip)
             + ['-f', 'mp3', f'file:{output_name}']
         )
 
-    def output_args_pipe(self, io) -> list[str]:
+    def output_args_pipe(self, io: IOContext) -> list[str]:
         return self.duration_arg(io.download_limits) + [
             '-f',
             'mp3',
@@ -532,13 +539,13 @@ class HLSSubtitlesBackend(FfmpegBackend):
 
         return args
 
-    def output_args_pipe(self, io):
+    def output_args_pipe(self, io: IOContext):
         return self._subtitle_output_args(io, 'pipe:1')
 
-    def output_args_file(self, clip, io, output_name: str):
+    def output_args_file(self, clip, io: IOContext, output_name: str):
         return self._subtitle_output_args(io, f'file:{output_name}')
 
-    def _subtitle_output_args(self, io, destination: str) -> list[str]:
+    def _subtitle_output_args(self, io: IOContext, destination: str) -> list[str]:
         short_code = two_letter_language_code(io.subtitles) or 'fi'
         long_code = 'fin' if io.subtitles == 'all' else io.subtitles
         return (
@@ -675,7 +682,7 @@ class VideoAndSubtitlesWgetBackend(WgetBackend):
         super().__init__(video_url, video_extension)
         self.subtitles = subtitles
 
-    def save_stream(self, output_name: str, clip, io) -> int:
+    def save_stream(self, output_name: str, clip, io: IOContext) -> int:
         res = super().save_stream(output_name, clip, io)
 
         try:
@@ -730,7 +737,7 @@ class Backends:
         return backend_name in Backends.default_order
 
     @staticmethod
-    def parse_backends(backend_names):
+    def parse_backends(backend_names: Iterable[str]):
         backends = []
         for bn in backend_names:
             if not Backends.is_valid_backend(bn):
