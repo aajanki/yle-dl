@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with yle-dl. If not, see <https://www.gnu.org/licenses/>.
 
-import copy
 import logging
 import os
 import re
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from typing import Iterable, Any, Optional, Literal, Iterator
 from .clip import Clip
 from .errors import ExternalApplicationNotFoundError, TransientDownloadError
@@ -393,16 +392,14 @@ class YleDlDownloader:
     def apply_backend_filter(
         self, flavors: Iterable[StreamFlavor], filters: StreamFilters
     ) -> list[StreamFlavor]:
-        def filter_streams_by_backend(flavor):
+        def filter_streams_by_backend(flavor: StreamFlavor) -> StreamFlavor:
             sorted_streams = []
             for be in filters.enabled_backends:
                 for downloader in flavor.streams:
                     if downloader.name == be:
                         sorted_streams.append(downloader)
 
-            res = copy.copy(flavor)
-            res.streams = sorted_streams
-            return res
+            return replace(flavor, streams=sorted_streams)
 
         if not flavors:
             return []

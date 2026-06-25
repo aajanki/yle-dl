@@ -20,7 +20,7 @@ from typing import Optional
 from .backends import BaseDownloader, FailingBackend
 
 
-@dataclass
+@dataclass(frozen=True)
 class StreamFlavor:
     media_type: str
     height: Optional[int] = None
