@@ -94,7 +94,7 @@ class BaseDownloader:
         # IOCapability.RESUME will be checked later when we know if we
         # are trying to resume a partial download
 
-    def warn_on_unsupported_resume(self, filename: str, clip, io: IOContext) -> None:
+    def warn_on_unsupported_resume(self, filename: str, io: IOContext) -> None:
         if (
             io.resume
             and 'resume' not in self.io_capabilities
@@ -129,7 +129,7 @@ class BaseDownloader:
 
 class ExternalDownloader(BaseDownloader):
     def save_stream(self, output_name: str, clip, io: IOContext) -> int:
-        self.warn_on_unsupported_resume(output_name, clip, io)
+        self.warn_on_unsupported_resume(output_name, io)
 
         env = self.extra_environment(io)
         args = self.build_args(self.url, output_name, clip, io)
@@ -322,15 +322,10 @@ class DASHHLSBackend(FfmpegBackend):
             '80000000',  # bytes
         ]
 
-    def _metadata_args(
-        self, clip, io: IOContext, description_on_video_stream=True
-    ) -> list[str]:
-        if not clip:
-            return []
-
+    def _metadata_args(self, clip, io: IOContext) -> list[str]:
         metadata = []
         if clip.description:
-            if description_on_video_stream and not self._is_mp4(io):
+            if not self._is_mp4(io):
                 metadata_spec = ':s:v:0'
             else:
                 metadata_spec = ''
@@ -480,9 +475,6 @@ class HLSAudioBackend(FfmpegBackend):
         ]
 
     def _metadata_args(self, clip) -> list[str]:
-        if not clip:
-            return []
-
         metadata = []
         if clip.description:
             metadata += [f'description={clip.description}']
