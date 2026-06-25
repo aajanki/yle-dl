@@ -22,7 +22,7 @@ from .io import IOContext, OutputFileNameGenerator
 from .streamflavor import failed_flavor, StreamFlavor
 
 
-@dataclass
+@dataclass(frozen=True)
 class Clip:
     webpage: str
     flavors: list[StreamFlavor] = field(default_factory=list)
