@@ -343,7 +343,9 @@ class YleDlDownloader:
 
         return (not io.overwrite and os.path.exists(outputfile)) or (
             not slicing_active
-            and downloader.full_stream_already_downloaded(outputfile, clip, io)
+            and downloader.full_stream_already_downloaded(
+                outputfile, clip.duration_seconds, io
+            )
         )
 
     def generate_output_name(

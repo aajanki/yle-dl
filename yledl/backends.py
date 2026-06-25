@@ -118,7 +118,7 @@ class BaseDownloader:
         return self.url
 
     def full_stream_already_downloaded(
-        self, filename: str, clip, io: IOContext
+        self, filename: str, duration_seconds: Optional[float], io: IOContext
     ) -> bool:
         """Override on backends that are able to check if a file is complete."""
         return False
@@ -216,6 +216,12 @@ class FfmpegBackend(ExternalDownloader):
         # Prefer subtitle delay set by command line argument --subdelay.
         # If --subdelay is not set, use the delay probed from the stream metadata.
         return io.subtitle_delay_s or clip.subtitle_start_s()
+
+    def full_stream_already_downloaded(self, filename, duration_seconds, io):
+        ffprobe = io.ffprobe()
+        return ffprobe and ffprobe.full_stream_already_downloaded(
+            filename, duration_seconds
+        )
 
 
 ### Download an MPEG-DASH and HLS stream by delegating to ffmpeg ###
@@ -434,12 +440,6 @@ class DASHHLSBackend(FfmpegBackend):
             io.outputfilename and io.outputfilename.endswith('.mp4')
         ) or io.preferred_format in ('mp4', '.mp4')
 
-    def full_stream_already_downloaded(self, filename, clip, io):
-        ffprobe = io.ffprobe()
-        return ffprobe and ffprobe.full_stream_already_downloaded(
-            filename, clip.duration_seconds
-        )
-
 
 ### Download an HLS audio stream by delegating to ffmpeg ###
 
@@ -486,12 +486,6 @@ class HLSAudioBackend(FfmpegBackend):
             ]
 
         return metadata
-
-    def full_stream_already_downloaded(self, filename, clip, io):
-        ffprobe = io.ffprobe()
-        return ffprobe and ffprobe.full_stream_already_downloaded(
-            filename, clip.duration_seconds
-        )
 
 
 ### Download subtitles in SRT format ###
