@@ -2,6 +2,11 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2026 Antti Ajanki
 Distributed under the GPL v3 or later
 
+Unreleased
+
+- Fix compatibility with ffmpeg nightly by moving thread_queue_size argument
+  to an output position
+
 Version 20260716
 
 - Avoid leaving temporary *.tmp_subdelay.mkv files behind

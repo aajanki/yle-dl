@@ -241,8 +241,6 @@ class DASHHLSBackend(FfmpegBackend):
     def input_args(self, url, clip, io):
         args = [
             '-y',
-            '-thread_queue_size',
-            '2048',
             # -seekable 0 is needed for media ID 67-xxxx streams
             '-seekable',
             '0',
@@ -279,7 +277,18 @@ class DASHHLSBackend(FfmpegBackend):
             self.duration_arg(io.download_limits)
             + self._map_video_and_audio_streams(io)
             + self._subtitle_args(io)
-            + ['-vcodec', 'copy', '-acodec', 'aac', '-dn', '-f', 'matroska', 'pipe:1']
+            + [
+                '-thread_queue_size',
+                '2048',
+                '-vcodec',
+                'copy',
+                '-acodec',
+                'aac',
+                '-dn',
+                '-f',
+                'matroska',
+                'pipe:1',
+            ]
         )
 
     def output_args_file(self, clip, io, output_name):
@@ -289,6 +298,8 @@ class DASHHLSBackend(FfmpegBackend):
             + self._map_video_and_audio_streams(io)
             + self._subtitle_args(io)
             + [
+                '-thread_queue_size',
+                '2048',
                 '-bsf:a',
                 'aac_adtstoasc',
                 '-vcodec',
