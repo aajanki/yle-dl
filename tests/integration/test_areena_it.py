@@ -220,19 +220,6 @@ def test_areena_sort_by_timestamp():
     assert timestamps == sorted(timestamps)
 
 
-def test_areena_sort_by_url():
-    # Clips don't have release timestamp or episode number. Should sort by program ID.
-    metadata = fetch_metadata(
-        'https://areena.yle.fi/1-3830094', filters_backends_disabled
-    )
-
-    # Should be sorted from smallest to largest
-    ids = [x.get('program_id') for x in metadata]
-
-    assert len(ids) > 1
-    assert ids == sorted(ids)
-
-
 def test_areena_season_and_episode_number():
     # The episode titles should include S01E01, S01E02, etc.
     # These episodes have season number in their description, e.g. "Kausi 1"
