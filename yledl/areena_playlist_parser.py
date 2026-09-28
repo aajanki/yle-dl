@@ -414,31 +414,42 @@ class AreenaPlaylistParser:
             article = page_data['articleWithMetadata'].get('article', {})
         else:
             # News articles have a plain "article"
-            article = page_data.get('article', {})
+            article = page_data.get('article')
 
-        if article.get('mainMedia') is not None:
-            medias = article['mainMedia']
-            data_ids = [
-                media['id']
-                for media in medias
-                if media.get('type') in ['VideoBlock', 'video'] and 'id' in media
+        if article:
+            if article.get('mainMedia') is not None:
+                medias = article['mainMedia']
+                data_ids = [
+                    media['id']
+                    for media in medias
+                    if media.get('type') in ['VideoBlock', 'video'] and 'id' in media
+                ]
+            else:
+                headline_video_id = (
+                    article.get('headline', {}).get('video', {}).get('id')
+                )
+                if headline_video_id:
+                    data_ids = [headline_video_id]
+
+            content = article.get('content', [])
+            inline_media = [
+                block['id']
+                for block in content
+                if block.get('type') in ['AudioBlock', 'audio', 'VideoBlock', 'video']
+                and 'id' in block
             ]
+            for pid in inline_media:
+                if pid not in data_ids:
+                    data_ids.append(pid)
         else:
-            headline_video_id = article.get('headline', {}).get('video', {}).get('id')
-            if headline_video_id:
-                data_ids = [headline_video_id]
-
-        content = article.get('content', [])
-        inline_media = [
-            block['id']
-            for block in content
-            if block.get('type') in ['AudioBlock', 'audio', 'VideoBlock', 'video']
-            and 'id' in block
-        ]
-        for pid in inline_media:
-            if pid not in data_ids:
+            # short videos have item.video.programId
+            pid = page_data.get('item', {}).get('video', {}).get('programId')
+            if pid:
                 data_ids.append(pid)
 
-        logger.debug(f'Found Areena data IDs: {",".join(data_ids)}')
+        if data_ids:
+            logger.debug(f'Found Areena data IDs: {",".join(data_ids)}')
+        else:
+            logger.debug('Did not find any Areena data IDs!')
 
         return [id_to_areena_url(pid) for pid in data_ids]

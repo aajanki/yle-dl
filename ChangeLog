@@ -6,6 +6,7 @@ Unreleased
 
 - Fix compatibility with ffmpeg nightly by moving thread_queue_size argument
   to an output position
+- Fix the support for "Lyhyet" videos
 
 Version 20260716
 
