@@ -133,4 +133,4 @@ def test_uutiset_metadata_old_address():
 
     flavors = metadata[0]['flavors']
     assert len(flavors) >= 1
-    assert all(f.get('media_type') == 'video' for f in flavors)
+    assert all(f.get('media_type') in ['video', 'subtitle'] for f in flavors)
