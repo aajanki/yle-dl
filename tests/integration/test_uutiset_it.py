@@ -1,6 +1,6 @@
 # This file is part of yle-dl.
 #
-# Copyright 2010-2025 Antti Ajanki and others
+# Copyright 2010-2026 Antti Ajanki and others
 #
 # Yle-dl is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -132,5 +132,8 @@ def test_uutiset_metadata_old_address():
     assert 'expired_timestamp' not in metadata[0]
 
     flavors = metadata[0]['flavors']
+    media_types = [f.get('media_type') for f in flavors]
     assert len(flavors) >= 1
-    assert all(f.get('media_type') in ['video', 'subtitle'] for f in flavors)
+    assert all(t in ['video', 'subtitle'] for t in media_types), (
+        f'Unexpected media_types {media_types}'
+    )
