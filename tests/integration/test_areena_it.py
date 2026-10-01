@@ -209,6 +209,8 @@ def test_areena_sort_by_season_episode():
 
 def test_areena_sort_by_timestamp():
     # These clips have timestamps but not episode numbers
+    # Flaky tests: episodes annotated with "poistuu 2.10.2026" or similar might
+    # not get sorted properly.
     metadata = fetch_metadata(
         'https://areena.yle.fi/1-3830094', filters_backends_disabled
     )
