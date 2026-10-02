@@ -2,7 +2,7 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2026 Antti Ajanki
 Distributed under the GPL v3 or later
 
-Unreleased
+Version 20261002
 
 - Fix compatibility with ffmpeg nightly by moving thread_queue_size argument
   to an output position
