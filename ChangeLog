@@ -2,6 +2,10 @@ yle-dl - download videos from Yle servers
 Copyright 2009-2026 Antti Ajanki
 Distributed under the GPL v3 or later
 
+Unreleased
+
+- Update minimum Python version to 3.10
+
 Version 20261002
 
 - Fix compatibility with ffmpeg nightly by moving thread_queue_size argument
