@@ -252,6 +252,8 @@ class DASHHLSBackend(FfmpegBackend):
             '-allowed_extensions',
             'ts,aac,vtt',
         ]
+        if io.ffmpeg_version() < (7, 0):
+            args.extend(['-thread_queue_size', '2048'])
         if not (io.subtitles == 'none' or self.live):
             # Needed for decoding webvtt subtitles on HLS streams
             #
@@ -278,8 +280,6 @@ class DASHHLSBackend(FfmpegBackend):
             + self._map_video_and_audio_streams(io)
             + self._subtitle_args(io)
             + [
-                '-thread_queue_size',
-                '2048',
                 '-vcodec',
                 'copy',
                 '-acodec',
@@ -298,8 +298,6 @@ class DASHHLSBackend(FfmpegBackend):
             + self._map_video_and_audio_streams(io)
             + self._subtitle_args(io)
             + [
-                '-thread_queue_size',
-                '2048',
                 '-bsf:a',
                 'aac_adtstoasc',
                 '-vcodec',
