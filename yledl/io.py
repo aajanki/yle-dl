@@ -87,8 +87,9 @@ class IOContext:
 
         The parameter ffmpeg_binary is the path to the ffmpeg executable.
 
-        Returns the version as a two-tuple (major, minor). If parsing the version
-        number in the ffmpeg output fails, returns an all-zero version (0, 0).
+        Returns the version as a two-tuple (major, minor). If the ffmpeg is a
+        nightly build, returns (999, 999). If parsing the version number in the
+        ffmpeg output fails, returns an all-zero version (0, 0).
 
         The return value is memoized, and the same value is returned on
         subsequent calls.
@@ -106,9 +107,20 @@ class IOContext:
                 p = subprocess.run(args, stdout=subprocess.PIPE, text=True)
                 if p.returncode == 0:
                     first_line = p.stdout.splitlines()[0]
-                    m = re.match(r'ffmpeg version n?(\d+)\.(\d+)', first_line)
-                    if m:
-                        ver = int(m.group(1)), int(m.group(2))
+                    nightly_match = re.match(r'ffmpeg version N-', first_line)
+                    if nightly_match:
+                        # nightly, assume that this is more recent than any release
+                        ver = 999, 999
+                    else:
+                        # release version
+                        release_match = re.match(
+                            r'ffmpeg version n?(\d+)\.(\d+)', first_line
+                        )
+                        if release_match:
+                            ver = (
+                                int(release_match.group(1)),
+                                int(release_match.group(2)),
+                            )
             except FileNotFoundError:
                 raise FfmpegNotFoundError()
 
