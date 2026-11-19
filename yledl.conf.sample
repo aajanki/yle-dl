@@ -10,6 +10,9 @@
 # Maximum horizontal resolution to download
 #resolution=720
 
+# Wait 10 seconds between episode downloads in a playlist
+#delay=10
+
 # Resume if there is a partially downloaded file
 #resume=true
 

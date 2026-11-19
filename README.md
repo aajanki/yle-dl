@@ -73,6 +73,7 @@ yle-dl options:
 * `--postprocess cmd` Execute a command cmd after a successful download. The command is called with the downloaded video file as the first parameter and subtitle files (if any) as the following parameters.
 * `--proxy uri`       Proxy to use. Examples: `--proxy localhost:8118`, `--proxy socks5h://localhost:1080`
 * `--destdir dir`     Save files to dir
+* `-d, --delay seconds` Wait between episode downloads in a playlist (default: 0). Fractional seconds are supported. There is no wait before the first or after the last episode.
 * `--pipe`            Dump stream to stdout for piping to media player. E.g. `yle-dl --pipe URL | vlc -`.
 * `-V, --verbose`     Show verbose debug output
 

@@ -262,6 +262,35 @@ def test_download_success(simple):
     assert res == RD_SUCCESS
 
 
+@pytest.mark.parametrize('episode_count', [0, 1, 3])
+@pytest.mark.parametrize('delay', [0.0, 2.5])
+@pytest.mark.parametrize('download_status', [RD_SUCCESS, RD_FAILED])
+def test_delay_between_episode_downloads(
+    simple, monkeypatch, episode_count, delay, download_status
+):
+    playlist = {str(i): successful_clip() for i in range(episode_count)}
+    dl = downloader(playlist)
+    events = Mock()
+    events.download.return_value = download_status
+    monkeypatch.setattr(dl, 'download_with_retry', events.download)
+    monkeypatch.setattr('yledl.downloader.time.sleep', events.sleep)
+    io = dataclasses.replace(simple.io, delay=delay)
+
+    res = dl.download_clips('', io, simple.filters)
+
+    expected_calls = []
+    for i, clip_url in enumerate(playlist):
+        if i > 0 and delay > 0:
+            expected_calls.append(unittest.mock.call.sleep(delay))
+        expected_calls.append(
+            unittest.mock.call.download(
+                clip_url, '', unittest.mock.ANY, simple.filters, io, max_retry_count=3
+            )
+        )
+    assert events.mock_calls == expected_calls
+    assert res == (download_status if episode_count else RD_SUCCESS)
+
+
 def test_download_incomplete_metadata(simple):
     clip = incomplete_flavors_clip()
     dl = downloader({'a': clip})

@@ -18,6 +18,7 @@
 import logging
 import os
 import re
+import time
 from dataclasses import asdict, replace
 from typing import Iterable, Any, Optional, Literal, Iterator
 from .clip import Clip
@@ -88,7 +89,10 @@ class YleDlDownloader:
             logger.info('No streams found')
 
         overall_status = RD_SUCCESS
-        for clip_url in playlist:
+        for i, clip_url in enumerate(playlist):
+            if i > 0 and io.delay > 0:
+                logger.info(f'Waiting {io.delay:g} seconds before the next download')
+                time.sleep(io.delay)
             res = self.download_with_retry(
                 clip_url, base_url, extractor, filters, io, max_retry_count=3
             )
