@@ -75,6 +75,7 @@ class IOContext:
     create_dirs: bool = False
     xattr: bool = False
     subtitle_delay_s: Optional[float] = None
+    delay: float = 0.0
 
     def ffprobe(self):
         if self.ffprobe_binary is None:

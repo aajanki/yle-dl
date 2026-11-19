@@ -29,6 +29,7 @@ import re
 import codecs
 import json
 import logging
+import math
 import os
 import os.path
 from argparse import Namespace
@@ -355,6 +356,15 @@ def _add_io_arguments(parser):
         help='Maximum bandwidth consumption, integer in kB/s',
     )
     io_group.add_argument(
+        '-d',
+        '--delay',
+        metavar='SECONDS',
+        type=nonnegative_seconds,
+        default=0.0,
+        help='Wait SECONDS between episode downloads in a playlist '
+        '(default: 0). Can be a floating point number.',
+    )
+    io_group.add_argument(
         '--proxy',
         metavar='URI',
         type=str,
@@ -448,6 +458,15 @@ def float_with_dot_or_comma(s: str) -> float:
         return float(s)
     except ValueError:
         return float(s.replace(',', '.'))
+
+
+def nonnegative_seconds(s: str) -> float:
+    seconds = float_with_dot_or_comma(s)
+    if not math.isfinite(seconds) or seconds < 0:
+        raise configargparse.ArgumentTypeError(
+            'delay must be a finite, non-negative number of seconds'
+        )
+    return seconds
 
 
 def execute_action(
@@ -664,6 +683,7 @@ def main():
         create_dirs=args.create_dirs,
         xattr=args.xattrs,
         subtitle_delay_s=args.subdelay,
+        delay=args.delay,
     )
 
     action = _parse_action(args)
